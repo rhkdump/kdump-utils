@@ -1,0 +1,110 @@
+#! /bin/sh
+
+#
+#  kdump
+#
+#  Description:  The kdump init script provides the support necessary for
+#  		 loading a kdump kernel into memory at system bootup time,
+#		 and for copying away a vmcore at system panic time.
+#
+#  Copyright 2005 Red Hat, Inc.
+#
+#  chkconfig: 2345 20 80
+#
+#  Author:  Jeff Moyer <jmoyer@redhat.com>
+
+
+# Source function library.
+. /etc/init.d/functions
+
+KEXEC=/usr/sbin/kexec
+
+# Will be different for ia64, for example.  For now, that architecture isn't
+# supported.  Code needs to be added here when we do.
+BOOTDIR="/boot"
+
+KDUMP_KERNELVER=""
+KDUMP_COMMANDLINE=""
+# KEXEC_HEADERS will not be in the sysconfig file by default
+KEXEC_HEADERS="--elf32-core-headers"
+KEXEC_ARGS=""
+
+standard_kexec_args="-p --args-linux"
+
+if [ -f /etc/sysconfig/kdump ]; then
+	. /etc/sysconfig/kdump
+fi
+
+function save_core()
+{
+	coredir="/var/crash/`date +"%Y-%m-%d-%H:%M"`"
+
+	mkdir -p $coredir
+	cp /proc/vmcore $coredir/vmcore
+}
+
+# Load the kdump kerel specified in /etc/sysconfig/kdump
+# If none is specified, try to load a kdump kernel with the same version
+# as the currently running kernel.
+function load_kdump()
+{
+	if [ -z "$KDUMP_KERNELVER" ]; then
+		local running_kernel=`uname -r`
+
+		kdump_kver=`echo $running_kernel | sed 's/smp//g'`
+		kdump_kver="${kdump_kver}kdump"
+	else
+		kdump_kver=$KDUMP_KERNELVER
+	fi
+
+	kdump_kernel="${BOOTDIR}/vmlinux-${kdump_kver}"
+	kdump_initrd="${BOOTDIR}/initrd-${kdump_kver}.img"
+
+	if [ ! -f $kdump_kernel ]; then
+		echo "No kdump kernel image found."
+		echo "Tried to locate ${kdump_kernel}"
+		return 1
+	fi
+
+	if [ ! -f $kdump_initrd ]; then
+		echo "No kdump initial ramdisk found."
+		echo "Tried to locate ${kdump_initrd}"
+		return 1
+	fi
+
+	if [ -z "$KDUMP_COMMANDLINE" ]; then
+		KDUMP_COMMANDLINE=`cat /proc/cmdline`
+		KDUMP_COMMANDLINE=`echo $KDUMP_COMMANDLINE | sed -e 's/crashkernel=[0-9]\+M@[0-9]\+M//g'`
+	fi
+
+	$KEXEC $KEXEC_ARGS $standard_kexec_args $KEXEC_HEADERS \
+		"--command-line=\"$KDUMP_COMMANDLINE\"" \
+		--initrd=$kdump_initrd $kdump_kernel
+}
+
+case "$1" in
+  start)
+	if [ -f /proc/vmcore ]; then
+	    save_core
+	    reboot
+        else
+	    load_kdump
+	fi
+	;;
+  stop)
+	$KEXEC -u
+	;;
+  status)
+	echo "not implemented"
+	;;
+  restart)
+	echo "not implemented"
+	;;
+  condrestart)
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|status|restart}"
+	exit 1
+esac
+
+exit $?
