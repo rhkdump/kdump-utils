@@ -61,9 +61,9 @@ function load_kdump()
 	kdump_initrd="${BOOTDIR}/initrd-${kdump_kver}.img"
 
 	if [ ! -f $kdump_kernel ]; then
-		echo "No kdump kernel image found."
-		echo "Tried to locate ${kdump_kernel}"
-		return 1
+		echo -n "No kdump kernel image found."; warning; echo
+		echo -n "Tried to locate ${kdump_kernel}"
+		exit 0
 	fi
 
 	if [ ! -f $kdump_initrd ]; then

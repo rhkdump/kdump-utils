@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 4
+Release: 5
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -104,6 +104,9 @@ exit 0
 %doc TODO
 
 %changelog
+* Wed Nov 16 2005 Thomas Graf <tgraf@redhat.com> - 1.101-5
+- Report missing kdump kernel image as warning
+ 
 * Thu Nov  3 2005 Jeff Moyer <jmoyer@redhat.com> - 1.101-4
 - Build for x86_64 as well.  Kdump support doesn't work there, but users
   should be able to use kexec.
