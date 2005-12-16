@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 5
+Release: 5.1
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -104,6 +104,9 @@ exit 0
 %doc TODO
 
 %changelog
+* Fri Dec 16 2005 Jesse Keating <jkeating@redhat.com>
+- rebuilt for new gcj
+
 * Wed Nov 16 2005 Thomas Graf <tgraf@redhat.com> - 1.101-5
 - Report missing kdump kernel image as warning
  
