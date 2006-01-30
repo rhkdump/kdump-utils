@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 5.1
+Release: 6
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -104,6 +104,9 @@ exit 0
 %doc TODO
 
 %changelog
+* Mon Jan 30 2006 Thomas Graf <tgraf@redhat.com>
+- New kdump patch to support x86_64 userspace
+
 * Fri Dec 16 2005 Jesse Keating <jkeating@redhat.com>
 - rebuilt for new gcj
 
