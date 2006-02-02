@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 7
+Release: 7.1
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -28,6 +28,8 @@ Patch101: kexec-tools-1.101-disable-kdump-x8664.patch
 # Patches 301 through 400 are meant for ppc64 kexec-tools enablement
 #
 
+Patch501: kexec-tools-1.101-Makefile.patch
+
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
 kernel to boot using the kernel's kexec feature either on a
@@ -40,6 +42,7 @@ component of the kernel's kexec feature.
 rm -f ../kexec-tools-1.101.spec
 %patch1 -p1
 %patch101 -p1
+%patch501 -p1
 
 cp $RPM_SOURCE_DIR/kdump.init .
 cp $RPM_SOURCE_DIR/kdump.sysconfig .
@@ -89,6 +92,8 @@ exit 0
 %doc TODO
 
 %changelog
+* Thu Feb 02 2006 Thomas Graf <tgraf@redhat.com> - 1.101-7.1
+- Add patch to enable the kdump binary for x86_64
 * Wed Feb 01 2006 Thomas Graf <tgraf@redhat.com>
 - New kdump patch to support s390 arch + various fixes
 - Include kdump in x86_64 builds
