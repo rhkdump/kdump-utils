@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 6
+Release: 7
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -9,13 +9,6 @@ Source0: %{name}-%{version}.tar.gz
 Source1: kdump.init
 Source2: kdump.sysconfig
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
-
-%define kdump 0
-
-%ifarch %{ix86}
-%define kdump 1
-%endif
-
 
 #
 # Patches 0 through 100 are meant for x86 kexec-tools enablement
@@ -48,10 +41,8 @@ rm -f ../kexec-tools-1.101.spec
 %patch1 -p1
 %patch101 -p1
 
-%if %{kdump}
 cp $RPM_SOURCE_DIR/kdump.init .
 cp $RPM_SOURCE_DIR/kdump.sysconfig .
-%endif
 
 %build
 %configure
@@ -63,18 +54,14 @@ rm -rf $RPM_BUILD_ROOT
 make install DESTDIR=$RPM_BUILD_ROOT
 mkdir -p -m755 $RPM_BUILD_ROOT/etc/rc.d/init.d
 mkdir -p -m755 $RPM_BUILD_ROOT/etc/sysconfig
-%if %{kdump}
 install -m 644 kdump.sysconfig $RPM_BUILD_ROOT/etc/sysconfig/kdump
 install -m 755 kdump.init $RPM_BUILD_ROOT/etc/rc.d/init.d/kdump
-%endif
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
 %post
-%if %{kdump}
 chkconfig --add kdump
-%endif
 
 %postun
 
@@ -92,11 +79,9 @@ exit 0
 %files
 %defattr(-,root,root,-)
 %{_sbindir}/kexec
-%if %{kdump}
 %{_sbindir}/kdump
 %config(noreplace,missingok) /etc/sysconfig/kdump
 %config /etc/rc.d/init.d/kdump
-%endif
 
 %{_libdir}/kexec-tools/kexec_test
 %doc News
@@ -104,6 +89,9 @@ exit 0
 %doc TODO
 
 %changelog
+* Wed Feb 01 2006 Thomas Graf <tgraf@redhat.com>
+- New kdump patch to support s390 arch + various fixes
+- Include kdump in x86_64 builds
 * Mon Jan 30 2006 Thomas Graf <tgraf@redhat.com>
 - New kdump patch to support x86_64 userspace
 
