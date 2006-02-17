@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 7.1.1
+Release: 8
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -64,6 +64,10 @@ install -m 755 kdump.init $RPM_BUILD_ROOT/etc/rc.d/init.d/kdump
 rm -rf $RPM_BUILD_ROOT
 
 %post
+KDUMP_COMMANDLINE=`cat /proc/cmdline`
+KDUMP_COMMANDLINE=`echo $KDUMP_COMMANDLINE | sed -e 's/crashkernel=[0-9]\+M@[0-9]\+M//g'`
+export KDUMP_COMMANDLINE
+sed -i -e "s|REPLACEME|$KDUMP_COMMANDLINE irqpoll|g" /etc/sysconfig/kdump
 chkconfig --add kdump
 
 %postun
@@ -92,6 +96,12 @@ exit 0
 %doc TODO
 
 %changelog
+* Fri Feb 17 2006 Jeff Moyer <jmoyer@redhat.com> - 1.101-8
+- Fix the service stop case.  It was previously unloading the wrong kernel.
+- Implement the "restart" function.
+- Add the "irqpoll" option as a default kdump kernel commandline parameter.
+- Create a default kernel command line in the sysconfig file upon rpm install.
+
 * Tue Feb 07 2006 Jesse Keating <jkeating@redhat.com> - 1.101-7.1.1
 - rebuilt for new gcc4.1 snapshot and glibc changes
 

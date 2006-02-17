@@ -9,7 +9,7 @@ KDUMP_KERNELVER=""
 #   KDUMP_COMMANDLINE="ro root=LABEL=/"
 # If a command line is not specified, the default will be taken from
 # /proc/cmdline
-KDUMP_COMMANDLINE=""
+KDUMP_COMMANDLINE="REPLACEME"
 
 # Any additional kexec arguments required.  In most situations, this should
 # be left empty

@@ -75,6 +75,7 @@ function load_kdump()
 	if [ -z "$KDUMP_COMMANDLINE" ]; then
 		KDUMP_COMMANDLINE=`cat /proc/cmdline`
 		KDUMP_COMMANDLINE=`echo $KDUMP_COMMANDLINE | sed -e 's/crashkernel=[0-9]\+M@[0-9]\+M//g'`
+		KDUMP_COMMANDLINE="${KDUMP_COMMANDLINE} irqpoll"
 	fi
 
 	$KEXEC $KEXEC_ARGS $standard_kexec_args $KEXEC_HEADERS \
@@ -92,13 +93,14 @@ case "$1" in
 	fi
 	;;
   stop)
-	$KEXEC -u
+	$KEXEC -u -p
 	;;
   status)
 	echo "not implemented"
 	;;
   restart)
-	echo "not implemented"
+	$KEXEC -u -p
+	load_kdump
 	;;
   condrestart)
 	;;
