@@ -79,7 +79,7 @@ function load_kdump()
 	fi
 
 	$KEXEC $KEXEC_ARGS $standard_kexec_args $KEXEC_HEADERS \
-		"--command-line=\"$KDUMP_COMMANDLINE\"" \
+		--command-line="$KDUMP_COMMANDLINE" \
 		--initrd=$kdump_initrd $kdump_kernel
 }
 

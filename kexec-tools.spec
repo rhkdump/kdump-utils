@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 8
+Release: 9
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -96,6 +96,9 @@ exit 0
 %doc TODO
 
 %changelog
+* Wed Feb 22 2006 Thomas Graf <tgraf@redhat.com> - 1.101-9
+- Remove wrong quotes around --command-line in kdump.init
+
 * Fri Feb 17 2006 Jeff Moyer <jmoyer@redhat.com> - 1.101-8
 - Fix the service stop case.  It was previously unloading the wrong kernel.
 - Implement the "restart" function.
