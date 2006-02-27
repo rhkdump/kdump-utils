@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 9
+Release: 10
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -96,6 +96,17 @@ exit 0
 %doc TODO
 
 %changelog
+* Mon Feb 27 2006 Thomas Graf <tgraf@redhat.com> - 1.101-10
+- kdump7.patch
+   o Remove elf32 core headers support for x86_64
+   o Fix x86 prepare elf core header routine
+   o Fix ppc64 kexec -p failure for gcc 4.10
+   o Fix few warnings for gcc 4.10
+   o Add the missing --initrd option for ppc64
+   o Fix ppc64 persistent root device bug
+- Remove --elf32-core-headers from default configuration, users
+  may re-add it via KEXEC_ARGS.
+- Remove obsolete KEXEC_HEADERS
 * Wed Feb 22 2006 Thomas Graf <tgraf@redhat.com> - 1.101-9
 - Remove wrong quotes around --command-line in kdump.init
 

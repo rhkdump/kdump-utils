@@ -13,4 +13,7 @@ KDUMP_COMMANDLINE="REPLACEME"
 
 # Any additional kexec arguments required.  In most situations, this should
 # be left empty
+#
+# Example:
+#   KEXEC_ARGS="--elf32-core-headers"
 KEXEC_ARGS=""

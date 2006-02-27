@@ -1,6 +1,6 @@
 diff -urNp -X dontdiff kexec-tools-1.101/configure kexec-tools-1.101-kdump/configure
 --- kexec-tools-1.101/configure	2005-02-16 18:07:44.000000000 +0530
-+++ kexec-tools-1.101-kdump/configure	2006-02-01 14:28:15.497259392 +0530
++++ kexec-tools-1.101-kdump/configure	2006-02-22 11:30:09.912285648 +0530
 @@ -1384,12 +1384,18 @@ case $host_cpu in
  	powerpc )
  		host_cpu="ppc"
@@ -21,19 +21,20 @@ diff -urNp -X dontdiff kexec-tools-1.101/configure kexec-tools-1.101-kdump/confi
  		;;
  	* )
  		{ { echo "$as_me:$LINENO: error:  unsupported architecture $host_cpu" >&5
-@@ -1406,6 +1412,11 @@ if test "${host_alias}" ; then
+@@ -1406,6 +1412,12 @@ if test "${host_alias}" ; then
  fi
  EXTRA_CFLAGS=""
  
 +# Check whether ppc64. Add -m64 for building 64-bit binary
++# Add -mcall-aixdesc to generate dot-symbols as in gcc 3.3.3
 +if test "$ARCH" = ppc64; then
-+  EXTRA_CFLAGS="$EXTRA_CFLAGS -m64"
++  EXTRA_CFLAGS="$EXTRA_CFLAGS -m64 -mcall-aixdesc"
 +fi;
 +
  # Check whether --with-objdir or --without-objdir was given.
  if test "${with_objdir+set}" = set; then
    withval="$with_objdir"
-@@ -1421,7 +1432,6 @@ if test "${with_gamecube+set}" = set; th
+@@ -1421,7 +1433,6 @@ if test "${with_gamecube+set}" = set; th
     EXTRA_CFLAGS="$EXTRA_CFLAGS -DCONFIG_GAMECUBE=1"
  fi;
  
@@ -43,7 +44,7 @@ diff -urNp -X dontdiff kexec-tools-1.101/configure kexec-tools-1.101-kdump/confi
    withval="$with_zlib"
 diff -urNp -X dontdiff kexec-tools-1.101/configure.ac kexec-tools-1.101-kdump/configure.ac
 --- kexec-tools-1.101/configure.ac	2005-01-09 07:06:57.000000000 +0530
-+++ kexec-tools-1.101-kdump/configure.ac	2006-02-01 14:28:15.498259240 +0530
++++ kexec-tools-1.101-kdump/configure.ac	2006-02-22 11:30:08.809453304 +0530
 @@ -25,12 +25,18 @@ case $host_cpu in 
  	powerpc )
  		host_cpu="ppc"
@@ -64,23 +65,36 @@ diff -urNp -X dontdiff kexec-tools-1.101/configure.ac kexec-tools-1.101-kdump/co
  		;;
  	* )
  		AC_MSG_ERROR([ unsupported architecture $host_cpu])
-@@ -45,6 +51,12 @@ if test "${host_alias}" ; then
+@@ -45,6 +51,13 @@ if test "${host_alias}" ; then
  	OBJDIR="$OBJDIR-${host_alias}"
  fi 
  EXTRA_CFLAGS=""
 +
 +# Check whether ppc64. Add -m64 for building 64-bit binary
++# Add -mcall-aixdesc to generate dot-symbols as in gcc 3.3.3
 +if test "$ARCH" = ppc64; then
-+  EXTRA_CFLAGS="$EXTRA_CFLAGS -m64"
++  EXTRA_CFLAGS="$EXTRA_CFLAGS -m64 -mcall-aixdesc"
 +fi;
 +
  AC_ARG_WITH([objdir], AC_HELP_STRING([--with-objdir=<dir>],[select directory for object files]),
  	[ OBJDIR="$withval" ], [ OBJDIR="$OBJDIR" ])
  
+diff -urNp -X dontdiff kexec-tools-1.101/kdump/kdump.c kexec-tools-1.101-kdump/kdump/kdump.c
+--- kexec-tools-1.101/kdump/kdump.c	2005-02-06 07:28:15.000000000 +0530
++++ kexec-tools-1.101-kdump/kdump/kdump.c	2006-02-22 11:30:11.080108112 +0530
+@@ -54,7 +54,7 @@ static void *xmalloc(size_t size)
+ 	result = malloc(size);
+ 	if (result == NULL) {
+ 		fprintf(stderr, "malloc of %u bytes failed: %s\n",
+-			size, strerror(errno));
++			(unsigned int)size, strerror(errno));
+ 		exit(7);
+ 	}
+ 	return result;
 diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/i386/crashdump-x86.c kexec-tools-1.101-kdump/kexec/arch/i386/crashdump-x86.c
 --- kexec-tools-1.101/kexec/arch/i386/crashdump-x86.c	1970-01-01 05:30:00.000000000 +0530
-+++ kexec-tools-1.101-kdump/kexec/arch/i386/crashdump-x86.c	2006-01-19 18:19:07.000000000 +0530
-@@ -0,0 +1,724 @@
++++ kexec-tools-1.101-kdump/kexec/arch/i386/crashdump-x86.c	2006-02-22 11:30:01.525560624 +0530
+@@ -0,0 +1,728 @@
 +/*
 + * kexec: Linux boots Linux
 + *
@@ -608,10 +622,12 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/i386/crashdump-x86.c kexec-t
 +	 * A seprate program header for Backup Region*/
 +	for (i = 0; i < CRASH_MAX_MEMORY_RANGES; i++) {
 +		unsigned long long mstart, mend;
++		if (crash_memory_range[i].type != RANGE_RAM)
++			continue;
 +		mstart = crash_memory_range[i].start;
 +		mend = crash_memory_range[i].end;
 +		if (!mstart && !mend)
-+			break;
++			continue;
 +		phdr = (Elf64_Phdr *) bufp;
 +		bufp += sizeof(Elf64_Phdr);
 +		phdr->p_type	= PT_LOAD;
@@ -703,10 +719,12 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/i386/crashdump-x86.c kexec-t
 +	 * A seprate program header for Backup Region*/
 +	for (i = 0; i < CRASH_MAX_MEMORY_RANGES; i++) {
 +		unsigned long long mstart, mend;
++		if (crash_memory_range[i].type != RANGE_RAM)
++			continue;
 +		mstart = crash_memory_range[i].start;
 +		mend = crash_memory_range[i].end;
 +		if (!mstart && !mend)
-+			break;
++			continue;
 +		phdr = (Elf32_Phdr *) bufp;
 +		bufp += sizeof(Elf32_Phdr);
 +		phdr->p_type	= PT_LOAD;
@@ -1152,7 +1170,7 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/i386/Makefile kexec-tools-1.
 +KEXEC_C_SRCS+= kexec/arch/i386/crashdump-x86.c
 diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/i386/x86-linux-setup.c kexec-tools-1.101-kdump/kexec/arch/i386/x86-linux-setup.c
 --- kexec-tools-1.101/kexec/arch/i386/x86-linux-setup.c	2005-01-13 18:40:01.000000000 +0530
-+++ kexec-tools-1.101-kdump/kexec/arch/i386/x86-linux-setup.c	2006-02-01 14:41:09.489594672 +0530
++++ kexec-tools-1.101-kdump/kexec/arch/i386/x86-linux-setup.c	2006-02-01 14:41:09.000000000 +0530
 @@ -94,7 +94,8 @@ void setup_linux_bootloader_parameters(
  	cmdline_ptr[cmdline_len - 1] = '\0';
  }
@@ -1799,8 +1817,8 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/ppc64/crashdump-ppc64.c kexe
 +
 diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/ppc64/crashdump-ppc64.h kexec-tools-1.101-kdump/kexec/arch/ppc64/crashdump-ppc64.h
 --- kexec-tools-1.101/kexec/arch/ppc64/crashdump-ppc64.h	1970-01-01 05:30:00.000000000 +0530
-+++ kexec-tools-1.101-kdump/kexec/arch/ppc64/crashdump-ppc64.h	2006-01-19 18:20:04.000000000 +0530
-@@ -0,0 +1,33 @@
++++ kexec-tools-1.101-kdump/kexec/arch/ppc64/crashdump-ppc64.h	2006-02-22 11:30:11.080108112 +0530
+@@ -0,0 +1,35 @@
 +#ifndef CRASHDUMP_PPC64_H
 +#define CRASHDUMP_PPC64_H
 +
@@ -1828,7 +1846,9 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/ppc64/crashdump-ppc64.h kexe
 +#define KDUMP_BACKUP_LIMIT      0x8000
 +#define _ALIGN_UP(addr,size)     (((addr)+((size)-1))&(~((size)-1)))
 +#define _ALIGN_DOWN(addr,size)   ((addr)&(~((size)-1)))
++#ifndef PAGE_SIZE
 +#define PAGE_SIZE      4096
++#endif
 +
 +extern unsigned long long crash_base;
 +extern unsigned long long crash_size;
@@ -1836,8 +1856,8 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/ppc64/crashdump-ppc64.h kexe
 +#endif /* CRASHDUMP_PPC64_H */
 diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/ppc64/fs2dt.c kexec-tools-1.101-kdump/kexec/arch/ppc64/fs2dt.c
 --- kexec-tools-1.101/kexec/arch/ppc64/fs2dt.c	1970-01-01 05:30:00.000000000 +0530
-+++ kexec-tools-1.101-kdump/kexec/arch/ppc64/fs2dt.c	2006-01-19 18:20:08.000000000 +0530
-@@ -0,0 +1,435 @@
++++ kexec-tools-1.101-kdump/kexec/arch/ppc64/fs2dt.c	2006-02-22 11:41:54.993097072 +0530
+@@ -0,0 +1,462 @@
 +/*
 + * fs2dt: creates a flattened device-tree
 + *
@@ -2032,12 +2052,17 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/ppc64/fs2dt.c kexec-tools-1.
 +}
 +
 +/* put all properties (files) in the property structure */
-+void putprops(char *fn, DIR *dir)
++void putprops(char *fn, struct dirent **nlist, int numlist)
 +{
 +	struct dirent *dp;
++	int i = 0;
 +
-+	while ((dp = readdir(dir)) != NULL) {
++	for (i = 0; i < numlist; i++) {
++		dp = nlist[i];
 +		strcpy(fn, dp->d_name);
++
++		if (!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, ".."))
++                        continue;
 +
 +		if (lstat(pathname, statbuf))
 +			err(pathname, ERR_STAT);
@@ -2079,6 +2104,7 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/ppc64/fs2dt.c kexec-tools-1.
 +			fd = open(pathname, O_RDONLY);
 +			if (fd == -1)
 +				err(pathname, ERR_OPEN);
++
 +			if (read(fd, dt, len) != len)
 +				err(pathname, ERR_READ);
 +
@@ -2095,7 +2121,6 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/ppc64/fs2dt.c kexec-tools-1.
 +							"crashkernel=");
 +					if (param)
 +						crash_param = 1;
-+					param = NULL;
 +					param = strstr(local_cmdline, "root=");
 +				}
 +				if (!param) {
@@ -2131,15 +2156,38 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/ppc64/fs2dt.c kexec-tools-1.
 +}
 +
 +/*
++ * Compare function used to sort the device-tree directories
++ * This function will be passed to scandir.
++ */
++int comparefunc(const void *dentry1, const void *dentry2)
++{
++	char *str1 = (*(struct dirent **)dentry1)->d_name;
++	char *str2 = (*(struct dirent **)dentry2)->d_name;
++
++	/*
++	 * strcmp scans from left to right and fails to idetify for some
++	 * strings such as memory@10000000 and memory@f000000.
++	 * Therefore, we get the wrong sorted order like memory@10000000 and
++	 * memory@f000000.
++	 */
++	if (strchr(str1, '@') && strchr(str2, '@') &&
++		(strlen(str1) > strlen(str2)))
++		return 1;
++
++	return strcmp(str1, str2);
++}
++
++/*
 + * put a node (directory) in the property structure.  first properties
 + * then children.
 + */
 +void putnode(void)
 +{
-+	DIR *dir;
 +	char *dn;
 +	struct dirent *dp;
 +	char *basename;
++	struct dirent **namelist;
++	int numlist, i;
 +
 +	*dt++ = 1;
 +	strcpy((void *)dt, *pathstart ? pathstart : "/");
@@ -2148,9 +2196,8 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/ppc64/fs2dt.c kexec-tools-1.
 +	if (dt[-1] & 0xff)
 +		dt++;
 +
-+	dir = opendir(pathname);
-+
-+	if (!dir)
++	numlist = scandir(pathname, &namelist, 0, comparefunc);
++	if (numlist == 0)
 +		err(pathname, ERR_OPENDIR);
 +
 +	basename = strrchr(pathname,'/');
@@ -2158,7 +2205,7 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/ppc64/fs2dt.c kexec-tools-1.
 +	strcat(pathname, "/");
 +	dn = pathname + strlen(pathname);
 +
-+	putprops(dn, dir);
++	putprops(dn, namelist, numlist);
 +
 +	/* Add initrd entries to the second kernel if first kernel does not
 +	 * have and second kernel needs.
@@ -2191,10 +2238,10 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/ppc64/fs2dt.c kexec-tools-1.
 +		reserve(initrd_base, initrd_size);
 +	}
 +
-+	rewinddir(dir);
-+
-+	while ((dp = readdir(dir)) != NULL) {
++	for (i=0; i < numlist; i++) {
++		dp = namelist[i];
 +		strcpy(dn, dp->d_name);
++		free(namelist[i]);
 +
 +		if (!strcmp(dn, ".") || !strcmp(dn, ".."))
 +			continue;
@@ -2209,8 +2256,8 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/ppc64/fs2dt.c kexec-tools-1.
 +		err(pathname, ERR_READDIR);
 +
 +	*dt++ = 2;
-+	closedir(dir);
 +	dn[-1] = '\0';
++	free(namelist);
 +}
 +
 +int create_flatten_tree(struct kexec_info *info, unsigned char **bufp,
@@ -2290,7 +2337,7 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/ppc64/include/arch/options.h
  
 diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/ppc64/kexec-elf-ppc64.c kexec-tools-1.101-kdump/kexec/arch/ppc64/kexec-elf-ppc64.c
 --- kexec-tools-1.101/kexec/arch/ppc64/kexec-elf-ppc64.c	2004-12-17 15:02:04.000000000 +0530
-+++ kexec-tools-1.101-kdump/kexec/arch/ppc64/kexec-elf-ppc64.c	2006-01-19 18:20:08.000000000 +0530
++++ kexec-tools-1.101-kdump/kexec/arch/ppc64/kexec-elf-ppc64.c	2006-02-22 11:38:31.003108264 +0530
 @@ -3,6 +3,8 @@
   *
   * Copyright (C) 2004  Adam Litke (agl@us.ibm.com)
@@ -2355,7 +2402,7 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/ppc64/kexec-elf-ppc64.c kexe
  
  int elf_ppc64_probe(const char *buf, off_t len)
  {
-@@ -94,12 +69,91 @@ int elf_ppc64_probe(const char *buf, off
+@@ -94,12 +69,94 @@ int elf_ppc64_probe(const char *buf, off
  	return result;
  }
  
@@ -2391,6 +2438,7 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/ppc64/kexec-elf-ppc64.c kexe
 +		{ "command-line",       1, NULL, OPT_APPEND },
 +		{ "append",             1, NULL, OPT_APPEND },
 +		{ "ramdisk",            1, NULL, OPT_RAMDISK },
++		{ "initrd",             1, NULL, OPT_RAMDISK },
 +		{ "devicetreeblob",     1, NULL, OPT_DEVICETREEBLOB },
 +		{ 0,                    0, NULL, 0 },
 +	};
@@ -2431,6 +2479,8 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/ppc64/kexec-elf-ppc64.c kexe
 +	cmdline_len = 0;
 +	if (cmdline)
 +		cmdline_len = strlen(cmdline) + 1;
++	else
++		fprintf(stdout, "Warning: append= option is not passed. Using the first kernel root partition\n");
 +
 +	setup_memory_ranges(info->kexec_flags);
 +
@@ -2449,7 +2499,7 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/ppc64/kexec-elf-ppc64.c kexe
  
  	/* Parse the Elf file */
  	result = build_elf_exec_info(buf, len, &ehdr);
-@@ -108,13 +162,171 @@ int elf_ppc64_load(int argc, char **argv
+@@ -108,13 +165,173 @@ int elf_ppc64_load(int argc, char **argv
  		return result;
  	}
  
@@ -2491,15 +2541,15 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/ppc64/kexec-elf-ppc64.c kexe
 +	seg_buf = NULL;
 +	seg_size = 0;
 +
-+	seg_buf = (char *) malloc(purgatory_size);
++	seg_buf = (unsigned char *) malloc(purgatory_size);
 +	if (seg_buf == NULL) {
 +		free_elf_info(&ehdr);
 +		return -1;
 +	}
 +	memcpy(seg_buf, purgatory, purgatory_size);
 +	seg_size = purgatory_size;
-+	elf_rel_build_load(info, &info->rhdr, purgatory, purgatory_size,
-+				0, max_addr, 1);
++	elf_rel_build_load(info, &info->rhdr, (const char *)purgatory,
++				purgatory_size, 0, max_addr, 1);
 +
 +	/* Add a ram-disk to the current image
 +	 * Note: Add the ramdisk after elf_rel_build_load
@@ -2510,7 +2560,7 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/ppc64/kexec-elf-ppc64.c kexe
 +			"Can't use ramdisk with device tree blob input\n");
 +			return -1;
 +		}
-+		seg_buf = slurp_file(ramdisk, &seg_size);
++		seg_buf = (unsigned char *)slurp_file(ramdisk, &seg_size);
 +		add_buffer(info, seg_buf, seg_size, seg_size, 0, 0, max_addr, 1);
 +		hole_addr = (unsigned long long)
 +			info->segment[info->nr_segments-1].mem;
@@ -2524,7 +2574,8 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/ppc64/kexec-elf-ppc64.c kexe
 +		off_t blob_size = 0;
 +
 +		/* Grab device tree from buffer */
-+		blob_buf = slurp_file(devicetreeblob, &blob_size);
++		blob_buf =
++			(unsigned char *)slurp_file(devicetreeblob, &blob_size);
 +		add_buffer(info, blob_buf, blob_size, blob_size, 0, 0,
 +				max_addr, -1);
 +
@@ -2532,7 +2583,8 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/ppc64/kexec-elf-ppc64.c kexe
 +		/* create from fs2dt */
 +		seg_buf = NULL;
 +		seg_size = 0;
-+		create_flatten_tree(info, &seg_buf, &seg_size, cmdline);
++		create_flatten_tree(info, (unsigned char **)&seg_buf,
++				(unsigned long *)&seg_size,cmdline);
 +		add_buffer(info, seg_buf, seg_size, seg_size,
 +				0, 0, max_addr, -1);
 +	}
@@ -2543,7 +2595,7 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/ppc64/kexec-elf-ppc64.c kexe
 +	 */
 +	bb_ptr = (struct bootblock *)(
 +		(unsigned char *)info->segment[(info->nr_segments)-1].buf);
-+	rsvmap_ptr = (long long *)(
++	rsvmap_ptr = (unsigned long long *)(
 +		(unsigned char *)info->segment[(info->nr_segments)-1].buf +
 +		bb_ptr->off_mem_rsvmap);
 +	while (*rsvmap_ptr || *(rsvmap_ptr+1))
@@ -2625,7 +2677,7 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/ppc64/kexec-elf-ppc64.c kexe
  void elf_ppc64_usage(void)
 diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/ppc64/kexec-elf-rel-ppc64.c kexec-tools-1.101-kdump/kexec/arch/ppc64/kexec-elf-rel-ppc64.c
 --- kexec-tools-1.101/kexec/arch/ppc64/kexec-elf-rel-ppc64.c	2004-12-20 07:36:04.000000000 +0530
-+++ kexec-tools-1.101-kdump/kexec/arch/ppc64/kexec-elf-rel-ppc64.c	2006-01-19 18:20:08.000000000 +0530
++++ kexec-tools-1.101-kdump/kexec/arch/ppc64/kexec-elf-rel-ppc64.c	2006-02-22 11:30:11.082107808 +0530
 @@ -1,5 +1,6 @@
  #include <stdio.h>
  #include <elf.h>
@@ -2633,7 +2685,7 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/ppc64/kexec-elf-rel-ppc64.c 
  #include "../../kexec.h"
  #include "../../kexec-elf.h"
  
-@@ -21,20 +22,19 @@ static struct mem_shdr *toc_section(cons
+@@ -21,20 +22,20 @@ static struct mem_shdr *toc_section(cons
  {
  	struct mem_shdr *shdr, *shdr_end;
  	unsigned char *strtab;
@@ -2645,7 +2697,8 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/ppc64/kexec-elf-rel-ppc64.c 
 +	shdr_end = &ehdr->e_shdr[ehdr->e_shnum];
 +	for(shdr = ehdr->e_shdr; shdr != shdr_end; shdr++)
 +		if ( shdr->sh_size &&
-+			strcmp(&strtab[shdr->sh_name], ".toc") == 0)
++			strcmp((char *)&strtab[shdr->sh_name],
++						".toc") == 0)
  			return shdr;
 -		}
 -	}
@@ -2660,7 +2713,7 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/ppc64/kexec-elf-rel-ppc64.c 
  {
  	struct mem_shdr *shdr;
  	shdr = toc_section(ehdr);
-@@ -53,7 +53,7 @@ void machine_apply_elf_rel(struct mem_eh
+@@ -53,7 +54,7 @@ void machine_apply_elf_rel(struct mem_eh
  		/* Simply set it */
  		*(uint32_t *)location = value;
  		break;
@@ -2669,7 +2722,7 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/ppc64/kexec-elf-rel-ppc64.c 
  	case R_PPC64_ADDR64:
  		/* Simply set it */
  		*(uint64_t *)location = value;
-@@ -78,15 +78,34 @@ void machine_apply_elf_rel(struct mem_eh
+@@ -78,15 +79,34 @@ void machine_apply_elf_rel(struct mem_eh
  		/* Convert value to relative */
  		value -= address;
  		if (value + 0x2000000 > 0x3ffffff || (value & 3) != 0){
@@ -3403,7 +3456,7 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/ppc64/kexec-ppc64.h kexec-to
 +#endif /* KEXEC_PPC64_H */
 diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/ppc64/kexec-zImage-ppc64.c kexec-tools-1.101-kdump/kexec/arch/ppc64/kexec-zImage-ppc64.c
 --- kexec-tools-1.101/kexec/arch/ppc64/kexec-zImage-ppc64.c	2004-12-16 17:47:51.000000000 +0530
-+++ kexec-tools-1.101-kdump/kexec/arch/ppc64/kexec-zImage-ppc64.c	2006-01-19 18:20:08.000000000 +0530
++++ kexec-tools-1.101-kdump/kexec/arch/ppc64/kexec-zImage-ppc64.c	2006-02-22 11:30:11.082107808 +0530
 @@ -153,7 +153,8 @@ int zImage_ppc64_load(FILE *file, int ar
  			return -1;
  		}
@@ -3414,6 +3467,15 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/ppc64/kexec-zImage-ppc64.c k
  			perror("read error: ");
  			return -1;
  		}
+@@ -161,7 +162,7 @@ int zImage_ppc64_load(FILE *file, int ar
+ 	segment->mem = (void *) load_loc;
+ 	segment->memsz = memsize;
+ 	segment->bufsz = filesize;
+-	*ret_entry = elf.e_entry;
++	*ret_entry = (void *)((uint64_t)elf.e_entry);
+ 	*ret_nr_segments = i - 1;
+ 	free(ph);
+ 	return 0;
 diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/ppc64/Makefile kexec-tools-1.101-kdump/kexec/arch/ppc64/Makefile
 --- kexec-tools-1.101/kexec/arch/ppc64/Makefile	2004-12-17 12:05:30.000000000 +0530
 +++ kexec-tools-1.101-kdump/kexec/arch/ppc64/Makefile	2006-01-19 18:20:06.000000000 +0530
@@ -3761,8 +3823,8 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/s390/Makefile kexec-tools-1.
 +KEXEC_C_SRCS+= kexec/arch/s390/kexec-elf-rel-s390.c
 diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/x86_64/crashdump-x86_64.c kexec-tools-1.101-kdump/kexec/arch/x86_64/crashdump-x86_64.c
 --- kexec-tools-1.101/kexec/arch/x86_64/crashdump-x86_64.c	1970-01-01 05:30:00.000000000 +0530
-+++ kexec-tools-1.101-kdump/kexec/arch/x86_64/crashdump-x86_64.c	2006-02-01 14:33:42.949479088 +0530
-@@ -0,0 +1,770 @@
++++ kexec-tools-1.101-kdump/kexec/arch/x86_64/crashdump-x86_64.c	2006-02-19 11:13:06.000000000 +0530
+@@ -0,0 +1,655 @@
 +/*
 + * kexec: Linux boots Linux
 + *
@@ -4303,12 +4365,12 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/x86_64/crashdump-x86_64.c ke
 +	 * A seprate program header for Backup Region*/
 +	for (i = 0; i < CRASH_MAX_MEMORY_RANGES; i++) {
 +		unsigned long long mstart, mend;
++		if (crash_memory_range[i].type != RANGE_RAM)
++			continue;
 +		mstart = crash_memory_range[i].start;
 +		mend = crash_memory_range[i].end;
 +		if (!mstart && !mend)
-+			break;
-+		if (crash_memory_range[i].type != RANGE_RAM)
-+			break;
++			continue;
 +		phdr = (Elf64_Phdr *) bufp;
 +		bufp += sizeof(Elf64_Phdr);
 +		phdr->p_type	= PT_LOAD;
@@ -4337,111 +4399,6 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/x86_64/crashdump-x86_64.c ke
 +		/* Do we need any alignment of segments? */
 +		phdr->p_align	= 0;
 +
-+		/* Increment number of program headers. */
-+		(elf->e_phnum)++;
-+	}
-+	return 0;
-+}
-+
-+/* Prepares the crash memory elf32 headers and stores in supplied buffer. */
-+static int prepare_crash_memory_elf32_headers(struct kexec_info *info,
-+						void *buf, unsigned long size)
-+{
-+	Elf32_Ehdr *elf;
-+	Elf32_Phdr *phdr;
-+	int i;
-+	char *bufp;
-+	long int nr_cpus = 0;
-+	uint64_t notes_addr;
-+
-+	bufp = (char*) buf;
-+
-+	/* Setup ELF Header*/
-+	elf = (Elf32_Ehdr *) bufp;
-+	bufp += sizeof(Elf32_Ehdr);
-+	memcpy(elf->e_ident, ELFMAG, SELFMAG);
-+	elf->e_ident[EI_CLASS]  = ELFCLASS32;
-+	elf->e_ident[EI_DATA]   = ELFDATA2LSB;
-+	elf->e_ident[EI_VERSION]= EV_CURRENT;
-+	elf->e_ident[EI_OSABI] = ELFOSABI_NONE;
-+	memset(elf->e_ident+EI_PAD, 0, EI_NIDENT-EI_PAD);
-+	elf->e_type	= ET_CORE;
-+	elf->e_machine	= EM_X86_64;
-+	elf->e_version	= EV_CURRENT;
-+	elf->e_entry	= 0;
-+	elf->e_phoff	= sizeof(Elf32_Ehdr);
-+	elf->e_shoff	= 0;
-+	elf->e_flags	= 0;
-+	elf->e_ehsize   = sizeof(Elf32_Ehdr);
-+	elf->e_phentsize= sizeof(Elf32_Phdr);
-+	elf->e_phnum    = 0;
-+	elf->e_shentsize= 0;
-+	elf->e_shnum    = 0;
-+	elf->e_shstrndx = 0;
-+
-+	/* PT_NOTE program headers. One per cpu*/
-+	nr_cpus = sysconf(_SC_NPROCESSORS_CONF);
-+	if (nr_cpus < 0) {
-+		return -1;
-+	}
-+
-+	/* Need to find a better way to determine per cpu notes section size. */
-+#define MAX_NOTE_BYTES	1024
-+	for (i = 0; i < nr_cpus; i++) {
-+		if (get_crash_notes_per_cpu(i, &notes_addr) < 0) {
-+			/* This cpu is not present. Skip it. */
-+			return -1;
-+		}
-+		phdr = (Elf32_Phdr *) bufp;
-+		bufp += sizeof(Elf32_Phdr);
-+		phdr->p_type	= PT_NOTE;
-+		phdr->p_flags	= 0;
-+		phdr->p_offset  = phdr->p_paddr = notes_addr;
-+		phdr->p_vaddr   = 0;
-+		phdr->p_filesz	= phdr->p_memsz	= MAX_NOTE_BYTES;
-+		/* Do we need any alignment of segments? */
-+		phdr->p_align	= 0;
-+
-+		/* Increment number of program headers. */
-+		(elf->e_phnum)++;
-+	}
-+
-+	/* Setup PT_LOAD type program header for every system RAM chunk.
-+	 * A seprate program header for Backup Region*/
-+	for (i = 0; i < CRASH_MAX_MEMORY_RANGES; i++) {
-+		unsigned long long mstart, mend;
-+		mstart = crash_memory_range[i].start;
-+		mend = crash_memory_range[i].end;
-+		if (!mstart && !mend)
-+			break;
-+		if (crash_memory_range[i].type != RANGE_RAM)
-+			break;
-+		phdr = (Elf32_Phdr *) bufp;
-+		bufp += sizeof(Elf32_Phdr);
-+		phdr->p_type	= PT_LOAD;
-+		phdr->p_flags	= PF_R|PF_W|PF_X;
-+		if (mstart == BACKUP_START && mend == BACKUP_END)
-+			phdr->p_offset	= info->backup_start;
-+		else
-+			phdr->p_offset	= mstart;
-+		/* Handle linearly mapped region.*/
-+
-+		/* Filling the vaddr conditionally as we have two linearly
-+		 * mapped regions here. One is __START_KERNEL_map 0 to 40 MB
-+		 * other one is PAGE_OFFSET */
-+
-+		if (mend <= (MAXMEM - 1) && mstart < KERNEL_TEXT_SIZE)
-+			phdr->p_vaddr = mstart + __START_KERNEL_map;
-+		else {
-+			if (mend <= (MAXMEM - 1))
-+				phdr->p_vaddr = mstart + PAGE_OFFSET;
-+			else
-+				phdr->p_vaddr = UINT_MAX;
-+		}
-+		phdr->p_paddr = mstart;
-+		phdr->p_filesz	= phdr->p_memsz	= mend - mstart + 1;
-+		/* Do we need any alignment of segments? */
-+		phdr->p_align	= 0;
 +		/* Increment number of program headers. */
 +		(elf->e_phnum)++;
 +	}
@@ -4488,25 +4445,15 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/x86_64/crashdump-x86_64.c ke
 +			" failed: %s\n", strerror(errno));
 +		return -1;
 +	}
-+	if (arch_options.core_header_type == CORE_TYPE_ELF64) {
-+		sz = 	sizeof(Elf64_Ehdr) +
-+			nr_cpus * sizeof(Elf64_Phdr) +
++	sz = 	sizeof(Elf64_Ehdr) + nr_cpus * sizeof(Elf64_Phdr) +
 +			nr_ranges * sizeof(Elf64_Phdr);
-+	} else {
-+		sz = 	sizeof(Elf32_Ehdr) +
-+			nr_cpus * sizeof(Elf32_Phdr) +
-+			nr_ranges * sizeof(Elf32_Phdr);
-+	}
 +	sz = (sz + align - 1) & ~(align -1);
 +	tmp = xmalloc(sz);
 +	memset(tmp, 0, sz);
-+	if (arch_options.core_header_type == CORE_TYPE_ELF64) {
-+		if (prepare_crash_memory_elf64_headers(info, tmp, sz) < 0)
-+			return -1;
-+	} else {
-+		if (prepare_crash_memory_elf32_headers(info, tmp, sz) < 0)
-+			return -1;
-+	}
++
++	/* Prepare ELF64 core heaers. */
++	if (prepare_crash_memory_elf64_headers(info, tmp, sz) < 0)
++		return -1;
 +
 +	/* Hack: With some ld versions (GNU ld version 2.14.90.0.4 20030523),
 +	 * vmlinux program headers show a gap of two pages between bss segment
@@ -4561,29 +4508,6 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/x86_64/crashdump-x86_64.h ke
 +#define BACKUP_SIZE	(BACKUP_END - BACKUP_START + 1)
 +
 +#endif /* CRASHDUMP_X86_64_H */
-diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/x86_64/include/arch/options.h kexec-tools-1.101-kdump/kexec/arch/x86_64/include/arch/options.h
---- kexec-tools-1.101/kexec/arch/x86_64/include/arch/options.h	2004-12-22 02:24:02.000000000 +0530
-+++ kexec-tools-1.101-kdump/kexec/arch/x86_64/include/arch/options.h	2006-01-19 11:41:40.000000000 +0530
-@@ -6,7 +6,9 @@
- #define OPT_SERIAL_BAUD    (OPT_MAX+2)
- #define OPT_CONSOLE_VGA    (OPT_MAX+3)
- #define OPT_CONSOLE_SERIAL (OPT_MAX+4)
--#define OPT_ARCH_MAX       (OPT_MAX+5)
-+#define OPT_ELF32_CORE     (OPT_MAX+5)
-+#define OPT_ELF64_CORE     (OPT_MAX+6)
-+#define OPT_ARCH_MAX       (OPT_MAX+7)
- 
- #define KEXEC_ARCH_OPTIONS \
- 	KEXEC_OPTIONS \
-@@ -15,6 +17,8 @@
- 	{ "serial-baud",    1, 0, OPT_SERIAL_BAUD }, \
- 	{ "console-vga",    0, 0, OPT_CONSOLE_VGA }, \
- 	{ "console-serial", 0, 0, OPT_CONSOLE_SERIAL }, \
-+	{ "elf32-core-headers", 0, 0, OPT_ELF32_CORE }, \
-+	{ "elf64-core-headers", 0, 0, OPT_ELF64_CORE }, \
- 
- #define KEXEC_ARCH_OPT_STR KEXEC_OPT_STR ""
- 
 diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/x86_64/kexec-elf-x86_64.c kexec-tools-1.101-kdump/kexec/arch/x86_64/kexec-elf-x86_64.c
 --- kexec-tools-1.101/kexec/arch/x86_64/kexec-elf-x86_64.c	2005-01-13 18:40:54.000000000 +0530
 +++ kexec-tools-1.101-kdump/kexec/arch/x86_64/kexec-elf-x86_64.c	2006-01-19 11:41:42.000000000 +0530
@@ -4681,7 +4605,7 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/x86_64/kexec-elf-x86_64.c ke
  		elf_rel_get_symbol(&info->rhdr, "entry64_regs", &regs, sizeof(regs));
 diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/x86_64/kexec-x86_64.c kexec-tools-1.101-kdump/kexec/arch/x86_64/kexec-x86_64.c
 --- kexec-tools-1.101/kexec/arch/x86_64/kexec-x86_64.c	2005-02-06 04:55:01.000000000 +0530
-+++ kexec-tools-1.101-kdump/kexec/arch/x86_64/kexec-x86_64.c	2006-01-19 18:19:07.000000000 +0530
++++ kexec-tools-1.101-kdump/kexec/arch/x86_64/kexec-x86_64.c	2006-02-19 11:11:37.000000000 +0530
 @@ -30,14 +30,15 @@
  #include "../../kexec-elf.h"
  #include "../../kexec-syscall.h"
@@ -4721,12 +4645,7 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/x86_64/kexec-x86_64.c kexec-
  		else {
  			continue;
  		}
-@@ -121,21 +136,25 @@ void arch_usage(void)
- 		"     --serial-baud=<buad_rate> Specify the serial port baud rate\n"
- 		"     --console-vga             Enable the vga console\n"
- 		"     --console-serial          Enable the serial console\n"
-+		"     --elf32-core-headers      Prepare core headers in ELF32 format\n"
-+		"     --elf64-core-headers      Prepare core headers in ELF64 format\n"
+@@ -124,18 +139,20 @@ void arch_usage(void)
  		);
  }
  
@@ -4748,20 +4667,7 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/x86_64/kexec-x86_64.c kexec-
  };
  
  int arch_process_options(int argc, char **argv)
-@@ -199,6 +218,12 @@ int arch_process_options(int argc, char 
- 			}
- 			arch_options.serial_baud = value;
- 			break;
-+			case OPT_ELF32_CORE:
-+				arch_options.core_header_type = CORE_TYPE_ELF32;
-+				break;
-+			case OPT_ELF64_CORE:
-+				arch_options.core_header_type = CORE_TYPE_ELF64;
-+				break;
- 		}
- 	}
- 	/* Reset getopt for the next pass; called in other source modules */
-@@ -207,7 +232,7 @@ int arch_process_options(int argc, char 
+@@ -207,7 +224,7 @@ int arch_process_options(int argc, char 
  	return 0;
  }
  
@@ -4770,7 +4676,7 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/x86_64/kexec-x86_64.c kexec-
  {
  	int result;
  	struct utsname utsname;
-@@ -222,7 +247,7 @@ int arch_compat_trampoline(struct kexec_
+@@ -222,7 +239,7 @@ int arch_compat_trampoline(struct kexec_
  		/* For compatibility with older patches 
  		 * use KEXEC_ARCH_DEFAULT instead of KEXEC_ARCH_X86_64 here.
  		 */
@@ -4779,7 +4685,7 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/x86_64/kexec-x86_64.c kexec-
  	}
  	else {
  		fprintf(stderr, "Unsupported machine type: %s\n",
-@@ -234,6 +259,8 @@ int arch_compat_trampoline(struct kexec_
+@@ -234,6 +251,8 @@ int arch_compat_trampoline(struct kexec_
  
  void arch_update_purgatory(struct kexec_info *info)
  {
@@ -4788,7 +4694,7 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/arch/x86_64/kexec-x86_64.c kexec-
  	elf_rel_set_symbol(&info->rhdr, "reset_vga",
  		&arch_options.reset_vga, sizeof(arch_options.reset_vga));
  	elf_rel_set_symbol(&info->rhdr, "serial_base", 
-@@ -244,4 +271,12 @@ void arch_update_purgatory(struct kexec_
+@@ -244,4 +263,12 @@ void arch_update_purgatory(struct kexec_
  		&arch_options.console_vga, sizeof(arch_options.console_vga));
  	elf_rel_set_symbol(&info->rhdr, "console_serial", 
  		&arch_options.console_serial, sizeof(arch_options.console_serial));
@@ -4896,7 +4802,7 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/crashdump.h kexec-tools-1.101-kdu
 +#endif /* CRASHDUMP_H */
 diff -urNp -X dontdiff kexec-tools-1.101/kexec/kexec.c kexec-tools-1.101-kdump/kexec/kexec.c
 --- kexec-tools-1.101/kexec/kexec.c	2005-01-13 18:54:29.000000000 +0530
-+++ kexec-tools-1.101-kdump/kexec/kexec.c	2006-02-01 14:41:52.281089376 +0530
++++ kexec-tools-1.101-kdump/kexec/kexec.c	2006-02-01 14:41:52.000000000 +0530
 @@ -38,8 +38,8 @@
  #include "kexec-elf.h"
  #include "kexec-sha256.h"
@@ -4986,7 +4892,7 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/kexec.c kexec-tools-1.101-kdump/k
  	return result;
 diff -urNp -X dontdiff kexec-tools-1.101/kexec/kexec-elf.c kexec-tools-1.101-kdump/kexec/kexec-elf.c
 --- kexec-tools-1.101/kexec/kexec-elf.c	2004-12-20 14:58:30.000000000 +0530
-+++ kexec-tools-1.101-kdump/kexec/kexec-elf.c	2006-01-19 18:20:08.000000000 +0530
++++ kexec-tools-1.101-kdump/kexec/kexec-elf.c	2006-02-22 11:30:11.084107504 +0530
 @@ -113,21 +113,21 @@ static int build_mem_elf32_ehdr(const ch
  		}
  		return -1;
@@ -5194,7 +5100,13 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/kexec-elf.c kexec-tools-1.101-kdu
  					i);
  			}
  			return -1;
-@@ -653,14 +653,14 @@ static int build_mem_shdrs(const char *b
+@@ -648,19 +648,19 @@ static int build_mem_shdrs(const char *b
+ 			return -1;
+ 		}
+ 		/* Remember where the section lives in the buffer */
+-		shdr->sh_data = buf + shdr->sh_offset;
++		shdr->sh_data = (unsigned char *)(buf + shdr->sh_offset);
+ 	}
  	return 0;
  }
  
@@ -5211,6 +5123,15 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/kexec-elf.c kexec-tools-1.101-kdu
  }
  static int build_mem_notes(const char *buf, off_t len, struct mem_ehdr *ehdr)
  {
+@@ -672,7 +672,7 @@ static int build_mem_notes(const char *b
+ 	for(i = 0; !note_start && (i < ehdr->e_phnum); i++) {
+ 		struct mem_phdr *phdr = &ehdr->e_phdr[i];
+ 		if (phdr->p_type == PT_NOTE) {
+-			note_start = phdr->p_data;
++			note_start = (unsigned char *)phdr->p_data;
+ 			note_end = note_start + phdr->p_filesz;
+ 		}
+ 	}
 @@ -686,7 +686,7 @@ static int build_mem_notes(const char *b
  	if (!note_start) {
  		return 0;
@@ -5220,7 +5141,7 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/kexec-elf.c kexec-tools-1.101-kdu
  	/* Walk through and count the notes */
  	ehdr->e_notenum = 0;
  	for(note = note_start; note < note_end; note+= note_size) {
-@@ -708,7 +708,7 @@ static int build_mem_notes(const char *b
+@@ -708,15 +708,15 @@ static int build_mem_notes(const char *b
  		note_size += (hdr.n_namesz + 3) & ~3;
  		desc       = note + note_size;
  		note_size += (hdr.n_descsz + 3) & ~3;
@@ -5229,8 +5150,9 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/kexec-elf.c kexec-tools-1.101-kdu
  		if ((hdr.n_namesz != 0) && (name[hdr.n_namesz -1] != '\0')) {
  			die("Note name is not null termiated");
  		}
-@@ -716,7 +716,7 @@ static int build_mem_notes(const char *b
- 		ehdr->e_note[i].n_name = name;
+ 		ehdr->e_note[i].n_type = hdr.n_type;
+-		ehdr->e_note[i].n_name = name;
++		ehdr->e_note[i].n_name = (char *)name;
  		ehdr->e_note[i].n_desc = desc;
  		ehdr->e_note[i].n_descsz = hdr.n_descsz;
 -		
@@ -5240,7 +5162,7 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/kexec-elf.c kexec-tools-1.101-kdu
  }
 diff -urNp -X dontdiff kexec-tools-1.101/kexec/kexec-elf-rel.c kexec-tools-1.101-kdump/kexec/kexec-elf-rel.c
 --- kexec-tools-1.101/kexec/kexec-elf-rel.c	2005-01-13 18:34:21.000000000 +0530
-+++ kexec-tools-1.101-kdump/kexec/kexec-elf-rel.c	2006-02-01 16:41:33.288410328 +0530
++++ kexec-tools-1.101-kdump/kexec/kexec-elf-rel.c	2006-02-22 11:30:11.085107352 +0530
 @@ -155,7 +155,7 @@ int build_elf_rel_info(const char *buf, 
  		if (probe_debug) {
  			fprintf(stderr, "No ELF section headers\n");
@@ -5331,7 +5253,7 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/kexec-elf-rel.c kexec-tools-1.101
  				(void *)location, address, value);
  		}
  	}
-@@ -399,7 +410,7 @@ int elf_rel_load(struct mem_ehdr *ehdr, 
+@@ -399,14 +410,14 @@ int elf_rel_load(struct mem_ehdr *ehdr, 
  	return result;
  }
  
@@ -5340,6 +5262,23 @@ diff -urNp -X dontdiff kexec-tools-1.101/kexec/kexec-elf-rel.c kexec-tools-1.101
  	const char *buf, off_t len, unsigned long min, unsigned long max,
  	int end)
  {
+ 	int result;
+ 
+ 	/* Parse the Elf file */
+-	result = build_elf_rel_info(purgatory, purgatory_size, ehdr);
++	result = build_elf_rel_info((char *)purgatory, purgatory_size, ehdr);
+ 	if (result < 0) {
+ 		die("ELF rel parse failed\n");
+ 	}
+@@ -439,7 +450,7 @@ int elf_rel_find_symbol(struct mem_ehdr 
+ 			/* Invalid strtab section number? */
+ 			continue;
+ 		}
+-		strtab = ehdr->e_shdr[shdr->sh_link].sh_data;
++		strtab = (char *)ehdr->e_shdr[shdr->sh_link].sh_data;
+ 		/* Walk through the symbol table and find the symbol */
+ 		sym_size = elf_sym_size(ehdr);
+ 		sym_end = shdr->sh_data + shdr->sh_size;
 @@ -452,8 +463,8 @@ int elf_rel_find_symbol(struct mem_ehdr 
  			if (strcmp(strtab + sym.st_name, name) != 0) {
  				continue;
