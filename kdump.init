@@ -91,13 +91,13 @@ case "$1" in
 	fi
 	;;
   stop)
-	$KEXEC -u -p
+	$KEXEC -p -u
 	;;
   status)
 	echo "not implemented"
 	;;
   restart)
-	$KEXEC -u -p
+	$KEXEC -p -u
 	load_kdump
 	;;
   condrestart)
