@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 12
+Release: 13
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -9,6 +9,7 @@ Source0: %{name}-%{version}.tar.gz
 Source1: kdump.init
 Source2: kdump.sysconfig
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
+Requires(pre): coreutils chkconfig sed
 
 #
 # Patches 0 through 100 are meant for x86 kexec-tools enablement
@@ -95,6 +96,9 @@ exit 0
 %doc TODO
 
 %changelog
+* Mon Mar  6 2006 Jeremy Katz <katzj@redhat.com> - 1.101-13
+- proper requires for scriptlets
+
 * Mon Mar 06 2006 Thomas Graf <tgraf@redhat.com> - 1.101-12
 - Move kexec and kdump binaries to /sbin
 
