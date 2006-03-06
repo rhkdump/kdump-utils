@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 11
+Release: 12
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -48,7 +48,7 @@ cp $RPM_SOURCE_DIR/kdump.init .
 cp $RPM_SOURCE_DIR/kdump.sysconfig .
 
 %build
-%configure
+%configure --sbindir=/sbin
 rm -f kexec-tools.spec.in
 make
 
@@ -85,8 +85,7 @@ exit 0
 
 %files
 %defattr(-,root,root,-)
-%{_sbindir}/kexec
-%{_sbindir}/kdump
+/sbin/*
 %config(noreplace,missingok) /etc/sysconfig/kdump
 %config /etc/rc.d/init.d/kdump
 
@@ -96,6 +95,9 @@ exit 0
 %doc TODO
 
 %changelog
+* Mon Mar 06 2006 Thomas Graf <tgraf@redhat.com> - 1.101-12
+- Move kexec and kdump binaries to /sbin
+
 * Thu Mar 02 2006 Thomas Graf <tgraf@redhat.com> - 1.101-11
 - Fix argument order when stopping kexec
 
