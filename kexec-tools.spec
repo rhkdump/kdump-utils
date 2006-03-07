@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 13
+Release: 14
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -96,6 +96,9 @@ exit 0
 %doc TODO
 
 %changelog
+* Tue Mar 07 2006 Thomas Graf <tgraf@redhat.com> - 1.101-14
+- Fix kdump.init to call kexec from its new location
+
 * Mon Mar  6 2006 Jeremy Katz <katzj@redhat.com> - 1.101-13
 - proper requires for scriptlets
 

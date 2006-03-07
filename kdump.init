@@ -17,7 +17,7 @@
 # Source function library.
 . /etc/init.d/functions
 
-KEXEC=/usr/sbin/kexec
+KEXEC=/sbin/kexec
 
 # Will be different for ia64, for example.  For now, that architecture isn't
 # supported.  Code needs to be added here when we do.
