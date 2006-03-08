@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 14
+Release: 15
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -69,7 +69,10 @@ KDUMP_COMMANDLINE=`cat /proc/cmdline`
 KDUMP_COMMANDLINE=`echo $KDUMP_COMMANDLINE | sed -e 's/crashkernel=[0-9]\+M@[0-9]\+M//g'`
 export KDUMP_COMMANDLINE
 sed -i -e "s|REPLACEME|$KDUMP_COMMANDLINE irqpoll|g" /etc/sysconfig/kdump
-chkconfig --add kdump
+
+# No longer add kdump service by default, let the user add it manually
+# to avoid everyone to see a warning.
+# chkconfig --add kdump
 
 %postun
 
@@ -96,6 +99,10 @@ exit 0
 %doc TODO
 
 %changelog
+* Wed Mar 08 2006 Thomas Graf <tgraf@redhat.com> - 1.101-15
+- Don't add kdump service by default, let the user manually add it to
+  avoid everyone seeing a warning.
+
 * Tue Mar 07 2006 Thomas Graf <tgraf@redhat.com> - 1.101-14
 - Fix kdump.init to call kexec from its new location
 
