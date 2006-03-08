@@ -9,7 +9,7 @@
 #
 #  Copyright 2005 Red Hat, Inc.
 #
-#  chkconfig: 2345 20 80
+#  chkconfig: - 20 80
 #
 #  Author:  Jeff Moyer <jmoyer@redhat.com>
 
