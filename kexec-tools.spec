@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 16
+Release: 17
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -28,6 +28,7 @@ Patch101: kexec-tools-1.101-disable-kdump-x8664.patch
 #
 # Patches 301 through 400 are meant for ppc64 kexec-tools enablement
 #
+Patch301: kexec-ppc64-ingnore-args-linux.patch
 
 Patch501: kexec-tools-1.101-Makefile.patch
 
@@ -43,6 +44,7 @@ component of the kernel's kexec feature.
 rm -f ../kexec-tools-1.101.spec
 %patch1 -p1
 %patch101 -p1
+%patch301 -p1
 %patch501 -p1
 
 cp $RPM_SOURCE_DIR/kdump.init .
@@ -96,6 +98,9 @@ exit 0
 %doc TODO
 
 %changelog
+* Thu Jun 22 2006 Neil Horman <nhorman@redhat.com> -1.101-17
+- Add patch to allow ppc64 to ignore args-linux option
+
 * Wed Mar 08 2006 Bill Nottingham <notting@redhat.com> - 1.101-16
 - fix scriptlet - call chkconfig --add, change the default in the
   script itself (#183633)
