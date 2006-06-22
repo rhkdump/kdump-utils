@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 17
+Release: 19
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -98,6 +98,9 @@ exit 0
 %doc TODO
 
 %changelog
+* Thu Jun 22 2006 Neil Horman <nhorman@redhat.com> -1.101-19
+- Bumping rev number
+
 * Thu Jun 22 2006 Neil Horman <nhorman@redhat.com> -1.101-17
 - Add patch to allow ppc64 to ignore args-linux option
 
