@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 19
+Release: 20
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -10,6 +10,7 @@ Source1: kdump.init
 Source2: kdump.sysconfig
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 Requires(pre): coreutils chkconfig sed
+BuildRequires: zlib-devel
 
 #
 # Patches 0 through 100 are meant for x86 kexec-tools enablement
@@ -98,6 +99,9 @@ exit 0
 %doc TODO
 
 %changelog
+* Wed Jun 28 2006 Karsten Hopp <karsten@redhat.de> 1.101-20
+- Buildrequire zlib-devel
+
 * Thu Jun 22 2006 Neil Horman <nhorman@redhat.com> -1.101-19
 - Bumping rev number
 
