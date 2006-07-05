@@ -38,3 +38,85 @@
  		/* For compatibility with older patches 
  		 * use KEXEC_ARCH_DEFAULT instead of KEXEC_ARCH_IA64 here.
  		 */
+--- kexec-tools-1.101/kexec_test/Makefile.ia64.orig	2006-07-05 09:52:22.000000000 -0400
++++ kexec-tools-1.101/kexec_test/Makefile.ia64	2006-07-05 09:52:22.000000000 -0400
+@@ -0,0 +1,30 @@
++#
++# kexec_test Debugging payload to be certain the infrastructure works
++#
++RELOC:=0x10000
++KEXEC_TEST_S_SRCS:= kexec_test/kexec_test_ia64.S
++KEXEC_TEST_S_TEMPS:=$(patsubst %.S, $(OBJDIR)/%.s, $(KEXEC_TEST_S_SRCS))
++KEXEC_TEST_S_OBJS:=$(patsubst $(OBJDIR)/%.s, $(OBJDIR)/%.o, $(KEXEC_TEST_S_TEMPS))
++KEXEC_TEST_S_DEPS:=$(patsubst %.S, $(OBJDIR)/%.d, $(KEXEC_TEST_S_SRCS))
++KEXEC_TEST_SRCS:= $(KEXEC_TEST_S_SRCS)
++KEXEC_TEST_OBJS:= $(KEXEC_TEST_S_OBJS)
++KEXEC_TEST_DEPS:= $(KEXEC_TEST_S_DEPS)
++KEXEC_TEST:=$(PKGLIBDIR)/kexec_test
++
++include $(KEXEC_TEST_DEPS)
++
++$(KEXEC_TEST_S_DEPS): $(OBJDIR)/%.d: %.S
++	mkdir -p $(@D)
++	$(CC) $(CFLAGS) -M $< | sed -e 's|$(patsubst %.d,%.o,$(@F))|$(patsubst %.d,%.o,$(@))|' > $@
++
++$(KEXEC_TEST_S_TEMPS): $(OBJDIR)/%.s: %.S 
++	mkdir -p $(@D)
++	$(CPP) $(CPPFLAGS) -DRELOC=$(RELOC) $< > $@
++
++$(KEXEC_TEST_S_OBJS): $(OBJDIR)/%.o: $(OBJDIR)/%.s 
++	mkdir -p $(@D)
++	$(AS) -o $@ $<
++
++$(KEXEC_TEST): $(KEXEC_TEST_OBJS) 
++	mkdir -p $(@D)
++	$(LD) -m elf64_ia64 -e _start -Ttext $(RELOC) $(KEXEC_TEST_OBJS) -o $@
+--- kexec-tools-1.101/kexec_test/kexec_test_ia64.S.orig	2006-07-05 09:52:22.000000000 -0400
++++ kexec-tools-1.101/kexec_test/kexec_test_ia64.S	2006-07-05 09:55:17.000000000 -0400
+@@ -0,0 +1,26 @@
++/*
++ * kexec: Linux boots Linux
++ *
++ * Copyright (C) 2003,2004  Eric Biederman (ebiederm@xmission.com)
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation (version 2 of the License).
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
++ */
++
++	.text
++	.globl _start
++_start:
++	# Jump to self
++	br.few _start
++
++
+--- kexec-tools-1.101/Makefile.orig	2006-07-05 09:52:29.000000000 -0400
++++ kexec-tools-1.101/Makefile	2006-07-05 09:54:24.000000000 -0400
+@@ -45,6 +45,7 @@
+ MAN_PAGES:= kexec/kexec.8
+ BINARIES_i386:=  $(SBINDIR)/kexec $(PKGLIBDIR)/kexec_test $(SBINDIR)/kdump
+ BINARIES_x86_64:=$(SBINDIR)/kexec $(PKGLIBDIR)/kexec_test $(SBINDIR)/kdump
++BINARIES_ia64:=$(SBINDIR)/kexec $(PKGLIBDIR)/kexec_test $(SBINDIR)/kdump
+ BINARIES:=$(SBINDIR)/kexec $(BINARIES_$(ARCH)) 
+ 
+ TARGETS:=$(BINARIES) $(MAN_PAGES)
+@@ -89,6 +90,9 @@
+ ifeq ($(ARCH),x86_64)
+ include kexec_test/Makefile
+ endif
++ifeq ($(ARCH),ia64)
++include kexec_test/Makefile.ia64
++endif
+ 
+ GENERATED_SRCS:= ./configure
+ SPEC=$(OBJDIR)/$(PACKAGE)-$(VERSION).spec
