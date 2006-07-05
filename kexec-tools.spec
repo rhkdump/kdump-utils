@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 28%{dist}
+Release: 29%{dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -36,7 +36,15 @@ Patch301: kexec-ppc64-ingnore-args-linux.patch
 #
 Patch401: kexec-tools-1.101-s390-fixup.patch
 
-Patch501: kexec-tools-1.101-Makefile.patch
+#
+# Patches 501 through 600 are meant for ppc kexec-tools enablement
+#
+Patch501: kexec-tools-1.101-ppc-fixup.patch
+
+#
+# Patches 601 onward are generic patches
+#
+Patch601: kexec-tools-1.101-Makefile.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -54,6 +62,7 @@ rm -f ../kexec-tools-1.101.spec
 %patch301 -p1
 %patch401 -p1
 %patch501 -p1
+%patch601 -p1
 
 cp $RPM_SOURCE_DIR/kdump.init .
 cp $RPM_SOURCE_DIR/kdump.sysconfig .

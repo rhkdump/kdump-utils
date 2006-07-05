@@ -1,0 +1,10 @@
+--- kexec-tools-1.101/kexec/arch/ppc/kexec-ppc.c.orig	2006-07-05 16:21:50.000000000 -0400
++++ kexec-tools-1.101/kexec/arch/ppc/kexec-ppc.c	2006-07-05 16:22:01.000000000 -0400
+@@ -33,7 +33,6 @@ int get_memory_ranges(struct memory_rang
+ 	memory_range[memory_ranges].type = RANGE_RAM;
+ 	memory_ranges++;
+ #else
+-#error Please, fix this for your platform
+ 	const char iomem[] = "/proc/iomem";
+ 	char line[MAX_LINE];
+ 	FILE *fp;
