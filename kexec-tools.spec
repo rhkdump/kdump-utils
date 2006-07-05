@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 24%{dist}
+Release: 25%{dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -89,8 +89,9 @@ exit 0
 /sbin/*
 %config(noreplace,missingok) /etc/sysconfig/kdump
 %config /etc/rc.d/init.d/kdump
-
+%ifarch %{ix86} x86_64
 %{_libdir}/kexec-tools/kexec_test
+%endif
 %doc News
 %doc COPYING
 %doc TODO
