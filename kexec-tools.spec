@@ -24,6 +24,7 @@ Patch101: kexec-tools-1.101-disable-kdump-x8664.patch
 #
 # Patches 201 through 300 are meant for ia64 kexec-tools enablement
 #
+Patch201: kexec-tools-1.101-ia64-fixup.patch
 
 #
 # Patches 301 through 400 are meant for ppc64 kexec-tools enablement
@@ -44,6 +45,7 @@ component of the kernel's kexec feature.
 rm -f ../kexec-tools-1.101.spec
 %patch1 -p1
 %patch101 -p1
+%patch201 -p1
 %patch301 -p1
 %patch501 -p1
 

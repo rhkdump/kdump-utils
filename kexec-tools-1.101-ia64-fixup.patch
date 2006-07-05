@@ -1,0 +1,40 @@
+--- kexec-tools-1.101/kexec/arch/ia64/kexec-ia64.c.orig	2006-07-05 13:02:12.000000000 -0400
++++ kexec-tools-1.101/kexec/arch/ia64/kexec-ia64.c	2006-07-05 13:17:41.000000000 -0400
+@@ -87,8 +87,6 @@ int arch_process_options(int argc, char 
+ 	};
+ 	static const char short_options[] = KEXEC_ARCH_OPT_STR;
+ 	int opt;
+-	unsigned long value;
+-	char *end;
+ 
+ 	opterr = 0; /* Don't complain about unrecognized options here */
+ 	while((opt = getopt_long(argc, argv, short_options, options, 0)) != -1) {
+@@ -115,28 +113,6 @@ int arch_compat_trampoline(struct kexec_
+ 	}
+ 	if (strcmp(utsname.machine, "ia64") == 0)
+ 	{
+-		info->kexec_flags |= KEXEC_ARCH_X86_64;
+-	}
+-	else {
+-		fprintf(stderr, "Unsupported machine type: %s\n",
+-			utsname.machine);
+-		return -1;
+-	}
+-	return 0;
+-}
+-
+-int arch_compat_trampoline(struct kexec_info *info)
+-{
+-	int result;
+-	struct utsname utsname;
+-	result = uname(&utsname);
+-	if (result < 0) {
+-		fprintf(stderr, "uname failed: %s\n",
+-			strerror(errno));
+-		return -1;
+-	}
+-	if (strcmp(utsname.machine, "ia64") == 0)
+-	{
+ 		/* For compatibility with older patches 
+ 		 * use KEXEC_ARCH_DEFAULT instead of KEXEC_ARCH_IA64 here.
+ 		 */
