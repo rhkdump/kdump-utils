@@ -4,7 +4,6 @@ Release: 20%{dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
-ExclusiveArch: %{ix86} x86_64
 Source0: %{name}-%{version}.tar.gz
 Source1: kdump.init
 Source2: kdump.sysconfig
@@ -95,9 +94,10 @@ exit 0
 %doc TODO
 
 %changelog
-* Wed Jul 07 2006 Neil Horman <nhorman@redhat.com> 1.101-20.fc6
+* Wed Jul 07 2006 Neil Horman <nhorman@redhat.com> 1.101-21.fc6
 - Modify spec/sysconfig to not autobuild kdump kernel command line
 - Add dist to revision tag
+- Build for all arches
 
 * Wed Jun 28 2006 Karsten Hopp <karsten@redhat.de> 1.101-20
 - Buildrequire zlib-devel
