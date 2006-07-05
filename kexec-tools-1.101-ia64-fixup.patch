@@ -1,5 +1,5 @@
---- kexec-tools-1.101/kexec/arch/ia64/kexec-ia64.c.orig	2006-07-05 13:02:12.000000000 -0400
-+++ kexec-tools-1.101/kexec/arch/ia64/kexec-ia64.c	2006-07-05 13:17:41.000000000 -0400
+--- kexec-tools-1.101/kexec/arch/ia64/kexec-ia64.c.orig	2006-07-05 15:16:35.000000000 -0400
++++ kexec-tools-1.101/kexec/arch/ia64/kexec-ia64.c	2006-07-05 15:16:54.000000000 -0400
 @@ -87,8 +87,6 @@ int arch_process_options(int argc, char 
  	};
  	static const char short_options[] = KEXEC_ARCH_OPT_STR;
@@ -38,8 +38,28 @@
  		/* For compatibility with older patches 
  		 * use KEXEC_ARCH_DEFAULT instead of KEXEC_ARCH_IA64 here.
  		 */
---- kexec-tools-1.101/kexec_test/Makefile.ia64.orig	2006-07-05 09:52:22.000000000 -0400
-+++ kexec-tools-1.101/kexec_test/Makefile.ia64	2006-07-05 09:52:22.000000000 -0400
+--- kexec-tools-1.101/Makefile.orig	2006-07-05 15:16:35.000000000 -0400
++++ kexec-tools-1.101/Makefile	2006-07-05 15:17:18.000000000 -0400
+@@ -45,6 +45,7 @@ PKGINCLUDEIR=$(INCLUDEDIR)/$(PACKAGE)
+ MAN_PAGES:= kexec/kexec.8
+ BINARIES_i386:=  $(SBINDIR)/kexec $(PKGLIBDIR)/kexec_test $(SBINDIR)/kdump
+ BINARIES_x86_64:=$(SBINDIR)/kexec $(PKGLIBDIR)/kexec_test
++BINARIES_ia64:=  $(SBINDIR)/kexec $(PKGLIBDIR)/kexec_test $(SBINDIR)/kdump
+ BINARIES:=$(SBINDIR)/kexec $(BINARIES_$(ARCH)) 
+ 
+ TARGETS:=$(BINARIES) $(MAN_PAGES)
+@@ -89,6 +90,9 @@ endif
+ ifeq ($(ARCH),x86_64)
+ include kexec_test/Makefile
+ endif
++ifeq ($(ARCH),ia64)
++include kexec_test/Makefile.ia64
++endif
+ 
+ GENERATED_SRCS:= ./configure
+ SPEC=$(OBJDIR)/$(PACKAGE)-$(VERSION).spec
+--- /dev/null	2006-06-30 11:19:59.592541712 -0400
++++ kexec-tools-1.101/kexec_test/Makefile.ia64	2006-07-05 15:16:54.000000000 -0400
 @@ -0,0 +1,30 @@
 +#
 +# kexec_test Debugging payload to be certain the infrastructure works
@@ -71,8 +91,8 @@
 +$(KEXEC_TEST): $(KEXEC_TEST_OBJS) 
 +	mkdir -p $(@D)
 +	$(LD) -m elf64_ia64 -e _start -Ttext $(RELOC) $(KEXEC_TEST_OBJS) -o $@
---- kexec-tools-1.101/kexec_test/kexec_test_ia64.S.orig	2006-07-05 09:52:22.000000000 -0400
-+++ kexec-tools-1.101/kexec_test/kexec_test_ia64.S	2006-07-05 09:55:17.000000000 -0400
+--- /dev/null	2006-06-30 11:19:59.592541712 -0400
++++ kexec-tools-1.101/kexec_test/kexec_test_ia64.S	2006-07-05 15:16:54.000000000 -0400
 @@ -0,0 +1,26 @@
 +/*
 + * kexec: Linux boots Linux
@@ -100,23 +120,3 @@
 +	br.few _start
 +
 +
---- kexec-tools-1.101/Makefile.orig	2006-07-05 09:52:29.000000000 -0400
-+++ kexec-tools-1.101/Makefile	2006-07-05 09:54:24.000000000 -0400
-@@ -45,6 +45,7 @@
- MAN_PAGES:= kexec/kexec.8
- BINARIES_i386:=  $(SBINDIR)/kexec $(PKGLIBDIR)/kexec_test $(SBINDIR)/kdump
- BINARIES_x86_64:=$(SBINDIR)/kexec $(PKGLIBDIR)/kexec_test $(SBINDIR)/kdump
-+BINARIES_ia64:=$(SBINDIR)/kexec $(PKGLIBDIR)/kexec_test $(SBINDIR)/kdump
- BINARIES:=$(SBINDIR)/kexec $(BINARIES_$(ARCH)) 
- 
- TARGETS:=$(BINARIES) $(MAN_PAGES)
-@@ -89,6 +90,9 @@
- ifeq ($(ARCH),x86_64)
- include kexec_test/Makefile
- endif
-+ifeq ($(ARCH),ia64)
-+include kexec_test/Makefile.ia64
-+endif
- 
- GENERATED_SRCS:= ./configure
- SPEC=$(OBJDIR)/$(PACKAGE)-$(VERSION).spec
