@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 27%{dist}
+Release: 28%{dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -34,7 +34,7 @@ Patch301: kexec-ppc64-ingnore-args-linux.patch
 #
 # Patches 401 through 500 are meant for s390 kexec-tools enablement
 #
-Patch401: http://intranet.corp.redhat.com/ic/intranet/JobBands.html
+Patch401: kexec-tools-1.101-s390-fixup.patch
 
 Patch501: kexec-tools-1.101-Makefile.patch
 
