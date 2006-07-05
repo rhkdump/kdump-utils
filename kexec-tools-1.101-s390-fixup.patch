@@ -1,0 +1,20 @@
+--- kexec-tools-1.101/kexec/arch/s390/kexec-s390.c.orig	2006-07-05 16:01:46.000000000 -0400
++++ kexec-tools-1.101/kexec/arch/s390/kexec-s390.c	2006-07-05 16:02:48.000000000 -0400
+@@ -36,7 +36,7 @@ static struct memory_range memory_range[
+  *  - (-1) if something went wrong.
+  */
+ 
+-int get_memory_ranges(struct memory_range **range, int *ranges)
++int get_memory_ranges(struct memory_range **range, int *ranges, unsigned long kexec_flags)
+ {
+ 	char sys_ram[] = "System RAM\n";
+ 	char iomem[] = "/proc/iomem";
+@@ -94,7 +94,7 @@ int arch_process_options(int argc, char 
+ 	return 0;
+ }
+ 
+-int arch_compat_trampoline(struct kexec_info *info, unsigned long *flags)
++int arch_compat_trampoline(struct kexec_info *info)
+ {
+ 	return 0;
+ }

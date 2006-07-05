@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 25%{dist}
+Release: 27%{dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -31,6 +31,11 @@ Patch201: kexec-tools-1.101-ia64-fixup.patch
 #
 Patch301: kexec-ppc64-ingnore-args-linux.patch
 
+#
+# Patches 401 through 500 are meant for s390 kexec-tools enablement
+#
+Patch401: http://intranet.corp.redhat.com/ic/intranet/JobBands.html
+
 Patch501: kexec-tools-1.101-Makefile.patch
 
 %description
@@ -47,6 +52,7 @@ rm -f ../kexec-tools-1.101.spec
 %patch101 -p1
 %patch201 -p1
 %patch301 -p1
+%patch401 -p1
 %patch501 -p1
 
 cp $RPM_SOURCE_DIR/kdump.init .
@@ -97,7 +103,7 @@ exit 0
 %doc TODO
 
 %changelog
-* Wed Jul 07 2006 Neil Horman <nhorman@redhat.com> 1.101-22.fc6
+* Wed Jul 07 2006 Neil Horman <nhorman@redhat.com> 1.101-27.fc6
 - Modify spec/sysconfig to not autobuild kdump kernel command line
 - Add dist to revision tag
 - Build for all arches
