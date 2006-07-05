@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 20
+Release: 20%{dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -68,10 +68,6 @@ install -m 755 kdump.init $RPM_BUILD_ROOT/etc/rc.d/init.d/kdump
 rm -rf $RPM_BUILD_ROOT
 
 %post
-KDUMP_COMMANDLINE=`cat /proc/cmdline`
-KDUMP_COMMANDLINE=`echo $KDUMP_COMMANDLINE | sed -e 's/crashkernel=[0-9]\+M@[0-9]\+M//g'`
-export KDUMP_COMMANDLINE
-sed -i -e "s|REPLACEME|$KDUMP_COMMANDLINE irqpoll|g" /etc/sysconfig/kdump
 /sbin/chkconfig --add kdump
 
 %postun
@@ -99,6 +95,10 @@ exit 0
 %doc TODO
 
 %changelog
+* Wed Jul 07 206 Neil Horman <nhorman@redhat.com> 1.101-20.fc6
+- Modify spec/sysconfig to not autobuild kdump kernel command line
+- Add dist to revision tag
+
 * Wed Jun 28 2006 Karsten Hopp <karsten@redhat.de> 1.101-20
 - Buildrequire zlib-devel
 
