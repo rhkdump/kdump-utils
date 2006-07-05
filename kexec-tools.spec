@@ -95,7 +95,7 @@ exit 0
 %doc TODO
 
 %changelog
-* Wed Jul 07 206 Neil Horman <nhorman@redhat.com> 1.101-20.fc6
+* Wed Jul 07 2006 Neil Horman <nhorman@redhat.com> 1.101-20.fc6
 - Modify spec/sysconfig to not autobuild kdump kernel command line
 - Add dist to revision tag
 
