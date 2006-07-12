@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 29%{dist}
+Release: 29%{dist}.1
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -112,6 +112,9 @@ exit 0
 %doc TODO
 
 %changelog
+* Wed Jul 12 2006 Jesse Keating <jkeating@redhat.com> - 1.101-29%{dist}.1
+- rebuild
+
 * Wed Jul 07 2006 Neil Horman <nhorman@redhat.com> 1.101-27.fc6
 - Modify spec/sysconfig to not autobuild kdump kernel command line
 - Add dist to revision tag
