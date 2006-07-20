@@ -1,12 +1,16 @@
 Name: kexec-tools
 Version: 1.101
-Release: 29%{dist}.1
+Release: 30%{dist}.1
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
 Source0: %{name}-%{version}.tar.gz
 Source1: kdump.init
 Source2: kdump.sysconfig
+Source3: mkdumprd
+Source4: kdump.conf
+Source5: kcp.c
+Source6: Makefile.kcp
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 Requires(pre): coreutils chkconfig sed
 BuildRequires: zlib-devel
@@ -45,6 +49,7 @@ Patch501: kexec-tools-1.101-ppc-fixup.patch
 # Patches 601 onward are generic patches
 #
 Patch601: kexec-tools-1.101-Makefile.patch
+Patch602: kexec-tools-1.101-Makefile-kcp.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -63,9 +68,15 @@ rm -f ../kexec-tools-1.101.spec
 %patch401 -p1
 %patch501 -p1
 %patch601 -p1
+%patch602 -p1
 
 cp $RPM_SOURCE_DIR/kdump.init .
 cp $RPM_SOURCE_DIR/kdump.sysconfig .
+cp $RPM_SOURCE_DIR/kdump.conf .
+cp $RPM_SOURCE_DIR/mkdumprd .
+mkdir -p -m755 kcp
+cp $RPM_SOURCE_DIR/kcp.c kcp/kcp.c
+cp $RPM_SOURCE_DIR/Makefile.kcp kcp/Makefile
 
 %build
 %configure --sbindir=/sbin
@@ -79,11 +90,14 @@ mkdir -p -m755 $RPM_BUILD_ROOT/etc/rc.d/init.d
 mkdir -p -m755 $RPM_BUILD_ROOT/etc/sysconfig
 install -m 644 kdump.sysconfig $RPM_BUILD_ROOT/etc/sysconfig/kdump
 install -m 755 kdump.init $RPM_BUILD_ROOT/etc/rc.d/init.d/kdump
+install -m 755 mkdumprd $RPM_BUILD_ROOT/sbin/mkdumprd
+install -m 755 kdump.conf $RPM_BUILD_ROOT/etc/kdump.conf
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
 %post
+touch /etc/kdump.conf
 /sbin/chkconfig --add kdump
 
 %postun
@@ -103,6 +117,7 @@ exit 0
 %defattr(-,root,root,-)
 /sbin/*
 %config(noreplace,missingok) /etc/sysconfig/kdump
+%config(noreplace,missingok) /etc/kdump.conf
 %config /etc/rc.d/init.d/kdump
 %ifarch %{ix86} x86_64
 %{_libdir}/kexec-tools/kexec_test
@@ -112,6 +127,9 @@ exit 0
 %doc TODO
 
 %changelog
+* Wed Jul 19 2006 Neil Horman <nhorman@redhat.com> - 1.101-30%{dist}.1
+-add kexec frontend (bz 197695)
+
 * Wed Jul 12 2006 Jesse Keating <jkeating@redhat.com> - 1.101-29%{dist}.1
 - rebuild
 
