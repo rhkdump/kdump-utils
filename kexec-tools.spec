@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 30%{dist}.1
+Release: 31%{dist}.1
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -127,6 +127,9 @@ exit 0
 %doc TODO
 
 %changelog
+* Thu Jul 27 2006 Neil Horman <nhorman@redhat.com> - 1.101-30%{dist}.1
+-fixing up missing patch to kdump.init
+
 * Wed Jul 19 2006 Neil Horman <nhorman@redhat.com> - 1.101-30%{dist}.1
 -add kexec frontend (bz 197695)
 

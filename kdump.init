@@ -26,6 +26,7 @@ BOOTDIR="/boot"
 KDUMP_KERNELVER=""
 KDUMP_COMMANDLINE=""
 KEXEC_ARGS=""
+KDUMP_CONFIG_FILE="/etc/kdump.conf"
 
 standard_kexec_args="-p --args-linux"
 
@@ -41,10 +42,7 @@ function save_core()
 	cp /proc/vmcore $coredir/vmcore
 }
 
-# Load the kdump kerel specified in /etc/sysconfig/kdump
-# If none is specified, try to load a kdump kernel with the same version
-# as the currently running kernel.
-function load_kdump()
+function check_config()
 {
 	if [ -z "$KDUMP_KERNELVER" ]; then
 		local running_kernel=`uname -r`
@@ -70,6 +68,38 @@ function load_kdump()
 		return 1
 	fi
 
+	#check to see if config file has been modified after
+	#last build of the image file
+	config_time=0
+	if [ -f $KDUMP_CONFIG_FILE ]; then
+		config_time=`stat -c "%Y" $KDUMP_CONFIG_FILE`
+	fi
+	kernel_time=`stat -c "%Y" $kdump_kernel`
+	image_time=`stat -c "%Y" $kdump_initrd`
+
+	if [ "$config_time" -gt "$image_time" ] ||
+	   [ "$kernel_time" -gt "$image_time" ]; then
+		echo "Detected $KDUMP_CONFIG_FILE or $kdump_kernel change"
+		echo "Rebuilding $kdump_initrd"
+		/sbin/mkdumprd -d -f $kdump_initrd $kdump_kver
+	fi
+
+	#hack until we stop making initrd for kdump during rpm install
+	#allow initrd 120 seconds to be created before considering it new
+	module_time=`stat -c "%Y" /lib/modules/${kdump_kver}`
+	let module_time=module_time+120
+	if [ ! "$image_time" -gt "$module_time" ]; then
+		echo "Detected initial rpm install"
+		echo "Rebuilding $kdump_initrd"
+		/sbin/mkdumprd -d -f $kdump_initrd $kdump_kver
+	fi
+}
+
+# Load the kdump kerel specified in /etc/sysconfig/kdump
+# If none is specified, try to load a kdump kernel with the same version
+# as the currently running kernel.
+function load_kdump()
+{
 	if [ -z "$KDUMP_COMMANDLINE" ]; then
 		KDUMP_COMMANDLINE=`cat /proc/cmdline`
 		KDUMP_COMMANDLINE=`echo $KDUMP_COMMANDLINE | sed -e 's/crashkernel=[0-9]\+M@[0-9]\+M//g'`
@@ -87,6 +117,8 @@ case "$1" in
 	    save_core
 	    reboot
         else
+	    #TODO check raw partition for core dump image
+	    check_config
 	    load_kdump
 	fi
 	;;
@@ -98,6 +130,7 @@ case "$1" in
 	;;
   restart)
 	$KEXEC -p -u
+	check_config
 	load_kdump
 	;;
   condrestart)
