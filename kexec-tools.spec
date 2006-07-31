@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 31%{dist}.1
+Release: 32%{dist}.1
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -50,6 +50,7 @@ Patch501: kexec-tools-1.101-ppc-fixup.patch
 #
 Patch601: kexec-tools-1.101-Makefile.patch
 Patch602: kexec-tools-1.101-Makefile-kcp.patch
+Patch603: kexec-tools-1.101-et-dyn.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -69,6 +70,7 @@ rm -f ../kexec-tools-1.101.spec
 %patch501 -p1
 %patch601 -p1
 %patch602 -p1
+%patch603 -p1
 
 cp $RPM_SOURCE_DIR/kdump.init .
 cp $RPM_SOURCE_DIR/kdump.sysconfig .
@@ -127,11 +129,14 @@ exit 0
 %doc TODO
 
 %changelog
+* Mon Jul 31 2006 Neil Horman <nhorman@redhat.com> - 1.101-32%{dist}.1
+- added et-dyn patch to allow loading of relocatable kernels
+
 * Thu Jul 27 2006 Neil Horman <nhorman@redhat.com> - 1.101-30%{dist}.1
--fixing up missing patch to kdump.init
+- fixing up missing patch to kdump.init
 
 * Wed Jul 19 2006 Neil Horman <nhorman@redhat.com> - 1.101-30%{dist}.1
--add kexec frontend (bz 197695)
+- add kexec frontend (bz 197695)
 
 * Wed Jul 12 2006 Jesse Keating <jkeating@redhat.com> - 1.101-29%{dist}.1
 - rebuild
