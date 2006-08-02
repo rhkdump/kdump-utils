@@ -11,9 +11,10 @@ Source3: mkdumprd
 Source4: kdump.conf
 Source5: kcp.c
 Source6: Makefile.kcp
+Source7: makedumpfile.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 Requires(pre): coreutils chkconfig sed
-BuildRequires: zlib-devel
+BuildRequires: zlib-devel elfutils-libelf-devel glib2-devel xorg-x11-devel
 
 #
 # Patches 0 through 100 are meant for x86 kexec-tools enablement
@@ -51,6 +52,8 @@ Patch501: kexec-tools-1.101-ppc-fixup.patch
 Patch601: kexec-tools-1.101-Makefile.patch
 Patch602: kexec-tools-1.101-Makefile-kcp.patch
 Patch603: kexec-tools-1.101-et-dyn.patch
+Patch604: kexec-tools-1.101-add-makedumpfile1.patch
+Patch605: kexec-tools-1.101-add-makedumpfile2.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -79,6 +82,11 @@ cp $RPM_SOURCE_DIR/mkdumprd .
 mkdir -p -m755 kcp
 cp $RPM_SOURCE_DIR/kcp.c kcp/kcp.c
 cp $RPM_SOURCE_DIR/Makefile.kcp kcp/Makefile
+mkdir makedumpfile 
+tar -C makedumpfile -z -x -v -f $RPM_SOURCE_DIR/makedumpfile.tar.gz
+
+%patch604 -p1
+%patch605 -p1
 
 %build
 %configure --sbindir=/sbin
@@ -129,6 +137,9 @@ exit 0
 %doc TODO
 
 %changelog
+* Wed Aug 02 2006 Neil Horman <nhorman@redhat.com> - 1.101-33%{dist}.1
+- added makedumpconfig source to package
+
 * Mon Jul 31 2006 Neil Horman <nhorman@redhat.com> - 1.101-32%{dist}.1
 - added et-dyn patch to allow loading of relocatable kernels
 
