@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 33%{dist}.1
+Release: 34%{dist}.1
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -92,6 +92,7 @@ tar -C makedumpfile -z -x -v -f $RPM_SOURCE_DIR/makedumpfile.tar.gz
 %configure --sbindir=/sbin
 rm -f kexec-tools.spec.in
 make
+make -C makedumpfile
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -102,6 +103,7 @@ install -m 644 kdump.sysconfig $RPM_BUILD_ROOT/etc/sysconfig/kdump
 install -m 755 kdump.init $RPM_BUILD_ROOT/etc/rc.d/init.d/kdump
 install -m 755 mkdumprd $RPM_BUILD_ROOT/sbin/mkdumprd
 install -m 755 kdump.conf $RPM_BUILD_ROOT/etc/kdump.conf
+install -m 755 makedumpfile/makedumpfile $RPM_BUILD_ROOT/sbin/makedumpfile
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -137,8 +139,11 @@ exit 0
 %doc TODO
 
 %changelog
+* Wed Aug 02 2006 Neil Horman <nhorman@redhat.com> - 1.101-34%{dist}.1
+- enabling makedumpfile in build
+
 * Wed Aug 02 2006 Neil Horman <nhorman@redhat.com> - 1.101-33%{dist}.1
-- added makedumpconfig source to package
+- added makedumpfile source to package
 
 * Mon Jul 31 2006 Neil Horman <nhorman@redhat.com> - 1.101-32%{dist}.1
 - added et-dyn patch to allow loading of relocatable kernels
