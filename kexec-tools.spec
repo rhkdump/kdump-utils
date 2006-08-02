@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 32%{dist}.1
+Release: 33%{dist}.1
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
