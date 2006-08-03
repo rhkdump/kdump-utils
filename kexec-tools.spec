@@ -14,7 +14,7 @@ Source6: Makefile.kcp
 Source7: makedumpfile.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 Requires(pre): coreutils chkconfig sed
-BuildRequires: zlib-devel elfutils-libelf-devel glib2-devel
+BuildRequires: zlib-devel elfutils-libelf-devel glib2-devel pkgconfig
 
 #
 # Patches 0 through 100 are meant for x86 kexec-tools enablement
