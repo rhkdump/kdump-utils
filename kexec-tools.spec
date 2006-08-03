@@ -54,6 +54,7 @@ Patch602: kexec-tools-1.101-Makefile-kcp.patch
 Patch603: kexec-tools-1.101-et-dyn.patch
 Patch604: kexec-tools-1.101-add-makedumpfile1.patch
 Patch605: kexec-tools-1.101-add-makedumpfile2.patch
+Patch606: kexec-tools-1.101-makedumpfile-archbuild.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -87,6 +88,7 @@ tar -C makedumpfile -z -x -v -f $RPM_SOURCE_DIR/makedumpfile.tar.gz
 
 %patch604 -p1
 %patch605 -p1
+%patch606 -p1
 
 %build
 %configure --sbindir=/sbin
@@ -139,6 +141,9 @@ exit 0
 %doc TODO
 
 %changelog
+* Thu Aug 03 2006 Neil Horman <nhorman@redhat.com> - 1.101-39%{dist}.1
+- patch makedumpfile to build on other arches besides x86[_64]
+
 * Thu Aug 03 2006 Neil Horman <nhorman@redhat.com> - 1.101-38%{dist}.1
 - updating makedumpfile makefile to use pkg-config on glib-2.0
 
