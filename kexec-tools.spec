@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 36%{dist}.1
+Release: 37%{dist}.1
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -14,7 +14,7 @@ Source6: Makefile.kcp
 Source7: makedumpfile.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 Requires(pre): coreutils chkconfig sed
-BuildRequires: zlib-devel elfutils-libelf-devel glib-devel
+BuildRequires: zlib-devel elfutils-libelf-devel glib2-devel
 
 #
 # Patches 0 through 100 are meant for x86 kexec-tools enablement
@@ -139,6 +139,9 @@ exit 0
 %doc TODO
 
 %changelog
+* Thu Aug 03 2006 Neil Horman <nhorman@redhat.com> - 1.101-37%{dist}.1
+- updating makedumpfile makefile to use pkg-config
+
 * Thu Aug 03 2006 Neil Horman <nhorman@redhat.com> - 1.101-36%{dist}.1
 - Removing unneeded deps after Makefile fixup for makedumpfile
 
