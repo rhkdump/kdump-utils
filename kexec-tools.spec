@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 40%{dist}.1
+Release: 41%{dist}.1
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -144,7 +144,10 @@ exit 0
 %doc COPYING
 %doc TODO
 
-%changelog
+%chaNgelog
+* Thu Aug 03 2006 Neil Horman <nhorman@redhat.com> - 1.101-41%{dist}.1
+- fix another silly makefile error for makedumpfile 
+
 * Thu Aug 03 2006 Neil Horman <nhorman@redhat.com> - 1.101-40%{dist}.1
 - exclude makedumpfile from build on non-x86[_64] arches 
 
