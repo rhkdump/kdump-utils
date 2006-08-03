@@ -94,7 +94,9 @@ tar -C makedumpfile -z -x -v -f $RPM_SOURCE_DIR/makedumpfile.tar.gz
 %configure --sbindir=/sbin
 rm -f kexec-tools.spec.in
 make
+%ifarch %{ix86} x86_64
 make -C makedumpfile
+%endif
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -105,7 +107,9 @@ install -m 644 kdump.sysconfig $RPM_BUILD_ROOT/etc/sysconfig/kdump
 install -m 755 kdump.init $RPM_BUILD_ROOT/etc/rc.d/init.d/kdump
 install -m 755 mkdumprd $RPM_BUILD_ROOT/sbin/mkdumprd
 install -m 755 kdump.conf $RPM_BUILD_ROOT/etc/kdump.conf
+%ifarch %{ix86} x86_64
 install -m 755 makedumpfile/makedumpfile $RPM_BUILD_ROOT/sbin/makedumpfile
+%endif
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -142,7 +146,7 @@ exit 0
 
 %changelog
 * Thu Aug 03 2006 Neil Horman <nhorman@redhat.com> - 1.101-39%{dist}.1
-- patch makedumpfile to build on other arches besides x86[_64]
+- exclude makedumpfile from build on non-x86[_64] arches 
 
 * Thu Aug 03 2006 Neil Horman <nhorman@redhat.com> - 1.101-38%{dist}.1
 - updating makedumpfile makefile to use pkg-config on glib-2.0
