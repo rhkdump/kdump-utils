@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 41%{dist}.1
+Release: 42%{dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -103,6 +103,7 @@ rm -rf $RPM_BUILD_ROOT
 make install DESTDIR=$RPM_BUILD_ROOT
 mkdir -p -m755 $RPM_BUILD_ROOT/etc/rc.d/init.d
 mkdir -p -m755 $RPM_BUILD_ROOT/etc/sysconfig
+mkdir -p -m755 $RPM_BUILD_ROOT/var/crash
 install -m 644 kdump.sysconfig $RPM_BUILD_ROOT/etc/sysconfig/kdump
 install -m 755 kdump.init $RPM_BUILD_ROOT/etc/rc.d/init.d/kdump
 install -m 755 mkdumprd $RPM_BUILD_ROOT/sbin/mkdumprd
@@ -137,6 +138,7 @@ exit 0
 %config(noreplace,missingok) /etc/sysconfig/kdump
 %config(noreplace,missingok) /etc/kdump.conf
 %config /etc/rc.d/init.d/kdump
+%dir /var/crash
 %ifarch %{ix86} x86_64
 %{_libdir}/kexec-tools/kexec_test
 %endif
@@ -144,7 +146,10 @@ exit 0
 %doc COPYING
 %doc TODO
 
-%chaNgelog
+%changelog
+* Wed Aug 09 2006 Jarod Wilson <jwilson@redhat.com> - 1.101-42%{dist}
+- Add %dir /var/crash, so default kdump setup works
+
 * Thu Aug 03 2006 Neil Horman <nhorman@redhat.com> - 1.101-41%{dist}.1
 - fix another silly makefile error for makedumpfile 
 
