@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 42%{dist}
+Release: 43%{dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -76,15 +76,11 @@ rm -f ../kexec-tools-1.101.spec
 %patch602 -p1
 %patch603 -p1
 
-cp $RPM_SOURCE_DIR/kdump.init .
-cp $RPM_SOURCE_DIR/kdump.sysconfig .
-cp $RPM_SOURCE_DIR/kdump.conf .
-cp $RPM_SOURCE_DIR/mkdumprd .
 mkdir -p -m755 kcp
-cp $RPM_SOURCE_DIR/kcp.c kcp/kcp.c
-cp $RPM_SOURCE_DIR/Makefile.kcp kcp/Makefile
+cp %{SOURCE5} kcp/kcp.c
+cp %{SOURCE6} kcp/Makefile
 mkdir makedumpfile 
-tar -C makedumpfile -z -x -v -f $RPM_SOURCE_DIR/makedumpfile.tar.gz
+tar -C makedumpfile -z -x -v -f %{SOURCE7}
 
 %patch604 -p1
 %patch605 -p1
@@ -101,13 +97,13 @@ make -C makedumpfile
 %install
 rm -rf $RPM_BUILD_ROOT
 make install DESTDIR=$RPM_BUILD_ROOT
-mkdir -p -m755 $RPM_BUILD_ROOT/etc/rc.d/init.d
-mkdir -p -m755 $RPM_BUILD_ROOT/etc/sysconfig
-mkdir -p -m755 $RPM_BUILD_ROOT/var/crash
-install -m 644 kdump.sysconfig $RPM_BUILD_ROOT/etc/sysconfig/kdump
-install -m 755 kdump.init $RPM_BUILD_ROOT/etc/rc.d/init.d/kdump
-install -m 755 mkdumprd $RPM_BUILD_ROOT/sbin/mkdumprd
-install -m 755 kdump.conf $RPM_BUILD_ROOT/etc/kdump.conf
+mkdir -p -m755 $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d
+mkdir -p -m755 $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
+mkdir -p -m755 $RPM_BUILD_ROOT%{_localstatedir}/crash
+install -m 755 %{SOURCE1} $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/kdump
+install -m 644 %{SOURCE2} $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/kdump
+install -m 755 %{SOURCE3} $RPM_BUILD_ROOT/sbin/mkdumprd
+install -m 755 %{SOURCE4} $RPM_BUILD_ROOT%{_sysconfdir}/kdump.conf
 %ifarch %{ix86} x86_64
 install -m 755 makedumpfile/makedumpfile $RPM_BUILD_ROOT/sbin/makedumpfile
 %endif
@@ -135,10 +131,10 @@ exit 0
 %files
 %defattr(-,root,root,-)
 /sbin/*
-%config(noreplace,missingok) /etc/sysconfig/kdump
-%config(noreplace,missingok) /etc/kdump.conf
-%config /etc/rc.d/init.d/kdump
-%dir /var/crash
+%config(noreplace,missingok) %{_sysconfdir}/sysconfig/kdump
+%config(noreplace,missingok) %{_sysconfdir}/kdump.conf
+%config %{_sysconfdir}/rc.d/init.d/kdump
+%dir %{_localstatedir}/crash
 %ifarch %{ix86} x86_64
 %{_libdir}/kexec-tools/kexec_test
 %endif
@@ -147,6 +143,9 @@ exit 0
 %doc TODO
 
 %changelog
+* Wed Aug 09 2006 Jarod Wilson <jwilson@redhat.com> - 1.101-43%{dist}
+- Misc spec cleanups and macro-ifications
+
 * Wed Aug 09 2006 Jarod Wilson <jwilson@redhat.com> - 1.101-42%{dist}
 - Add %dir /var/crash, so default kdump setup works
 
