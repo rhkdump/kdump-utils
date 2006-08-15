@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 43%{dist}
+Release: 44%{dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -143,6 +143,9 @@ exit 0
 %doc TODO
 
 %changelog
+* Tue Aug 15 2006 Neil Horman <nhorman@redhat.com> - 1.101-44%{dist}
+- updated init script to implement status function/scrub err messages
+ 
 * Wed Aug 09 2006 Jarod Wilson <jwilson@redhat.com> - 1.101-43%{dist}
 - Misc spec cleanups and macro-ifications
 

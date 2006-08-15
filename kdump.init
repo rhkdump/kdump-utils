@@ -58,12 +58,12 @@ function check_config()
 
 	if [ ! -f $kdump_kernel ]; then
 		echo -n "No kdump kernel image found."; warning; echo
-		echo -n "Tried to locate ${kdump_kernel}"
+		echo "Tried to locate ${kdump_kernel}"
 		exit 0
 	fi
 
 	if [ ! -f $kdump_initrd ]; then
-		echo "No kdump initial ramdisk found."
+		echo  -n "No kdump initial ramdisk found."; warning; echo
 		echo "Tried to locate ${kdump_initrd}"
 		return 1
 	fi
@@ -109,6 +109,11 @@ function load_kdump()
 	$KEXEC $KEXEC_ARGS $standard_kexec_args \
 		--command-line="$KDUMP_COMMANDLINE" \
 		--initrd=$kdump_initrd $kdump_kernel
+
+	if [ $? == 0 ]; then
+		touch /var/run/kdump.status
+	fi
+
 }
 
 case "$1" in
@@ -124,12 +129,18 @@ case "$1" in
 	;;
   stop)
 	$KEXEC -p -u
+	rm -f /var/run/kdump.status
 	;;
   status)
-	echo "not implemented"
+	if [ -a /var/run/kdump.status ]; then
+		echo "Kdump is operational"
+	else
+		echo "Kdump is not operational"
+	fi 
 	;;
   restart)
 	$KEXEC -p -u
+	rm -f /var/run/kdump.status
 	check_config
 	load_kdump
 	;;
