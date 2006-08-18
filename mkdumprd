@@ -833,7 +833,7 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
             #find ethernet device used to route to remote host, ie eth0
             netdev=`/sbin/ip route get to $rhost 2>&1`
             [ $? != 0 ] && echo "Bad kdump location: $location" && continue
-            netdev=`echo $netdev|awk '{print $3;}'|head -n 1`
+            netdev=`echo $netdev|awk '{print $5;}'|head -n 1`
            
             #add the ethernet device to the list of modules 
             handlenetdev $netdev
@@ -1080,8 +1080,8 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                         tmnt=`mktemp -dq`
                         kdump_chk "mount -t nfs -o nolock $rlocation $tmnt" \
                                    "Bad NFS mount $location"
-                        mkdir -p /mnt/var/crash
-                        tdir=`mktemp -dqp /mnt/var/crash`
+                        mkdir -p $tmnt/var/crash
+                        tdir=`mktemp -dqp $tmnt/var/crash`
 
                         rc=$? && rm -rf $tdir && umount $tmnt && rm -rf $tmnt
                         if [ $rc != "0" ]; then 
