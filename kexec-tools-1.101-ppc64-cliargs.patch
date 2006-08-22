@@ -1,0 +1,21 @@
+Index: kexec-tools-1.101/kexec/arch/ppc64/fs2dt.c
+===================================================================
+--- kexec-tools-1.101.orig/kexec/arch/ppc64/fs2dt.c
++++ kexec-tools-1.101/kexec/arch/ppc64/fs2dt.c
+@@ -267,10 +267,12 @@ void putprops(char *fn, struct dirent **
+ 					char *old_param;
+ 					memcpy(temp_cmdline, dt, len);
+ 					param = strstr(temp_cmdline, "root=");
+-					old_param = strtok(param, " ");
+-					if (cmd_len != 0)
+-						strcat(local_cmdline, " ");
+-					strcat(local_cmdline, old_param);
++					if (param) {
++						old_param = strtok(param, " ");
++						if (cmd_len != 0)
++							strcat(local_cmdline, " ");
++						strcat(local_cmdline, old_param);
++					}
+ 				}
+ 				strcat(local_cmdline, " ");
+ 				cmd_len = strlen(local_cmdline);

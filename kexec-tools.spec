@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 45%{dist}
+Release: 46%{dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -12,7 +12,7 @@ Source4: kdump.conf
 Source5: kcp.c
 Source6: Makefile.kcp
 Source7: makedumpfile.tar.gz
-BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
+BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires(pre): coreutils chkconfig sed
 BuildRequires: zlib-devel elfutils-libelf-devel glib2-devel pkgconfig
 
@@ -34,7 +34,9 @@ Patch201: kexec-tools-1.101-ia64-fixup.patch
 #
 # Patches 301 through 400 are meant for ppc64 kexec-tools enablement
 #
-Patch301: kexec-ppc64-ingnore-args-linux.patch
+Patch301: kexec-tools-1.101-ppc64-ignore-args.patch
+Patch302: kexec-tools-1.101-ppc64-usage.patch
+Patch303: kexec-tools-1.101-ppc64-cliargs.patch
 
 #
 # Patches 401 through 500 are meant for s390 kexec-tools enablement
@@ -70,6 +72,8 @@ rm -f ../kexec-tools-1.101.spec
 %patch101 -p1
 %patch201 -p1
 %patch301 -p1
+%patch302 -p1
+%patch303 -p1
 %patch401 -p1
 %patch501 -p1
 %patch601 -p1
@@ -87,7 +91,12 @@ tar -C makedumpfile -z -x -v -f %{SOURCE7}
 %patch606 -p1
 
 %build
-%configure --sbindir=/sbin
+%configure \
+%ifarch ppc64
+    --host=powerpc64-redhat-linux-gnu \
+    --build=powerpc64-redhat-linux-gnu \
+%endif
+    --sbindir=/sbin
 rm -f kexec-tools.spec.in
 make
 %ifarch %{ix86} x86_64
@@ -100,10 +109,12 @@ make install DESTDIR=$RPM_BUILD_ROOT
 mkdir -p -m755 $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d
 mkdir -p -m755 $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
 mkdir -p -m755 $RPM_BUILD_ROOT%{_localstatedir}/crash
+mkdir -p -m755 $RPM_BUILD_ROOT%{_mandir}/man8/
 install -m 755 %{SOURCE1} $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/kdump
 install -m 644 %{SOURCE2} $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/kdump
 install -m 755 %{SOURCE3} $RPM_BUILD_ROOT/sbin/mkdumprd
 install -m 755 %{SOURCE4} $RPM_BUILD_ROOT%{_sysconfdir}/kdump.conf
+install -m 644 kexec/kexec.8 $RPM_BUILD_ROOT%{_mandir}/man8/kexec.8
 %ifarch %{ix86} x86_64
 install -m 755 makedumpfile/makedumpfile $RPM_BUILD_ROOT/sbin/makedumpfile
 %endif
@@ -138,11 +149,20 @@ exit 0
 %ifarch %{ix86} x86_64
 %{_libdir}/kexec-tools/kexec_test
 %endif
+%{_mandir}/man8/kexec.8*
 %doc News
 %doc COPYING
 %doc TODO
 
 %changelog
+* Mon Aug 21 2006 Jarod Wilson <jwilson@redhat.com> - 1.101-46%{dist}
+- ppc64 fixups:
+  - actually build ppc64 binaries (bug 203407)
+  - correct usage output
+  - avoid segfault in command-line parsing
+- install kexec man page
+- use regulation Fedora BuildRoot
+
 * Fri Aug 18 2006 Neil Horman <nhorman@redhat.com> - 1.101-45%{dist}
 - fixed typo in mkdumprd for bz 202983
 - fixed typo in mkdumprd for bz 203053
