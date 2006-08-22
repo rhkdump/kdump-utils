@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 46%{dist}
+Release: 47%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -37,6 +37,7 @@ Patch201: kexec-tools-1.101-ia64-fixup.patch
 Patch301: kexec-tools-1.101-ppc64-ignore-args.patch
 Patch302: kexec-tools-1.101-ppc64-usage.patch
 Patch303: kexec-tools-1.101-ppc64-cliargs.patch
+Patch304: kexec-tools-1.101-ppc64-platform-fix.patch
 
 #
 # Patches 401 through 500 are meant for s390 kexec-tools enablement
@@ -74,6 +75,7 @@ rm -f ../kexec-tools-1.101.spec
 %patch301 -p1
 %patch302 -p1
 %patch303 -p1
+%patch304 -p1
 %patch401 -p1
 %patch501 -p1
 %patch601 -p1
@@ -155,6 +157,9 @@ exit 0
 %doc TODO
 
 %changelog
+* Tue Aug 22 2006 Jarod Wilson <jwilson@redhat.com> - 1.101-47%{dist}
+- ppc64 no-more-platform fix
+
 * Mon Aug 21 2006 Jarod Wilson <jwilson@redhat.com> - 1.101-46%{dist}
 - ppc64 fixups:
   - actually build ppc64 binaries (bug 203407)
