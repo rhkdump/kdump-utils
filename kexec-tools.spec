@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 48%{?dist}
+Release: 49%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -157,7 +157,11 @@ exit 0
 %doc TODO
 
 %changelog
-* Wed Aug 23 2006 Neil Horman <nhorman@redhat.com> - 1.101-47%{dist}
+* Thu Aug 24 2006 Neil Horman <nhorman@redhat.com> - 1.101-49%{dist}
+- rewriting kcp to properly do ssh and scp
+- updating mkdumprd to use new kcp syntax
+
+* Wed Aug 23 2006 Neil Horman <nhorman@redhat.com> - 1.101-48%{dist}
 - Bumping revision number 
 
 * Tue Aug 22 2006 Jarod Wilson <jwilson@redhat.com> - 1.101-47%{dist}

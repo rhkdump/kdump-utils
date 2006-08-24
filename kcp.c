@@ -30,36 +30,6 @@
 #include <strings.h>
 #include <string.h>
 
-#define BLOCK_SIZE 512
-#define SSH_TMP ".kcp-ssh"
-
-/* simple copy routine to copy src to dst */
-int copy_core(const char *src, const char *dst)
-{
-	int bytes, total=0;
-	int fd_dst, fd_src;
-	char buf[BLOCK_SIZE];
-
-	if ((fd_dst=open(dst,O_RDWR|O_CREAT, 0755)) < 0) 	
-		return -1;
-	if ((fd_src=open(src,O_RDONLY)) < 0) 		
-		return -1;
-
-	while ((bytes=read(fd_src,buf,BLOCK_SIZE)) > 0) {
-		if ((bytes=write(fd_dst,buf,bytes)) < 0) 
-			break;
-		total+=bytes;
-	}
-	if (bytes < 0) 
-		return -1;
-
-	close(fd_dst);
-	close(fd_src);
-
-	printf("Total bytes written: %d\n", total);
-	return total;
-}
-
 /* grab the local time and replace the %DATE var with it */
 char * xlate_time(const char *dst)
 {
@@ -101,8 +71,8 @@ void usage(int rc)
 {
 
 	printf("usage: kcp source dest\n");
-	printf("       kcp --ssh dest (first time)\n");
-	printf("       kcp --ssh src (second time)\n");
+	printf("       kcp --ssh src user@host:/dst\n");
+	printf("       kcp --local src dst\n");
 	printf("Will translate any %%DATE command properly\n");
 	printf("in the 'dest' variable\n");
 	exit(rc);
@@ -110,95 +80,103 @@ void usage(int rc)
 
 int main(int argc, char *argv[])
 {
-	char *src,*dst, *new_dst, *top;
-	char path[256];
+	char *src, *dst, *new_dst, *ptr;
+	char *path;
 	int using_ssh=0;
 	char *login;
+	int status;
+	pid_t child;
 
-	if (argc < 3)
+	if (argc < 4)
 		usage(1);
 
-	if (!strncmp(argv[1], "--ssh", 5))
-		using_ssh=1;
-	else
-		src=argv[1];
-
-	dst=argv[2];
-
+	src = argv[2];
+	dst = argv[3];
 	if ((new_dst=xlate_time(dst)) == NULL){
 		printf("Failed to translate time\n");
 		exit(1);
 	}
-	top=new_dst;
+
+	if (!strcmp(argv[1], "--ssh"))
+		using_ssh =1;
 	
-	//Hack for ssh because nash doesn't support variables
-	//The idea here is to save the translated date to a file to 
-	//be read back later for scp
-	if (using_ssh){
-		int fd_dst, x;
-
-		if ((fd_dst=open(SSH_TMP, O_RDWR|O_CREAT, 0755)) < 0){
-			perror("Failed to open SSH_TMP: ");
-			exit(1);
-		}
-		if ((x=read(fd_dst, path, BLOCK_SIZE)) > 0){
-			//second time around
-			src=dst;
-			path[x]='\0';
-			close(fd_dst);
-			remove(SSH_TMP);
-			execlp("scp", "scp", "-q", "-o", "BatchMode=yes", "-o", 
-				"StrictHostKeyChecking=no", src, path, NULL);
-			//should never return!!
-			perror("Failed to scp: ");
-			exit(1);
-		}
-		//save data for next run of this program
-		printf("writing <%s> to file %s\n",top, SSH_TMP);
-		if ((write(fd_dst, top, strlen(top))) < 0){
-			perror("Failed to write to SSH_TMP: ");
-			exit(1);
-		}
-		close(fd_dst);
-
-		//save the login info
-		login=top;
-		if ((top=index(login, ':')) == NULL){
-			printf("Bad ssh format %s\n", path);
-			exit(1);
-		}
-		*top++='\0';
+	/*
+	 * Now that we have called xlate_time, new_dst
+	 * holds the expanded ssh destination
+	 */
+	if (using_ssh) {
+		login=strdup(new_dst);
+		ptr=index(login, ':');
+		*ptr++='\0';
+		path = ptr;
+	} else {
+		login = NULL;
+		path = new_dst;
 	}
 
-	//find the directory portion and separate it from the file
-	if ((new_dst=rindex(top, '/')) == NULL){
-		new_dst=top;  //strange but okay, only the file passed in
-		sprintf(path,"%s",new_dst);
-	}else{
-		*new_dst='\0';
-		new_dst++;
-
-		//finish the ssh hack by running mkdir
-		if (using_ssh){
-			execlp("ssh", "ssh", "-q", "-o", "BatchMode=yes", "-o",
-                               "StrictHostKeyChecking=no", login, "mkdir", "-p", 
-				top, NULL);
-			//should never return!!
-			perror("Failed to ssh: ");
+	/*
+	 *this makes our target directory
+	 */
+	if ((child = fork()) == 0) {
+		/*
+		 * child
+		 */
+		if (using_ssh) {
+			if (execlp("ssh", "ssh", "-q", "-o", "BatchMode=yes", "-o",
+				"StrictHostKeyChecking=no", login, "mkdir", "-p",
+				path, NULL) < 0) {
+				perror("Failed to run ssh");
+				exit(1);
+			}
+		} else {
+			if (execlp("mkdir", "mkdir", "-p", path, NULL) < 0) {
+				perror("Failed to run mkdir");
+				exit(1);
+			}
+		}
+	} else {
+		/*
+		 * parent
+		 */
+		if (child < 0) {
+			perror("Could not fork");
 			exit(1);
 		}
-		//make the new directory
-		if ((mkdir(top, 0777)) != 0){
-			perror("mkdir failed: ");
+		wait(&status);
+		if (WEXITSTATUS(status) != 0) {
+			printf ("%s exited abnormally: error = %d\n",
+				using_ssh ? "ssh":"mkdir", WEXITSTATUS(status));
+			exit(1);  
+		}
+
+	}
+
+	/*
+	 * now that we have our directory, lets copy everything over
+	 * Note that scp can be used for local copies as well
+	 */
+	if ((child = fork()) == 0) {
+		/*need to include login info if scp to remote host*/
+		if (using_ssh)
+			path=new_dst; 
+			src, path;
+		if (execlp("scp", "scp", "-q", "-o", "BatchMode=yes", "-o",
+			"StrictHostKeyChecking=no", src, path, NULL) < 0) {
+			perror("Failed to run scp\n");
 			exit(1);
 		}
-		sprintf(path,"%s/%s",top,new_dst);
+	} else {
+		if (child < 0) {
+			perror("Could not fork");
+			exit(1);
+		}
+		wait(&status);
+		if (WEXITSTATUS(status) != 0) {
+			printf("scp exited abnormally: error = %d\n",
+				WEXITSTATUS(status));
+			exit(1);
+		}
 	}
-
-	if (copy_core(src,path) < 0){
-		perror("Failed to write core file: ");
-		exit(1);
-	}
-
-	return 0;
+	
+	exit(0);	
 }
