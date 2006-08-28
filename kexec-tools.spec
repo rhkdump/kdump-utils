@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 49%{?dist}
+Release: 50%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -58,6 +58,7 @@ Patch603: kexec-tools-1.101-et-dyn.patch
 Patch604: kexec-tools-1.101-add-makedumpfile1.patch
 Patch605: kexec-tools-1.101-add-makedumpfile2.patch
 Patch606: kexec-tools-1.101-makedumpfile-archbuild.patch
+Patch607: kexec-tools-1.101-page_h.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -91,6 +92,7 @@ tar -C makedumpfile -z -x -v -f %{SOURCE7}
 %patch604 -p1
 %patch605 -p1
 %patch606 -p1
+%patch607 -p1
 
 %build
 %configure \
@@ -157,6 +159,9 @@ exit 0
 %doc TODO
 
 %changelog
+* Mon Aug 28 2006 Neil Horman <nhorman@redhat.com> - 1.101-50%{dist}
+- updating to build without need for asm/page.h on x86_64
+
 * Thu Aug 24 2006 Neil Horman <nhorman@redhat.com> - 1.101-49%{dist}
 - rewriting kcp to properly do ssh and scp
 - updating mkdumprd to use new kcp syntax
