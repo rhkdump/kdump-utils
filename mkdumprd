@@ -413,7 +413,13 @@ handlenetdev() {
 	    IPSTR="$IPSTR --dns $DNS1"
 	fi
     fi
+    #when kdump boots the netdevice name might be different.  this 
+    #lets us override the name we normally think it is
+    if [ -n "$KDUMP_IFC" ]; then
+        dev=$KDUMP_IFC
+    fi
     network="network --device $dev --bootproto $BOOTPROTO $IPSTR"
+    
 }
 
 while [ $# -gt 0 ]; do
@@ -819,7 +825,6 @@ if [ -z "$MNTIMAGE" -o -z "$IMAGE" ]; then
     error "Error creating temporaries.  Try again"
     exit 1
 fi
-
 if [ -n "$KDUMP_CONFIG_FILE" ]; then
     while read type location; do
 
@@ -833,13 +838,19 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
             #find ethernet device used to route to remote host, ie eth0
             netdev=`/sbin/ip route get to $rhost 2>&1`
             [ $? != 0 ] && echo "Bad kdump location: $location" && continue
-            netdev=`echo $netdev|awk '{print $5;}'|head -n 1`
+            netdev=`echo $netdev|awk '{print $3;}'|head -n 1`
            
             #add the ethernet device to the list of modules 
             handlenetdev $netdev
 
             #load nfs modules, if needed 
             echo $location | grep -v "@" > /dev/null && findmodule nfs
+            ;;
+        ifc)
+            KDUMP_IFC=$location
+            if [ -n "$network" ]; then
+                network=`echo $network | sed -e's/\(^.* \)\('$netdev'\)\( .*$\)/\1 '$KDUMP_IFC' \3/'`
+            fi
             ;;
         *)
             ;;
@@ -945,6 +956,7 @@ done
 for i in 0 1 2 3 ; do
     emit "mknod /dev/ttyS$i c 4 $(($i + 64))"
 done
+emit "mknod /dev/mem c 1 1"
 
 emit "echo Setting up hotplug."
 emit "hotplug"
@@ -1036,7 +1048,7 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
     
     #timezone info for date which outputs YYYY-MM-DD-hh:mm
     cp /etc/localtime $MNTIMAGE/etc/localtime
-    bin="/sbin/reboot /sbin/kcp"
+    bin="/sbin/reboot /sbin/kcp /bin/mkdir"
     
     #traverse the config file and setup each dump location
     while read type location; do
@@ -1061,6 +1073,14 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                     ;;
 
                 net)
+                    #ssh, scp require libraries that aren't found with ldd
+                    lib=/lib && [ -d "/lib64" ] && lib=/lib64
+                    k_extras="/$lib/libnss_compat.so.2 /$lib/libnss_files.so.2"
+            
+                    # bring up the network
+                    emit "echo Bring up network"
+                    emit $network
+
                     #grab remote host and xlate into numbers
                     rhost=`echo $location | sed 's/.*@//' | cut -d':' -f1`
                     need_dns=`echo $rhost|grep [a-zA-Z]`
@@ -1126,11 +1146,9 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                         emit "cond kcp --ssh /proc/vmcore $rlocation:/var/crash/$lhost-%DATE/vmcore"
                         emit "cond reboot -h -f"
                         bin="$bin /usr/bin/scp /usr/bin/ssh /bin/dd"
-                        
-                        #ssh, scp require libraries that aren't found with ldd
-                        lib=/lib && [ -d "/lib64" ] && lib=/lib64
-                        k_extras="/$lib/libnss_compat.so.2 /$lib/libnss_files.so.2"
                     fi
+                    ;;
+                ifc)
                     ;;
                 default)
                     [ "$location" == "reboot" ] && emit "reboot -h -f"

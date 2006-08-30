@@ -159,7 +159,6 @@ int main(int argc, char *argv[])
 		/*need to include login info if scp to remote host*/
 		if (using_ssh)
 			path=new_dst; 
-			src, path;
 		if (execlp("scp", "scp", "-q", "-o", "BatchMode=yes", "-o",
 			"StrictHostKeyChecking=no", src, path, NULL) < 0) {
 			perror("Failed to run scp\n");
