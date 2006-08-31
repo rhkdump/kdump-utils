@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 50%{?dist}
+Release: 51%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -159,6 +159,10 @@ exit 0
 %doc TODO
 
 %changelog
+* Thu Aug 31 2006 Neil Horman <nhorman@redhat.com> - 1.101-51%{dist}
+- update mkdumprd to properly do scp and nfs based dumps
+- update docs in kdump.conf to reflect new ifc parameter
+
 * Mon Aug 28 2006 Neil Horman <nhorman@redhat.com> - 1.101-50%{dist}
 - updating to build without need for asm/page.h on x86_64
 

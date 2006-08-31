@@ -1076,7 +1076,11 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                     #ssh, scp require libraries that aren't found with ldd
                     lib=/lib && [ -d "/lib64" ] && lib=/lib64
                     k_extras="/$lib/libnss_compat.so.2 /$lib/libnss_files.so.2"
-            
+                    bin="$bin /usr/bin/scp /usr/bin/ssh /bin/dd /bin/cp"
+                    
+                    #build an /etc/passwd for scp to work properly
+                    grep "^root" /etc/passwd > $MNTIMAGE/etc/passwd
+
                     # bring up the network
                     emit "echo Bring up network"
                     emit $network
@@ -1113,7 +1117,8 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                         #setup nfs case
                         mkdir -p $MNTIMAGE/mnt
                         emit "mount -t nfs -o nolock $rlocation /mnt"
-                        emit "cond kcp --local /proc/vmcore /mnt/var/crash/$lhost-%DATE/vmcore"
+                        emit "dd if=/dev/mem of=/dev/urandom count=1 bs=512 skip=100" 
+                        emit "cond kcp --local /proc/vmcore /mnt/var/crash/$lhost-%DATE"
                         emit "cond reboot -h -f"
                     else
                         #SSH path
@@ -1135,7 +1140,6 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                         #setup ssh case, quick check to see if setup already
                         if [ ! -r $MNTIMAGE/dev/urandom ]; then
                             #only need to do these once
-                            grep "^root" /etc/passwd > $MNTIMAGE/etc/passwd
                             mkdir -p $MNTIMAGE/root
                             cp -a /root/.ssh $MNTIMAGE/root/
                             cp -a /etc/ssh $MNTIMAGE/etc
@@ -1143,9 +1147,8 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                             emit "mknod /dev/urandom c 1 9"
                         fi
                         emit "dd if=/dev/mem of=/dev/urandom count=1 bs=512 skip=100" 
-                        emit "cond kcp --ssh /proc/vmcore $rlocation:/var/crash/$lhost-%DATE/vmcore"
+                        emit "cond kcp --ssh /proc/vmcore $rlocation:/var/crash/$lhost-%DATE"
                         emit "cond reboot -h -f"
-                        bin="$bin /usr/bin/scp /usr/bin/ssh /bin/dd"
                     fi
                     ;;
                 ifc)
@@ -1174,7 +1177,7 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                     emit "echo Saving to the local filesystem $location"
                     emit "fsck.$type $location"
                     emit "cond mount -t $type $location /mnt"
-                    emit "cond kcp --local /proc/vmcore /mnt/var/crash/$lhost-%DATE/vmcore"
+                    emit "cond kcp --local /proc/vmcore /mnt/var/crash/$lhost-%DATE"
                     emit "cond umount /mnt"
                     emit "cond reboot -h -f"
                     bin="$bin /sbin/fsck.$type /bin/mount"
