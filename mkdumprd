@@ -66,6 +66,7 @@ fstab="/etc/fstab"
 
 vg_list=""
 net_list=""
+USING_METHOD="raw"
 
 vecho()
 {
@@ -832,6 +833,12 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
         net)
             #grab remote host and xlate into numbers
             rhost=`echo $location | sed 's/.*@//' | cut -d':' -f1`
+            USE_SSH=`echo $location | grep @`
+            if [ -n "$USE_SSH" ]; then
+                USING_METHOD="ssh"
+            else
+                USING_METHOD="nfs"
+            fi
             need_dns=`echo $rhost|grep [a-zA-Z]`
             [ -n "$need_dns" ] && rhost=`host $rhost|cut -d' ' -f4`
 
@@ -846,19 +853,46 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
             #load nfs modules, if needed 
             echo $location | grep -v "@" > /dev/null && findmodule nfs
             ;;
+        raw)
+            USING_METHOD="raw"
+            ;;
         ifc)
             KDUMP_IFC=$location
             if [ -n "$network" ]; then
                 network=`echo $network | sed -e's/\(^.* \)\('$netdev'\)\( .*$\)/\1 '$KDUMP_IFC' \3/'`
             fi
             ;;
+        core_collector)
+            if [ -x /sbin/makedumpfile ]; then
+                CORE_COLLECTOR=$location
+                CORE_COLLECTOR=`echo $CORE_COLLECTOR | sed -e's/makedumpfile/makedumpfile -i \/etc\/makedumpfile.config/'`
+            else
+                echo "Cannot use the core_collector option on this arch"
+                rm -rf $MNTIMAGE
+                rm -rf $IMAGE
+                exit 1
+            fi
+            ;;
         *)
+            USING_METHOD="local_fs"
             ;;
         esac
 
     done < $KDUMP_CONFIG_FILE
 fi
 
+
+if [ -n "$CORE_COLLECTOR" ]; then
+    if [ "$USING_METHOD" == "ssh" ] || [ "$USING_METHOD" == "raw" ]; then
+        echo "You may only use alternate core collectors with the NFS and Local Filesystem targets"
+        rm -rf $MNTIMAGE
+        rm -rf $IMAGE
+        exit 1
+    fi            
+fi
+
+
+#START BUILDING INITRD HERE
 mkdir -p $MNTIMAGE
 mkdir -p $MNTIMAGE/lib
 mkdir -p $MNTIMAGE/bin
@@ -867,14 +901,54 @@ mkdir -p $MNTIMAGE/dev
 mkdir -p $MNTIMAGE/proc
 mkdir -p $MNTIMAGE/sys
 mkdir -p $MNTIMAGE/sysroot
+mkdir -p $MNTIMAGE/modules
 ln -s bin $MNTIMAGE/sbin
+
+
+#if we are using makedumpfile here, then generate the config file
+if [ -n "$CORE_COLLECTOR" ]; then
+    RUN_KERN_VER=`uname -r`
+    /sbin/makedumpfile -g $MNTIMAGE/etc/makedumpfile.config -x /usr/lib/debug/lib/modules/$RUN_KERN_VER/vmlinux /boot/System.map-$RUN_KERN_VER 
+    if [ $? != 0 ]; then
+        echo "could not generate makedumpfile configuration.  aborting"
+        rm -rf $MNTIMAGE
+        rm -rf $IMAGE
+        exit 1;
+    fi
+fi
+
+#copy in busybox and make symlinks to its supported utilities
+cp /sbin/busybox $MNTIMAGE/sbin/busybox
+cd $MNTIMAGE/sbin
+for i in `/sbin/busybox | 
+        awk 'BEGIN {found=0} /.*/ { if (found) print $0 } /Currently/ {found=1}' | 
+        sed -e's/,//g' -e's/busybox//g'`
+do
+        ln -s busybox $MNTIMAGE/sbin/$i
+done
+cd -
+
+#Busybox doesn't have a /bin/sh applet, 
+#so we build a reasonable faximilie here
+cat >> $MNTIMAGE/bin/sh << EOF
+#!/bin/msh
+#drop the -c from the command line
+shift 1
+#now execute the passed command
+#don't exec this or $@ won't work
+/bin/msh -c "\$@"
+EOF
+
+chmod 755 $MNTIMAGE/bin/sh
 
 if [ -e /etc/fstab.sys ]; then
     inst /etc/fstab.sys "$MNTIMAGE/etc/fstab.sys"
 fi
-inst /sbin/nash "$MNTIMAGE/bin/nash"
-inst /sbin/insmod.static "$MNTIMAGE/bin/insmod"
-ln -s /sbin/nash $MNTIMAGE/sbin/modprobe
+
+#build a good passwd file
+cat >> $MNTIMAGE/etc/passwd << EOF
+root:x:0:0:root:/root:/bin/bash
+EOF
 
 for MODULE in $MODULES; do
     if [ -x /usr/bin/strip ]; then
@@ -920,7 +994,7 @@ fi
 
 echo -n >| $RCFILE
 cemit << EOF
-#!/bin/nash
+#!/bin/msh
 
 mount -t proc /proc /proc
 setquiet
@@ -941,6 +1015,7 @@ mknod /dev/tty c 5 0
 mknod /dev/console c 5 1
 mknod /dev/ptmx c 5 2
 mknod /dev/rtc c 10 135
+
 EOF
 if [ "$(uname -m)" == "ia64" ]; then
     emit "mknod $MNTIMAGE/dev/efirtc c 10 136"
@@ -957,12 +1032,6 @@ for i in 0 1 2 3 ; do
     emit "mknod /dev/ttyS$i c 4 $(($i + 64))"
 done
 emit "mknod /dev/mem c 1 1"
-
-emit "echo Setting up hotplug."
-emit "hotplug"
-
-emit "echo Creating block device nodes."
-emit "mkblkdevs"
 
 for MODULE in $MODULES; do
     text=""
@@ -998,42 +1067,65 @@ EOF
     fi
 done
 
+# HACK: module loading + device creation isn't necessarily synchronous...
+# this will make sure that we have all of our devices before trying
+# things like RAID or LVM
+emit "echo Creating Block Devices"
+emit "for i in \`ls /sys/block\`; do"
+emit "  MAJOR_NUM=\`cat /sys/block/\$i/dev | cut -d":" -f1\`"
+emit "  MINOR_NUM=\`cat /sys/block/\$i/dev | cut -d":" -f2\`"
+emit "  echo Creating block device \$i"
+emit "  mknod /dev/\$i b \$MAJOR_NUM \$MINOR_NUM"
+emit "  MINOR_END=\`echo \$MINOR_NUM 10 + p | dc\`"
+emit "  MINOR_START=\`echo \$MINOR_NUM 1 + p | dc\`"
+emit "  for j in \`seq \$MINOR_START 1 \$MINOR_END\`"
+emit "  do"
+emit "     mknod /dev/\$i\$j b \$MAJOR_NUM \$j"
+emit "  done"
+emit "done"
+
 if [ -n "$vg_list" ]; then
     emit "echo Making device-mapper control node"
-    emit "mkdmnod"
+    emit "DM_MAJ=\`cat /proc/devices | grep misc | cut -d\" \" -f2\`"
+    emit "DM_MIN=\`cat /proc/misc | grep device-mapper | cut -d\" \" -f2\`"
+    emit "mknod /dev/mapper/control b \$DM_MAJ \$DM_MIN"
 fi
 
 if [ -n "$net_list" ]; then
     for netdev in $net_list; do 
 	emit "echo Bringing up $netdev"
 	handle_netdev $netdev
-	emit $network
+	#emit $network
     done
 fi
-
-# HACK: module loading + device creation isn't necessarily synchronous...
-# this will make sure that we have all of our devices before trying
-# things like RAID or LVM
-emit "mkblkdevs"
 
 emitdms
 
 if [ -n "$raiddevices" ]; then
     for dev in $raiddevices; do
 	cp -a /dev/${dev} $MNTIMAGE/dev
-	emit "raidautorun /dev/${dev}"
+	emit "\#need code here to set up md devs"
     done
 fi
 
 if [ -n "$vg_list" ]; then
     emit "echo Scanning logical volumes"
-    emit "lvm vgscan --ignorelockingfailure"
+    emit "lvm vgscan --ignorelockingfailure --mknodes"
     emit "echo Activating logical volumes"
-    emit "lvm vgchange -ay --ignorelockingfailure $vg_list"
-fi
-
-if [ -z "$noresume" -a -n "$swsuspdev" ]; then
-    emit "resume $swsuspdev"
+    emit "lvm vgchange -a y --ignorelockingfailure"
+    emit "for i in \`lvm lvs | awk '/Log.*/ { print \$1}'\`"
+    emit "do"
+    emit "   VGRP=\`lvm lvs | grep \$i | cut -d\" \" -f4\`"
+    emit "   mkdir -p /dev/\$VGRP"
+    emit "   if [ ! -e /dev/\$VGRP/\$i ]"
+    emit "   then" 
+    emit "      ln -s /dev/mapper/\$VGRP-\$i /dev/\$VGRP/\$i"
+    emit "      if [ -z \"\$noresume\" ]"
+    emit "      then"
+    emit "        /sbin/dmsetup resume /dev/mapper/\$VGRP-\$i"
+    emit "      fi"
+    emit "   fi"
+    emit "done"
 fi
 
 kdump_chk()
@@ -1048,8 +1140,11 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
     
     #timezone info for date which outputs YYYY-MM-DD-hh:mm
     cp /etc/localtime $MNTIMAGE/etc/localtime
-    bin="/sbin/reboot /sbin/kcp /bin/mkdir"
-    
+    bin="/sbin/dmsetup /sbin/kcp /usr/bin/scp /usr/bin/ssh /sbin/kcp /sbin/ethtool /sbin/mdadm" 
+    #ssh, scp require libraries that aren't found with ldd
+    lib=/lib && [ -d "/lib64" ] && lib=/lib64
+    k_extras="/$lib/libnss_compat.so.2 /$lib/libnss_files.so.2"
+
     #traverse the config file and setup each dump location
     while read type location; do
             [ -z "$type" ] && continue  #skip empty lines
@@ -1069,15 +1164,13 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                     emit "echo Saving to partition $location"
                     emit "dd if=/proc/vmcore of=$location"
                     emit "cond reboot -h -f"
-                    bin="$bin /bin/dd"
                     ;;
 
                 net)
-                    #ssh, scp require libraries that aren't found with ldd
-                    lib=/lib && [ -d "/lib64" ] && lib=/lib64
-                    k_extras="/$lib/libnss_compat.so.2 /$lib/libnss_files.so.2"
-                    bin="$bin /usr/bin/scp /usr/bin/ssh /bin/dd /bin/cp"
-                    
+                    if [ -n "$CORE_COLLECTOR" ]; then
+                        bin="$bin /sbin/makedumpfile"
+                    fi
+
                     #build an /etc/passwd for scp to work properly
                     grep "^root" /etc/passwd > $MNTIMAGE/etc/passwd
 
@@ -1098,7 +1191,6 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                     emit "echo Saving to remote location $location"
                     if [ -z "`echo $location|grep @`" ]; then
                         #NFS path
-
                         #test nfs mount and directory creation
                         rlocation=`echo $location| sed 's/.*:/'"$rhost"':/'`
                         tmnt=`mktemp -dq`
@@ -1112,17 +1204,21 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                             echo "Cannot create directory in $location: var/crash"
                             exit 1 
                         fi
+
+                        if [ -z "$CORE_COLLECTOR" ]; then
+                            CORE_COLLECTOR="cp"
+                        fi
+
                         #TODO check for available size is greater than $memtotal
     
                         #setup nfs case
                         mkdir -p $MNTIMAGE/mnt
                         emit "mount -t nfs -o nolock $rlocation /mnt"
                         emit "dd if=/dev/mem of=/dev/urandom count=1 bs=512 skip=100" 
-                        emit "cond kcp --local /proc/vmcore /mnt/var/crash/$lhost-%DATE"
-                        emit "cond reboot -h -f"
+                        emit "$CORE_COLLECTOR /proc/vmcore /mnt/var/crash/$lhost-%DATE"
+                        emit "reboot -f"
                     else
                         #SSH path
-           
                         #rebuild $location replacing machine name with ip address
                         rlocation=`echo $location|sed 's/@.*/@'"$rhost"'/'`
                         #test ssh path and directory creation
@@ -1148,13 +1244,15 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                         fi
                         emit "dd if=/dev/mem of=/dev/urandom count=1 bs=512 skip=100" 
                         emit "cond kcp --ssh /proc/vmcore $rlocation:/var/crash/$lhost-%DATE"
-                        emit "cond reboot -h -f"
+                        emit "cond reboot -f"
                     fi
                     ;;
                 ifc)
                     ;;
+                core_collector)
+                    ;;
                 default)
-                    [ "$location" == "reboot" ] && emit "reboot -h -f"
+                    [ "$location" == "reboot" ] && emit "reboot -f"
                     #else load normally on default failure case
                     ;;
                 *)
@@ -1171,16 +1269,25 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                     #TODO check for available size is greater than $memtotal
     
                     #setup filesystem case
-                    lhost="127.0.0.1"
                     mkdir -p $MNTIMAGE/mnt
 		    touch $MNTIMAGE/etc/mtab
+                    if [ -z "$CORE_COLLECTOR" ]; then
+                        CORE_COLLECTOR="cp"
+                    fi
+                    emit "DATE=\`date +%Y-%M-%d-%T\`"
                     emit "echo Saving to the local filesystem $location"
                     emit "fsck.$type $location"
-                    emit "cond mount -t $type $location /mnt"
-                    emit "cond kcp --local /proc/vmcore /mnt/var/crash/$lhost-%DATE"
-                    emit "cond umount /mnt"
-                    emit "cond reboot -h -f"
-                    bin="$bin /sbin/fsck.$type /bin/mount"
+                    emit "mount -t $type $location /mnt"
+                    emit "if [ \$? == 0 ]"
+                    emit "then"
+                    emit "  mkdir -p /proc/vmcore/var/crash/127.0.0.1-\$DATE"
+                    emit "  $CORE_COLLECTOR /proc/vmcore /mnt/var/crash/127.0.0.1-\$DATE/vmcore"
+                    emit "  if [ \$? == 0 ]"
+                    emit "  then"
+                    emit "      reboot -f"
+                    emit "  fi"
+                    emit "fi"
+                    emit "umount /mnt"
                     ;;
             esac
     done < $KDUMP_CONFIG_FILE
@@ -1199,18 +1306,30 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
 fi
 
 emit "echo Creating root device."
-# mkrootdev does "echo /dev/root /sysroot ext3 defaults,ro 0 0 >/etc/fstab"
-emit "mkrootdev -t $rootfs -o $rootopts $rootdev"
-rootdev=/dev/root
+emit "#check to see if we have root= on the command line"
+emit "ROOTDEV=\`cat /proc/cmdline | grep root=\`"
+emit "if [ -n \"\$ROOTDEV\" ]"
+emit "then"
+emit "   ROOTDEV=\`cat /proc/cmdline | cut -d\" \" -f2 | sed -e's/root=//'\`"
+emit "else"
+emit "   #we need to get the root major/minor from real-root-dev"
+emit "   ROOT_DEV_NR=\`cat /proc/sys/kernel/real-root-dev\`"
+emit "   ROOT_MIN=\`echo \$ROOT_DEV_NR | sed -e's/\\([0-9a-f]\\{1,2\\}\\)\\([0-9a-f]\\{2\\}\\)/\\2/'\`"
+emit "   ROOT_MAJ=\`echo \$ROOT_DEV_NR | sed -e's/\\([0-9a-f]\\{1,2\\}\\)\\([0-9a-f]\\{2\\}\\)/\\1/'\`"
+emit "   mknod /dev/rootdev b 0x\$ROOT_MAJ 0x\$ROOT_MIN"
+emit "   ROOTDEV=/dev/rootdev"
+emit "fi"
 
 emit "echo Mounting root filesystem."
-emit "mount /sysroot"
-
-emit "echo Setting up other filesystems."
-emit "setuproot"
+emit "mount \$ROOTDEV /sysroot"
+emit "if [ \$? != 0 ]"
+emit "then"
+emit "   echo unable to mount rootfs. Dropping to shell"
+emit "   /bin/msh"
+emit "fi"
 
 emit "echo Switching to new root and running init."
-emit "switchroot"
+emit "exec switch_root /sysroot /sbin/init"
 
 chmod +x $RCFILE
 
