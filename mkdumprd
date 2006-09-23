@@ -25,7 +25,6 @@
 #       Guillaume Cottenceau <gc@mandrakesoft.com>
 #	Peter Jones <pjones@redhat.com>
 #       Neil Horman <nhorman@redhat.com>
-
 umask 0022
 
 export MALLOC_PERTURB_=204
@@ -902,7 +901,6 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
     done < $KDUMP_CONFIG_FILE
 fi
 
-
 if [ -n "$CORE_COLLECTOR" ]; then
     if [ "$USING_METHOD" == "ssh" ] || [ "$USING_METHOD" == "raw" ]; then
         echo "You may only use alternate core collectors with the NFS and Local Filesystem targets"
@@ -926,7 +924,6 @@ mkdir -p $MNTIMAGE/modules
 mkdir -p $MNTIMAGE/usr/share/udhcpc
 ln -s bin $MNTIMAGE/sbin
 
-
 #if we are using makedumpfile here, then generate the config file
 if [ -n "$CORE_COLLECTOR" ]; then
     RUN_KERN_VER=`uname -r`
@@ -938,7 +935,6 @@ if [ -n "$CORE_COLLECTOR" ]; then
         exit 1;
     fi
 fi
-
 #copy in busybox and make symlinks to its supported utilities
 cp /sbin/busybox $MNTIMAGE/sbin/busybox
 cd $MNTIMAGE/sbin
@@ -948,8 +944,7 @@ for i in `/sbin/busybox |
 do
         ln -s busybox $MNTIMAGE/sbin/$i
 done
-cd -
-
+cd - > /dev/null 2>&1
 #Busybox doesn't have a /bin/sh applet, 
 #so we build a reasonable faximilie here
 cat >> $MNTIMAGE/bin/sh << EOF
@@ -968,7 +963,6 @@ cat >> $MNTIMAGE/usr/share/udhcpc/default.script << EOF
 EOF
 
 chmod 755 $MNTIMAGE/usr/share/udhcpc/default.script
-
 
 if [ -e /etc/fstab.sys ]; then
     inst /etc/fstab.sys "$MNTIMAGE/etc/fstab.sys"
@@ -1060,7 +1054,6 @@ for i in 0 1 2 3 ; do
     emit "mknod /dev/ttyS$i c 4 $(($i + 64))"
 done
 emit "mknod /dev/mem c 1 1"
-
 for MODULE in $MODULES; do
     text=""
     module=`echo $MODULE | sed "s|.*/||" | sed "s/.k\?o$//"`
@@ -1168,7 +1161,6 @@ kdump_chk()
     echo "$KDUMP_CONFIG_FILE: $2"
     exit 1
 }
-
     emit "DATE=\`date +%Y-%M-%d-%T\`"
 if [ -n "$KDUMP_CONFIG_FILE" ]; then
     memtotal=`cat /proc/meminfo | grep MemTotal | awk '{print $2}'`
@@ -1284,9 +1276,13 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                         #setup nfs case
                         mkdir -p $MNTIMAGE/mnt
                         emit "mount -t nfs -o nolock $rlocation /mnt"
-                        emit "dd if=/dev/mem of=/dev/urandom count=1 bs=512 skip=100" 
-                        emit "$CORE_COLLECTOR /proc/vmcore /mnt/var/crash/$lhost-%DATE"
-                        emit "reboot -f"
+                        emit "mkdir -p /mnt/var/crash/$lhost-\$DATE"
+                        emit "$CORE_COLLECTOR /proc/vmcore /mnt/var/crash/$lhost-\$DATE/vmcore"
+                        emit "if [ \$? == 0 ]"
+                        emit "then"
+                        emit "  reboot -f"
+                        emit "fi"
+                        emit "umount /mnt"
                     else
                         #SSH path
                         #rebuild $location replacing machine name with ip address
@@ -1424,5 +1420,4 @@ else
 fi
 rm -rf $MNTIMAGE $IMAGE
 if [ -n "$MNTPOINT" ]; then rm -rf $MNTPOINT ; fi
-
 exit $rc
