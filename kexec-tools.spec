@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 52%{?dist}
+Release: 53%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -14,7 +14,7 @@ Source6: Makefile.kcp
 Source7: makedumpfile.tar.gz
 Source8: kexec-kdump-howto.txt
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-Requires(pre): coreutils chkconfig sed
+Requires(pre): coreutils chkconfig sed busybox ethtool
 BuildRequires: zlib-devel elfutils-libelf-devel glib2-devel pkgconfig
 
 #
@@ -162,6 +162,9 @@ exit 0
 %doc kexec-kdump-howto.txt
 
 %changelog
+* Fri Sep 22 2006 Neil Horman <nhorman@redhat.com> - 1.101-52%{dist}
+- rewrote mkdumprd to use busybox
+
 * Tue Sep 19 2006 Neil Horman <nhorman@redhat.com> - 1.101-52%{dist}
 - added kdump howto documentation
 
