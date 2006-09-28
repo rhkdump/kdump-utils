@@ -386,60 +386,30 @@ handlelvordev() {
 
 handlenetdev() {
     local dev=$1
-    local rip=$2
-    source /etc/sysconfig/network
-    if [ ! -f /etc/sysconfig/network-scripts/ifcfg-$dev ]; then
-	error "unable to find network device configuration for $dev"
-    fi
-    source /etc/sysconfig/network-scripts/ifcfg-$dev
-    [ -n  "$BOOTPROTO" ] || error "bootproto not specified for $dev"
+    cp /etc/sysconfig/network-scripts/ifcfg-$dev $MNTIMAGE/etc
+    . $MNTIMAGE/etc/ifcfg-$dev
 
     findnetdriver $dev
-    [ -z "$IPADDR" ] && IPADDR=`ip addr show dev $dev scope global | grep inet | awk '{print $2}' | cut -d/ -f1`
-    [ -n "$IPADDR" ] && IPSTR="$IPSTR --ip $IPADDR"
-    if [ -z "$NETMASK" ]; then
-        IPPREFIX=`ip addr show dev $dev scope global | grep inet | awk '{print $2}'`
-        NETMASK=`ipcalc --netmask $IPPREFIX | cut -d= -f2`
-    fi
-    [ -n "$NETMASK" ] && IPSTR="$IPSTR --netmask $NETMASK"
-    [ -z "$GATEWAY" ] && GATEWAY=`ip route get to $rip | awk '/.*via.*/{print$3}'`
-    [ -z "$GATEWAY" ] && GATEWAY=`ip route list | grep default | awk '/.*via.*/{print$3}'`
-    [ -n "$GATEWAY" ] && IPSTR="$IPSTR --gateway $GATEWAY"
-    [ -n "$ETHTOOL_OPTS" ] && IPSTR="$IPSTR --ethtool \"$ETHTOOL_OPTS\""
-    [ -n "$MTU" ] && IPSTR="$IPSTR --mtu $MTU"
-    if [ -n "$IPADDR" ]; then
-	[ -z "$DOMAIN" ] && DOMAIN=$(awk '/^search / { print gensub("^search ","",1) }' /etc/resolv.conf)
-	if [ -z "$DNS1" ]; then
-	    DNS1=$(awk '/^nameserver / { ORS="" ; if (x > 0) print "," ; printf "%s", $2 ; x = 1}' /etc/resolv.conf)
-	fi
-    fi
-    [ -n "$DOMAIN" ] && IPSTR="$IPSTR --domain \"$DOMAIN\""
-    if [ -n "$DNS1" ]; then
-        if [ -n "$DNS2" ]; then
-	    IPSTR="$IPSTR --dns $DNS1,$DNS2"
-	else
-	    IPSTR="$IPSTR --dns $DNS1"
-	fi
-    fi
-    #when kdump boots the netdevice name might be different.  this 
-    #lets us override the name we normally think it is
-    if [ -n "$KDUMP_IFC" ]; then
-        dev=$KDUMP_IFC
-    fi
-    network="network --device $dev --bootproto $BOOTPROTO $IPSTR"
-    BUS_ID=`/sbin/ethtool -i $dev | grep bus-info`
-    cat >> $MNTIMAGE/etc/ifcfg-$dev << EOF
-IPADDR=$IPADDR
-NETMASK=$NETMASK
-GATEWAY=$GATEWAY
-ETHTOL_OPTS=$ETHTOOL_OPTS
-MTU=$MTU
-DNS1=$DNS1
-DNS2=$DNS2
-BOOTPROTO=$BOOTPROTO    
-BUS_ID="$BUS_ID"
-EOF
 
+    if [ "$MASTER" == "yes" ]
+    then
+        #put code here to handle subdevs for a bond
+        echo "BUS_ID=\"Bonding\"" >> $MNTIMAGE/etc/ifcfg-$dev
+    elif [ "$VLAN" == "yes" ] 
+    then
+        #put code to handle vlan devices
+        echo "BUS+Id=\"Vlan\"" >> $MNTIMAGE/etc/ifcfg-$dev
+    else
+        BUS_ID=`/sbin/ethtool -i $dev | grep bus-info`
+        echo "BUS_ID=\"$BUS_ID\"" >> $MNTIMAGE/etc/ifcfg-$dev
+    fi
+
+    if [ "$BOOTPROTO" == "dhcp" ]
+    then
+        echo iface $dev inet dhcp >> $MNTIMAGE/etc/network/interfaces
+    else    
+        echo iface $dev inet static address $IPADDR netmask $NETMASK >> $MNTIMAGE/etc/network/interfaces
+    fi
 }
 
 while [ $# -gt 0 ]; do
@@ -864,11 +834,21 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
             #find ethernet device used to route to remote host, ie eth0
             netdev=`/sbin/ip route get to $rhost 2>&1`
             [ $? != 0 ] && echo "Bad kdump location: $location" && continue
-            netdev=`echo $netdev|awk '{print $3;}'|head -n 1`
+            #the field in the ip output changes if we go to another subnet
+            OFF_SUBNET=`echo $netdev | grep via`
+            if [ -n "$OFF_SUBNET" ]
+            then
+                # we are going to a different subnet
+                netdev=`echo $netdev|awk '{print $5;}'|head -n 1`
+            else
+                # we are on the same subnet
+                netdev=`echo $netdev|awk '{print $3}'|head -n 1`
+            fi
            
             #add the ethernet device to the list of modules 
-            mkdir -p $MNTIMAGE/etc
-            handlenetdev $netdev $rhost
+            mkdir -p $MNTIMAGE/etc/network/
+            handlenetdev $netdev
+            echo $netdev >> $MNTIMAGE/etc/iface_to_activate
 
             #load nfs modules, if needed 
             echo $location | grep -v "@" > /dev/null && findmodule nfs
@@ -922,6 +902,12 @@ mkdir -p $MNTIMAGE/sys
 mkdir -p $MNTIMAGE/sysroot
 mkdir -p $MNTIMAGE/modules
 mkdir -p $MNTIMAGE/usr/share/udhcpc
+mkdir -p $MNTIMAGE/var/run
+mkdir -p $MNTIMAGE/etc/network/if-pre-up.d
+mkdir -p $MNTIMAGE/etc/network/if-up.d
+mkdir -p $MNTIMAGE/etc/network/if-pre-down.d
+mkdir -p $MNTIMAGE/etc/network/if-down.d
+mkdir -p $MNTIMAGE/etc/network/if-post-down.d
 ln -s bin $MNTIMAGE/sbin
 
 #if we are using makedumpfile here, then generate the config file
@@ -945,6 +931,8 @@ do
         ln -s busybox $MNTIMAGE/sbin/$i
 done
 cd - > /dev/null 2>&1
+
+#THIS IS WHERE WE GENERATE OUR ADDITINONAL UTILITIES
 #Busybox doesn't have a /bin/sh applet, 
 #so we build a reasonable faximilie here
 cat >> $MNTIMAGE/bin/sh << EOF
@@ -960,9 +948,157 @@ chmod 755 $MNTIMAGE/bin/sh
 
 cat >> $MNTIMAGE/usr/share/udhcpc/default.script << EOF
 #!/bin/msh
+[ -z "\$1" ] && echo "Error: should be called from udhcpc" && exit 1
+
+
+case "\$1" in
+    deconfig)
+        /sbin/ifconfig \$interface 0.0.0.0
+        ;;
+
+    renew|bound)
+        /sbin/ifconfig \$interface \$ip netmask \$subnet
+
+        if [ -n "\$router" ] ; then
+            echo "deleting routers"
+            while route del default gw 0.0.0.0 dev \$interface ; do
+                :
+            done
+
+            for i in \$router ; do
+                route add default gw \$i dev \$interface
+            done
+        fi
+
+        echo -n > /etc/resolv.conf 
+        [ -n "\$domain" ] && echo search $domain >> /etc/resolv.conf 
+        for i in \$dns ; do
+            echo adding dns \$i
+            echo nameserver \$i >> /etc/resolv.conf 
+        done
+        ;;
+esac
+
+exit 0
 EOF
 
+#NETWORKING SCRIPT DIRECTORIES
+cat >> $MNTIMAGE/etc/network/if-pre-up.d/pre-up-script << EOF
+#!/bin/msh
+ifconfig \$IFACE up
+exit 0
+EOF
+
+for i in `ls $MNTIMAGE/etc/network/if-pre-up.d`
+do
+    chmod 755 $MNTIMAGE/etc/network/if-pre-up.d/$i
+done
+
+cat >> $MNTIMAGE/etc/network/if-up.d/up-script << EOF
+#!/bin/msh
+if [ "\$METHOD" != "dhcp" ]
+then
+    . /etc/ifcfg-\$IFACE
+    ifconfig \$IFACE \$IPADDR netmask \$NETMASK
+    route add default gw \$GATEWAY dev \$IFACE
+fi
+exit 0
+EOF
+
+for i in `ls $MNTIMAGE/etc/network/if-up.d`
+do
+    chmod 755 $MNTIMAGE/etc/network/if-up.d/$i
+done
+
 chmod 755 $MNTIMAGE/usr/share/udhcpc/default.script
+
+# WE DONT HAVE FUNCTIONS AVAILABLE IN MSH
+# SO WE IMPLEMENT THEM HERE AS scripts
+SCRIPTDIR=$MNTIMAGE/scriptfns
+mkdir -p $SCRIPTDIR
+
+cat >> $SCRIPTDIR/rename_interfaces << EOF
+#!/bin/msh
+TMPCNT=0
+#erase previously recorded map
+rm -f /etc/iface_map
+for i in \`ls /etc/ifcfg-*\`
+do
+    RENAMED=""
+    REAL_DEV=""
+    NETDEV=\`echo \$i | cut -d"-" -f2\`
+    for j in \`ifconfig -a | awk '/.*Link encap.*/ {print \$1}'\`
+    do
+        . /etc/ifcfg-\$NETDEV
+        case "\$BUS_ID" in
+        Bonding)
+            #do something for bonding
+            ;;
+        Vlan)
+            #do something for vlan
+            ;;
+        *)
+            INFO=\`ethtool -i \$j | grep bus-info\`
+            if [ "\$INFO" == "\$BUS_ID" -a -z "\$REAL_DEV" ]
+            then
+                REAL_DEV=\$j
+                RENAMED="yes"
+            fi
+            ;;
+        esac
+    done
+
+    if [ -z "\$RENAMED" ]
+    then
+        echo "Could not find a mapping for device \$NETDEV"
+        exit 1
+    fi
+
+    #build the interface rename map
+    echo \$NETDEV \$REAL_DEV tmp\$TMPCNT>> /etc/iface_map
+    TMPCNT=\`echo \$TMPCNT 1 + p | dc\`
+    echo mapping \$NETDEV to \$REAL_DEV
+done
+
+MAP_COUNT=\`wc -l /etc/iface_map | cut -d" " -f7 \`
+#now do all the renaming - first to temp space
+for j in \`seq 1 1 \$MAP_COUNT\`
+do
+    CURRENT=\`awk '{if (RN == ARGV[j]) print \$1}' /etc/iface_map\`
+    NEW=\`awk '{if (RN == ARGV[j]) print \$2}' /etc/iface_map\`
+    INTERIM=\`awk '{if (RN == ARGV[j]) print \$3}' /etc/iface_map\`
+    mv /etc/ifcfg-\$CURRENT /etc/ifcfg-\$INTERIM
+    for i in /etc/ifcfg-\$INTERIM /etc/iface_to_activate /etc/network/interfaces
+    do
+        # the double quotes lets us expand the variables
+        sed -e"s/\$CURRENT/\$INTERIM/g" \$i > \$i.tmp
+        mv \$i.tmp \$i
+    done
+done
+ 
+
+for j in \`seq 1 1 \$MAP_COUNT\`
+do
+    CURRENT=\`awk '{if (RN == ARGV[j])  print \$1}' /etc/iface_map\`
+    NEW=\`awk '{if (RN == ARGV[j]) print \$2}' /etc/iface_map\`
+    INTERIM=\`awk '{if (RN == ARGV[j]) print \$3}' /etc/iface_map\`
+    mv /etc/ifcfg-\$INTERIM /etc/ifcfg-\$NEW
+    for i in /etc/ifcfg-\$NEW /etc/iface_to_activate /etc/network/interfaces
+    do
+        # the double quotes lets us expand the variables
+        sed -e"s/\$INTERIM/\$NEW/g" \$i > \$i.tmp
+        mv \$i.tmp \$i
+    done
+done < /etc/iface_map
+
+exit 0
+EOF
+
+#DONT ADD STUFF to SCRIPTDIR PAST HERE
+for i in `ls $SCRIPTDIR/*`
+do
+    chmod 755 $i
+done
 
 if [ -e /etc/fstab.sys ]; then
     inst /etc/fstab.sys "$MNTIMAGE/etc/fstab.sys"
@@ -1018,6 +1154,7 @@ fi
 echo -n >| $RCFILE
 cat >> $MNTIMAGE/init << EOF
 #!/bin/msh
+export PATH=$PATH:/scriptfns
 mount -t proc /proc /proc
 setquiet
 echo Mounting proc filesystem
@@ -1202,44 +1339,9 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                     grep "^root" /etc/passwd > $MNTIMAGE/etc/passwd
 
                     # bring up the network
-                    emit "for i in \`ls /etc/ifcfg*\`"
-                    emit "do"
-                    emit "  NETDEV=\`echo \$i | cut -d\"-\" -f2\`"
-                    emit "  echo activating \$NETDEV"
-                    emit "  REAL_DEV=\"\""
-                    emit "  #first source the config information"
-                    emit "  . /etc/ifcfg-\$NETDEV"
-                    emit "  #now search for the real device name"
-                    emit "  #based on bus id information"
-                    emit "  for i in \`ifconfig -a | awk '/.*Link encap.*/ {print \$1}'\`"
-                    emit "  do"
-                    emit "      if [ -z \"\$REAL_DEV\" ]"
-                    emit "      then"
-                    emit "          INFO=\`ethtool -i \$i | grep bus-info\`"
-                    emit "          if [ \"\$INFO\" == \"\$BUS_ID\" ]"
-                    emit "          then"
-                    emit "              REAL_DEV=\$i"
-                    emit "          fi"
-                    emit "      fi"
-                    emit "  done"
-                    emit "  ifconfig \$REAL_DEV up"
-                    emit "  #check the boot protocol of the device"
-                    emit "  if [ \"\$BOOTPROTO\" == \"dhcp\" ]"
-                    emit "  then"
-                    emit "      RESULT=\`udhcpc -i \$REAL_DEV  -q -n\`"
-                    emit "      if [ \$? != 0 ]"
-                    emit "      then"
-                    emit "          echo Unable to obtain an IP address, dropping to shell"
-                    emit "          /bin/msh"
-                    emit "      fi"
-                    emit "      IPADDR=\`echo \$RESULT | awk '{print \$14}'\`"
-                    emit "  fi"
-                    emit "  ifconfig \$REAL_DEV \$IPADDR netmask \$NETMASK"
-                    emit "  if [ -n \"\$GATEWAY\" ]"
-                    emit "  then"
-                    emit "      route add default gw \$GATEWAY"
-                    emit "  fi"
-                    emit "done"
+                    emit "rename_interfaces"
+                    emit "IFACE=\`cat /etc/iface_to_activate\`"
+                    emit "ifup \$IFACE"
                     #grab remote host and xlate into numbers
                     rhost=`echo $location | sed 's/.*@//' | cut -d':' -f1`
                     need_dns=`echo $rhost|grep [a-zA-Z]`
@@ -1320,6 +1422,13 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                     ;;
                 default)
                     [ "$location" == "reboot" ] && emit "reboot -f"
+                    if [ "$location" == "shell" ]
+                    then
+                        emit "echo dropping to initramfs shell"
+                        emit "echo exiting this shell will reboot your system"
+                        emit "/bin/msh"
+                        emit "reboot -f"
+                    fi
                     #else load normally on default failure case
                     ;;
                 *)

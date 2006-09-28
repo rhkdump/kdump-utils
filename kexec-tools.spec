@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 53%{?dist}
+Release: 54%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -162,6 +162,10 @@ exit 0
 %doc kexec-kdump-howto.txt
 
 %changelog
+* Thu Sep 28 2006 Neil Horman <nhorman@redhat.com> - 1.101-54%{dist}
+- update mkdumprd to use busybox ifup/down infrastructure
+- update initscript file to use chkconfig properly
+
 * Fri Sep 22 2006 Neil Horman <nhorman@redhat.com> - 1.101-52%{dist}
 - rewrote mkdumprd to use busybox
 
