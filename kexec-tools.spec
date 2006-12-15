@@ -1,36 +1,55 @@
 Name: kexec-tools
 Version: 1.101
-Release: 54%{?dist}
+Release: 55%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
 Source0: %{name}-%{version}.tar.gz
 Source1: kdump.init
 Source2: kdump.sysconfig
-Source3: mkdumprd
-Source4: kdump.conf
-Source5: kcp.c
-Source6: Makefile.kcp
-Source7: makedumpfile.tar.gz
-Source8: kexec-kdump-howto.txt
+Source3: kdump.sysconfig.x86_64
+Source4: kdump.sysconfig.i386
+Source5: kdump.sysconfig.ppc64
+Source6: kdump.sysconfig.ia64
+Source7: mkdumprd
+Source8: kdump.conf
+Source9: makedumpfile-1.0.7.tar.gz
+Source10: kexec-kdump-howto.txt
+Source11: firstboot_kdump.py
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-Requires(pre): coreutils chkconfig sed busybox ethtool
-BuildRequires: zlib-devel elfutils-libelf-devel glib2-devel pkgconfig
+Requires(pre): coreutils chkconfig sed 
+Requires: busybox >= 1.2.0
+BuildRequires: zlib-devel elfutils-libelf-devel glib2-devel pkgconfig elfutils-libelf-devel elfutils-devel
+ExcludeArch: ppc
+%ifarch %{ix86} x86_64 ppc64 ia64
+Obsoletes: diskdumputils netdump
+%endif
 
 #
 # Patches 0 through 100 are meant for x86 kexec-tools enablement
 #
 Patch1: kexec-tools-1.101-kdump.patch
+Patch2: kexec-tools-1.101-elf-core-type.patch
 
 #
 # Patches 101 through 200 are meant for x86_64 kexec-tools enablement
 #
 Patch101: kexec-tools-1.101-disable-kdump-x8664.patch
+Patch102: kexec-tools-1.101-x86_64-exactmap.patch
 
 #
 # Patches 201 through 300 are meant for ia64 kexec-tools enablement
 #
 Patch201: kexec-tools-1.101-ia64-fixup.patch
+Patch202: kexec-tools-1.101-ia64-tools.patch
+Patch203: kexec-tools-1.101-ia64-kdump.patch
+Patch204: kexec-tools-1.101-ia64-EFI.patch
+Patch205: kexec-tools-1.101-ia64-icache-align.patch
+Patch206: kexec-tools-1.101-ia64-noio.patch
+Patch207: kexec-tools-1.101-ia64-phdr-malloc.patch
+Patch208: kexec-tools-1.101-ia64-load-offset.patch
+Patch209: kexec-tools-1.101-ia64-noio-eat.patch
+Patch210: kexec-tools-1.101-ia64-dash-l-fix.patch
 
 #
 # Patches 301 through 400 are meant for ppc64 kexec-tools enablement
@@ -39,6 +58,7 @@ Patch301: kexec-tools-1.101-ppc64-ignore-args.patch
 Patch302: kexec-tools-1.101-ppc64-usage.patch
 Patch303: kexec-tools-1.101-ppc64-cliargs.patch
 Patch304: kexec-tools-1.101-ppc64-platform-fix.patch
+Patch305: kexec-tools-1.101-ppc64-64k-pages.patch
 
 #
 # Patches 401 through 500 are meant for s390 kexec-tools enablement
@@ -54,12 +74,11 @@ Patch501: kexec-tools-1.101-ppc-fixup.patch
 # Patches 601 onward are generic patches
 #
 Patch601: kexec-tools-1.101-Makefile.patch
-Patch602: kexec-tools-1.101-Makefile-kcp.patch
-Patch603: kexec-tools-1.101-et-dyn.patch
-Patch604: kexec-tools-1.101-add-makedumpfile1.patch
-Patch605: kexec-tools-1.101-add-makedumpfile2.patch
-Patch606: kexec-tools-1.101-makedumpfile-archbuild.patch
-Patch607: kexec-tools-1.101-page_h.patch
+Patch602: kexec-tools-1.101-et-dyn.patch
+Patch603: kexec-tools-1.101-page_h.patch
+Patch604: kexec-tools-1.101-elf-format.patch
+Patch605: kexec-tools-1.101-ifdown.patch
+Patch606: kexec-tools-1.101-reloc-update.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -72,28 +91,36 @@ component of the kernel's kexec feature.
 %setup -q -n %{name}-%{version}
 rm -f ../kexec-tools-1.101.spec
 %patch1 -p1
+%patch2 -p1
 %patch101 -p1
+%patch102 -p1
 %patch201 -p1
+%patch202 -p1
+%patch203 -p1
+%patch204 -p1
+%patch205 -p1
+%patch206 -p1
+%patch207 -p1
+%patch208 -p1
+%patch209 -p1
+%patch210 -p1
 %patch301 -p1
 %patch302 -p1
 %patch303 -p1
 %patch304 -p1
+%patch305 -p1
 %patch401 -p1
 %patch501 -p1
 %patch601 -p1
 %patch602 -p1
-%patch603 -p1
 
 mkdir -p -m755 kcp
-cp %{SOURCE5} kcp/kcp.c
-cp %{SOURCE6} kcp/Makefile
-mkdir makedumpfile 
-tar -C makedumpfile -z -x -v -f %{SOURCE7}
+tar -z -x -v -f %{SOURCE9}
 
+%patch603 -p1
 %patch604 -p1
 %patch605 -p1
 %patch606 -p1
-%patch607 -p1
 
 %build
 %configure \
@@ -103,9 +130,9 @@ tar -C makedumpfile -z -x -v -f %{SOURCE7}
 %endif
     --sbindir=/sbin
 rm -f kexec-tools.spec.in
-cp %{SOURCE8} .
+cp %{SOURCE10} . 
 make
-%ifarch %{ix86} x86_64
+%ifarch %{ix86} x86_64 ia64 ppc64
 make -C makedumpfile
 %endif
 
@@ -116,21 +143,41 @@ mkdir -p -m755 $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d
 mkdir -p -m755 $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
 mkdir -p -m755 $RPM_BUILD_ROOT%{_localstatedir}/crash
 mkdir -p -m755 $RPM_BUILD_ROOT%{_mandir}/man8/
+mkdir -p -m755 $RPM_BUILD_ROOT%{_docdir}
+mkdir -p -m755 $RPM_BUILD_ROOT%{_datadir}/kdump
 install -m 755 %{SOURCE1} $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/kdump
-install -m 644 %{SOURCE2} $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/kdump
-install -m 755 %{SOURCE3} $RPM_BUILD_ROOT/sbin/mkdumprd
-install -m 755 %{SOURCE4} $RPM_BUILD_ROOT%{_sysconfdir}/kdump.conf
+if [ -f $RPM_SOURCE_DIR/kdump.sysconfig.%{_target_cpu} ]; then
+	install -m 644 $RPM_SOURCE_DIR/kdump.sysconfig.%{_target_cpu} $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/kdump
+else
+	install -m 644 %{SOURCE2} $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/kdump
+fi
+install -m 755 %{SOURCE7} $RPM_BUILD_ROOT/sbin/mkdumprd
+install -m 755 %{SOURCE8} $RPM_BUILD_ROOT%{_sysconfdir}/kdump.conf
 install -m 644 kexec/kexec.8 $RPM_BUILD_ROOT%{_mandir}/man8/kexec.8
-%ifarch %{ix86} x86_64
+install -m 755 %{SOURCE11} $RPM_BUILD_ROOT%{_datadir}/kdump/firstboot_kdump.py
+%ifarch %{ix86} x86_64 ia64 ppc64
 install -m 755 makedumpfile/makedumpfile $RPM_BUILD_ROOT/sbin/makedumpfile
 %endif
-
 %clean
 rm -rf $RPM_BUILD_ROOT
 
 %post
 touch /etc/kdump.conf
 /sbin/chkconfig --add kdump
+#This portion of the script is temporary.  Its only here
+#to fix up broken boxes that require special settings 
+#in /etc/sysconfig/kdump.  It will be removed when 
+#These systems are fixed.
+
+#This is for HP zx1 machines
+#They require machvec=dig on the kernel command line
+if [ -d /proc/bus/mckinley ]
+then
+	sed -e's/\(^KDUMP_COMMANDLINE_APPEND.*\)\("$\)/\1 machvec=dig"/' \
+	/etc/sysconfig/kdump > /etc/sysconfig/kdump.new
+	mv /etc/sysconfig/kdump.new /etc/sysconfig/kdump
+fi
+
 
 %postun
 
@@ -145,9 +192,20 @@ if [ "$1" = 0 ]; then
 fi
 exit 0
 
+%triggerin -- firstboot
+if [ ! -e %{_datadir}/firstboot/modules/firstboot_kdump.py ]
+then
+	ln -s %{_datadir}/kdump/firstboot_kdump.py %{_datadir}/firstboot/modules/firstboot_kdump.py
+fi
+
+
+%triggerun -- firstboot
+rm -f %{_datadir}/firstboot/modules/firstboot_kdump.py
+
 %files
 %defattr(-,root,root,-)
 /sbin/*
+%{_datadir}/kdump
 %config(noreplace,missingok) %{_sysconfdir}/sysconfig/kdump
 %config(noreplace,missingok) %{_sysconfdir}/kdump.conf
 %config %{_sysconfdir}/rc.d/init.d/kdump
@@ -162,22 +220,24 @@ exit 0
 %doc kexec-kdump-howto.txt
 
 %changelog
-* Thu Sep 28 2006 Neil Horman <nhorman@redhat.com> - 1.101-54%{dist}
-- update mkdumprd to use busybox ifup/down infrastructure
-- update initscript file to use chkconfig properly
+* Fri Dec 15 2006 Neil Horman <nhorman@redhat.com> - 1.101-5%{dist}
+- Wholesale update of RHEL5 revisions 55-147
 
-* Fri Sep 22 2006 Neil Horman <nhorman@redhat.com> - 1.101-52%{dist}
-- rewrote mkdumprd to use busybox
+* Tue Aug 29 2006 Neil Horman <nhorman@redhat.com> - 1.101-54%{dist}
+- integrate default elf format patch
 
-* Tue Sep 19 2006 Neil Horman <nhorman@redhat.com> - 1.101-52%{dist}
-- added kdump howto documentation
+* Tue Aug 29 2006 Neil Horman <nhorman@redhat.com> - 1.101-53%{dist}
+- Taking Viveks x86_64 crashdump patch (rcv. via email)
 
-* Thu Aug 31 2006 Neil Horman <nhorman@redhat.com> - 1.101-51%{dist}
-- update mkdumprd to properly do scp and nfs based dumps
-- update docs in kdump.conf to reflect new ifc parameter
+* Tue Aug 29 2006 Neil Horman <nhorman@redhat.com> - 1.101-52%{dist}
+- Taking ia64 tools patch for bz 181358
 
-* Mon Aug 28 2006 Neil Horman <nhorman@redhat.com> - 1.101-50%{dist}
-- updating to build without need for asm/page.h on x86_64
+* Mon Aug 28 2006 Neil Horman <nhorman@redhat.com> - 1.101-51%{dist}
+- more doc updates
+- added patch to fix build break from kernel headers change
+
+* Thu Aug 24 2006 Neil Horman <nhorman@redhat.com> - 1.101-50%{dist}
+- repo patch to enable support for relocatable kernels.
 
 * Thu Aug 24 2006 Neil Horman <nhorman@redhat.com> - 1.101-49%{dist}
 - rewriting kcp to properly do ssh and scp
@@ -251,11 +311,6 @@ exit 0
 - rebuild
 
 * Wed Jul 07 2006 Neil Horman <nhorman@redhat.com> 1.101-27.fc6
-- Modify spec/sysconfig to not autobuild kdump kernel command line
-- Add dist to revision tag
-- Build for all arches
-
-* Wed Jun 28 2006 Karsten Hopp <karsten@redhat.de> 1.101-20
 - Buildrequire zlib-devel
 
 * Thu Jun 22 2006 Neil Horman <nhorman@redhat.com> -1.101-19

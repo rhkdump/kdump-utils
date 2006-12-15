@@ -1,0 +1,22 @@
+--- kexec-tools-1.101/kexec/arch/x86_64/kexec-elf-x86_64.c.fix	2006-08-29 20:07:34.000000000 -0400
++++ kexec-tools-1.101/kexec/arch/x86_64/kexec-elf-x86_64.c	2006-08-29 20:08:03.000000000 -0400
+@@ -120,7 +120,7 @@ int elf_x86_64_load(int argc, char **arg
+ 	/*
+ 	 * Parse the command line arguments
+ 	 */
+-	arg_style = ARG_STYLE_ELF;
++	arg_style = ARG_STYLE_LINUX;
+ 	command_line = 0;
+ 	modified_cmdline = 0;
+ 	modified_cmdline_len = 0;
+--- kexec-tools-1.101/kexec/arch/i386/kexec-elf-x86.c.fix	2006-08-29 20:07:14.000000000 -0400
++++ kexec-tools-1.101/kexec/arch/i386/kexec-elf-x86.c	2006-08-29 20:07:24.000000000 -0400
+@@ -121,7 +121,7 @@ int elf_x86_load(int argc, char **argv, 
+ 	/*
+ 	 * Parse the command line arguments
+ 	 */
+-	arg_style = ARG_STYLE_ELF;
++	arg_style = ARG_STYLE_LINUX;
+ 	command_line = 0;
+ 	modified_cmdline = 0;
+ 	modified_cmdline_len = 0;

@@ -25,6 +25,8 @@
 #       Guillaume Cottenceau <gc@mandrakesoft.com>
 #	Peter Jones <pjones@redhat.com>
 #       Neil Horman <nhorman@redhat.com>
+cmdname=`basename $0`
+
 umask 0022
 
 export MALLOC_PERTURB_=204
@@ -66,7 +68,8 @@ fstab="/etc/fstab"
 
 vg_list=""
 net_list=""
-USING_METHOD="raw"
+USING_METHOD="local_fs"
+SAVE_PATH=/var/crash
 
 vecho()
 {
@@ -95,14 +98,14 @@ usage () {
         cmd=error
     fi
 
-    $cmd "usage: `basename $0` [--version] [--help] [-v] [-d] [-f] [--preload <module>]"
+    $cmd "usage: $cmdname [--version] [--help] [-v] [-d] [-f] [--preload <module>]"
     $cmd "       [--force-ide-probe] [--force-scsi-probe | --omit-scsi-modules]"
     $cmd "       [--image-version] [--force-scsi-probe | --omit-raid-modules]"
     $cmd "       [--with=<module>] [--force-lvm-probe | --omit-lvm-modules]"
     $cmd "       [--builtin=<module>] [--omit-dmraid]"
     $cmd "       [--fstab=<fstab>] [--nocompress] <initrd-image> <kernel-version>"
     $cmd ""
-    $cmd "       (ex: `basename $0` /boot/initrd-2.2.5-15.img 2.2.5-15)"
+    $cmd "       (ex: $cmdname /boot/initrd-2.2.5-15.img 2.2.5-15)"
 
     if [ "$1" == "-n" ]; then
         exit 0
@@ -233,31 +236,6 @@ findmodule() {
     fi
 }
 
-finddmmods() {
-    line=$(/sbin/dmsetup table "$1" 2>/dev/null)
-    [ -z "$line" ] && return 1
-    type=$(echo "$line" | awk '{ print $3 }')
-    [ -z "$type" ] && return 1
-    case "$type" in
-    mirror)
-        findmodule -dm-mirror
-        ;;
-    emc)
-        findmodule -dm-emc
-        findmodule -dm-round-robin
-        ;;
-    multipath)
-        findmodule -dm-multipath
-        findmodule -dm-round-robin
-        ;;
-    crypt)
-        findmodule -dm-crypt
-        ;;
-    zero)
-        findmodule -dm-zero
-        ;;
-    esac
-}
 
 inst() {
     if [ "$#" != "2" ];then
@@ -320,7 +298,23 @@ findnetdriver() {
                 continue ;;
             *) handleddevices="$handleddevices $device" ;;
         esac
-        modalias=$(cat /sys/class/net/$device/device/modalias)
+
+        case "$device" in
+        bond*)
+            modalias=bonding
+            ;;
+        eth*.*)
+            modalias=8021q
+            ;;
+        *)
+            if [ -f /sys/class/net/$device/device/modalias ]
+            then 
+                modalias=$(cat /sys/class/net/$device/device/modalias)
+            else
+                modalias=$(ethtool -i $device | awk '/^driver:/ { print $2 }')
+            fi
+            ;;
+        esac
         for driver in $(modprobe --set-version $kernel --show-depends $modalias 2>/dev/null| awk '{ print gensub(".*/","","g",$2) }') ; do
             findmodule ${driver%%.ko}
         done
@@ -367,6 +361,9 @@ handleraid() {
 
 handlelvordev() {
     local vg=`lvs --noheadings -o vg_name $1 2>/dev/null`
+    if [ -z "$vg" ]; then
+        vg=`lvs --noheadings -o vg_name $(echo $1 | sed -e 's#^/dev/mapper/\([^-]*\)-\(.*\)$#/dev/\1/\2#') 2>/dev/null`
+    fi
     if [ -n "$vg" ]; then
         vg=`echo $vg` # strip whitespace
         case " $vg_list " in
@@ -387,29 +384,56 @@ handlelvordev() {
 handlenetdev() {
     local dev=$1
     cp /etc/sysconfig/network-scripts/ifcfg-$dev $MNTIMAGE/etc
+    BOOTPROTO=""
+    VLAN=""
+    MASTER=""
+    SLAVE=""
     . $MNTIMAGE/etc/ifcfg-$dev
 
     findnetdriver $dev
 
-    if [ "$MASTER" == "yes" ]
-    then
-        #put code here to handle subdevs for a bond
-        echo "BUS_ID=\"Bonding\"" >> $MNTIMAGE/etc/ifcfg-$dev
-    elif [ "$VLAN" == "yes" ] 
-    then
-        #put code to handle vlan devices
-        echo "BUS+Id=\"Vlan\"" >> $MNTIMAGE/etc/ifcfg-$dev
-    else
-        BUS_ID=`/sbin/ethtool -i $dev | grep bus-info`
-        echo "BUS_ID=\"$BUS_ID\"" >> $MNTIMAGE/etc/ifcfg-$dev
-    fi
 
     if [ "$BOOTPROTO" == "dhcp" ]
     then
         echo iface $dev inet dhcp >> $MNTIMAGE/etc/network/interfaces
     else    
-        echo iface $dev inet static address $IPADDR netmask $NETMASK >> $MNTIMAGE/etc/network/interfaces
+        echo iface $dev inet static >> $MNTIMAGE/etc/network/interfaces
+        if [ -n "$IPADDR" ]
+        then
+            echo "  " address $IPADDR >> $MNTIMAGE/etc/network/interfaces
+        fi
+        if [ -n "$NETMASK" ]
+        then
+            echo "  " netmask $NETMASK >> $MNTIMAGE/etc/network/interfaces
+        fi
     fi
+
+    #This lets us recursively handle stacked devices
+    case "$dev" in
+        bond*)
+            #This is a bond, pick up its slaves
+            for j in `cat /sys/class/net/$dev/bonding/slaves`
+            do
+                handlenetdev $j
+            done
+            echo "BUS_ID=\"Bonding\"" >> $MNTIMAGE/etc/ifcfg-$dev
+            ;;
+        *)
+
+            if [ "$VLAN" == "yes" ] 
+            then
+                #put code to handle vlan devices
+                echo "BUS_ID=\"Vlan\"" >> $MNTIMAGE/etc/ifcfg-$dev
+                #now make sure we pick up the driver to support the 
+                #underlying interface
+                BASE_IFC=`echo $dev | cut -d"." -f1`
+                handlenetdev $BASE_IFC
+            else
+                BUS_ID=`ls -l /sys/class/net/$dev/device | sed -e's/\(.*\/\)\(.*$\)/\2/'`
+                echo "BUS_ID=\"$BUS_ID\"" >> $MNTIMAGE/etc/ifcfg-$dev
+            fi
+            ;;
+    esac
 }
 
 while [ $# -gt 0 ]; do
@@ -453,7 +477,7 @@ while [ $# -gt 0 ]; do
 	    ;;
 
 	--version)
-	    echo "mkinitrd: version $VERSION"
+	    echo "$cmdname: version $VERSION"
 	    exit 0
 	    ;;
 
@@ -574,7 +598,7 @@ if [ ! -d /lib/modules/$kernel ]; then
 fi
 
 if [ $UID != 0 ]; then
-    error "mkinitrd must be run as root."
+    error "$cmdname must be run as root."
     exit 1
 fi
 
@@ -759,8 +783,6 @@ for n in $CONFMODS; do
     findmodule $n
 done
 
-finddmmods
-
 vecho "Using modules:$MODULES"
 
 MNTIMAGE=`mktemp -d ${TMPDIR}/initrd.XXXXXX`
@@ -789,7 +811,7 @@ emitdm()
     if [ -n "$UUID" ]; then
         UUID="--uuid $UUID"
     fi
-    emit dm create "$1" $UUID $(/sbin/dmsetup table "$1")
+    emit "echo \"$(/sbin/dmsetup table $1)\" | /sbin/dmsetup.static create \"$1\" $UUID"
 }
 
 emitdms()
@@ -805,7 +827,7 @@ emitdms()
             emitdm "$NAME"
             ;;
         part)
-            emit dm partadd "$NAME"
+            emit /sbin/kpartx.static -pp -a \"/dev/mapper/$NAME\"
             ;;
         esac
     done
@@ -833,7 +855,7 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
 
             #find ethernet device used to route to remote host, ie eth0
             netdev=`/sbin/ip route get to $rhost 2>&1`
-            [ $? != 0 ] && echo "Bad kdump location: $location" && continue
+            [ $? != 0 ] && echo "Bad kdump location: $location" && exit 1 
             #the field in the ip output changes if we go to another subnet
             OFF_SUBNET=`echo $netdev | grep via`
             if [ -n "$OFF_SUBNET" ]
@@ -855,12 +877,10 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
             ;;
         raw)
             USING_METHOD="raw"
-            ;;
-        ifc)
-            KDUMP_IFC=$location
-            if [ -n "$network" ]; then
-                network=`echo $network | sed -e's/\(^.* \)\('$netdev'\)\( .*$\)/\1 '$KDUMP_IFC' \3/'`
+            if (echo $location | egrep -q "^(LABEL|UUID)="); then
+                location=$(findfs $location)
             fi
+            handlelvordev $location
             ;;
         core_collector)
             if [ -x /sbin/makedumpfile ]; then
@@ -873,8 +893,26 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                 exit 1
             fi
             ;;
+        path)
+            SAVE_PATH=$location
+            ;;
+        link_delay)
+            LINK_DELAY=$location
+            ;;
+        default)
+            DEFAULT_ACTION=$location
+            ;;
         *)
-            USING_METHOD="local_fs"
+            IS_COMMENT=`echo $type | grep ^#.*$`
+            if [ -n "$IS_COMMENT" -o -z "$location" ]
+            then
+                     #don't process comments or blank line
+                     continue
+            fi
+            if (echo $location | egrep -q "^(LABEL|UUID)="); then
+                location=$(findfs $location)
+            fi
+            handlelvordev $location
             ;;
         esac
 
@@ -899,6 +937,7 @@ mkdir -p $MNTIMAGE/etc
 mkdir -p $MNTIMAGE/dev
 mkdir -p $MNTIMAGE/proc
 mkdir -p $MNTIMAGE/sys
+mkdir -p $MNTIMAGE/tmp
 mkdir -p $MNTIMAGE/sysroot
 mkdir -p $MNTIMAGE/modules
 mkdir -p $MNTIMAGE/usr/share/udhcpc
@@ -913,7 +952,15 @@ ln -s bin $MNTIMAGE/sbin
 #if we are using makedumpfile here, then generate the config file
 if [ -n "$CORE_COLLECTOR" ]; then
     RUN_KERN_VER=`uname -r`
-    /sbin/makedumpfile -g $MNTIMAGE/etc/makedumpfile.config -x /usr/lib/debug/lib/modules/$RUN_KERN_VER/vmlinux /boot/System.map-$RUN_KERN_VER 
+    if [ ! -f /usr/lib/debug/lib/modules/$RUN_KERN_VER/vmlinux ]
+    then
+        echo "kernel-debuginfo-$RUN_KERN_VER is not installed.  You need this to use makedumpfile!"
+        echo "please install it and restart the kdump service"
+        rm -rf $MNTIMAGE
+        rm -rf $IMAGE
+        exit 1
+    fi
+    /sbin/makedumpfile -g $MNTIMAGE/etc/makedumpfile.config -x /usr/lib/debug/lib/modules/$RUN_KERN_VER/vmlinux > /dev/null
     if [ $? != 0 ]; then
         echo "could not generate makedumpfile configuration.  aborting"
         rm -rf $MNTIMAGE
@@ -985,7 +1032,41 @@ EOF
 #NETWORKING SCRIPT DIRECTORIES
 cat >> $MNTIMAGE/etc/network/if-pre-up.d/pre-up-script << EOF
 #!/bin/msh
-ifconfig \$IFACE up
+PATH=\$PATH:/scriptfns
+. /etc/ifcfg-\$IFACE
+
+LINK_DELAY=$LINK_DELAY
+if [ "\$BUS_ID" != "Vlan" ]
+then
+    ifconfig \$IFACE up
+    if [ -n "\$LINK_DELAY" ]
+    then
+        echo "\$IFACE Link Up.  Waiting \$LINK_DELAY Seconds"
+        sleep \$LINK_DELAY
+        echo "Continuing"
+    fi
+fi
+
+if [ "\$BUS_ID" == "Bonding" ]
+then
+    #this is a bond find and bring up the slaves
+    echo searching for slaves
+    find_activate_slaves \$IFACE
+elif [ "\$BUS_ID" == "Vlan" ]
+then
+    #bring up the base interface first
+    BASE_DEV=\`echo \$IFACE | cut -d"." -f1\`
+    VLAN_ID=\`echo \$IFACE | cut -d"." -f2\`
+    ifconfig \$BASE_DEV up
+    if [ -n "\$LINK_DELAY" ]
+    then
+        echo "\$IFACE Link Up.  Waiting \$LINK_DELAY Seconds"
+        sleep \$LINK_DELAY
+        echo "Continuing"
+    fi  
+    vconfig add \$BASE_DEV \$VLAN_ID
+    ifconfig \$IFACE up
+fi
 exit 0
 EOF
 
@@ -996,6 +1077,7 @@ done
 
 cat >> $MNTIMAGE/etc/network/if-up.d/up-script << EOF
 #!/bin/msh
+PATH=\$PATH:/scriptfns
 if [ "\$METHOD" != "dhcp" ]
 then
     . /etc/ifcfg-\$IFACE
@@ -1017,56 +1099,69 @@ chmod 755 $MNTIMAGE/usr/share/udhcpc/default.script
 SCRIPTDIR=$MNTIMAGE/scriptfns
 mkdir -p $SCRIPTDIR
 
-cat >> $SCRIPTDIR/rename_interfaces << EOF
+cat >> $SCRIPTDIR/map_interface << EOF
 #!/bin/msh
-TMPCNT=0
+if [ -e /tmp/tmpcnt ]
+then
+    TMPCNT=\`cat /tmp/tmpcnt\`
+else
+    TMPCNT=0
+fi
 #erase previously recorded map
-rm -f /etc/iface_map
-for i in \`ls /etc/ifcfg-*\`
+RENAMED=""
+REAL_DEV=""
+NETDEV=\$1
+. /etc/ifcfg-\$NETDEV
+for j in \`ifconfig -a | awk '/.*Link encap.*/ {print \$1}'\`
 do
-    RENAMED=""
-    REAL_DEV=""
-    NETDEV=\`echo \$i | cut -d"-" -f2\`
-    for j in \`ifconfig -a | awk '/.*Link encap.*/ {print \$1}'\`
-    do
-        . /etc/ifcfg-\$NETDEV
-        case "\$BUS_ID" in
-        Bonding)
-            #do something for bonding
-            ;;
-        Vlan)
-            #do something for vlan
-            ;;
-        *)
-            INFO=\`ethtool -i \$j | grep bus-info\`
-            if [ "\$INFO" == "\$BUS_ID" -a -z "\$REAL_DEV" ]
-            then
-                REAL_DEV=\$j
-                RENAMED="yes"
-            fi
-            ;;
-        esac
-    done
-
-    if [ -z "\$RENAMED" ]
-    then
-        echo "Could not find a mapping for device \$NETDEV"
-        exit 1
-    fi
-
-    #build the interface rename map
-    echo \$NETDEV \$REAL_DEV tmp\$TMPCNT>> /etc/iface_map
-    TMPCNT=\`echo \$TMPCNT 1 + p | dc\`
-    echo mapping \$NETDEV to \$REAL_DEV
+    case "\$BUS_ID" in
+    Bonding)
+        REAL_DEV=bond0
+        RENAMED="yes"
+        ;;
+    Vlan)
+        BASE_DEV=\`echo \$NETDEV | cut -d"." -f1\`
+        VLAN_ID=\`echo \$NETDEV | cut -d"." -f2\`
+        REAL_BASE=\`grep "^\$BASE_DEV " /etc/iface_map | cut -d" " -f2\` 
+        #Note we add the \ to our vlan values to escape the . for sed-ability
+        #Note we also convert . to _ to avoid problems with busybox ifup
+        REAL_DEV=\$REAL_BASE\\\\.\$VLAN_ID
+        NETDEV=\$BASE_DEV\\\\.\$VLAN_ID
+        RENAMED="yes"
+        ;;
+    *)
+        INFO=\`ls -l /sys/class/net/\$j/device 2>/dev/null |  sed -e's/\\(.*\\/\\)\\(.*$\\)/\\2/'\`
+        if [ "\$INFO" == "\$BUS_ID" -a -z "\$REAL_DEV" ]
+        then
+            REAL_DEV=\$j
+            RENAMED="yes"
+        fi
+        ;;
+    esac
 done
 
+if [ -z "\$RENAMED" ]
+then
+    echo "Could not find a mapping for device \$NETDEV"
+    exit 1
+fi
+
+#build the interface rename map
+echo \$NETDEV \$REAL_DEV tmp\$TMPCNT >> /etc/iface_map
+TMPCNT=\`echo \$TMPCNT 1 + p | dc\`
+echo \$TMPCNT > /tmp/tmpcnt
+echo mapping \$NETDEV to \$REAL_DEV
+EOF
+
+cat >> $SCRIPTDIR/rename_interfaces << EOF
+#!/bin/msh
 MAP_COUNT=\`wc -l /etc/iface_map | cut -d" " -f7 \`
 #now do all the renaming - first to temp space
 for j in \`seq 1 1 \$MAP_COUNT\`
 do
-    CURRENT=\`awk '{if (RN == ARGV[j]) print \$1}' /etc/iface_map\`
-    NEW=\`awk '{if (RN == ARGV[j]) print \$2}' /etc/iface_map\`
-    INTERIM=\`awk '{if (RN == ARGV[j]) print \$3}' /etc/iface_map\`
+    CURRENT=\`awk -v MATCH=\$j '{if (NR == MATCH) print \$1}' /etc/iface_map\`
+    NEW=\`awk -v MATCH=\$j '{if (NR == MATCH) print \$2}' /etc/iface_map\`
+    INTERIM=\`awk -v MATCH=\$j '{if (NR == MATCH) print \$3}' /etc/iface_map\`
     mv /etc/ifcfg-\$CURRENT /etc/ifcfg-\$INTERIM
     for i in /etc/ifcfg-\$INTERIM /etc/iface_to_activate /etc/network/interfaces
     do
@@ -1079,9 +1174,9 @@ done
 
 for j in \`seq 1 1 \$MAP_COUNT\`
 do
-    CURRENT=\`awk '{if (RN == ARGV[j])  print \$1}' /etc/iface_map\`
-    NEW=\`awk '{if (RN == ARGV[j]) print \$2}' /etc/iface_map\`
-    INTERIM=\`awk '{if (RN == ARGV[j]) print \$3}' /etc/iface_map\`
+    CURRENT=\`awk -v MATCH=\$j '{if (NR == MATCH)  print \$1}' /etc/iface_map\`
+    NEW=\`awk -v MATCH=\$j '{if (NR == MATCH) print \$2}' /etc/iface_map\`
+    INTERIM=\`awk -v MATCH=\$j '{if (NR == MATCH) print \$3}' /etc/iface_map\`
     mv /etc/ifcfg-\$INTERIM /etc/ifcfg-\$NEW
     for i in /etc/ifcfg-\$NEW /etc/iface_to_activate /etc/network/interfaces
     do
@@ -1092,6 +1187,23 @@ do
 done < /etc/iface_map
 
 exit 0
+EOF
+
+cat >> $SCRIPTDIR/find_activate_slaves << EOF
+#!/bin/msh
+BOND_MASTER=\$1
+
+for j in \`ifconfig -a | awk '/.*Link encap.*/ {print \$1}'\`
+do
+    MASTER=""
+    . /etc/ifcfg-\$j
+    if [ "\$MASTER" == "\$BOND_MASTER" ]
+    then
+        #this is a slave of the rising interface
+        echo enslaving \$j to \$BOND_MASTER
+        echo +\$j > /sys/class/net/\$BOND_MASTER/bonding/slaves
+    fi
+done
 EOF
 
 #DONT ADD STUFF to SCRIPTDIR PAST HERE
@@ -1156,10 +1268,13 @@ cat >> $MNTIMAGE/init << EOF
 #!/bin/msh
 export PATH=$PATH:/scriptfns
 mount -t proc /proc /proc
-setquiet
 echo Mounting proc filesystem
 echo Mounting sysfs filesystem
 mount -t sysfs /sys /sys
+echo 1 > /proc/sys/vm/dirty_background_ratio
+echo 5 > /proc/sys/vm/dirty_ratio
+echo 10 > /proc/sys/vm/dirty_writeback_centisecs
+echo 50 > /proc/sys/vm/dirty_expire_centisecs
 echo Creating /dev
 mount -o mode=0755 -t tmpfs /dev /dev
 mkdir /dev/pts
@@ -1232,17 +1347,23 @@ emit "echo Creating Block Devices"
 emit "for i in \`ls /sys/block\`; do"
 emit "  MAJOR_NUM=\`cat /sys/block/\$i/dev | cut -d":" -f1\`"
 emit "  MINOR_NUM=\`cat /sys/block/\$i/dev | cut -d":" -f2\`"
+emit "  MINOR_RANGE=\`cat /sys/block/\$i/range | cut -d":" -f2\`"
 emit "  echo Creating block device \$i"
 emit "  mknod /dev/\$i b \$MAJOR_NUM \$MINOR_NUM"
-emit "  MINOR_END=\`echo \$MINOR_NUM 10 + p | dc\`"
-emit "  MINOR_START=\`echo \$MINOR_NUM 1 + p | dc\`"
-emit "  for j in \`seq \$MINOR_START 1 \$MINOR_END\`"
-emit "  do"
-emit "     if [ ! -e /dev/\$i\$j ]"
-emit "     then"
-emit "          mknod /dev/\$i\$j b \$MAJOR_NUM \$j"
-emit "     fi"
-emit "  done"
+emit "  if [ \"\$MINOR_RANGE\" -gt 1 ]"
+emit "  then"
+emit "    MINOR_END=\`echo \$MINOR_NUM \$MINOR_RANGE + p | dc\`"
+emit "    MINOR_START=\`echo \$MINOR_NUM 1 + p | dc\`"
+emit "    PART_NUM=1"
+emit "    for j in \`seq \$MINOR_START 1 \$MINOR_END\`"
+emit "    do"
+emit "       if [ ! -e /dev/\$i\$PART_NUM ]"
+emit "       then"
+emit "            mknod /dev/\$i\$PART_NUM b \$MAJOR_NUM \$j"
+emit "       fi"
+emit "       PART_NUM=\`expr \$PART_NUM + 1\`"
+emit "    done"
+emit "  fi"
 emit "done"
 
 if [ -n "$vg_list" ]; then
@@ -1286,7 +1407,7 @@ if [ -n "$vg_list" ]; then
     emit "      DM_NUM=\`echo \$DM_NUM 1 + p | dc\`"
     emit "      if [ -z \"\$noresume\" ]"
     emit "      then"
-    emit "        /sbin/dmsetup resume /dev/mapper/\$VGRP-\$i"
+    emit "        /sbin/dmsetup.static resume /dev/mapper/\$VGRP-\$i"
     emit "      fi"
     emit "   fi"
     emit "done"
@@ -1298,15 +1419,31 @@ kdump_chk()
     echo "$KDUMP_CONFIG_FILE: $2"
     exit 1
 }
-    emit "DATE=\`date +%Y-%M-%d-%T\`"
 if [ -n "$KDUMP_CONFIG_FILE" ]; then
     memtotal=`cat /proc/meminfo | grep MemTotal | awk '{print $2}'`
     
     #timezone info for date which outputs YYYY-MM-DD-hh:mm
     cp /etc/localtime $MNTIMAGE/etc/localtime
-    bin="/sbin/dmsetup /usr/bin/scp /usr/bin/ssh /sbin/ethtool /sbin/mdadm" 
+    cp /etc/sysconfig/clock $MNTIMAGE/etc
+    emit ". /etc/clock"
+    emit " if [ \"\$UTC\" == "true" ]"
+    emit " then"
+    emit "    TIME_FORMAT=-u"
+    emit " else"
+    emit "    TIME_FORMAT=-l"
+    emit "fi"
+    emit "hwclock --hctosys \$TIME_FORMAT"
+    emit "DATE=\`date +%Y-%m-%d-%T\`"
+
+    bin="/sbin/dmsetup.static /sbin/kpartx.static" 
+
+    if [ -n "$CORE_COLLECTOR" ]; then
+        bin="$bin /sbin/makedumpfile"
+    fi
+
     #ssh, scp require libraries that aren't found with ldd
-    lib=/lib && [ -d "/lib64" ] && lib=/lib64
+    ARCH=`uname -m`
+    lib=/lib && [ -d "/lib64" -a "$ARCH" != "ppc64" ] && lib=/lib64
     k_extras="/$lib/libnss_compat.so.2 /$lib/libnss_files.so.2"
 
     #traverse the config file and setup each dump location
@@ -1327,21 +1464,40 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                     #setup raw case
                     emit "echo Saving to partition $location"
                     emit "dd if=/proc/vmcore of=$location"
-                    emit "cond reboot -h -f"
+                    emit "if [ $? == 0 ]"
+                    emit "then"
+                    emit "  reboot -f"
+                    emit "fi"
                     ;;
 
                 net)
-                    if [ -n "$CORE_COLLECTOR" ]; then
-                        bin="$bin /sbin/makedumpfile"
-                    fi
-
                     #build an /etc/passwd for scp to work properly
                     grep "^root" /etc/passwd > $MNTIMAGE/etc/passwd
 
                     # bring up the network
+                    emit "for i in \`ls /etc/ifcfg-*\`"
+                    emit "do"
+                    emit "   NETDEV=\`echo \$i | cut -d\"-\" -f2\`"
+                    emit "   map_interface \$NETDEV"
+                    emit "done"
                     emit "rename_interfaces"
                     emit "IFACE=\`cat /etc/iface_to_activate\`"
                     emit "ifup \$IFACE"
+                    #lets make sure we're up
+                    emit "IFADDR=\`ifconfig \$IFACE | awk '/inet addr/ {print \$2}' | cut -d\":\" -f 2\`"
+                    emit "if [ -z \"\$IFADDR\" ]"
+                    emit "then"
+                    emit "  echo \"\$IFACE failed to come up\""
+                    if [ "$DEFAULT_ACTION" == "shell" ]
+                    then
+                        emit "  echo \"Dropping to shell. exit to reboot\""
+                        emit "  /bin/msh"
+                        emit "  reboot -f"
+                    elif [ "$DEFAULT_ACTION" == "reboot" ]
+                    then
+                        emit "  reboot -f"
+                    fi 
+                    emit "fi"
                     #grab remote host and xlate into numbers
                     rhost=`echo $location | sed 's/.*@//' | cut -d':' -f1`
                     need_dns=`echo $rhost|grep [a-zA-Z]`
@@ -1349,9 +1505,17 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
 
                     #find the local ip being used as a route to remote ip
                     netdev=`/sbin/ip route get to $rhost 2>&1`
-                    [ $? != 0 ] && echo "Bad kdump location: $location" && continue
-                    lhost=`echo $netdev|awk '{print $5;}'|head -n 1`
-           
+                    [ $? != 0 ] && echo "Bad kdump location: $location" && exit 1 
+                    OFF_SUBNET=`echo $netdev | grep via`
+                    if [ -n "$OFF_SUBNET" ]
+                    then
+                        # we are going to a different subnet
+                        lhost=`echo $netdev|awk '{print $7}'|head -n 1`
+                    else
+                        # we are on the same subnet
+                        lhost=`echo $netdev|awk '{print $5}'|head -n 1`
+                    fi
+ 
                     emit "echo Saving to remote location $location"
                     if [ -z "`echo $location|grep @`" ]; then
                         #NFS path
@@ -1360,12 +1524,18 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                         tmnt=`mktemp -dq`
                         kdump_chk "mount -t nfs -o nolock $rlocation $tmnt" \
                                    "Bad NFS mount $location"
-                        mkdir -p $tmnt/var/crash
-                        tdir=`mktemp -dqp $tmnt/var/crash`
+                        mkdir -p $tmnt/$SAVE_PATH
+                        tdir=`mktemp -dqp $tmnt/$SAVE_PATH`
 
-                        rc=$? && rm -rf $tdir && umount $tmnt && rm -rf $tmnt
+                        rc=$? && rm -rf $tdir 
+                        umount $tmnt
+                        if [ $? != 0 ]; then
+                            echo "Cannot unmount the temporary directory"
+                            exit 1
+                        fi
+                        rm -rf $tmnt
                         if [ $rc != "0" ]; then 
-                            echo "Cannot create directory in $location: var/crash"
+                            echo "Cannot create directory in $location: $SAVE_PATH"
                             exit 1 
                         fi
 
@@ -1378,26 +1548,31 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                         #setup nfs case
                         mkdir -p $MNTIMAGE/mnt
                         emit "mount -t nfs -o nolock $rlocation /mnt"
-                        emit "mkdir -p /mnt/var/crash/$lhost-\$DATE"
-                        emit "$CORE_COLLECTOR /proc/vmcore /mnt/var/crash/$lhost-\$DATE/vmcore"
+                        emit "mkdir -p /mnt/$SAVE_PATH/$lhost-\$DATE"
+                        emit "$CORE_COLLECTOR /proc/vmcore /mnt/$SAVE_PATH/$lhost-\$DATE/vmcore-incomplete"
                         emit "if [ \$? == 0 ]"
                         emit "then"
+                        emit "  mv /mnt/$SAVE_PATH/$lhost-\$DATE/vmcore-incomplete /mnt/$SAVE_PATH/$lhost-\$DATE/vmcore"
+                        emit "  umount /mnt"
                         emit "  reboot -f"
                         emit "fi"
                         emit "umount /mnt"
                     else
                         #SSH path
                         #rebuild $location replacing machine name with ip address
+                        bin="$bin /usr/bin/ssh /usr/bin/scp"
                         rlocation=`echo $location|sed 's/@.*/@'"$rhost"'/'`
                         #test ssh path and directory creation
                         s_opts="-o BatchMode=yes -o StrictHostKeyChecking=no"
-                        kdump_chk "ssh -q $s_opts $rlocation mkdir -p /var/crash/ </dev/null" \
-                                   "Could not create $location:/var/crash, check ssh keys"
-                        tdir=`ssh -q $s_opts $rlocation mktemp -dqp /var/crash </dev/null`
+                        kdump_chk "ssh -q $s_opts $rlocation mkdir -p $SAVE_PATH </dev/null" \
+                                "Could not create $location:$SAVE_PATH, you probably need to run \"service kdump propagate\""
+                        tdir=`ssh -q $s_opts $rlocation mktemp -dqp $SAVE_PATH </dev/null`
                         if [ $? != "0" ]; then
-                            echo "$KDUMP_CONFIG_FILE: Could not create temp directory in $location:/var/crash"
+                            echo "$KDUMP_CONFIG_FILE: Could not create temp directory in $location:$SAVE_PATH"
                             exit 1
                         fi
+                        #We do this to remove the temp directory from above
+                        ssh -q $s_opts $rlocation rmdir $tdir
 
                         #setup ssh case, quick check to see if setup already
                         if [ ! -r $MNTIMAGE/dev/urandom ]; then
@@ -1408,38 +1583,32 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                             mknod $MNTIMAGE/dev/urandom c 1 9
                         fi
                         emit "dd if=/dev/mem of=/dev/urandom count=1 bs=512 skip=100" 
-                        emit "ssh -q -o BatchMode=yes -o StrictHostKeyChecking=no $rlocation mkdir /var/crash/$lhost-\$DATE"
-                        emit "scp -q -o BatchMode=yes -o StrictHostKeyChecking=no /proc/vmcore $rlocation:/var/crash/$lhost-\$DATE/vmcore"
+                        emit "ssh -q -o BatchMode=yes -o StrictHostKeyChecking=no $rlocation mkdir $SAVE_PATH/$lhost-\$DATE"
+                        emit "scp -q -o BatchMode=yes -o StrictHostKeyChecking=no /proc/vmcore $rlocation:$SAVE_PATH/$lhost-\$DATE/vmcore-incomplete"
                         emit "if [ \$? == 0 ]"
                         emit "then"
+                        emit "  ssh -q -o BatchMode=yes -o StrictHostKeyChecking=no $rlocation mv $SAVE_PATH/$lhost-\$DATE/vmcore-incomplete $SAVE_PATH/$lhost-\$DATE/vmcore"
                         emit "  reboot -f"
                         emit "fi"
                     fi
                     ;;
-                ifc)
-                    ;;
                 core_collector)
                     ;;
                 default)
-                    [ "$location" == "reboot" ] && emit "reboot -f"
-                    if [ "$location" == "shell" ]
-                    then
-                        emit "echo dropping to initramfs shell"
-                        emit "echo exiting this shell will reboot your system"
-                        emit "/bin/msh"
-                        emit "reboot -f"
-                    fi
-                    #else load normally on default failure case
+                    ;;
+                link_delay)
+                    ;;
+                path)
                     ;;
                 *)
                     #test filesystem and directory creation
                     kdump_chk "test -f /sbin/fsck.$type" "Unsupported type $type"
                     kdump_chk "mount -t $type $location /mnt" "Bad mount point $location"
-                    mkdir -p /mnt/var/crash
-                    tdir=`mktemp -dqp /mnt/var/crash/`
+                    mkdir -p /mnt/$SAVE_PATH
+                    tdir=`mktemp -dqp /mnt/$SAVE_PATH`
                     rc=$? && rm -rf $tdir && umount /mnt
                     if [ $rc != "0" ]; then 
-                        echo "Cannot create directory in $location: /var/crash"
+                        echo "Cannot create directory in $location: $SAVE_PATH"
                         exit 1
                     fi
                     #TODO check for available size is greater than $memtotal
@@ -1451,14 +1620,23 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                         CORE_COLLECTOR="cp"
                     fi
                     emit "echo Saving to the local filesystem $location"
-                    emit "fsck.$type $location"
-                    emit "mount -t $type $location /mnt"
+                    emit "DUMPDEV=$location"
+                    emit "IS_LABEL=\`echo \$DUMPDEV | grep LABEL\`"
+                    emit "IS_UUID=\`echo \$DUMPDEV | grep UUID\`"
+                    emit "if [ -n \"\$IS_LABEL\" -o -n \"\$IS_UUID\" ] "
+                    emit "then"
+                    emit "  DUMPDEV=\`findfs \$DUMPDEV\`"
+                    emit "fi"
+                    emit "fsck.$type \$DUMPDEV"
+                    emit "mount -t $type \$DUMPDEV /mnt"
                     emit "if [ \$? == 0 ]"
                     emit "then"
-                    emit "  mkdir -p /mnt/var/crash/127.0.0.1-\$DATE"
-                    emit "  $CORE_COLLECTOR /proc/vmcore /mnt/var/crash/127.0.0.1-\$DATE/vmcore"
+                    emit "  mkdir -p /mnt/$SAVE_PATH/127.0.0.1-\$DATE"
+                    emit "  $CORE_COLLECTOR /proc/vmcore /mnt/$SAVE_PATH/127.0.0.1-\$DATE/vmcore-incomplete"
                     emit "  if [ \$? == 0 ]"
                     emit "  then"
+                    emit "      mv /mnt/$SAVE_PATH/127.0.0.1-\$DATE/vmcore-incomplete /mnt/$SAVE_PATH/127.0.0.1-\$DATE/vmcore"
+                    emit "      umount /mnt"
                     emit "      reboot -f"
                     emit "  fi"
                     emit "fi"
@@ -1467,6 +1645,18 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
             esac
     done < $KDUMP_CONFIG_FILE
 
+    #now handle the default action
+    if [ "$DEFAULT_ACTION" == "shell" ]
+    then
+        emit "echo dropping to initramfs shell"
+        emit "echo exiting this shell will reboot your system"
+        emit "/bin/msh"
+        emit "reboot -f"
+    elif [ "$DEFAULT_ACTION" == "reboot" ]
+    then
+        emit "reboot -f"
+    fi
+                    
     #find the shared libraries.  this snippet taken from kboot
     kdump_libs=`for n in $bin; do 
         ldd "$n" 2>/dev/null | tr -s '\011' ' ' | 
@@ -1485,7 +1675,13 @@ emit "#check to see if we have root= on the command line"
 emit "ROOTDEV=\`cat /proc/cmdline | grep root=\`"
 emit "if [ -n \"\$ROOTDEV\" ]"
 emit "then"
-emit "   ROOTDEV=\`cat /proc/cmdline | cut -d\" \" -f2 | sed -e's/root=//'\`"
+emit "   ROOTDEV=\`cat /proc/cmdline | sed 's/^.*root=//' | cut -d\" \" -f1\`"
+emit "   IS_LABEL=\`echo \$ROOTDEV | grep LABEL\`"
+emit "   IS_UUID=\`echo \$ROOTDEV | grep UUID\`"
+emit "   if [ -n \"\$IS_LABEL\" -o -n \"\$IS_UUID\" ] "
+emit "   then"
+emit "      ROOTDEV=\`findfs \$ROOTDEV\`"
+emit "   fi"
 emit "else"
 emit "   #we need to get the root major/minor from real-root-dev"
 emit "   ROOT_DEV_NR=\`cat /proc/sys/kernel/real-root-dev\`"

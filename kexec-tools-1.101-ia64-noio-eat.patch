@@ -1,0 +1,11 @@
+--- kexec-tools-1.101/kexec/arch/ia64/kexec-elf-ia64.c.orig	2006-12-01 14:30:59.000000000 -0500
++++ kexec-tools-1.101/kexec/arch/ia64/kexec-elf-ia64.c	2006-12-01 14:31:04.000000000 -0500
+@@ -128,7 +128,7 @@
+ 		{"command-line", 1, 0, OPT_APPEND},
+ 		{"append",       1, 0, OPT_APPEND},
+ 		{"initrd",       1, 0, OPT_RAMDISK},
+-		{"noio",         1, 0, OPT_NOIO},
++		{"noio",         0, 0, OPT_NOIO},
+ 		{0, 0, 0, 0},
+ 	};
+ 

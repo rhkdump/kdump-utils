@@ -1,8 +1,6 @@
-Index: kexec-tools-1.101/kexec/arch/ppc64/kexec-ppc64.c
-===================================================================
---- kexec-tools-1.101.orig/kexec/arch/ppc64/kexec-ppc64.c
-+++ kexec-tools-1.101/kexec/arch/ppc64/kexec-ppc64.c
-@@ -552,6 +552,10 @@ int file_types = sizeof(file_type) / siz
+--- kexec-tools-1.101/kexec/arch/ppc64/kexec-ppc64.c.orig	2006-10-20 11:10:39.000000000 -0400
++++ kexec-tools-1.101/kexec/arch/ppc64/kexec-ppc64.c	2006-10-20 11:11:22.000000000 -0400
+@@ -577,6 +577,10 @@
  
  void arch_usage(void)
  {

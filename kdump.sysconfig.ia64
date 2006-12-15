@@ -21,3 +21,12 @@ KDUMP_COMMANDLINE_APPEND="irqpoll maxcpus=1"
 # Example:
 #   KEXEC_ARGS="--elf32-core-headers"
 KEXEC_ARGS=""
+
+#Where to find the boot image
+KDUMP_BOOTDIR="/boot/efi/efi/redhat"
+
+#What is the image type used for kdump
+KDUMP_IMG="vmlinuz"
+
+#What is the images extension.  Relocatable kernels don't have one
+KDUMP_IMG_EXT=""

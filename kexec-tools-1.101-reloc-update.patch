@@ -1,0 +1,1051 @@
+--- kexec-tools-1.101/purgatory/arch/i386/linux-entry16.S.orig	2004-12-20 05:48:45.000000000 -0500
++++ kexec-tools-1.101/purgatory/arch/i386/linux-entry16.S	2006-12-01 15:05:42.000000000 -0500
+@@ -127,10 +127,10 @@
+ 	TTYS0_TX_AL
+ 
+ 
+-#define DEBUG(x) TTYS0_TX_CHAR($x) ;  TTYS0_TX_CHAR($'\r') ;  TTYS0_TX_CHAR($'\n')
++#define DEBUG_CHAR(x) TTYS0_TX_CHAR($x) ;  TTYS0_TX_CHAR($'\r') ;  TTYS0_TX_CHAR($'\n')
+ #define DEBUG_TX_HEX32(x) TTYS0_TX_HEX32(x) ;  TTYS0_TX_CHAR($'\r') ;  TTYS0_TX_CHAR($'\n')
+ #else
+-#define DEBUG(x)
++#define DEBUG_CHAR(x)
+ #define DEBUG_TX_HEX32(x)
+ #endif
+ 	
+@@ -142,15 +142,15 @@
+ entry16:
+ 	.code32
+ 
+-DEBUG('a')	
++DEBUG_CHAR('a')
+ 	/* Setup the classic BIOS interrupt table at 0x0 */
+ 	lidt	idtptr
+ 
+-DEBUG('b')		
++DEBUG_CHAR('b')
+ 	/* Provide us with 16bit segments that we can use */
+ 	lgdt	gdt
+ 
+-DEBUG('c')	
++DEBUG_CHAR('c')
+ 	/* Note we don't disable the a20 line, (this shouldn't be required)
+ 	 * The code to do it is in kexec_test and it is a real pain.
+ 	 * I will worry about that when I need it.
+@@ -164,26 +164,26 @@
+ 	movl	%eax, %fs
+ 	movl	%eax, %gs
+ 
+-DEBUG('d')
++DEBUG_CHAR('d')
+ 
+ 	/* switch to 16bit mode */
+ 	ljmp	$0x08, $1f - entry16
+ 1:
+ 	.code16
+-DEBUG('e')	
++DEBUG_CHAR('e')
+ 	/* Disable Paging and protected mode */
+ 	/* clear the PG & PE bits of CR0 */
+ 	movl	%cr0,%eax
+ 	andl	$~((1 << 31)|(1<<0)),%eax
+ 	movl	%eax,%cr0
+ 
+-DEBUG('f')
++DEBUG_CHAR('f')
+ 	/* make intersegment jmp to flush the processor pipeline
+ 	 * and reload %cs:%eip (to clear upper 16 bits of %eip).
+ 	 */
+ 	ljmp	*(realptr - entry16)
+ 3:
+-DEBUG('g')
++DEBUG_CHAR('g')
+ 	/* we are in real mode now
+ 	 * set up the real mode segment registers : %ds, $ss, %es
+ 	 */
+@@ -191,7 +191,7 @@
+ 	movw	%cs, %ax
+ 	movw	%ax, %ds
+ 
+-DEBUG('h')
++DEBUG_CHAR('h')
+ 	/* Load the registers */
+ 	movl	eax - entry16, %eax
+ 	movl	ebx - entry16, %ebx
+@@ -386,10 +386,10 @@
+ 	TTYS0_TX_AL
+ 
+ 
+-#define DEBUG(x) TTYS0_TX_CHAR($x) ;  TTYS0_TX_CHAR($'\r') ;  TTYS0_TX_CHAR($'\n')
++#define DEBUG_CHAR(x) TTYS0_TX_CHAR($x) ;  TTYS0_TX_CHAR($'\r') ;  TTYS0_TX_CHAR($'\n')
+ #define DEBUG_TX_HEX32(x) TTYS0_TX_HEX32(x) ;  TTYS0_TX_CHAR($'\r') ;  TTYS0_TX_CHAR($'\n')
+ #else
+-#define DEBUG(x)
++#define DEBUG_CHAR(x)
+ #define DEBUG_TX_HEX32(x)
+ #endif
+ 
+@@ -403,7 +403,7 @@
+ _reloc = .
+ 	.balign 16
+ 	.code32
+-DEBUG('a')
++DEBUG_CHAR('a')
+ 	/* Compute where I am running at */
+ 	call	1f
+ 1:	popl	%ebx
+@@ -412,13 +412,13 @@
+ 	/* Remember where I am running at */
+ 	movl	%ebx, location - _reloc(%ebx)
+ 	
+-DEBUG('b')
++DEBUG_CHAR('b')
+ 	/* Fixup my real mode segment */
+ 	movl	%ebx, %eax
+ 	shrl	$4, %eax
+ 	movw	%ax, 2 + realptr - _reloc(%ebx)
+ 
+-DEBUG('c')
++DEBUG_CHAR('c')
+ 	/* Fixup the gdt */
+ 	movl	%ebx, %eax
+ 	shll	$16, %eax
+@@ -440,7 +440,7 @@
+ 
+ 
+ 	
+-DEBUG('d')
++DEBUG_CHAR('d')
+ 	/* Setup the classic BIOS interrupt table at 0x0 */
+ 	lidt	idtptr - _reloc(%ebx)
+ 	
+@@ -465,20 +465,20 @@
+ 	ljmp	$0x08, $2f - _reloc
+ 2:
+ 	.code16
+-DEBUG('e')
++DEBUG_CHAR('e')
+ 	/* Disable Paging and protected mode */
+ 	/* clear the PG & PE bits of CR0 */
+ 	movl	%cr0,%eax
+ 	andl	$~((1 << 31)|(1<<0)),%eax
+ 	movl	%eax,%cr0
+ 
+-DEBUG('f')
++DEBUG_CHAR('f')
+ 	/* make intersegment jmp to flush the processor pipeline
+ 	 * and reload %cs:%eip (to clear upper 16 bits of %eip).
+ 	 */
+ 	ljmp	*(realptr - _reloc)
+ 3:
+-DEBUG('g')
++DEBUG_CHAR('g')
+ 	/* we are in real mode now
+ 	 * set up the real mode segment registers : %ds, $ss, %es
+ 	 */
+@@ -486,7 +486,7 @@
+ 	movw	%cs, %ax
+ 	movw	%ax, %ds
+ 
+-DEBUG('h')
++DEBUG_CHAR('h')
+ 	/* Load the registers */
+ 	movl	eax - _reloc, %eax
+ 	movl	ebx - _reloc, %ebx
+@@ -600,7 +600,7 @@
+ 		
+ setup16_debug_kernel_pre_protected:
+ 	.code16
+-	DEBUG('i')
++	DEBUG_CHAR('i')
+ 	cli					# no interrupts allowed !
+ 	movb	$0x80, %al			# disable NMI for bootup
+ 						# sequence
+@@ -611,7 +611,7 @@
+ 	.byte	0xbf	/* movl $0x12345678, %edi */
+ location:
+ 	.long	0x12345678
+-	DEBUG('j')
++	DEBUG_CHAR('j')
+ 	.byte	0xb8	/* movl $0x10000, %eax */
+ setup16_debug_old_code32:
+ 	.long	0x10000
+--- kexec-tools-1.101/purgatory/arch/i386/include/arch/debug.h.orig	2004-12-20 18:03:17.000000000 -0500
++++ kexec-tools-1.101/purgatory/arch/i386/include/arch/debug.h	2006-12-01 15:05:42.000000000 -0500
+@@ -311,6 +311,6 @@
+ 	TTYS0_TX_AL
+ 	
+ 
+-#define DEBUG(x) TTYS0_TX_CHAR($x) ;  TTYS0_TX_CHAR($'\r') ;  TTYS0_TX_CHAR($'\n')
++#define DEBUG_CHAR(x) TTYS0_TX_CHAR($x) ;  TTYS0_TX_CHAR($'\r') ;  TTYS0_TX_CHAR($'\n')
+ #define DEBUG_TX_HEX32(x) TTYS0_TX_HEX32(x); TTYS0_TX_CHAR($'\r') ;  TTYS0_TX_CHAR($'\n')
+ #define DEBUG_TX_HEX64(x) TTYS0_TX_HEX64(x); TTYS0_TX_CHAR($'\r') ;  TTYS0_TX_CHAR($'\n')
+--- kexec-tools-1.101/purgatory/arch/i386/entry32-16-debug.S.orig	2004-12-20 18:11:43.000000000 -0500
++++ kexec-tools-1.101/purgatory/arch/i386/entry32-16-debug.S	2006-12-01 15:05:42.000000000 -0500
+@@ -55,15 +55,15 @@
+ 	orl	%ecx, 0x14 + gdt	
+ 	
+ 	
+-DEBUG('a')	
++DEBUG_CHAR('a')
+ 	/* Setup the classic BIOS interrupt table at 0x0 */
+ 	lidt	idtptr
+ 
+-DEBUG('b')		
++DEBUG_CHAR('b')
+ 	/* Provide us with 16bit segments that we can use */
+ 	lgdt	gdt
+ 
+-DEBUG('c')	
++DEBUG_CHAR('c')
+ 	/* Note we don't disable the a20 line, (this shouldn't be required)
+ 	 * The code to do it is in kexec_test and it is a real pain.
+ 	 * I will worry about that when I need it.
+@@ -77,26 +77,26 @@
+ 	movl	%eax, %fs
+ 	movl	%eax, %gs
+ 
+-DEBUG('d')
++DEBUG_CHAR('d')
+ 
+ 	/* switch to 16bit mode */
+ 	ljmp	$0x08, $1f - entry16_debug
+ 1:
+ 	.code16
+-DEBUG('e')	
++DEBUG_CHAR('e')
+ 	/* Disable Paging and protected mode */
+ 	/* clear the PG & PE bits of CR0 */
+ 	movl	%cr0,%eax
+ 	andl	$~((1 << 31)|(1<<0)),%eax
+ 	movl	%eax,%cr0
+ 
+-DEBUG('f')
++DEBUG_CHAR('f')
+ 	/* make intersegment jmp to flush the processor pipeline
+ 	 * and reload %cs:%eip (to clear upper 16 bits of %eip).
+ 	 */
+ 	ljmp	*(realptr - entry16_debug)
+ 3:
+-DEBUG('g')
++DEBUG_CHAR('g')
+ 	/* we are in real mode now
+ 	 * set up the real mode segment registers : %ds, $ss, %es
+ 	 */
+@@ -104,7 +104,7 @@
+ 	movw	%cs, %ax
+ 	movw	%ax, %ds
+ 
+-DEBUG('h')
++DEBUG_CHAR('h')
+ 	/* Load the registers */
+ 	movl	eax - entry16_debug, %eax
+ 	movl	ebx - entry16_debug, %ebx
+@@ -176,7 +176,7 @@
+ 	.text	
+ entry16_debug_pre32:
+ 	.code16
+-DEBUG('i')
++DEBUG_CHAR('i')
+ 	cli					# no interrupts allowed !
+ 	movb	$0x80, %al			# disable NMI for bootup
+ 						# sequence
+@@ -186,7 +186,7 @@
+ 	
+ entry16_debug_first32:
+ 	.code32
+-DEBUG('j')
++DEBUG_CHAR('j')
+ 	.byte	0xb8	/* movl $0x10000, %eax */
+ entry16_debug_old_first32:
+ 	.long 0x100000
+--- kexec-tools-1.101/purgatory/arch/x86_64/include/arch/debug.h.orig	2004-12-20 18:05:40.000000000 -0500
++++ kexec-tools-1.101/purgatory/arch/x86_64/include/arch/debug.h	2006-12-01 15:05:42.000000000 -0500
+@@ -311,7 +311,7 @@
+ 	TTYS0_TX_AL
+ 	
+ 
+-#define DEBUG(x) TTYS0_TX_CHAR($x) ;  TTYS0_TX_CHAR($'\r') ;  TTYS0_TX_CHAR($'\n')
++#define DEBUG_CHAR(x) TTYS0_TX_CHAR($x) ;  TTYS0_TX_CHAR($'\r') ;  TTYS0_TX_CHAR($'\n')
+ #define DEBUG_TX_HEX32(x) TTYS0_TX_HEX32(x); TTYS0_TX_CHAR($'\r') ;  TTYS0_TX_CHAR($'\n')
+ #define DEBUG_TX_HEX64(x) TTYS0_TX_HEX64(x); TTYS0_TX_CHAR($'\r') ;  TTYS0_TX_CHAR($'\n')
+ 
+--- kexec-tools-1.101/kexec/kexec.h.orig	2006-12-01 15:05:05.000000000 -0500
++++ kexec-tools-1.101/kexec/kexec.h	2006-12-01 15:05:42.000000000 -0500
+@@ -116,6 +116,9 @@
+ 	struct mem_ehdr rhdr;
+ 	unsigned long backup_start;
+ 	unsigned long kexec_flags;
++	unsigned long kern_vaddr_start;
++	unsigned long kern_paddr_start;
++	unsigned long kern_size;
+ };
+ 
+ void usage(void);
+@@ -177,6 +180,7 @@
+ extern void *xmalloc(size_t size);
+ extern void *xrealloc(void *ptr, size_t size);
+ extern char *slurp_file(const char *filename, off_t *r_size);
++extern char *slurp_file_len(const char *filename, off_t size);
+ extern char *slurp_decompress_file(const char *filename, off_t *r_size);
+ extern void add_segment(struct kexec_info *info,
+ 	const void *buf, size_t bufsz, unsigned long base, size_t memsz);
+--- kexec-tools-1.101/kexec/Makefile.orig	2006-12-01 15:05:05.000000000 -0500
++++ kexec-tools-1.101/kexec/Makefile	2006-12-01 15:05:42.000000000 -0500
+@@ -13,6 +13,7 @@
+ KEXEC_C_SRCS+= kexec/ifdown.c
+ KEXEC_C_SRCS+= kexec/kexec-elf.c 
+ KEXEC_C_SRCS+= kexec/kexec-elf-exec.c 
++KEXEC_C_SRCS+= kexec/kexec-elf-core.c
+ KEXEC_C_SRCS+= kexec/kexec-elf-rel.c 
+ KEXEC_C_SRCS+= kexec/kexec-elf-boot.c 
+ KEXEC_C_SRCS+= kexec/crashdump.c
+--- kexec-tools-1.101/kexec/kexec-elf-exec.c.orig	2006-12-01 15:05:05.000000000 -0500
++++ kexec-tools-1.101/kexec/kexec-elf-exec.c	2006-12-01 15:05:42.000000000 -0500
+@@ -11,11 +11,12 @@
+ 
+ static const int probe_debug = 0;
+ 
+-int build_elf_exec_info(const char *buf, off_t len, struct mem_ehdr *ehdr)
++int build_elf_exec_info(const char *buf, off_t len, struct mem_ehdr *ehdr,
++				uint32_t flags)
+ {
+ 	struct mem_phdr *phdr, *end_phdr;
+ 	int result;
+-	result = build_elf_info(buf, len, ehdr);
++	result = build_elf_info(buf, len, ehdr, flags);
+ 	if (result < 0) {
+ 		return result;
+ 	}
+@@ -136,11 +137,11 @@
+ }
+ 
+ void elf_exec_build_load(struct kexec_info *info, struct mem_ehdr *ehdr, 
+-	const char *buf, off_t len)
++	const char *buf, off_t len, uint32_t flags)
+ {
+ 	int result;
+ 	/* Parse the Elf file */
+-	result = build_elf_exec_info(buf, len, ehdr);
++	result = build_elf_exec_info(buf, len, ehdr, flags);
+ 	if (result < 0) {
+ 		die("ELF exec parse failed\n");
+ 	}
+--- kexec-tools-1.101/kexec/kexec.c.orig	2006-12-01 15:05:05.000000000 -0500
++++ kexec-tools-1.101/kexec/kexec.c	2006-12-01 15:05:42.000000000 -0500
+@@ -391,6 +391,50 @@
+ 	return buf;
+ }
+ 
++/* This functions reads either specified number of bytes from the file or
++   lesser if EOF is met. */
++
++char *slurp_file_len(const char *filename, off_t size)
++{
++	int fd;
++	char *buf;
++	off_t progress;
++	ssize_t result;
++
++	if (!filename)
++		return 0;
++	fd = open(filename, O_RDONLY);
++	if (fd < 0) {
++		fprintf(stderr, "Cannot open %s: %s\n", filename,
++				strerror(errno));
++		return 0;
++	}
++	buf = xmalloc(size);
++	progress = 0;
++	while(progress < size) {
++		result = read(fd, buf + progress, size - progress);
++		if (result < 0) {
++			if ((errno == EINTR) ||	(errno == EAGAIN))
++				continue;
++			fprintf(stderr, "read on %s of %ld bytes failed: %s\n",
++					filename, (size - progress)+ 0UL,
++					strerror(errno));
++			free(buf);
++			return 0;
++		}
++		if (result == 0)
++			/* EOF */
++			break;
++		progress += result;
++	}
++	result = close(fd);
++	if (result < 0) {
++		die("Close of %s failed: %s\n",
++			filename, strerror(errno));
++	}
++	return buf;
++}
++
+ #if HAVE_ZLIB_H
+ char *slurp_decompress_file(const char *filename, off_t *r_size)
+ {
+--- kexec-tools-1.101/kexec/arch/i386/kexec-bzImage.c.orig	2006-12-01 15:05:05.000000000 -0500
++++ kexec-tools-1.101/kexec/arch/i386/kexec-bzImage.c	2006-12-01 15:05:42.000000000 -0500
+@@ -133,7 +133,7 @@
+ 	 * it's gdt.
+ 	 */
+ 	elf_rel_build_load(info, &info->rhdr, purgatory, purgatory_size,
+-		0x3000, 640*1024, -1);
++		0x3000, 640*1024, -1, 0);
+ 
+ 	/* The argument/parameter segment */
+ 	setup_size = kern16_size + command_line_len;
+--- kexec-tools-1.101/kexec/arch/i386/kexec-multiboot-x86.c.orig	2006-12-01 15:05:05.000000000 -0500
++++ kexec-tools-1.101/kexec/arch/i386/kexec-multiboot-x86.c	2006-12-01 15:05:42.000000000 -0500
+@@ -209,10 +209,11 @@
+ 
+ 	
+ 	/* Load the ELF executable */
+-	elf_exec_build_load(info, &ehdr, buf, len);
++	elf_exec_build_load(info, &ehdr, buf, len, 0);
+ 
+ 	/* Load the setup code */
+-	elf_rel_build_load(info, &info->rhdr, purgatory, purgatory_size, 0, ULONG_MAX, 1);
++	elf_rel_build_load(info, &info->rhdr, purgatory, purgatory_size, 0,
++				ULONG_MAX, 1, 0);
+ 	
+ 	/* The first segment will contain the multiboot headers:
+ 	 * =============
+--- kexec-tools-1.101/kexec/arch/i386/kexec-elf-x86.c.orig	2006-12-01 15:05:05.000000000 -0500
++++ kexec-tools-1.101/kexec/arch/i386/kexec-elf-x86.c	2006-12-01 15:05:42.000000000 -0500
+@@ -47,7 +47,7 @@
+ 	
+ 	struct mem_ehdr ehdr;
+ 	int result;
+-	result = build_elf_exec_info(buf, len, &ehdr);
++	result = build_elf_exec_info(buf, len, &ehdr, 0);
+ 	if (result < 0) {
+ 		if (probe_debug) {
+ 			fprintf(stderr, "Not an ELF executable\n");
+@@ -177,7 +177,7 @@
+ 	}
+ 
+ 	/* Load the ELF executable */
+-	elf_exec_build_load(info, &ehdr, buf, len);
++	elf_exec_build_load(info, &ehdr, buf, len, 0);
+ 
+ 	entry = ehdr.e_entry;
+ 	max_addr = elf_max_addr(&ehdr);
+@@ -186,7 +186,7 @@
+ 	if (arg_style != ARG_STYLE_NONE) {
+ 		/* Load the setup code */
+ 		elf_rel_build_load(info, &info->rhdr, purgatory, purgatory_size,
+-			0, ULONG_MAX, 1);
++			0, ULONG_MAX, 1, 0);
+ 	}
+ 	if (arg_style == ARG_STYLE_NONE) {
+ 		info->entry = (void *)entry;
+--- kexec-tools-1.101/kexec/arch/ppc/kexec-elf-ppc.c.orig	2005-01-20 14:10:56.000000000 -0500
++++ kexec-tools-1.101/kexec/arch/ppc/kexec-elf-ppc.c	2006-12-01 15:05:42.000000000 -0500
+@@ -72,7 +72,7 @@
+ 
+ 	struct mem_ehdr ehdr;
+ 	int result;
+-	result = build_elf_exec_info(buf, len, &ehdr);
++	result = build_elf_exec_info(buf, len, &ehdr, 0);
+ 	if (result < 0) {
+ 		goto out;
+ 	}
+@@ -180,7 +180,7 @@
+ 	}
+ 
+ 	/* Parse the Elf file */
+-	result = build_elf_exec_info(buf, len, &ehdr);
++	result = build_elf_exec_info(buf, len, &ehdr, 0);
+ 	if (result < 0) {
+ 		free_elf_info(&ehdr);
+ 		return result;
+--- kexec-tools-1.101/kexec/arch/x86_64/kexec-x86_64.c.orig	2006-12-01 15:05:05.000000000 -0500
++++ kexec-tools-1.101/kexec/arch/x86_64/kexec-x86_64.c	2006-12-01 15:05:42.000000000 -0500
+@@ -64,7 +64,7 @@
+ 			continue;
+ 		str = line + consumed;
+ 		end = end + 1;
+-#if 0
++#ifdef DEBUG
+ 		printf("%016Lx-%016Lx : %s",
+ 			start, end, str);
+ #endif
+@@ -104,7 +104,7 @@
+ 		memory_range[memory_ranges].start = start;
+ 		memory_range[memory_ranges].end = end;
+ 		memory_range[memory_ranges].type = type;
+-#if 0
++#ifdef DEBUG
+ 		printf("%016Lx-%016Lx : %x\n",
+ 			start, end, type);
+ #endif
+--- kexec-tools-1.101/kexec/arch/x86_64/kexec-elf-x86_64.c.orig	2006-12-01 15:05:05.000000000 -0500
++++ kexec-tools-1.101/kexec/arch/x86_64/kexec-elf-x86_64.c	2006-12-01 15:05:42.000000000 -0500
+@@ -47,7 +47,7 @@
+ 	
+ 	struct mem_ehdr ehdr;
+ 	int result;
+-	result = build_elf_exec_info(buf, len, &ehdr);
++	result = build_elf_exec_info(buf, len, &ehdr, 0);
+ 	if (result < 0) {
+ 		if (probe_debug) {
+ 			fprintf(stderr, "Not an ELF executable\n");
+@@ -177,7 +177,7 @@
+ 	}
+ 
+ 	/* Load the ELF executable */
+-	elf_exec_build_load(info, &ehdr, buf, len);
++	elf_exec_build_load(info, &ehdr, buf, len, 0);
+ 
+ 	entry = ehdr.e_entry;
+ 	max_addr = elf_max_addr(&ehdr);
+@@ -186,7 +186,7 @@
+ 	if (arg_style != ARG_STYLE_NONE) {
+ 		/* Load the setup code */
+ 		elf_rel_build_load(info, &info->rhdr, purgatory, purgatory_size,
+-			0, ULONG_MAX, 1);
++			0, ULONG_MAX, 1, 0);
+ 	}
+ 	if (arg_style == ARG_STYLE_NONE) {
+ 		info->entry = (void *)entry;
+--- kexec-tools-1.101/kexec/arch/x86_64/kexec-elf-rel-x86_64.c.orig	2004-12-21 12:51:24.000000000 -0500
++++ kexec-tools-1.101/kexec/arch/x86_64/kexec-elf-rel-x86_64.c	2006-12-01 15:05:42.000000000 -0500
+@@ -60,7 +60,7 @@
+ void machine_apply_elf_rel(struct mem_ehdr *ehdr, unsigned long r_type, 
+ 	void *location, unsigned long address, unsigned long value)
+ {
+-#if 0
++#ifdef DEBUG
+ 	fprintf(stderr, "%s\n", reloc_name(r_type));
+ #endif
+ 	switch(r_type) {
+--- kexec-tools-1.101/kexec/arch/x86_64/crashdump-x86_64.c.orig	2006-12-01 15:05:05.000000000 -0500
++++ kexec-tools-1.101/kexec/arch/x86_64/crashdump-x86_64.c	2006-12-01 15:05:42.000000000 -0500
+@@ -24,8 +24,10 @@
+ #include <errno.h>
+ #include <limits.h>
+ #include <elf.h>
++#include <fcntl.h>
+ #include <sys/types.h>
+ #include <sys/stat.h>
++#include <sys/mman.h>
+ #include <unistd.h>
+ #include "../../kexec.h"
+ #include "../../kexec-elf.h"
+@@ -40,6 +42,137 @@
+ /* Forward Declaration. */
+ static int exclude_crash_reserve_region(int *nr_ranges);
+ 
++#define KERN_VADDR_ALIGN	0x200000	/* 2MB */
++
++/* Read kernel physical load addr from /proc/iomem (Kernel Code) and
++ * store in kexec_info */
++static int get_kernel_paddr(struct kexec_info *info)
++{
++	const char iomem[]= "/proc/iomem";
++	char line[MAX_LINE];
++	FILE *fp;
++	unsigned long long start, end;
++
++	fp = fopen(iomem, "r");
++	if (!fp) {
++		fprintf(stderr, "Cannot open %s: %s\n", iomem, strerror(errno));
++		return -1;
++	}
++	while(fgets(line, sizeof(line), fp) != 0) {
++		char *str;
++		int consumed, count;
++		count = sscanf(line, "%Lx-%Lx : %n",
++			&start, &end, &consumed);
++		if (count != 2)
++			continue;
++		str = line + consumed;
++#ifdef DEBUG
++		printf("%016Lx-%016Lx : %s",
++			start, end, str);
++#endif
++		if (memcmp(str, "Kernel code\n", 12) == 0) {
++			info->kern_paddr_start = start;
++
++#ifdef DEBUG
++			printf("kernel load physical addr start = 0x%016Lx\n",
++					start);
++#endif
++			fclose(fp);
++			return 0;
++		}
++	}
++	fprintf(stderr, "Cannot determine kernel physical load addr\n");
++	fclose(fp);
++	return -1;
++}
++
++/* Hardcoding kernel virtual address and size. While writting
++ * this patch vanilla kernel is compiled for addr 2MB. Anybody
++ * using kernel older than that which was compiled for 1MB
++ * physical addr, use older version of kexec-tools. This function
++ * is there just for backward compatibility reasons and we should
++ * get rid of it at some point of time.
++ */
++
++static int hardcode_kernel_vaddr_size(struct kexec_info *info)
++{
++	fprintf(stderr, "Warning: Hardcoding kernel virtual addr and size\n");
++	info->kern_vaddr_start = __START_KERNEL_map + 0x200000;
++	info->kern_size = KERNEL_TEXT_SIZE - 0x200000;
++	fprintf(stderr, "Warning: virtual addr = 0x%lx size = 0x%lx\n",
++		info->kern_vaddr_start, info->kern_size);
++	return 0;
++}
++
++/* Retrieve info regarding virtual address kernel has been compiled for and
++ * size of the kernel from /proc/kcore. Current /proc/kcore parsing from
++ * from kexec-tools fails because of malformed elf notes. A kernel patch has
++ * been submitted. For the folks using older kernels, this function
++ * hard codes the values to remain backward compatible. Once things stablize
++ * we should get rid of backward compatible code. */
++
++static int get_kernel_vaddr_and_size(struct kexec_info *info)
++{
++	int result;
++	const char kcore[] = "/proc/kcore";
++	char *buf;
++	struct mem_ehdr ehdr;
++	struct mem_phdr *phdr, *end_phdr;
++	int align;
++	unsigned long size;
++	uint32_t elf_flags = 0;
++
++	align = getpagesize();
++	size = KCORE_ELF_HEADERS_SIZE;
++	buf = slurp_file_len(kcore, size);
++	if (!buf) {
++		fprintf(stderr, "Cannot read %s: %s\n", kcore, strerror(errno));
++		return -1;
++	}
++
++	/* Don't perform checks to make sure stated phdrs and shdrs are
++	 * actually present in the core file. It is not practical
++	 * to read the GB size file into a user space buffer, Given the
++	 * fact that we don't use any info from that.
++	 */
++	elf_flags |= ELF_SKIP_FILESZ_CHECK;
++	result = build_elf_core_info(buf, size, &ehdr, elf_flags);
++	if (result < 0) {
++		fprintf(stderr, "ELF core (kcore) parse failed\n");
++		hardcode_kernel_vaddr_size(info);
++		return 0;
++	}
++
++	/* Traverse through the Elf headers and find the region where
++	 * kernel is mapped. */
++	end_phdr = &ehdr.e_phdr[ehdr.e_phnum];
++	for(phdr = ehdr.e_phdr; phdr != end_phdr; phdr++) {
++		if (phdr->p_type == PT_LOAD) {
++			unsigned long saddr = phdr->p_vaddr;
++			unsigned long eaddr = phdr->p_vaddr + phdr->p_memsz;
++			unsigned long size;
++
++			/* Look for kernel text mapping header. */
++			if ((saddr >= __START_KERNEL_map) &&
++			    (eaddr <= __START_KERNEL_map + KERNEL_TEXT_SIZE)) {
++				saddr = (saddr) & (~(KERN_VADDR_ALIGN - 1));
++				info->kern_vaddr_start = saddr;
++				size = eaddr - saddr;
++				/* Align size to page size boundary. */
++				size = (size + align - 1) & (~(align - 1));
++				info->kern_size = size;
++#ifdef DEBUG
++			printf("kernel vaddr = 0x%lx size = 0x%lx\n",
++					saddr, size);
++#endif
++				return 0;
++			}
++		}
++	}
++	fprintf(stderr, "Can't find kernel text map area from kcore\n");
++	return -1;
++}
++
+ /* Stores a sorted list of RAM memory ranges for which to create elf headers.
+  * A separate program header is created for backup region */
+ static struct memory_range crash_memory_range[CRASH_MAX_MEMORY_RANGES];
+@@ -245,7 +378,7 @@
+ 			memmap_p[j+1] = memmap_p[j];
+ 		memmap_p[tidx].start = addr;
+ 		memmap_p[tidx].end = addr + size - 1;
+-#if 0
++#ifdef DEBUG
+ 	printf("Memmap after adding segment\n");
+ 	for (i = 0; i < CRASH_MAX_MEMMAP_NR;  i++) {
+ 		mstart = memmap_p[i].start;
+@@ -330,7 +463,7 @@
+ 			memmap_p[j-1] = memmap_p[j];
+ 		memmap_p[j-1].start = memmap_p[j-1].end = 0;
+ 	}
+-#if 0
++#ifdef DEBUG
+ 	printf("Memmap after deleting segment\n");
+ 	for (i = 0; i < CRASH_MAX_MEMMAP_NR;  i++) {
+ 		mstart = memmap_p[i].start;
+@@ -404,7 +537,7 @@
+ 			die("Command line overflow\n");
+ 		strcat(cmdline, str_mmap);
+ 	}
+-#if 0
++#ifdef DEBUG
+ 		printf("Command line after adding memmap\n");
+ 		printf("%s\n", cmdline);
+ #endif
+@@ -432,7 +565,7 @@
+ 	if (cmdlen > (COMMAND_LINE_SIZE - 1))
+ 		die("Command line overflow\n");
+ 	strcat(cmdline, str);
+-#if 0
++#ifdef DEBUG
+ 		printf("Command line after adding elfcorehdr\n");
+ 		printf("%s\n", cmdline);
+ #endif
+@@ -465,7 +598,7 @@
+ 		die("Command line overflow\n");
+ 	strcat(cmdline, str_mmap);
+ 
+-#if 0
++#ifdef DEBUG
+ 		printf("Command line after adding acpi memmap\n");
+ 		printf("%s\n", cmdline);
+ #endif
+@@ -536,6 +669,27 @@
+ 		(elf->e_phnum)++;
+ 	}
+ 
++	/* Setup an PT_LOAD type program header for the region where
++	 * Kernel is mapped.
++	 */
++	phdr = (Elf64_Phdr *) bufp;
++	bufp += sizeof(Elf64_Phdr);
++	phdr->p_type    = PT_LOAD;
++	phdr->p_flags   = PF_R|PF_W|PF_X;
++	phdr->p_offset  = phdr->p_paddr = info->kern_paddr_start;
++	phdr->p_vaddr   = info->kern_vaddr_start;
++	phdr->p_filesz  = phdr->p_memsz = info->kern_size;
++	phdr->p_align   = 0;
++	(elf->e_phnum)++;
++#ifdef DEBUG
++	printf("Kernel text Elf header: p_type = %d, p_offset = 0x%lx "
++		"p_paddr = 0x%lx p_vaddr = 0x%lx "
++		"p_filesz = 0x%lx p_memsz = 0x%lx\n",
++		phdr->p_type, phdr->p_offset, phdr->p_paddr,
++		phdr->p_vaddr, phdr->p_filesz, phdr->p_memsz);
++#endif
++ 
++
+ 	/* Setup PT_LOAD type program header for every system RAM chunk.
+ 	 * A seprate program header for Backup Region*/
+ 	for (i = 0; i < CRASH_MAX_MEMORY_RANGES; i++) {
+@@ -555,21 +709,13 @@
+ 		else
+ 			phdr->p_offset	= mstart;
+ 
+-		/* Handle linearly mapped region.*/
++		/* We already prepared the header for kernel text. Map
++		 * rest of the memory segments to kernel linearly mapped
++		 * memory region.
++		 */
+ 
+-		/* Filling the vaddr conditionally as we have two linearly
+-		 * mapped regions here. One is __START_KERNEL_map 0 to 40 MB
+-		 * other one is PAGE_OFFSET */
+-
+-		if ((mend <= (MAXMEM - 1)) && mstart < KERNEL_TEXT_SIZE)
+-			phdr->p_vaddr = mstart + __START_KERNEL_map;
+-		else {
+-			if (mend <= (MAXMEM - 1))
+-				phdr->p_vaddr = mstart + PAGE_OFFSET;
+-			else
+-				phdr->p_vaddr = -1ULL;
+-		}
+ 		phdr->p_paddr = mstart;
++		phdr->p_vaddr = mstart + PAGE_OFFSET;
+ 		phdr->p_filesz	= phdr->p_memsz	= mend - mstart + 1;
+ 		/* Do we need any alignment of segments? */
+ 		phdr->p_align	= 0;
+@@ -593,6 +739,12 @@
+ 	long int nr_cpus = 0;
+ 	struct memory_range *mem_range, *memmap_p;
+ 
++	if (get_kernel_paddr(info))
++		return -1;
++
++	if (get_kernel_vaddr_and_size(info))
++		return -1;
++
+ 	if (get_crash_memory_ranges(&mem_range, &nr_ranges) < 0)
+ 		return -1;
+ 
+@@ -638,7 +790,7 @@
+ 	 * This is a makeshift solution until it is fixed in kernel.
+ 	 */
+ 	elfcorehdr = add_buffer(info, tmp, sz, 16*1024, align, min_base,
+-							max_addr, 1);
++							max_addr, -1);
+ 	if (delete_memmap(memmap_p, elfcorehdr, sz) < 0)
+ 		return -1;
+ 	cmdline_add_memmap(mod_cmdline, memmap_p);
+--- kexec-tools-1.101/kexec/arch/ia64/kexec-elf-ia64.c.orig	2006-12-01 15:05:05.000000000 -0500
++++ kexec-tools-1.101/kexec/arch/ia64/kexec-elf-ia64.c	2006-12-01 15:05:42.000000000 -0500
+@@ -56,7 +56,7 @@
+ {
+ 	struct mem_ehdr ehdr;
+ 	int result;
+-	result = build_elf_exec_info(buf, len, &ehdr);
++	result = build_elf_exec_info(buf, len, &ehdr, 0);
+ 	if (result < 0) {
+ 		if (probe_debug) {
+ 			fprintf(stderr, "Not an ELF executable\n");
+@@ -163,7 +163,7 @@
+ 	}
+ 
+ 	/* Parse the Elf file */
+-	result = build_elf_exec_info(buf, len, &ehdr);
++	result = build_elf_exec_info(buf, len, &ehdr, 0);
+ 	if (result < 0) {
+ 		fprintf(stderr, "ELF parse failed\n");
+ 		free_elf_info(&ehdr);
+@@ -198,7 +198,7 @@
+ 
+ 	/* Load the setup code */
+ 	elf_rel_build_load(info, &info->rhdr, purgatory, purgatory_size,
+-			0x0, ULONG_MAX, -1);
++			0x0, ULONG_MAX, -1, 0);
+ 
+ 
+ 	if (load_crashdump_segments(info, &ehdr, max_addr, 0,
+--- kexec-tools-1.101/kexec/arch/ppc64/kexec-elf-ppc64.c.orig	2006-12-01 15:05:05.000000000 -0500
++++ kexec-tools-1.101/kexec/arch/ppc64/kexec-elf-ppc64.c	2006-12-01 15:05:42.000000000 -0500
+@@ -52,7 +52,7 @@
+ {
+ 	struct mem_ehdr ehdr;
+ 	int result;
+-	result = build_elf_exec_info(buf, len, &ehdr);
++	result = build_elf_exec_info(buf, len, &ehdr, 0);
+ 	if (result < 0) {
+ 		goto out;
+ 	}
+@@ -163,7 +163,7 @@
+ 	}
+ 
+ 	/* Parse the Elf file */
+-	result = build_elf_exec_info(buf, len, &ehdr);
++	result = build_elf_exec_info(buf, len, &ehdr, 0);
+ 	if (result < 0) {
+ 		free_elf_info(&ehdr);
+ 		return result;
+@@ -213,7 +213,7 @@
+ 	memcpy(seg_buf, purgatory, purgatory_size);
+ 	seg_size = purgatory_size;
+ 	elf_rel_build_load(info, &info->rhdr, (const char *)purgatory,
+-				purgatory_size, 0, max_addr, 1);
++				purgatory_size, 0, max_addr, 1, 0);
+ 
+ 	/* Add a ram-disk to the current image
+ 	 * Note: Add the ramdisk after elf_rel_build_load
+--- kexec-tools-1.101/kexec/kexec-elf-rel.c.orig	2006-12-01 15:05:05.000000000 -0500
++++ kexec-tools-1.101/kexec/kexec-elf-rel.c	2006-12-01 15:05:42.000000000 -0500
+@@ -135,10 +135,11 @@
+ 	return rela;
+ }
+ 
+-int build_elf_rel_info(const char *buf, off_t len, struct mem_ehdr *ehdr)
++int build_elf_rel_info(const char *buf, off_t len, struct mem_ehdr *ehdr,
++				uint32_t flags)
+ {
+ 	int result;
+-	result = build_elf_info(buf, len, ehdr);
++	result = build_elf_info(buf, len, ehdr, flags);
+ 	if (result < 0) {
+ 		return result;
+ 	}
+@@ -412,12 +413,12 @@
+ 
+ void elf_rel_build_load(struct kexec_info *info, struct mem_ehdr *ehdr,
+ 	const char *buf, off_t len, unsigned long min, unsigned long max,
+-	int end)
++	int end, uint32_t flags)
+ {
+ 	int result;
+ 
+ 	/* Parse the Elf file */
+-	result = build_elf_rel_info((char *)purgatory, purgatory_size, ehdr);
++	result = build_elf_rel_info(buf, len, ehdr, flags);
+ 	if (result < 0) {
+ 		die("ELF rel parse failed\n");
+ 	}
+--- /dev/null	2006-11-22 10:18:18.589138000 -0500
++++ kexec-tools-1.101/kexec/kexec-elf-core.c	2006-12-01 15:05:42.000000000 -0500
+@@ -0,0 +1,29 @@
++#include <stdio.h>
++#include <stdint.h>
++#include <errno.h>
++#include <stdlib.h>
++#include "elf.h"
++#include "kexec-elf.h"
++
++
++int build_elf_core_info(const char *buf, off_t len, struct mem_ehdr *ehdr,
++				uint32_t flags)
++{
++	int result;
++	result = build_elf_info(buf, len, ehdr, flags);
++	if (result < 0) {
++		return result;
++	}
++	if ((ehdr->e_type != ET_CORE)) {
++		/* not an ELF Core */
++		fprintf(stderr, "Not ELF type ET_CORE\n");
++		return -1;
++	}
++	if (!ehdr->e_phdr) {
++		/* No program header */
++		fprintf(stderr, "No ELF program header\n");
++		return -1;
++	}
++
++	return 0;
++}
+--- kexec-tools-1.101/kexec/crashdump.h.orig	2006-12-01 15:05:05.000000000 -0500
++++ kexec-tools-1.101/kexec/crashdump.h	2006-12-01 15:05:42.000000000 -0500
+@@ -5,5 +5,7 @@
+ 
+ /* Need to find a better way to determine per cpu notes section size. */
+ #define MAX_NOTE_BYTES		1024
++/* Expecting ELF headers to fit in 4K. Increase it if you need more. */
++#define KCORE_ELF_HEADERS_SIZE  4096
+ 
+ #endif /* CRASHDUMP_H */
+--- kexec-tools-1.101/kexec/kexec-elf.c.orig	2006-12-01 15:05:05.000000000 -0500
++++ kexec-tools-1.101/kexec/kexec-elf.c	2006-12-01 15:05:42.000000000 -0500
+@@ -368,7 +368,8 @@
+ 	return 0;
+ }
+ 
+-static int build_mem_phdrs(const char *buf, off_t len, struct mem_ehdr *ehdr)
++static int build_mem_phdrs(const char *buf, off_t len, struct mem_ehdr *ehdr,
++				uint32_t flags)
+ {
+ 	size_t phdr_size, mem_phdr_size;
+ 	int i;
+@@ -418,9 +419,11 @@
+ 
+ 		/* Check the program headers to be certain
+ 		 * they are safe to use.
++		 * Skip the check if ELF_SKIP_FILESZ_CHECK is set.
+ 		 */
+ 		phdr = &ehdr->e_phdr[i];
+-		if ((phdr->p_offset + phdr->p_filesz) > len) {
++		if (!(flags & ELF_SKIP_FILESZ_CHECK)
++			&& (phdr->p_offset + phdr->p_filesz) > len) {
+ 			/* The segment does not fit in the buffer */
+ 			if (probe_debug) {
+ 				fprintf(stderr, "ELF segment not in file\n");
+@@ -580,7 +583,8 @@
+ 	return 0;
+ }
+ 
+-static int build_mem_shdrs(const char *buf, off_t len, struct mem_ehdr *ehdr)
++static int build_mem_shdrs(const char *buf, off_t len, struct mem_ehdr *ehdr,
++				uint32_t flags)
+ {
+ 	size_t shdr_size, mem_shdr_size;
+ 	int i;
+@@ -628,11 +632,12 @@
+ 		}
+ 		/* Check the section headers to be certain
+ 		 * they are safe to use.
++		 * Skip the check if ELF_SKIP_FILESZ_CHECK is set.
+ 		 */
+ 		shdr = &ehdr->e_shdr[i];
+-		if ((shdr->sh_type != SHT_NOBITS) &&
+-			((shdr->sh_offset + shdr->sh_size) > len))
+-		{
++		if (!(flags & ELF_SKIP_FILESZ_CHECK)
++			&& (shdr->sh_type != SHT_NOBITS)
++			&& (shdr->sh_offset + shdr->sh_size) > len) {
+ 			/* The section does not fit in the buffer */
+ 			if (probe_debug) {
+ 				fprintf(stderr, "ELF section %d not in file\n",
+@@ -710,7 +715,8 @@
+ 		note_size += (hdr.n_descsz + 3) & ~3;
+ 
+ 		if ((hdr.n_namesz != 0) && (name[hdr.n_namesz -1] != '\0')) {
+-			die("Note name is not null termiated");
++			fprintf(stderr, "Note name is not null termiated\n");
++			return -1;
+ 		}
+ 		ehdr->e_note[i].n_type = hdr.n_type;
+ 		ehdr->e_note[i].n_name = (char *)name;
+@@ -729,7 +735,8 @@
+ 	memset(ehdr, 0, sizeof(*ehdr));
+ }
+ 
+-int build_elf_info(const char *buf, off_t len, struct mem_ehdr *ehdr)
++int build_elf_info(const char *buf, off_t len, struct mem_ehdr *ehdr,
++			uint32_t flags)
+ {
+ 	int result;
+ 	result = build_mem_ehdr(buf, len, ehdr);
+@@ -737,14 +744,14 @@
+ 		return result;
+ 	}
+ 	if ((ehdr->e_phoff > 0) && (ehdr->e_phnum > 0)) {
+-		result = build_mem_phdrs(buf, len, ehdr);
++		result = build_mem_phdrs(buf, len, ehdr, flags);
+ 		if (result < 0) {
+ 			free_elf_info(ehdr);
+ 			return result;
+ 		}
+ 	}
+ 	if ((ehdr->e_shoff > 0) && (ehdr->e_shnum > 0)) {
+-		result = build_mem_shdrs(buf, len, ehdr);
++		result = build_mem_shdrs(buf, len, ehdr, flags);
+ 		if (result < 0) {
+ 			free_elf_info(ehdr);
+ 			return result;
+--- kexec-tools-1.101/kexec/kexec-elf.h.orig	2006-12-01 15:05:05.000000000 -0500
++++ kexec-tools-1.101/kexec/kexec-elf.h	2006-12-01 15:05:42.000000000 -0500
+@@ -82,22 +82,29 @@
+ 	uint32_t n_type;		/* Type of the note.  */
+ } ElfNN_Nhdr;
+ 
++/* Misc flags */
+ 
++#define ELF_SKIP_FILESZ_CHECK		0x00000001
+ 
+ extern void free_elf_info(struct mem_ehdr *ehdr);
+-extern int build_elf_info(const char *buf, off_t len, struct mem_ehdr *ehdr);
+-extern int build_elf_exec_info(const char *buf, off_t len, struct mem_ehdr *ehdr);
+-extern int build_elf_rel_info(const char *buf, off_t len, struct mem_ehdr *ehdr);
++extern int build_elf_info(const char *buf, off_t len, struct mem_ehdr *ehdr,
++				uint32_t flags);
++extern int build_elf_exec_info(const char *buf, off_t len,
++				struct mem_ehdr *ehdr, uint32_t flags);
++extern int build_elf_rel_info(const char *buf, off_t len, struct mem_ehdr *ehdr,
++				uint32_t flags);
+ 
++extern int build_elf_core_info(const char *buf, off_t len,
++					struct mem_ehdr *ehdr, uint32_t flags);
+ extern int elf_exec_load(struct mem_ehdr *ehdr, struct kexec_info *info);
+ extern int elf_rel_load(struct mem_ehdr *ehdr, struct kexec_info *info,
+ 	unsigned long min, unsigned long max, int end);
+ 
+ extern void elf_exec_build_load(struct kexec_info *info, struct mem_ehdr *ehdr, 
+-	const char *buf, off_t len);
++				const char *buf, off_t len, uint32_t flags);
+ extern void elf_rel_build_load(struct kexec_info *info, struct mem_ehdr *ehdr, 
+ 	const char *buf, off_t len, unsigned long min, unsigned long max, 
+-	int end);
++	int end, uint32_t flags);
+ 
+ extern int elf_rel_find_symbol(struct mem_ehdr *ehdr,
+ 	const char *name, struct mem_sym *ret_sym);

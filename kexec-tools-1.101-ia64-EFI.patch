@@ -1,0 +1,281 @@
+--- kexec-tools-1.101/purgatory/arch/ia64/entry.S.orig1	2006-10-12 14:25:54.000000000 -0400
++++ kexec-tools-1.101/purgatory/arch/ia64/entry.S	2006-10-12 14:48:04.000000000 -0400
+@@ -46,6 +46,8 @@
+ 	br.call.sptk.many b0=ia64_env_setup
+ 	movl r10=__kernel_entry;;
+ 	ld8 r14=[r10];;
++	movl r10=__boot_param_base;;
++	ld8 r28=[r10];;
+ 	mov b6=r14;;
+ 	mov ar.lc=r0
+ 	mov ar.ec=r0
+@@ -61,6 +63,7 @@
+ DECLARE_DATA8(__command_line_len)
+ DECLARE_DATA8(__efi_memmap_base)
+ DECLARE_DATA8(__efi_memmap_size)
++DECLARE_DATA8(__boot_param_base)
+ DECLARE_DATA8(__loaded_segments)
+ DECLARE_DATA8(__loaded_segments_num)
+ 
+--- kexec-tools-1.101/purgatory/arch/ia64/purgatory-ia64.c.orig1	2006-10-12 14:25:54.000000000 -0400
++++ kexec-tools-1.101/purgatory/arch/ia64/purgatory-ia64.c	2006-10-12 14:48:04.000000000 -0400
+@@ -123,11 +123,12 @@
+ 	uint64_t command_line_len;
+ 	uint64_t efi_memmap_base;
+ 	uint64_t efi_memmap_size;
++	uint64_t boot_param_base;
+ 	struct loaded_segment *loaded_segments;
+ 	unsigned long loaded_segments_num;
+ };
+ 
+-void
++void 
+ setup_arch(void)
+ {
+ 	reset_vga();
+@@ -138,11 +139,11 @@
+ 	return addr - PAGE_OFFSET;
+ }
+ 
+-void
+-patch_efi_memmap(struct kexec_boot_params *params,
++void 
++patch_efi_memmap(struct kexec_boot_params *params, 
+ 		struct ia64_boot_param *boot_param)
+ {
+-	void *dest = (void *)params->efi_memmap_base;
++	void *dest = (void *)params->efi_memmap_base; 
+ 	void *src  = (void *)boot_param->efi_memmap;
+ 	unsigned long len = boot_param->efi_memmap_size;
+ 	unsigned long memdesc_size = boot_param->efi_memdesc_size;
+@@ -150,15 +151,15 @@
+ 	efi_memory_desc_t *md1, *md2;
+ 	void *p1, *p2, *src_end = src + len;
+ 	int i;
+-	for (p1 = src, p2 = dest; p1 < src_end;
++	for (p1 = src, p2 = dest; p1 < src_end; 
+ 			p1 += memdesc_size, p2 += memdesc_size) {
+ 		unsigned long mstart, mend;
+ 		md1 = p1;
+ 		md2 = p2;
+-		if (md1->num_pages == 0)
++		if (md1->num_pages == 0) 
+ 			continue;
+ 		mstart = md1->phys_addr;
+-		mend = md1->phys_addr + (md1->num_pages
++		mend = md1->phys_addr + (md1->num_pages 
+ 				<< EFI_PAGE_SHIFT);
+ 		switch (md1->type) {
+ 			case EFI_LOADER_DATA:
+@@ -168,7 +169,7 @@
+ 			default:
+ 				*md2 = *md1;
+ 		}
+-		// segments are already sorted and aligned to 4K
++		// segments are already sorted and aligned to 4K 
+ 		orig_type = md2->type;
+ 		for (i = 0; i < params->loaded_segments_num; i++) {
+ 			struct loaded_segment *seg;
+@@ -177,50 +178,50 @@
+ 				unsigned long start_pages, mid_pages, end_pages;
+ 				if (seg->end > mend) {
+ 					p1 += memdesc_size;
+-					for(; p1 < src_end;
++					for(; p1 < src_end; 
+ 							p1 += memdesc_size) {
+ 						md1 = p1;
+ 						/* TODO check contig and attribute here */
+-						mend = md1->phys_addr
++						mend = md1->phys_addr 
+ 							+ (md1->num_pages << EFI_PAGE_SHIFT);
+ 						if (seg->end < mend)
+ 							break;
+ 					}
+ 				}
+-				start_pages = (seg->start - mstart)
++				start_pages = (seg->start - mstart) 
+ 					>> EFI_PAGE_SHIFT;
+ 				mid_pages = (seg->end - seg->start)
+ 					>> EFI_PAGE_SHIFT;
+-				end_pages  = (mend - seg->end)
++				end_pages  = (mend - seg->end) 
+ 					>> EFI_PAGE_SHIFT;
+ 				if (start_pages) {
+ 					md2->num_pages = start_pages;
+-					p2 += memdesc_size;
++					p2 += memdesc_size; 
+ 					md2 = p2;
+ 					*md2 = *md1;
+ 				}
+ 				md2->phys_addr = seg->start;
+ 				md2->num_pages = mid_pages;
+-				md2->type = seg->reserved ?
++				md2->type = seg->reserved ? 
+ 					EFI_UNUSABLE_MEMORY:EFI_LOADER_DATA;
+ 				if (end_pages) {
+-					p2 += memdesc_size;
++					p2 += memdesc_size; 
+ 					md2 = p2;
+ 					*md2 = *md1;
+ 					md2->phys_addr = seg->end;
+ 					md2->num_pages = end_pages;
+ 					md2->type = orig_type;
+ 					mstart = seg->end;
+-				} else
++				} else 
+ 					break;
+ 			}
+ 		}
+ 	}
+-
++	
+ 	boot_param->efi_memmap_size = p2 - dest;
+ }
+ 
+-void
++void 
+ flush_icache_range(char *start, unsigned long len)
+ {
+ 	unsigned long i;
+@@ -233,7 +234,7 @@
+ extern char __dummy_efi_function[], __dummy_efi_function_end[];
+ 
+ 
+-void
++void 
+ ia64_env_setup(struct ia64_boot_param *boot_param,
+ 	struct kexec_boot_params *params)
+ {
+@@ -243,13 +244,15 @@
+ 	unsigned long *set_virtual_address_map;
+ 	char *command_line = (char *)params->command_line;
+ 	uint64_t command_line_len = params->command_line_len;
+-
++	struct ia64_boot_param *new_boot_param = 
++	(struct ia64_boot_param *) params->boot_param_base;
++	memcpy(new_boot_param, boot_param, 4096);
+ 	// patch efi_runtime->set_virtual_address_map to a
+ 	// dummy function
+ 	len = __dummy_efi_function_end - __dummy_efi_function;
+-	memcpy(command_line + command_line_len,
++	memcpy(command_line + command_line_len, 
+ 		__dummy_efi_function, len);
+-	systab = (efi_system_table_t *)boot_param->efi_systab;
++	systab = (efi_system_table_t *)new_boot_param->efi_systab;
+ 	runtime = (efi_runtime_services_t *)PA(systab->runtime);
+ 	set_virtual_address_map =
+ 		(unsigned long *)PA(runtime->set_virtual_address_map);
+@@ -257,15 +260,14 @@
+ 		(unsigned long)(command_line + command_line_len);
+ 	flush_icache_range(command_line + command_line_len, len);
+ 
+-	patch_efi_memmap(params, boot_param);
+-
+-	boot_param->efi_memmap = params->efi_memmap_base;
++	patch_efi_memmap(params, new_boot_param);
+ 
+-	boot_param->command_line = params->command_line;
+-	boot_param->console_info.orig_x = 0;
+-	boot_param->console_info.orig_y = 0;
+-	boot_param->initrd_start = params->ramdisk_base;
+-	boot_param->initrd_size =  params->ramdisk_size;
++	new_boot_param->efi_memmap = params->efi_memmap_base;
++	new_boot_param->command_line = params->command_line;
++	new_boot_param->console_info.orig_x = 0;
++	new_boot_param->console_info.orig_y = 0;
++	new_boot_param->initrd_start = params->ramdisk_base;
++	new_boot_param->initrd_size =  params->ramdisk_size;
+ }
+ 
+ /* This function can be used to execute after the SHA256 verification. */
+--- kexec-tools-1.101/kexec/arch/ia64/kexec-ia64.c.orig1	2006-10-12 14:25:54.000000000 -0400
++++ kexec-tools-1.101/kexec/arch/ia64/kexec-ia64.c	2006-10-12 14:47:57.000000000 -0400
+@@ -36,6 +36,38 @@
+ 
+ static struct memory_range memory_range[MAX_MEMORY_RANGES];
+ 
++/* Reserve range for EFI memmap and Boot parameter */
++static int split_range(int range, unsigned long start, unsigned long end)
++{
++	unsigned long ram_end = memory_range[range - 1].end;
++	unsigned int type = memory_range[range - 1].type;
++	int i;
++	//align end and start to page size of EFI
++	start = start & ~((1UL<<12) - 1);
++	end = (end + (1UL<<12) - 1)& ~((1UL<<12) - 1);
++	for (i = 0; i < range; i++) 
++		if(memory_range[i].start <= start && memory_range[i].end >=end)
++			break;
++	if (i >= range)
++		return range;
++	range = i;
++	if (memory_range[range].start < start) {
++		memory_range[range].end = start;
++		range++;
++	}
++	memory_range[range].start = start;
++	memory_range[range].end = end;
++	memory_range[range].type = RANGE_RESERVED;
++	range++;
++	if (end < ram_end) {
++		memory_range[range].start = end;
++		memory_range[range].end = ram_end;
++		memory_range[range].type = type;
++		range++;
++	}
++	return range;
++}
++
+ /* Return a sorted list of available memory ranges. */
+ int get_memory_ranges(struct memory_range **range, int *ranges,
+ 				unsigned long kexec_flags)
+@@ -85,6 +117,12 @@
+ 					mem_max = end;
+ 			}
+ 			continue;
++		} else if (memcmp(str, "Boot parameter\n", 14) == 0) {
++			memory_ranges = split_range(memory_ranges, start, end);
++			continue;
++		} else if (memcmp(str, "EFI Memory Map\n", 14) == 0) {
++			memory_ranges = split_range(memory_ranges, start, end);
++			continue;
+ 		} else
+ 			continue;
+ 		/*
+@@ -125,7 +163,7 @@
+ {
+ 	static const struct option options[] = {
+ 		KEXEC_ARCH_OPTIONS
+-		{ 0, 			0, NULL, 0 },
++		{ 0, 0, NULL, 0 },
+ 	};
+ 	static const char short_options[] = KEXEC_ARCH_OPT_STR;
+ 	int opt;
+--- kexec-tools-1.101/kexec/arch/ia64/kexec-elf-ia64.c.orig1	2006-10-12 14:25:54.000000000 -0400
++++ kexec-tools-1.101/kexec/arch/ia64/kexec-elf-ia64.c	2006-10-12 14:48:04.000000000 -0400
+@@ -115,9 +115,10 @@
+ 	unsigned long entry, max_addr, gp_value;
+ 	unsigned long command_line_base, ramdisk_base;
+ 	unsigned long efi_memmap_base, efi_memmap_size;
++	unsigned long boot_param_base;
+ 	int result;
+ 	int opt;
+-	char *efi_memmap_buf;
++	char *efi_memmap_buf, *boot_param;
+ #define OPT_APPEND	(OPT_ARCH_MAX+0)
+ #define OPT_RAMDISK	(OPT_ARCH_MAX+1)
+ 	static const struct option options[] = {
+@@ -191,6 +192,13 @@
+ 				&command_line) < 0)
+ 		return -1;
+ 
++	// reverve 4k for ia64_boot_param
++	boot_param = xmalloc(4096);
++        boot_param_base = add_buffer(info, boot_param, 4096, 4096, 4096, 0,
++                        max_addr, -1);
++        elf_rel_set_symbol(&info->rhdr, "__boot_param_base",
++                        &boot_param_base, sizeof(long));
++
+ 	// reserve 8k for efi_memmap
+ 	efi_memmap_size = 1UL<<14;
+ 	efi_memmap_buf = xmalloc(efi_memmap_size);

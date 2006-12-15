@@ -9,7 +9,7 @@
 #
 #  Copyright 2005 Red Hat, Inc.
 #
-#  chkconfig: 2345 20 80
+#  chkconfig: - 20 80
 #
 #  Author:  Jeff Moyer <jmoyer@redhat.com>
 
@@ -28,7 +28,9 @@ KDUMP_COMMANDLINE=""
 KEXEC_ARGS=""
 KDUMP_CONFIG_FILE="/etc/kdump.conf"
 
-standard_kexec_args="-p --args-linux"
+LOGGER="/usr/bin/logger -p info -t kdump"
+
+standard_kexec_args="-p"
 
 if [ -f /etc/sysconfig/kdump ]; then
 	. /etc/sysconfig/kdump
@@ -39,7 +41,13 @@ function save_core()
 	coredir="/var/crash/`date +"%Y-%m-%d-%H:%M"`"
 
 	mkdir -p $coredir
-	cp /proc/vmcore $coredir/vmcore
+	cp /proc/vmcore $coredir/vmcore-incomplete
+	if [ $? == 0 ]; then
+		mv $coredir/vmcore-incomplete $coredir/vmcore
+		$LOGGER "saved a vmcore to $coredir"
+	else
+		$LOGGER "failed to save a vmcore to $coredir"
+	fi
 }
 
 function check_config()
@@ -48,24 +56,29 @@ function check_config()
 		local running_kernel=`uname -r`
 
 		kdump_kver=`echo $running_kernel | sed 's/smp//g'`
-		kdump_kver="${kdump_kver}kdump"
 	else
 		kdump_kver=$KDUMP_KERNELVER
 	fi
 
-	kdump_kernel="${BOOTDIR}/vmlinux-${kdump_kver}"
-	kdump_initrd="${BOOTDIR}/initrd-${kdump_kver}.img"
+	kdump_kernel="${KDUMP_BOOTDIR}/${KDUMP_IMG}-${kdump_kver}${KDUMP_IMG_EXT}"
+	kdump_initrd="${KDUMP_BOOTDIR}/initrd-${kdump_kver}kdump.img"
 
 	if [ ! -f $kdump_kernel ]; then
 		echo -n "No kdump kernel image found."; warning; echo
 		echo "Tried to locate ${kdump_kernel}"
-		exit 0
+		return 0
 	fi
 
 	if [ ! -f $kdump_initrd ]; then
 		echo  -n "No kdump initial ramdisk found."; warning; echo
-		echo "Tried to locate ${kdump_initrd}"
-		return 1
+		echo "Rebuilding $kdump_initrd"
+		/sbin/mkdumprd -d -f $kdump_initrd $kdump_kver
+		if [ $? != 0 ]; then
+			echo "Failed to run mkdumprd"
+			$LOGGER "mkdumprd: failed to make kdump initrd"
+			exit 1
+		fi
+		return 0
 	fi
 
 	#check to see if config file has been modified after
@@ -82,17 +95,52 @@ function check_config()
 		echo "Detected $KDUMP_CONFIG_FILE or $kdump_kernel change"
 		echo "Rebuilding $kdump_initrd"
 		/sbin/mkdumprd -d -f $kdump_initrd $kdump_kver
+		if [ $? != 0 ]; then
+			echo "Failed to run mkdumprd"
+			$LOGGER "mkdumprd: failed to make kdump initrd"
+			return 1
+		fi
 	fi
 
-	#hack until we stop making initrd for kdump during rpm install
-	#allow initrd 120 seconds to be created before considering it new
-	module_time=`stat -c "%Y" /lib/modules/${kdump_kver}`
-	let module_time=module_time+120
-	if [ ! "$image_time" -gt "$module_time" ]; then
-		echo "Detected initial rpm install"
-		echo "Rebuilding $kdump_initrd"
-		/sbin/mkdumprd -d -f $kdump_initrd $kdump_kver
+}
+
+# This function check iomem and determines if we have more than
+# 4GB of ram available. Returns 1 if we do, 0 if we dont
+function need_64bit_headers()
+{
+
+	MEMSZ=`sed -e's/\(^[0-9]\+.*\)/0x\1/' -e's/\(-\)\(.*\)/ 0x\2/' /proc/iomem | \
+	awk 'BEGIN {
+		totalmem=0;
+		segmentmem=0;
+	     }
+	     /.*RAM.*/ {
+		start = strtonum($1);
+		end = strtonum($2);
+		segmentmem=end-start;
+		totalmem=totalmem+(segmentmem/1024);
+		if (end >= 4194304) {
+			totalmem=totalmem+4194304;
+		}
+	     }
+	     END {
+		printf "%d", (totalmem+1);
+	     }'`
+
+	#The AWK script above computes the total number of KB 
+	#in the RAM areas of /proc/iomem
+	#Note also that we set totalmem to 4GB in the event that
+	#any physical address is larger than 4GB.  This lets us
+	#default to 64 bit ELF headers for PAE kernels, which 
+	#need then to access those higher addresses.
+
+	#This comparison tells us if the above amount is more than 
+	#4GB (4096 KB).  I do the funny math to avoid overflow
+	if [ $MEMSZ -ge 4194304 ]
+	then
+		return 1
 	fi
+	return 0
 }
 
 # Load the kdump kerel specified in /etc/sysconfig/kdump
@@ -100,54 +148,215 @@ function check_config()
 # as the currently running kernel.
 function load_kdump()
 {
-	if [ -z "$KDUMP_COMMANDLINE" ]; then
+
+	if [ -z "$KDUMP_COMMANDLINE" ]
+	then
 		KDUMP_COMMANDLINE=`cat /proc/cmdline`
-		KDUMP_COMMANDLINE=`echo $KDUMP_COMMANDLINE | sed -e 's/crashkernel=[0-9]\+M@[0-9]\+M//g'`
-		KDUMP_COMMANDLINE="${KDUMP_COMMANDLINE} irqpoll"
 	fi
+
+	ARCH=`uname -m`
+	if [ "$ARCH" == "i686" -o "$ARCH" == "i386" ]
+	then
+
+		need_64bit_headers
+		if [ $? == 1 ]
+		then
+			FOUND_ELF_ARGS=`echo $KEXEC_ARGS | grep elf32-core-headers`
+			if [ -n "$FOUND_ELF_ARGS" ]
+			then
+				echo -n "Warning: elf32-core-headers overrides correct elf64 setting"
+				warning
+				echo
+			else	
+				KEXEC_ARGS="$KEXEC_ARGS --elf64-core-headers"
+			fi
+		else
+			FOUND_ELF_ARGS=`echo $KEXEC_ARGS | grep elf64-core-headers`
+			if [ -z "$FOUND_ELF_ARGS" ]
+			then
+				KEXEC_ARGS="$KEXEC_ARGS --elf32-core-headers"
+			fi
+		fi
+	fi
+
+	KDUMP_COMMANDLINE=`echo $KDUMP_COMMANDLINE | sed -e 's/crashkernel=[0-9]\+M@[0-9]\+M//g'`
+	KDUMP_COMMANDLINE="${KDUMP_COMMANDLINE} ${KDUMP_COMMANDLINE_APPEND}"
 
 	$KEXEC $KEXEC_ARGS $standard_kexec_args \
 		--command-line="$KDUMP_COMMANDLINE" \
-		--initrd=$kdump_initrd $kdump_kernel
-
+		--initrd=$kdump_initrd $kdump_kernel 2>/dev/null
 	if [ $? == 0 ]; then
-		touch /var/run/kdump.status
+		$LOGGER "kexec: loaded kdump kernel"
+		return 0
+	else
+		$LOGGER "kexec: failed to load kdump kernel"
+		return 1
+	fi
+}
+
+function propagate_ssh_key()
+{
+	#Check if selinux is on... must flip to permissive mode
+	#for the moment to create key, then flip back...
+	se_enforce=`/usr/sbin/sestatus | grep -c "^Current mode.*enforcing"`
+	if [ "$se_enforce" -ge 1 ]; then
+		/usr/sbin/setenforce 0 2>&1 > /dev/null
 	fi
 
+	#Use dedicated key for kdump
+	if [ ! -d /root/.ssh ]; then
+		mkdir /root/.ssh
+		chmod 700 /root/.ssh
+	fi
+	if [ ! -e /root/.ssh/config ]; then
+		echo "IdentityFile ~/.ssh/kdump_id_rsa" >> /root/.ssh/config
+	elif [ `grep -c kdump_id_rsa /root/.ssh/config` -eq 0 ]; then
+		echo "IdentityFile ~/.ssh/kdump_id_rsa" >> /root/.ssh/config
+	fi
+	local KEYFILE=/root/.ssh/kdump_id_rsa.pub
+	local errmsg="Failed to propagate ssh key"
+
+	#make sure they've configured kdump.conf for ssh dumps
+	local SSH_TARGET=`awk '/^\ *net.*@.*$/ {print $0}' $KDUMP_CONFIG_FILE`
+	if [ -z "$SSH_TARGET" ]; then
+		echo "No ssh config specified in $KDUMP_CONFIG_FILE.  Can't propagate"
+		$LOGGER "$errmsg, no ssh config specified in $KDUMP_CONFIG_FILE"
+		exit 1
+	fi
+
+	#Check to see if we already created key, if not, create it.
+	if [ -f $KEYFILE ]; then
+		echo "Using existing keys..."
+	else
+		echo -n "Generating new ssh keys... "
+		/usr/bin/ssh-keygen -t rsa -f /root/.ssh/kdump_id_rsa -N "" 2>&1 > /dev/null
+		echo "done."
+	fi
+
+	#If necessary, flip selinux back to enforcing
+	if [ "$se_enforce" -ge 1 ]; then
+		/usr/sbin/setenforce 1 2>&1 > /dev/null
+	fi
+	
+	#now find the target ssh user and server to contact.
+	SSH_USER=`echo $SSH_TARGET | cut -d\  -f2 | cut -d@ -f1`
+	SSH_SERVER=`echo $SSH_TARGET | sed -e's/\(.*@\)\(.*$\)/\2/'`
+ 
+	#now send the found key to the found server
+	cat $KEYFILE | ssh -x $SSH_USER@$SSH_SERVER "mkdir -p ~$SSH_USER/.ssh; chmod 700 ~$SSH_USER/.ssh;  cat >> ~$SSH_USER/.ssh/authorized_keys2"
+	RET=$?
+	if [ $RET == 0 ]; then
+		echo $KEYFILE has been added to ~$SSH_USER/.ssh/authorized_keys2 on $SSH_SERVER
+		$LOGGER "propagated ssh key (ssh server: $SSH_SERVER)"
+		return 0
+	else
+		echo $KEYFILE failed in transfer to $SSH_SERVER
+		$LOGGER "$errmsg, unable to transfer $KEYFILE to $SSH_SERVER"
+		exit 1
+	fi
+		
+}
+
+function status()
+{
+	if [ ! -e /sys/kernel/kexec_crash_loaded ]
+	then
+		return 2 
+	fi
+	rc=`cat /sys/kernel/kexec_crash_loaded`
+	if [ $rc == 1 ]; then
+		return 0
+	else
+		return 1
+	fi
+}
+
+function start()
+{
+	#TODO check raw partition for core dump image
+	status 
+	rc=$?
+	if [ $rc == 2 ]; then
+		echo -n "Kdump is not supported on this kernel"; failure; echo
+		return 1;
+	else
+		if [ $rc == 0 ]; then
+			echo -n "Kdump already running"; success; echo
+			return 0
+		fi
+	fi
+	check_config
+	if [ $? != 0 ]; then
+		echo -n "Starting kdump:"; failure; echo
+		$LOGGER "failed to start up, config file incorrect"
+		return 1
+	fi
+	load_kdump
+	if [ $? != 0 ]; then
+		echo -n "Starting kdump:"; failure; echo
+		$LOGGER "failed to start up"
+		return 1
+	fi
+
+	echo -n "Starting kdump:"; success; echo
+	$LOGGER "started up"
+}
+
+function stop()
+{
+	$KEXEC -p -u 2>/dev/null
+	if [ $? == 0 ]; then
+		$LOGGER "kexec: unloaded kdump kernel"
+		echo -n "Stopping kdump:"; success; echo
+		$LOGGER "stopped"
+	else
+		$LOGGER "kexec: failed to unload kdump kernel"
+		echo -n "Stopping kdump:"; failure; echo
+		$LOGGER "failed to stop"
+	fi
 }
 
 case "$1" in
   start)
-	if [ -f /proc/vmcore ]; then
-	    save_core
-	    reboot
-        else
-	    #TODO check raw partition for core dump image
-	    check_config
-	    load_kdump
+	if [ -s /proc/vmcore ]; then
+		save_core
+		reboot
+	else
+		start
 	fi
 	;;
   stop)
-	$KEXEC -p -u
-	rm -f /var/run/kdump.status
+	stop
 	;;
   status)
-	if [ -a /var/run/kdump.status ]; then
+	EXIT_CODE=0
+	status
+	case "$?" in
+	0)
 		echo "Kdump is operational"
-	else
+		;;
+	1)
 		echo "Kdump is not operational"
-	fi 
+		EXIT_CODE=1
+		;;
+	2)
+		echo "Kdump is unsupported on this kernel"
+		EXIT_CODE=1
+		;;
+	esac
+	exit $EXIT_CODE
 	;;
   restart)
-	$KEXEC -p -u
-	rm -f /var/run/kdump.status
-	check_config
-	load_kdump
+	stop
+	start
 	;;
   condrestart)
 	;;
+  propagate)
+	propagate_ssh_key
+	;;
   *)
-	echo $"Usage: $0 {start|stop|status|restart}"
+	echo $"Usage: $0 {start|stop|status|restart|propagate}"
 	exit 1
 esac
 
