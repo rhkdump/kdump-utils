@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 55%{?dist}
+Release: 56%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -222,10 +222,10 @@ rm -f %{_datadir}/firstboot/modules/firstboot_kdump.py
 %doc kexec-kdump-howto.txt
 
 %changelog
-* Thu Jan 04 2007 Neil Horman <nhorman@redhat.com> - 1.101-6%{dist}
+* Thu Jan 04 2007 Neil Horman <nhorman@redhat.com> - 1.101-56%{dist}
 - Fix option parsing problem for bzImage files (bz 221272)
 
-* Fri Dec 15 2006 Neil Horman <nhorman@redhat.com> - 1.101-5%{dist}
+* Fri Dec 15 2006 Neil Horman <nhorman@redhat.com> - 1.101-55%{dist}
 - Wholesale update of RHEL5 revisions 55-147
 
 * Tue Aug 29 2006 Neil Horman <nhorman@redhat.com> - 1.101-54%{dist}
