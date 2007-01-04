@@ -30,6 +30,7 @@ Obsoletes: diskdumputils netdump
 #
 Patch1: kexec-tools-1.101-kdump.patch
 Patch2: kexec-tools-1.101-elf-core-type.patch
+Patch3: kexec-tools-1.101-bzimage-options.patch
 
 #
 # Patches 101 through 200 are meant for x86_64 kexec-tools enablement
@@ -92,6 +93,7 @@ component of the kernel's kexec feature.
 rm -f ../kexec-tools-1.101.spec
 %patch1 -p1
 %patch2 -p1
+%patch3 -p1
 %patch101 -p1
 %patch102 -p1
 %patch201 -p1
@@ -220,6 +222,9 @@ rm -f %{_datadir}/firstboot/modules/firstboot_kdump.py
 %doc kexec-kdump-howto.txt
 
 %changelog
+* Thu Jan 04 2007 Neil Horman <nhorman@redhat.com> - 1.101-6%{dist}
+- Fix option parsing problem for bzImage files (bz 221272)
+
 * Fri Dec 15 2006 Neil Horman <nhorman@redhat.com> - 1.101-5%{dist}
 - Wholesale update of RHEL5 revisions 55-147
 
