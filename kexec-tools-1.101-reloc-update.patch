@@ -1,5 +1,5 @@
 --- kexec-tools-1.101/purgatory/arch/x86_64/include/arch/debug.h.orig	2004-12-20 18:05:40.000000000 -0500
-+++ kexec-tools-1.101/purgatory/arch/x86_64/include/arch/debug.h	2007-01-05 12:45:07.000000000 -0500
++++ kexec-tools-1.101/purgatory/arch/x86_64/include/arch/debug.h	2007-01-05 13:32:24.000000000 -0500
 @@ -311,7 +311,7 @@
  	TTYS0_TX_AL
  	
@@ -10,7 +10,7 @@
  #define DEBUG_TX_HEX64(x) TTYS0_TX_HEX64(x); TTYS0_TX_CHAR($'\r') ;  TTYS0_TX_CHAR($'\n')
  
 --- kexec-tools-1.101/purgatory/arch/i386/linux-entry16.S.orig	2004-12-20 05:48:45.000000000 -0500
-+++ kexec-tools-1.101/purgatory/arch/i386/linux-entry16.S	2007-01-05 12:45:07.000000000 -0500
++++ kexec-tools-1.101/purgatory/arch/i386/linux-entry16.S	2007-01-05 13:32:24.000000000 -0500
 @@ -127,10 +127,10 @@
  	TTYS0_TX_AL
  
@@ -182,7 +182,7 @@
  setup16_debug_old_code32:
  	.long	0x10000
 --- kexec-tools-1.101/purgatory/arch/i386/entry32-16-debug.S.orig	2004-12-20 18:11:43.000000000 -0500
-+++ kexec-tools-1.101/purgatory/arch/i386/entry32-16-debug.S	2007-01-05 12:45:07.000000000 -0500
++++ kexec-tools-1.101/purgatory/arch/i386/entry32-16-debug.S	2007-01-05 13:32:24.000000000 -0500
 @@ -55,15 +55,15 @@ entry16_debug:
  	orl	%ecx, 0x14 + gdt	
  	
@@ -261,7 +261,7 @@
  entry16_debug_old_first32:
  	.long 0x100000
 --- kexec-tools-1.101/purgatory/arch/i386/include/arch/debug.h.orig	2004-12-20 18:03:17.000000000 -0500
-+++ kexec-tools-1.101/purgatory/arch/i386/include/arch/debug.h	2007-01-05 12:45:07.000000000 -0500
++++ kexec-tools-1.101/purgatory/arch/i386/include/arch/debug.h	2007-01-05 13:32:24.000000000 -0500
 @@ -311,6 +311,6 @@
  	TTYS0_TX_AL
  	
@@ -270,8 +270,8 @@
 +#define DEBUG_CHAR(x) TTYS0_TX_CHAR($x) ;  TTYS0_TX_CHAR($'\r') ;  TTYS0_TX_CHAR($'\n')
  #define DEBUG_TX_HEX32(x) TTYS0_TX_HEX32(x); TTYS0_TX_CHAR($'\r') ;  TTYS0_TX_CHAR($'\n')
  #define DEBUG_TX_HEX64(x) TTYS0_TX_HEX64(x); TTYS0_TX_CHAR($'\r') ;  TTYS0_TX_CHAR($'\n')
---- kexec-tools-1.101/kexec/Makefile.orig	2007-01-05 11:15:00.000000000 -0500
-+++ kexec-tools-1.101/kexec/Makefile	2007-01-05 12:45:07.000000000 -0500
+--- kexec-tools-1.101/kexec/Makefile.orig	2007-01-05 13:32:05.000000000 -0500
++++ kexec-tools-1.101/kexec/Makefile	2007-01-05 13:32:24.000000000 -0500
 @@ -13,6 +13,7 @@ KEXEC_C_SRCS:= kexec/kexec.c 
  KEXEC_C_SRCS+= kexec/ifdown.c
  KEXEC_C_SRCS+= kexec/kexec-elf.c 
@@ -280,8 +280,8 @@
  KEXEC_C_SRCS+= kexec/kexec-elf-rel.c 
  KEXEC_C_SRCS+= kexec/kexec-elf-boot.c 
  KEXEC_C_SRCS+= kexec/crashdump.c
---- kexec-tools-1.101/kexec/kexec-elf-rel.c.orig	2007-01-05 11:15:00.000000000 -0500
-+++ kexec-tools-1.101/kexec/kexec-elf-rel.c	2007-01-05 12:45:07.000000000 -0500
+--- kexec-tools-1.101/kexec/kexec-elf-rel.c.orig	2007-01-05 13:32:05.000000000 -0500
++++ kexec-tools-1.101/kexec/kexec-elf-rel.c	2007-01-05 13:32:24.000000000 -0500
 @@ -135,10 +135,11 @@ static struct mem_rela elf_rela(struct m
  	return rela;
  }
@@ -311,8 +311,8 @@
  	if (result < 0) {
  		die("ELF rel parse failed\n");
  	}
---- kexec-tools-1.101/kexec/kexec-elf.c.orig	2007-01-05 11:15:00.000000000 -0500
-+++ kexec-tools-1.101/kexec/kexec-elf.c	2007-01-05 12:45:07.000000000 -0500
+--- kexec-tools-1.101/kexec/kexec-elf.c.orig	2007-01-05 13:32:05.000000000 -0500
++++ kexec-tools-1.101/kexec/kexec-elf.c	2007-01-05 13:32:24.000000000 -0500
 @@ -368,7 +368,8 @@ static int build_mem_elf64_phdr(const ch
  	return 0;
  }
@@ -399,8 +399,8 @@
  		if (result < 0) {
  			free_elf_info(ehdr);
  			return result;
---- kexec-tools-1.101/kexec/arch/ia64/kexec-elf-ia64.c.orig	2007-01-05 11:15:00.000000000 -0500
-+++ kexec-tools-1.101/kexec/arch/ia64/kexec-elf-ia64.c	2007-01-05 12:45:07.000000000 -0500
+--- kexec-tools-1.101/kexec/arch/ia64/kexec-elf-ia64.c.orig	2007-01-05 13:32:05.000000000 -0500
++++ kexec-tools-1.101/kexec/arch/ia64/kexec-elf-ia64.c	2007-01-05 13:32:24.000000000 -0500
 @@ -56,7 +56,7 @@ int elf_ia64_probe(const char *buf, off_
  {
  	struct mem_ehdr ehdr;
@@ -428,8 +428,8 @@
  
  
  	if (load_crashdump_segments(info, &ehdr, max_addr, 0,
---- kexec-tools-1.101/kexec/arch/x86_64/crashdump-x86_64.c.orig	2007-01-05 11:15:00.000000000 -0500
-+++ kexec-tools-1.101/kexec/arch/x86_64/crashdump-x86_64.c	2007-01-05 12:45:07.000000000 -0500
+--- kexec-tools-1.101/kexec/arch/x86_64/crashdump-x86_64.c.orig	2007-01-05 13:32:05.000000000 -0500
++++ kexec-tools-1.101/kexec/arch/x86_64/crashdump-x86_64.c	2007-01-05 13:32:24.000000000 -0500
 @@ -24,8 +24,10 @@
  #include <errno.h>
  #include <limits.h>
@@ -702,7 +702,7 @@
  		return -1;
  	cmdline_add_memmap(mod_cmdline, memmap_p);
 --- kexec-tools-1.101/kexec/arch/x86_64/kexec-elf-rel-x86_64.c.orig	2004-12-21 12:51:24.000000000 -0500
-+++ kexec-tools-1.101/kexec/arch/x86_64/kexec-elf-rel-x86_64.c	2007-01-05 12:45:07.000000000 -0500
++++ kexec-tools-1.101/kexec/arch/x86_64/kexec-elf-rel-x86_64.c	2007-01-05 13:32:24.000000000 -0500
 @@ -60,7 +60,7 @@ static const char *reloc_name(unsigned l
  void machine_apply_elf_rel(struct mem_ehdr *ehdr, unsigned long r_type, 
  	void *location, unsigned long address, unsigned long value)
@@ -712,8 +712,8 @@
  	fprintf(stderr, "%s\n", reloc_name(r_type));
  #endif
  	switch(r_type) {
---- kexec-tools-1.101/kexec/arch/x86_64/kexec-elf-x86_64.c.orig	2007-01-05 11:15:00.000000000 -0500
-+++ kexec-tools-1.101/kexec/arch/x86_64/kexec-elf-x86_64.c	2007-01-05 12:45:07.000000000 -0500
+--- kexec-tools-1.101/kexec/arch/x86_64/kexec-elf-x86_64.c.orig	2007-01-05 13:32:05.000000000 -0500
++++ kexec-tools-1.101/kexec/arch/x86_64/kexec-elf-x86_64.c	2007-01-05 13:32:24.000000000 -0500
 @@ -47,7 +47,7 @@ int elf_x86_64_probe(const char *buf, of
  	
  	struct mem_ehdr ehdr;
@@ -741,8 +741,8 @@
  	}
  	if (arg_style == ARG_STYLE_NONE) {
  		info->entry = (void *)entry;
---- kexec-tools-1.101/kexec/arch/x86_64/kexec-x86_64.c.orig	2007-01-05 11:15:00.000000000 -0500
-+++ kexec-tools-1.101/kexec/arch/x86_64/kexec-x86_64.c	2007-01-05 12:45:07.000000000 -0500
+--- kexec-tools-1.101/kexec/arch/x86_64/kexec-x86_64.c.orig	2007-01-05 13:32:05.000000000 -0500
++++ kexec-tools-1.101/kexec/arch/x86_64/kexec-x86_64.c	2007-01-05 13:32:24.000000000 -0500
 @@ -64,7 +64,7 @@ int get_memory_ranges(struct memory_rang
  			continue;
  		str = line + consumed;
@@ -761,8 +761,8 @@
  		printf("%016Lx-%016Lx : %x\n",
  			start, end, type);
  #endif
---- kexec-tools-1.101/kexec/arch/i386/kexec-elf-x86.c.orig	2007-01-05 11:15:00.000000000 -0500
-+++ kexec-tools-1.101/kexec/arch/i386/kexec-elf-x86.c	2007-01-05 12:45:07.000000000 -0500
+--- kexec-tools-1.101/kexec/arch/i386/kexec-elf-x86.c.orig	2007-01-05 13:32:05.000000000 -0500
++++ kexec-tools-1.101/kexec/arch/i386/kexec-elf-x86.c	2007-01-05 13:32:24.000000000 -0500
 @@ -47,7 +47,7 @@ int elf_x86_probe(const char *buf, off_t
  	
  	struct mem_ehdr ehdr;
@@ -790,8 +790,8 @@
  	}
  	if (arg_style == ARG_STYLE_NONE) {
  		info->entry = (void *)entry;
---- kexec-tools-1.101/kexec/arch/i386/kexec-multiboot-x86.c.orig	2007-01-05 11:15:00.000000000 -0500
-+++ kexec-tools-1.101/kexec/arch/i386/kexec-multiboot-x86.c	2007-01-05 12:45:07.000000000 -0500
+--- kexec-tools-1.101/kexec/arch/i386/kexec-multiboot-x86.c.orig	2007-01-05 13:32:05.000000000 -0500
++++ kexec-tools-1.101/kexec/arch/i386/kexec-multiboot-x86.c	2007-01-05 13:32:24.000000000 -0500
 @@ -209,10 +209,11 @@ int multiboot_x86_load(int argc, char **
  
  	
@@ -806,19 +806,8 @@
  	
  	/* The first segment will contain the multiboot headers:
  	 * =============
---- kexec-tools-1.101/kexec/arch/i386/kexec-bzImage.c.orig	2007-01-05 11:15:00.000000000 -0500
-+++ kexec-tools-1.101/kexec/arch/i386/kexec-bzImage.c	2007-01-05 12:45:07.000000000 -0500
-@@ -175,7 +175,7 @@ int do_bzImage_load(struct kexec_info *i
- 	 * it's gdt.
- 	 */
- 	elf_rel_build_load(info, &info->rhdr, purgatory, purgatory_size,
--		0x3000, 640*1024, -1);
-+		0x3000, 640*1024, -1, 0);
- 
- 	/* The argument/parameter segment */
- 	setup_size = kern16_size + command_line_len;
 --- kexec-tools-1.101/kexec/arch/ppc/kexec-elf-ppc.c.orig	2005-01-20 14:10:56.000000000 -0500
-+++ kexec-tools-1.101/kexec/arch/ppc/kexec-elf-ppc.c	2007-01-05 12:45:07.000000000 -0500
++++ kexec-tools-1.101/kexec/arch/ppc/kexec-elf-ppc.c	2007-01-05 13:32:24.000000000 -0500
 @@ -72,7 +72,7 @@ int elf_ppc_probe(const char *buf, off_t
  
  	struct mem_ehdr ehdr;
@@ -837,8 +826,8 @@
  	if (result < 0) {
  		free_elf_info(&ehdr);
  		return result;
---- kexec-tools-1.101/kexec/arch/ppc64/kexec-elf-ppc64.c.orig	2007-01-05 11:15:00.000000000 -0500
-+++ kexec-tools-1.101/kexec/arch/ppc64/kexec-elf-ppc64.c	2007-01-05 12:45:07.000000000 -0500
+--- kexec-tools-1.101/kexec/arch/ppc64/kexec-elf-ppc64.c.orig	2007-01-05 13:32:05.000000000 -0500
++++ kexec-tools-1.101/kexec/arch/ppc64/kexec-elf-ppc64.c	2007-01-05 13:32:24.000000000 -0500
 @@ -52,7 +52,7 @@ int elf_ppc64_probe(const char *buf, off
  {
  	struct mem_ehdr ehdr;
@@ -867,7 +856,7 @@
  	/* Add a ram-disk to the current image
  	 * Note: Add the ramdisk after elf_rel_build_load
 --- /dev/null	2006-12-27 08:05:56.458406418 -0500
-+++ kexec-tools-1.101/kexec/kexec-elf-core.c	2007-01-05 12:45:07.000000000 -0500
++++ kexec-tools-1.101/kexec/kexec-elf-core.c	2007-01-05 13:32:24.000000000 -0500
 @@ -0,0 +1,29 @@
 +#include <stdio.h>
 +#include <stdint.h>
@@ -898,8 +887,8 @@
 +
 +	return 0;
 +}
---- kexec-tools-1.101/kexec/kexec-elf.h.orig	2007-01-05 11:15:00.000000000 -0500
-+++ kexec-tools-1.101/kexec/kexec-elf.h	2007-01-05 12:45:07.000000000 -0500
+--- kexec-tools-1.101/kexec/kexec-elf.h.orig	2007-01-05 13:32:05.000000000 -0500
++++ kexec-tools-1.101/kexec/kexec-elf.h	2007-01-05 13:32:24.000000000 -0500
 @@ -82,22 +82,29 @@ typedef struct
  	uint32_t n_type;		/* Type of the note.  */
  } ElfNN_Nhdr;
@@ -935,8 +924,8 @@
  
  extern int elf_rel_find_symbol(struct mem_ehdr *ehdr,
  	const char *name, struct mem_sym *ret_sym);
---- kexec-tools-1.101/kexec/kexec-elf-exec.c.orig	2007-01-05 11:15:00.000000000 -0500
-+++ kexec-tools-1.101/kexec/kexec-elf-exec.c	2007-01-05 12:45:07.000000000 -0500
+--- kexec-tools-1.101/kexec/kexec-elf-exec.c.orig	2007-01-05 13:32:05.000000000 -0500
++++ kexec-tools-1.101/kexec/kexec-elf-exec.c	2007-01-05 13:32:24.000000000 -0500
 @@ -11,11 +11,12 @@
  
  static const int probe_debug = 0;
@@ -966,8 +955,8 @@
  	if (result < 0) {
  		die("ELF exec parse failed\n");
  	}
---- kexec-tools-1.101/kexec/crashdump.h.orig	2007-01-05 11:15:00.000000000 -0500
-+++ kexec-tools-1.101/kexec/crashdump.h	2007-01-05 12:45:07.000000000 -0500
+--- kexec-tools-1.101/kexec/crashdump.h.orig	2007-01-05 13:32:05.000000000 -0500
++++ kexec-tools-1.101/kexec/crashdump.h	2007-01-05 13:32:24.000000000 -0500
 @@ -5,5 +5,7 @@ extern int get_crash_notes_per_cpu(int c
  
  /* Need to find a better way to determine per cpu notes section size. */
@@ -976,8 +965,8 @@
 +#define KCORE_ELF_HEADERS_SIZE  4096
  
  #endif /* CRASHDUMP_H */
---- kexec-tools-1.101/kexec/kexec.h.orig	2007-01-05 11:15:00.000000000 -0500
-+++ kexec-tools-1.101/kexec/kexec.h	2007-01-05 12:45:07.000000000 -0500
+--- kexec-tools-1.101/kexec/kexec.h.orig	2007-01-05 13:32:05.000000000 -0500
++++ kexec-tools-1.101/kexec/kexec.h	2007-01-05 13:32:24.000000000 -0500
 @@ -116,6 +116,9 @@ struct kexec_info {
  	struct mem_ehdr rhdr;
  	unsigned long backup_start;
@@ -996,8 +985,8 @@
  extern char *slurp_decompress_file(const char *filename, off_t *r_size);
  extern void add_segment(struct kexec_info *info,
  	const void *buf, size_t bufsz, unsigned long base, size_t memsz);
---- kexec-tools-1.101/kexec/kexec.c.orig	2007-01-05 11:15:00.000000000 -0500
-+++ kexec-tools-1.101/kexec/kexec.c	2007-01-05 12:45:07.000000000 -0500
+--- kexec-tools-1.101/kexec/kexec.c.orig	2007-01-05 13:32:05.000000000 -0500
++++ kexec-tools-1.101/kexec/kexec.c	2007-01-05 13:32:24.000000000 -0500
 @@ -391,6 +391,50 @@ char *slurp_file(const char *filename, o
  	return buf;
  }

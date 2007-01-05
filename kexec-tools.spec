@@ -31,6 +31,7 @@ Obsoletes: diskdumputils netdump
 Patch1: kexec-tools-1.101-kdump.patch
 Patch2: kexec-tools-1.101-elf-core-type.patch
 Patch3: kexec-tools-1.101-bzimage-options.patch
+Patch4: kexec-tools-1.101-relocatable-bzimage.patch
 
 #
 # Patches 101 through 200 are meant for x86_64 kexec-tools enablement
@@ -94,6 +95,7 @@ rm -f ../kexec-tools-1.101.spec
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
+%patch4 -p1
 %patch101 -p1
 %patch102 -p1
 %patch201 -p1
