@@ -154,6 +154,13 @@ function load_kdump()
 		KDUMP_COMMANDLINE=`cat /proc/cmdline`
 	fi
 
+	MEM_RESERVED=`echo $KDUMP_COMMANDLINE | grep "crashkernel=[0-9]\+[MmKkGg]@[0-9]\+[MmGgKk]"`
+	if [ -z "$MEM_RESERVED" ]
+	then
+		$LOGGER "No crashkernel parameter specified for running kernel"
+		return 1
+	fi
+
 	ARCH=`uname -m`
 	if [ "$ARCH" == "i686" -o "$ARCH" == "i386" ]
 	then
@@ -179,7 +186,7 @@ function load_kdump()
 		fi
 	fi
 
-	KDUMP_COMMANDLINE=`echo $KDUMP_COMMANDLINE | sed -e 's/crashkernel=[0-9]\+M@[0-9]\+M//g'`
+	KDUMP_COMMANDLINE=`echo $KDUMP_COMMANDLINE | sed -e 's/crashkernel=[0-9]\+[MmKkGg]@[0-9]\+[MmGgKk]//'`
 	KDUMP_COMMANDLINE="${KDUMP_COMMANDLINE} ${KDUMP_COMMANDLINE_APPEND}"
 
 	$KEXEC $KEXEC_ARGS $standard_kexec_args \

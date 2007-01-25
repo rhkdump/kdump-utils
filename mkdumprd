@@ -45,8 +45,6 @@ DMRAIDS=""
 MPATHS=""
 
 
-[ -e /etc/sysconfig/mkinitrd ] && . /etc/sysconfig/mkinitrd
-
 CONFMODS="$MODULES"
 MODULES=""
 
@@ -68,7 +66,7 @@ fstab="/etc/fstab"
 
 vg_list=""
 net_list=""
-USING_METHOD="local_fs"
+USING_METHOD=""
 SAVE_PATH=/var/crash
 
 vecho()
@@ -406,6 +404,11 @@ handlenetdev() {
         then
             echo "  " netmask $NETMASK >> $MNTIMAGE/etc/network/interfaces
         fi
+        if [ -z "$GATEWAY" ]
+        then
+            GATEWAY=`/sbin/ip route show | awk '/^default/ {print $3}'`
+        fi
+        echo "  " gateway $GATEWAY >> $MNTIMAGE/etc/network/interfaces
     fi
 
     #This lets us recursively handle stacked devices
@@ -909,6 +912,7 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                      #don't process comments or blank line
                      continue
             fi
+            USING_METHOD="filesystem"
             if (echo $location | egrep -q "^(LABEL|UUID)="); then
                 location=$(findfs $location)
             fi
@@ -925,7 +929,14 @@ if [ -n "$CORE_COLLECTOR" ]; then
         rm -rf $MNTIMAGE
         rm -rf $IMAGE
         exit 1
-    fi            
+    fi 
+
+    if [ -z "$USING_METHOD" ]
+    then
+        echo "Warning!  Lack of dump target specification means core_collector option is ignored!"
+        CORE_COLLECTOR=""
+    fi
+
 fi
 
 
@@ -1459,12 +1470,17 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                     #test raw partition
                     kdump_chk "dd if=$location count=1 of=/dev/null > /dev/null 2>&1" \
                                "Bad raw partition $location"
-                    #TODO check for available size is greater than $memtotal
+                    #check for available size is greater than $memtotal
+                    available_size=$(fdisk -s $location)
+                    if [ $available_size -lt $memtotal ]; then
+                        echo "Warning: There is not space enough to save a vmcore."
+                        echo "         The size of $location should be much greater than $memtotal bytes."
+                    fi
 
                     #setup raw case
                     emit "echo Saving to partition $location"
                     emit "dd if=/proc/vmcore of=$location"
-                    emit "if [ $? == 0 ]"
+                    emit "if [ \$? == 0 ]"
                     emit "then"
                     emit "  reboot -f"
                     emit "fi"
@@ -1526,6 +1542,7 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                                    "Bad NFS mount $location"
                         mkdir -p $tmnt/$SAVE_PATH
                         tdir=`mktemp -dqp $tmnt/$SAVE_PATH`
+                        available_size=$(df $tdir | tail -1 | tr -s ' ' ':' | cut -d: -f4)
 
                         rc=$? && rm -rf $tdir 
                         umount $tmnt
@@ -1543,7 +1560,11 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                             CORE_COLLECTOR="cp"
                         fi
 
-                        #TODO check for available size is greater than $memtotal
+                        #check for available size is greater than $memtotal
+                        if [ $available_size -lt $memtotal ]; then
+                            echo "Warning: There is not space enough to save a vmcore."
+                            echo "         The size of $location should be much greater than $memtotal bytes."
+                        fi
     
                         #setup nfs case
                         mkdir -p $MNTIMAGE/mnt
@@ -1570,6 +1591,14 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                         if [ $? != "0" ]; then
                             echo "$KDUMP_CONFIG_FILE: Could not create temp directory in $location:$SAVE_PATH"
                             exit 1
+                        fi
+                        remote_df=`ssh -q $s_opts $rlocation df $tdir`
+                        available_size=$(echo $remote_df | tail -1 | tr -s ' ' '|' | cut -d\| -f10)
+                       
+                        #check for available size is greater than $memtotal
+                        if [ $available_size -lt $memtotal ]; then
+                            echo "Warning: There is not space enough to save a vmcore."
+                            echo "         The size of $rlocation:$tdir should be much greater than $memtotal bytes."
                         fi
                         #We do this to remove the temp directory from above
                         ssh -q $s_opts $rlocation rmdir $tdir
@@ -1606,12 +1635,18 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                     kdump_chk "mount -t $type $location /mnt" "Bad mount point $location"
                     mkdir -p /mnt/$SAVE_PATH
                     tdir=`mktemp -dqp /mnt/$SAVE_PATH`
+                    available_size=$(df $tdir | tail -1 | tr -s ' ' ':' | cut -d: -f4)
                     rc=$? && rm -rf $tdir && umount /mnt
                     if [ $rc != "0" ]; then 
                         echo "Cannot create directory in $location: $SAVE_PATH"
                         exit 1
                     fi
-                    #TODO check for available size is greater than $memtotal
+                    #check for available size is greater than $memtotal
+                    if [ $available_size -lt $memtotal ]; then
+                        echo "Warning: There is not space enough to save a vmcore."
+                        echo "         The size of $location should be much greater than $memtotal bytes."
+                    fi
+
     
                     #setup filesystem case
                     mkdir -p $MNTIMAGE/mnt
