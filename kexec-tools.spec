@@ -19,7 +19,7 @@ Source11: firstboot_kdump.py
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires(pre): coreutils chkconfig sed 
 Requires: busybox >= 1.2.0
-BuildRequires: zlib-devel elfutils-libelf-devel glib2-devel pkgconfig elfutils-libelf-devel elfutils-devel
+BuildRequires: zlib-devel elfutils-libelf-devel glib2-devel pkgconfig elfutils-libelf-devel elfutils-devel-static
 ExcludeArch: ppc
 %ifarch %{ix86} x86_64 ppc64 ia64
 Obsoletes: diskdumputils netdump
@@ -226,6 +226,7 @@ rm -f %{_datadir}/firstboot/modules/firstboot_kdump.py
 %changelog
 * Wed Jan 25 2007 Neil Horman <nhorman@redhat.com> - 1.101-58%{dist}
 - Updating kdump.init and mkdumprd with most recent RHEL5 fixes
+- Fixing BuildReq to require elfutils-devel-static
 
 * Thu Jan 04 2007 Neil Horman <nhorman@redhat.com> - 1.101-56%{dist}
 - Fix option parsing problem for bzImage files (bz 221272)
