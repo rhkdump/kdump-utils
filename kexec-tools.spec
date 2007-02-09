@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 58%{?dist}
+Release: 59%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -16,6 +16,7 @@ Source8: kdump.conf
 Source9: makedumpfile-1.0.7.tar.gz
 Source10: kexec-kdump-howto.txt
 Source11: firstboot_kdump.py
+Source12: mkdumprd.8
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires(pre): coreutils chkconfig sed 
 Requires: busybox >= 1.2.0
@@ -159,6 +160,7 @@ install -m 755 %{SOURCE7} $RPM_BUILD_ROOT/sbin/mkdumprd
 install -m 755 %{SOURCE8} $RPM_BUILD_ROOT%{_sysconfdir}/kdump.conf
 install -m 644 kexec/kexec.8 $RPM_BUILD_ROOT%{_mandir}/man8/kexec.8
 install -m 755 %{SOURCE11} $RPM_BUILD_ROOT%{_datadir}/kdump/firstboot_kdump.py
+install -m 644 %{SOURCE12} $RPM_BUILD_ROOT%{_mandir}/man8/mkdumprd.8
 %ifarch %{ix86} x86_64 ia64 ppc64
 install -m 755 makedumpfile/makedumpfile $RPM_BUILD_ROOT/sbin/makedumpfile
 %endif
@@ -217,13 +219,16 @@ rm -f %{_datadir}/firstboot/modules/firstboot_kdump.py
 %ifarch %{ix86} x86_64
 %{_libdir}/kexec-tools/kexec_test
 %endif
-%{_mandir}/man8/kexec.8*
+%{_mandir}/man8/*
 %doc News
 %doc COPYING
 %doc TODO
 %doc kexec-kdump-howto.txt
 
 %changelog
+* Fri Feb 09 2007 Neil Horman <nhorman@redhat.com> - 1.101-59%{dist}
+- Adding mkdumprd man page to build
+
 * Wed Jan 25 2007 Neil Horman <nhorman@redhat.com> - 1.101-58%{dist}
 - Updating kdump.init and mkdumprd with most recent RHEL5 fixes
 - Fixing BuildReq to require elfutils-devel-static

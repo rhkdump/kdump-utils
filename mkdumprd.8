@@ -1,0 +1,117 @@
+.TH MKDUMRD 8 "Fri Feb 9 2007"
+.SH NAME
+mkdumprd \- creates initial ramdisk images for kdump crash recovery 
+.SH SYNOPSIS
+\fBmkdumprd\fR [--version] [-v] [-f] 
+         [--preload=\fImodule\fR] [--omit-scsi-modules] 
+         [--omit-raid-modules] [--omit-lvm-modules] 
+         [--with=\fImodule\fR] [--image-version]
+         [--fstab=\fIfstab\fR] [--nocompress]
+         [--builtin=\fImodule\fR] [--nopivot]
+         \fIimage\fR \fIkernel-version\fR
+
+.SH DESCRIPTION
+\fBmkdumprd\fR creates an initial ram file system for use in conjunction with
+the booting of a kernel within the kdump framework for crash recovery.
+\fBmkdumprds\fR purpose is to create an initial ram filesystem capable of copying
+the crashed systems vmcore image to a location specified in \fI/etc/kdump.conf 
+
+Any module options specified in \fI/etc/modprobe.conf\fR are passed
+to the modules as they are loaded by the initial ramdisk.
+
+\fBmkdumprd\fR interrogates the running system to understand what modules need to
+be loaded in the initramfs (based on configuration retrieved from
+\fI/etc/kdump.conf)\fR
+
+\fBmkdumprd\fR was origionally derived from the \fBmkinitrd\fR utility (hence
+the simmilarity in option sets), however mkdumprds purpose and mission is
+significantly different than that of \fBmkinitrd\fR.  As such, while most of the
+options still exist, and may work, they are largely vestigual at this point.
+\fBmkdumprd\fR was not intended for casual use outside of the service
+initialization script for the kdump utility, and should not be run manually.  If
+you require a custom kdump initramfs image, it is suggested that you use the
+kdump service infrastrucutre to create one, and then manually unpack, modify and
+repack the image.
+
+
+.SH OPTIONS
+.TP
+\fB-\-builtin=\fR\fImodule\fR
+Act as if \fImodule\fR is built into the kernel being used. \fBmkdumprd\fR
+will not look for this module, and will not emit an error if it does not
+exist. This option may be used multiple times.
+
+.TP
+\fB-f\fR
+Allows \fBmkdumprd\fR to overwrite an existing image file.
+
+.TP
+\fB-\-fstab=\fR\fIfstab\fR
+Use \fIfstab\fR to automatically determine what type of filesystem the
+root device is on. Normally, \fB/etc/fstab\fR is used.
+
+.TP
+\fB-\-image-version
+The kernel version number is appended to the initrd image path before the image
+is created.
+
+.TP
+\fB-\-nocompress
+Normally the created initrd image is compressed with \fBgzip\fR. If this
+option is specified, the compression is skipped.
+
+.TP
+\fB-\-nopivot
+Do not use the \fBpivot_root\fR system call as part of the initrd. This
+lets \fBmkdumprd\fR build proper images for Linux 2.2 kernels at the expense
+of some features. In particular, some filesystems (such as ext3) will not
+work properly and filesystem options will not be used to mount root. This
+option is not recommended, and will be removed in future versions.
+
+.TP
+\fB-\-omit-lvm-modules 
+Do not load any lvm modules, even if /etc/fstab expects them.
+
+.TP
+\fB-\-omit-raid-modules 
+Do not load any raid modules, even if /etc/fstab and /etc/raidtab expect them.
+
+.TP
+\fB-\-omit-scsi-modules 
+Do not load any scsi modules, including 'scsi_mod' and 'sd_mod'
+modules, even if they are present.
+
+.TP
+\fB-\-preload=\fR\fImodule\fR
+Load the module \fImodule\fR in the initial ramdisk image. The module gets
+loaded before any SCSI modules which are specified in \fI/etc/modprobe.conf\fR.
+This option may be used as many times as necessary.
+
+.TP
+\fB-v\fR
+Prints out verbose information while creating the image (normally
+the \fBmkdumprd\fR runs silently). 
+
+.TP
+\fB-\-version\fR
+Prints the version of \fBmkdumprd\fR that's being used and then exits.
+
+.TP
+\fB-\-with=\fR\fImodule\fR
+Load the modules \fImodule\fR in the initial ramdisk image. The module
+gets loaded after any SCSI modules which are specified in 
+\fI/etc/modprobe.conf\fR. This option may be used as many times as 
+necessary.
+
+.SH FILES
+.PD 0
+
+.TP 20
+\fI/etc/modprobe.conf\fR
+Specifies modules to be loaded and module options to be used.
+
+.PD
+.SH "SEE ALSO"
+.BR fstab (5),
+.BR insmod (1)
+.BR mkinitrd (8)
