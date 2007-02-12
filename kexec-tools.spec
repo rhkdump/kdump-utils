@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 59%{?dist}
+Release: 60%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -157,7 +157,7 @@ else
 	install -m 644 %{SOURCE2} $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/kdump
 fi
 install -m 755 %{SOURCE7} $RPM_BUILD_ROOT/sbin/mkdumprd
-install -m 755 %{SOURCE8} $RPM_BUILD_ROOT%{_sysconfdir}/kdump.conf
+install -m 644 %{SOURCE8} $RPM_BUILD_ROOT%{_sysconfdir}/kdump.conf
 install -m 644 kexec/kexec.8 $RPM_BUILD_ROOT%{_mandir}/man8/kexec.8
 install -m 755 %{SOURCE11} $RPM_BUILD_ROOT%{_datadir}/kdump/firstboot_kdump.py
 install -m 644 %{SOURCE12} $RPM_BUILD_ROOT%{_mandir}/man8/mkdumprd.8
@@ -226,6 +226,9 @@ rm -f %{_datadir}/firstboot/modules/firstboot_kdump.py
 %doc kexec-kdump-howto.txt
 
 %changelog
+* Mon Feb 12 2007 Neil Horman <nhorman@redhat.com> - 1.101-60%{dist}
+- Fixing up file permissions on kdump.conf (bz 228137)
+
 * Fri Feb 09 2007 Neil Horman <nhorman@redhat.com> - 1.101-59%{dist}
 - Adding mkdumprd man page to build
 
