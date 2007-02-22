@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 60%{?dist}
+Release: 61%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -21,7 +21,8 @@ Source13: pofiles.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires(pre): coreutils chkconfig sed 
 Requires: busybox >= 1.2.0
-BuildRequires: zlib-devel elfutils-libelf-devel glib2-devel pkgconfig elfutils-libelf-devel elfutils-devel-static
+BuildRequires: zlib-devel elfutils-libelf-devel glib2-devel pkgconfig
+BuildRequires: elfutils-libelf-devel elfutils-devel-static gettext
 ExcludeArch: ppc
 %ifarch %{ix86} x86_64 ppc64 ia64
 Obsoletes: diskdumputils netdump
@@ -143,10 +144,12 @@ make
 %ifarch %{ix86} x86_64 ia64 ppc64
 make -C makedumpfile
 %endif
+make -C po
 
 %install
 rm -rf $RPM_BUILD_ROOT
 make install DESTDIR=$RPM_BUILD_ROOT
+make -C po install DESTDIR=$RPM_BUILD_ROOT
 mkdir -p -m755 $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d
 mkdir -p -m755 $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
 mkdir -p -m755 $RPM_BUILD_ROOT%{_localstatedir}/crash
@@ -167,8 +170,12 @@ install -m 644 %{SOURCE12} $RPM_BUILD_ROOT%{_mandir}/man8/mkdumprd.8
 %ifarch %{ix86} x86_64 ia64 ppc64
 install -m 755 makedumpfile/makedumpfile $RPM_BUILD_ROOT/sbin/makedumpfile
 %endif
+CHOMP_SIZE=`echo $RPM_BUILD_ROOT | wc -c`
+find $RPM_BUILD_ROOT -name '*.mo' | cut -b $CHOMP_SIZE- >> %{name}.lang
+
 %clean
 rm -rf $RPM_BUILD_ROOT
+
 
 %post
 touch /etc/kdump.conf
@@ -211,7 +218,7 @@ fi
 %triggerun -- firstboot
 rm -f %{_datadir}/firstboot/modules/firstboot_kdump.py
 
-%files
+%files -f %{name}.lang
 %defattr(-,root,root,-)
 /sbin/*
 %{_datadir}/kdump
@@ -229,6 +236,9 @@ rm -f %{_datadir}/firstboot/modules/firstboot_kdump.py
 %doc kexec-kdump-howto.txt
 
 %changelog
+* Mon Feb 22 2007 Neil Horman <nhorman@redhat.com> - 1.101-61%{dist}
+- Adding multilanguage infrastructure to firstboot_kdump (bz 223175)
+
 * Mon Feb 12 2007 Neil Horman <nhorman@redhat.com> - 1.101-60%{dist}
 - Fixing up file permissions on kdump.conf (bz 228137)
 
