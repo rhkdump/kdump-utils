@@ -17,6 +17,7 @@ Source9: makedumpfile-1.0.7.tar.gz
 Source10: kexec-kdump-howto.txt
 Source11: firstboot_kdump.py
 Source12: mkdumprd.8
+Source13: pofiles.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires(pre): coreutils chkconfig sed 
 Requires: busybox >= 1.2.0
@@ -126,6 +127,8 @@ tar -z -x -v -f %{SOURCE9}
 %patch604 -p1
 %patch605 -p1
 %patch606 -p1
+
+tar -z -x -v -f %{SOURCE13}
 
 %build
 %configure \
