@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 61%{?dist}
+Release: 62%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -13,7 +13,7 @@ Source5: kdump.sysconfig.ppc64
 Source6: kdump.sysconfig.ia64
 Source7: mkdumprd
 Source8: kdump.conf
-Source9: makedumpfile-1.0.7.tar.gz
+Source9: makedumpfile-1.1.1.tar.gz
 Source10: kexec-kdump-howto.txt
 Source11: firstboot_kdump.py
 Source12: mkdumprd.8
@@ -169,6 +169,7 @@ install -m 755 %{SOURCE11} $RPM_BUILD_ROOT%{_datadir}/kdump/firstboot_kdump.py
 install -m 644 %{SOURCE12} $RPM_BUILD_ROOT%{_mandir}/man8/mkdumprd.8
 %ifarch %{ix86} x86_64 ia64 ppc64
 install -m 755 makedumpfile/makedumpfile $RPM_BUILD_ROOT/sbin/makedumpfile
+install -m 755 makedumpfile/makedumpfile-R.pl $RPM_BUILD_ROOT/sbin/makedumpfile-reasm
 %endif
 CHOMP_SIZE=`echo $RPM_BUILD_ROOT | wc -c`
 find $RPM_BUILD_ROOT -name '*.mo' | cut -b $CHOMP_SIZE- >> %{name}.lang
@@ -236,6 +237,9 @@ rm -f %{_datadir}/firstboot/modules/firstboot_kdump.py
 %doc kexec-kdump-howto.txt
 
 %changelog
+* Tue Mar 06 2007 Neil Horman <nhorman@redhat.com> - 1.101-62%{dist}
+- Updating makedumpfile to version 1.1.1 (bz 2223743)
+
 * Mon Feb 22 2007 Neil Horman <nhorman@redhat.com> - 1.101-61%{dist}
 - Adding multilanguage infrastructure to firstboot_kdump (bz 223175)
 
