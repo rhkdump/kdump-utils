@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 62%{?dist}
+Release: 63%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -237,6 +237,9 @@ rm -f %{_datadir}/firstboot/modules/firstboot_kdump.py
 %doc kexec-kdump-howto.txt
 
 %changelog
+* Thu Mar 15 2007 Neil Horman <nhorman@redhat.com> - 1.101-63%{dist}
+- Adding extra check to avoid oom kills on nfs mount failure (bz 215056)
+
 * Tue Mar 06 2007 Neil Horman <nhorman@redhat.com> - 1.101-62%{dist}
 - Updating makedumpfile to version 1.1.1 (bz 2223743)
 

@@ -1569,15 +1569,18 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                         #setup nfs case
                         mkdir -p $MNTIMAGE/mnt
                         emit "mount -t nfs -o nolock $rlocation /mnt"
-                        emit "mkdir -p /mnt/$SAVE_PATH/$lhost-\$DATE"
-                        emit "$CORE_COLLECTOR /proc/vmcore /mnt/$SAVE_PATH/$lhost-\$DATE/vmcore-incomplete"
                         emit "if [ \$? == 0 ]"
                         emit "then"
-                        emit "  mv /mnt/$SAVE_PATH/$lhost-\$DATE/vmcore-incomplete /mnt/$SAVE_PATH/$lhost-\$DATE/vmcore"
+                        emit "  mkdir -p /mnt/$SAVE_PATH/$lhost-\$DATE"
+                        emit "  $CORE_COLLECTOR /proc/vmcore /mnt/$SAVE_PATH/$lhost-\$DATE/vmcore-incomplete"
+                        emit "  if [ \$? == 0 ]"
+                        emit "  then"
+                        emit "      mv /mnt/$SAVE_PATH/$lhost-\$DATE/vmcore-incomplete /mnt/$SAVE_PATH/$lhost-\$DATE/vmcore"
+                        emit "      umount /mnt"
+                        emit "      reboot -f"
+                        emit "  fi"
                         emit "  umount /mnt"
-                        emit "  reboot -f"
                         emit "fi"
-                        emit "umount /mnt"
                     else
                         #SSH path
                         #rebuild $location replacing machine name with ip address
