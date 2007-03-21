@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 63%{?dist}
+Release: 64%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -64,6 +64,7 @@ Patch302: kexec-tools-1.101-ppc64-usage.patch
 Patch303: kexec-tools-1.101-ppc64-cliargs.patch
 Patch304: kexec-tools-1.101-ppc64-platform-fix.patch
 Patch305: kexec-tools-1.101-ppc64-64k-pages.patch
+Patch306: kexec-tools-1.101-ppc64-memory_regions.patch
 
 #
 # Patches 401 through 500 are meant for s390 kexec-tools enablement
@@ -116,6 +117,7 @@ rm -f ../kexec-tools-1.101.spec
 %patch303 -p1
 %patch304 -p1
 %patch305 -p1
+%patch306 -p1
 %patch401 -p1
 %patch501 -p1
 %patch601 -p1
@@ -237,6 +239,9 @@ rm -f %{_datadir}/firstboot/modules/firstboot_kdump.py
 %doc kexec-kdump-howto.txt
 
 %changelog
+* Wed Mar 21 2007 Neil Horman <nhorman@redhat.com> - 1.101-64%{dist}
+- Add fix for ppc memory region computation (bz 233312)
+
 * Thu Mar 15 2007 Neil Horman <nhorman@redhat.com> - 1.101-63%{dist}
 - Adding extra check to avoid oom kills on nfs mount failure (bz 215056)
 
