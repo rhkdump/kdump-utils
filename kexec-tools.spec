@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 64%{?dist}
+Release: 65%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -230,7 +230,7 @@ rm -f %{_datadir}/firstboot/modules/firstboot_kdump.py
 %config %{_sysconfdir}/rc.d/init.d/kdump
 %dir %{_localstatedir}/crash
 %ifarch %{ix86} x86_64
-%{_libdir}/kexec-tools/kexec_test
+%{_libdir}/kexec-tools
 %endif
 %{_mandir}/man8/*
 %doc News
@@ -239,6 +239,9 @@ rm -f %{_datadir}/firstboot/modules/firstboot_kdump.py
 %doc kexec-kdump-howto.txt
 
 %changelog
+* Mon Mar 26 2007 Neil Horman <nhorman@redhat.com> - 1.101-65%{dist}
+- Fix spec to own kexec_tools directory (bz 219035)
+
 * Wed Mar 21 2007 Neil Horman <nhorman@redhat.com> - 1.101-64%{dist}
 - Add fix for ppc memory region computation (bz 233312)
 
