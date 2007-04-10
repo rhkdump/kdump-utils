@@ -1,5 +1,5 @@
---- kexec-tools-1.101/kexec/arch/ppc64/kexec-elf-rel-ppc64.c.orig	2007-04-10 13:33:39.000000000 -0400
-+++ kexec-tools-1.101/kexec/arch/ppc64/kexec-elf-rel-ppc64.c	2007-04-10 13:33:49.000000000 -0400
+--- kexec-tools-1.101/kexec/arch/ppc64/kexec-elf-rel-ppc64.c.orig	2007-04-10 15:33:46.000000000 -0400
++++ kexec-tools-1.101/kexec/arch/ppc64/kexec-elf-rel-ppc64.c	2007-04-10 15:34:06.000000000 -0400
 @@ -101,10 +101,10 @@
  		break;
  
@@ -13,8 +13,20 @@
  		break;
  
  	default:
---- kexec-tools-1.101/kexec/arch/ppc64/kexec-elf-ppc64.c.orig	2007-04-10 13:33:39.000000000 -0400
-+++ kexec-tools-1.101/kexec/arch/ppc64/kexec-elf-ppc64.c	2007-04-10 13:33:49.000000000 -0400
+--- kexec-tools-1.101/kexec/arch/ppc64/crashdump-ppc64.h.orig	2007-04-10 15:34:59.000000000 -0400
++++ kexec-tools-1.101/kexec/arch/ppc64/crashdump-ppc64.h	2007-04-10 15:35:16.000000000 -0400
+@@ -25,7 +25,7 @@
+ #define _ALIGN_UP(addr,size)     (((addr)+((size)-1))&(~((size)-1)))
+ #define _ALIGN_DOWN(addr,size)   ((addr)&(~((size)-1)))
+ 
+-extern unsigned long long crash_base;
+-extern unsigned long long crash_size;
++extern uint64_t crash_base;
++extern uint64_t crash_size;
+ 
+ #endif /* CRASHDUMP_PPC64_H */
+--- kexec-tools-1.101/kexec/arch/ppc64/kexec-elf-ppc64.c.orig	2007-04-10 15:33:47.000000000 -0400
++++ kexec-tools-1.101/kexec/arch/ppc64/kexec-elf-ppc64.c	2007-04-10 15:34:06.000000000 -0400
 @@ -42,7 +42,7 @@
  #define BOOTLOADER         "kexec"
  #define BOOTLOADER_VERSION VERSION
@@ -93,8 +105,8 @@
  	elf_rel_set_symbol(&info->rhdr, "dt_offset", &my_dt_offset,
  				sizeof(my_dt_offset));
  
---- kexec-tools-1.101/kexec/arch/ppc64/kexec-ppc64.h.orig	2007-04-10 13:33:39.000000000 -0400
-+++ kexec-tools-1.101/kexec/arch/ppc64/kexec-ppc64.h	2007-04-10 13:33:49.000000000 -0400
+--- kexec-tools-1.101/kexec/arch/ppc64/kexec-ppc64.h.orig	2007-04-10 15:33:46.000000000 -0400
++++ kexec-tools-1.101/kexec/arch/ppc64/kexec-ppc64.h	2007-04-10 15:34:06.000000000 -0400
 @@ -15,7 +15,7 @@
  void elf_ppc64_usage(void);
  void reserve(unsigned long long where, unsigned long long length);
@@ -104,8 +116,8 @@
  /* boot block version 2 as defined by the linux kernel */
  struct bootblock {
  	unsigned magic,
---- kexec-tools-1.101/kexec/arch/ppc64/kexec-ppc64.c.orig	2007-04-10 13:33:39.000000000 -0400
-+++ kexec-tools-1.101/kexec/arch/ppc64/kexec-ppc64.c	2007-04-10 13:36:19.000000000 -0400
+--- kexec-tools-1.101/kexec/arch/ppc64/kexec-ppc64.c.orig	2007-04-10 15:33:46.000000000 -0400
++++ kexec-tools-1.101/kexec/arch/ppc64/kexec-ppc64.c	2007-04-10 15:34:06.000000000 -0400
 @@ -35,12 +35,12 @@
  #include <arch/options.h>
  
@@ -235,8 +247,8 @@
  				perror(fname);
  				fclose(file);
  				closedir(cdir);
---- kexec-tools-1.101/kexec/kexec-sha256.h.orig	2007-04-10 13:33:39.000000000 -0400
-+++ kexec-tools-1.101/kexec/kexec-sha256.h	2007-04-10 13:33:49.000000000 -0400
+--- kexec-tools-1.101/kexec/kexec-sha256.h.orig	2007-04-10 15:33:46.000000000 -0400
++++ kexec-tools-1.101/kexec/kexec-sha256.h	2007-04-10 15:34:06.000000000 -0400
 @@ -2,8 +2,8 @@
  #define KEXEC_SHA256_H
  
@@ -248,8 +260,8 @@
  };
  
  #define SHA256_REGIONS 16
---- kexec-tools-1.101/purgatory/Makefile.orig	2007-04-10 13:33:39.000000000 -0400
-+++ kexec-tools-1.101/purgatory/Makefile	2007-04-10 13:33:49.000000000 -0400
+--- kexec-tools-1.101/purgatory/Makefile.orig	2007-04-10 15:33:46.000000000 -0400
++++ kexec-tools-1.101/purgatory/Makefile	2007-04-10 15:34:06.000000000 -0400
 @@ -57,9 +57,9 @@
  	$(MKDIR) -p $(@D)
  	$(CC) $(PCFLAGS) -o $@ -c $<
@@ -262,16 +274,16 @@
  
  echo::
  	@echo "PURGATORY_C_SRCS $(PURGATORY_C_SRCS)"
---- kexec-tools-1.101/purgatory/arch/ppc64/Makefile.orig	2007-04-10 13:33:39.000000000 -0400
-+++ kexec-tools-1.101/purgatory/arch/ppc64/Makefile	2007-04-10 13:33:49.000000000 -0400
+--- kexec-tools-1.101/purgatory/arch/ppc64/Makefile.orig	2007-04-10 15:33:46.000000000 -0400
++++ kexec-tools-1.101/purgatory/arch/ppc64/Makefile	2007-04-10 15:34:06.000000000 -0400
 @@ -6,3 +6,5 @@
  PURGATORY_C_SRCS += purgatory/arch/ppc64/purgatory-ppc64.c
  PURGATORY_C_SRCS += purgatory/arch/ppc64/console-ppc64.c
  PURGATORY_C_SRCS += purgatory/arch/ppc64/crashdump_backup.c
 +
 +PCFLAGS += -m64 -mcall-aixdesc
---- kexec-tools-1.101/purgatory/purgatory.c.orig	2007-04-10 13:33:39.000000000 -0400
-+++ kexec-tools-1.101/purgatory/purgatory.c	2007-04-10 13:33:49.000000000 -0400
+--- kexec-tools-1.101/purgatory/purgatory.c.orig	2007-04-10 15:33:46.000000000 -0400
++++ kexec-tools-1.101/purgatory/purgatory.c	2007-04-10 15:34:06.000000000 -0400
 @@ -46,3 +46,5 @@
  	verify_sha256_digest();
  	post_verification_setup_arch();
