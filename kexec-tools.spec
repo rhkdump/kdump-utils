@@ -120,9 +120,7 @@ rm -f ../kexec-tools-1.101.spec
 %patch305 -p1
 %patch306 -p1
 %patch307 -p1
-%ifarch ppc
 %patch308 -p1
-%endif
 %patch401 -p1
 %patch501 -p1
 %patch601 -p1
