@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 67%{?dist}
+Release: 68%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -66,6 +66,8 @@ Patch305: kexec-tools-1.101-ppc64-64k-pages.patch
 Patch306: kexec-tools-1.101-ppc64-memory_regions.patch
 Patch307: kexec-tools-1.101-ppc64_rmo_top.patch
 Patch308: kexec-tools-1.101-ppc-boots-ppc64.patch
+Patch309: kexec-tools-1.101-ppc64-align-dtstruct.patch
+Patch310: kexec-tools-1.101-ppc64-bootargs-align.patch
 
 #
 # Patches 401 through 500 are meant for s390 kexec-tools enablement
@@ -121,6 +123,8 @@ rm -f ../kexec-tools-1.101.spec
 %patch306 -p1
 %patch307 -p1
 %patch308 -p1
+%patch309 -p1
+%patch310 -p1 
 %patch401 -p1
 %patch501 -p1
 %patch601 -p1
@@ -247,6 +251,9 @@ rm -f %{_datadir}/firstboot/modules/firstboot_kdump.py
 %doc kexec-kdump-howto.txt
 
 %changelog
+* Tue Apr 10 2007 Neil Horman <nhorman@redhat.com> - 1.101-68%{dist}
+- Fix alignment of bootargs and device-tree structures on ppc64
+
 * Tue Apr 10 2007 Neil Horman <nhorman@redhat.com> - 1.101-67%{dist}
 - Allow ppc to boot ppc64 kernels (bz 235608)
 

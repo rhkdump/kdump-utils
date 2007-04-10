@@ -1,0 +1,11 @@
+--- kexec-tools-1.101/kexec/arch/ppc64/fs2dt.c.org	2006-04-26 13:12:55.515946645 +0900
++++ kexec-tools-1.101/kexec/arch/ppc64/fs2dt.c	2006-04-26 13:50:00.665270758 +0900
+@@ -275,6 +275,8 @@
+ 				strcat(local_cmdline, " ");
+ 				cmd_len = strlen(local_cmdline);
+ 				cmd_len = cmd_len + 1;
++				if ((cmd_len >= 8) && ((unsigned long)dt & 0x4))
++					dt++;
+ 				memcpy(dt,local_cmdline,cmd_len);
+ 				len = cmd_len;
+ 				*dt_len = cmd_len;

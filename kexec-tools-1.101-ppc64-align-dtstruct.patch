@@ -1,0 +1,12 @@
+--- kexec-tools-1.101/kexec/arch/ppc64/fs2dt.c~	2006-04-27 15:01:55.000000000 +0900
++++ kexec-tools-1.101/kexec/arch/ppc64/fs2dt.c	2006-05-08 14:15:50.571330714 +0900
+@@ -61,7 +61,8 @@
+ struct stat statbuf[1];
+ char pathname[MAXPATH], *pathstart;
+ char propnames[NAMESPACE];
+-dvt dtstruct[TREEWORDS], *dt;
++dvt dtstruct[TREEWORDS] __attribute((aligned(8)));
++dvt *dt;
+ unsigned long long mem_rsrv[2*MEMRESERVE];
+ 
+ static int initrd_found = 0;
