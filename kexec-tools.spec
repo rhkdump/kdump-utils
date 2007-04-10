@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 66%{?dist}
+Release: 67%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -23,8 +23,7 @@ Requires(pre): coreutils chkconfig sed
 Requires: busybox >= 1.2.0
 BuildRequires: zlib-devel elfutils-libelf-devel glib2-devel pkgconfig
 BuildRequires: elfutils-libelf-devel elfutils-devel-static gettext
-ExcludeArch: ppc
-%ifarch %{ix86} x86_64 ppc64 ia64
+%ifarch %{ix86} x86_64 ppc64 ia64 ppc
 Obsoletes: diskdumputils netdump
 %endif
 
@@ -66,6 +65,7 @@ Patch304: kexec-tools-1.101-ppc64-platform-fix.patch
 Patch305: kexec-tools-1.101-ppc64-64k-pages.patch
 Patch306: kexec-tools-1.101-ppc64-memory_regions.patch
 Patch307: kexec-tools-1.101-ppc64_rmo_top.patch
+Patch308: kexec-tools-1.101-ppc-boots-ppc64.patch
 
 #
 # Patches 401 through 500 are meant for s390 kexec-tools enablement
@@ -120,6 +120,9 @@ rm -f ../kexec-tools-1.101.spec
 %patch305 -p1
 %patch306 -p1
 %patch307 -p1
+%ifarch ppc
+%patch308 -p1
+%endif
 %patch401 -p1
 %patch501 -p1
 %patch601 -p1
@@ -128,12 +131,17 @@ rm -f ../kexec-tools-1.101.spec
 mkdir -p -m755 kcp
 tar -z -x -v -f %{SOURCE9}
 
+
 %patch603 -p1
 %patch604 -p1
 %patch605 -p1
 %patch606 -p1
 
 tar -z -x -v -f %{SOURCE13}
+
+%ifarch ppc
+%define archdef ARCH=ppc64
+%endif
 
 %build
 %configure \
@@ -144,15 +152,15 @@ tar -z -x -v -f %{SOURCE13}
     --sbindir=/sbin
 rm -f kexec-tools.spec.in
 cp %{SOURCE10} . 
-make
-%ifarch %{ix86} x86_64 ia64 ppc64
+make %{?archdef}
+%ifarch %{ix86} x86_64 ia64 ppc64 ppc
 make -C makedumpfile
 %endif
 make -C po
 
 %install
 rm -rf $RPM_BUILD_ROOT
-make install DESTDIR=$RPM_BUILD_ROOT
+make install %{?archdef} DESTDIR=$RPM_BUILD_ROOT
 make -C po install DESTDIR=$RPM_BUILD_ROOT
 mkdir -p -m755 $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d
 mkdir -p -m755 $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
@@ -171,7 +179,7 @@ install -m 644 %{SOURCE8} $RPM_BUILD_ROOT%{_sysconfdir}/kdump.conf
 install -m 644 kexec/kexec.8 $RPM_BUILD_ROOT%{_mandir}/man8/kexec.8
 install -m 755 %{SOURCE11} $RPM_BUILD_ROOT%{_datadir}/kdump/firstboot_kdump.py
 install -m 644 %{SOURCE12} $RPM_BUILD_ROOT%{_mandir}/man8/mkdumprd.8
-%ifarch %{ix86} x86_64 ia64 ppc64
+%ifarch %{ix86} x86_64 ia64 ppc64 ppc
 install -m 755 makedumpfile/makedumpfile $RPM_BUILD_ROOT/sbin/makedumpfile
 install -m 755 makedumpfile/makedumpfile-R.pl $RPM_BUILD_ROOT/sbin/makedumpfile-reasm
 %endif
@@ -241,6 +249,9 @@ rm -f %{_datadir}/firstboot/modules/firstboot_kdump.py
 %doc kexec-kdump-howto.txt
 
 %changelog
+* Tue Apr 10 2007 Neil Horman <nhorman@redhat.com> - 1.101-67%{dist}
+- Allow ppc to boot ppc64 kernels (bz 235608)
+
 * Tue Apr 10 2007 Neil Horman <nhorman@redhat.com> - 1.101-66%{dist}
 - Reduce rmo_top to 0x7c000000 for PS3 (bz 235030)
 
