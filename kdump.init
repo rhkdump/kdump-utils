@@ -250,7 +250,7 @@ function propagate_ssh_key()
 	SSH_SERVER=`echo $SSH_TARGET | sed -e's/\(.*@\)\(.*$\)/\2/'`
  
 	#now send the found key to the found server
-	cat $KEYFILE | ssh -x $SSH_USER@$SSH_SERVER "mkdir -p ~$SSH_USER/.ssh; chmod 700 ~$SSH_USER/.ssh;  cat >> ~$SSH_USER/.ssh/authorized_keys2"
+	cat $KEYFILE | ssh -x $SSH_USER@$SSH_SERVER "mkdir -p ~$SSH_USER/.ssh; chmod 700 ~$SSH_USER/.ssh;  cat >> ~$SSH_USER/.ssh/authorized_keys2; chmod 600 ~$SSH_USER/.ssh/authorized_keys2"
 	RET=$?
 	if [ $RET == 0 ]; then
 		echo $KEYFILE has been added to ~$SSH_USER/.ssh/authorized_keys2 on $SSH_SERVER
