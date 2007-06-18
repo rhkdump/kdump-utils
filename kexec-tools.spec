@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 69%{?dist}
+Release: 70%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -251,6 +251,9 @@ rm -f %{_datadir}/firstboot/modules/firstboot_kdump.py
 %doc kexec-kdump-howto.txt
 
 %changelog
+* Mon Jun 18 2007 Neil Horman <nhorman@redhat.com> - 1.101-70%{dist}
+- Fixed kdump.init to properly read cmdline (bz 244649)
+
 * Wed Apr 11 2007 Neil Horman <nhorman@redhat.com> - 1.101-69%{dist}
 - Fixed up kdump.init to enforce mode 600 on authorized_keys2 (bz 235986)
 

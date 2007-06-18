@@ -154,7 +154,7 @@ function load_kdump()
 		KDUMP_COMMANDLINE=`cat /proc/cmdline`
 	fi
 
-	MEM_RESERVED=`echo $KDUMP_COMMANDLINE | grep "crashkernel=[0-9]\+[MmKkGg]@[0-9]\+[MmGgKk]"`
+	MEM_RESERVED=`grep "crashkernel=[0-9]\+[MmKkGg]@[0-9]\+[MmGgKk]" /proc/cmdline`
 	if [ -z "$MEM_RESERVED" ]
 	then
 		$LOGGER "No crashkernel parameter specified for running kernel"
