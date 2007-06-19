@@ -1635,11 +1635,12 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                 *)
                     #test filesystem and directory creation
                     kdump_chk "test -f /sbin/fsck.$type" "Unsupported type $type"
-                    kdump_chk "mount -t $type $location /mnt" "Bad mount point $location"
-                    mkdir -p /mnt/$SAVE_PATH
-                    tdir=`mktemp -dqp /mnt/$SAVE_PATH`
+                    tmnt=`mktemp -dq`
+                    kdump_chk "mount -t $type $location $tmnt" "Bad mount point $location"
+                    mkdir -p $tmnt/$SAVE_PATH
+                    tdir=`mktemp -dqp $tmnt/$SAVE_PATH`
                     available_size=$(df $tdir | tail -1 | tr -s ' ' ':' | cut -d: -f4)
-                    rc=$? && rm -rf $tdir && umount /mnt
+                    rc=$? && rm -rf $tdir && umount $tmnt
                     if [ $rc != "0" ]; then 
                         echo "Cannot create directory in $location: $SAVE_PATH"
                         exit 1
