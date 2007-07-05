@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 71%{?dist}
+Release: 72%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -251,6 +251,9 @@ rm -f %{_datadir}/firstboot/modules/firstboot_kdump.py
 %doc kexec-kdump-howto.txt
 
 %changelog
+* Thu Jul 05 2007 Neil Horman <nhorman@redhat.com> - 1.101-72%{dist}
+- Fixing up initscript for LSB (bz 246967)
+
 * Tue Jun 19 2007 Neil Horman <nhorman@redhat.com> - 1.101-71%{dist}
 - Fixed conflict in mkdumprd in use of /mnt (bz 222911)
 

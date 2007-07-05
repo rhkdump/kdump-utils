@@ -1,12 +1,13 @@
 #! /bin/sh
-
-#
-#  kdump
-#
-#  Description:  The kdump init script provides the support necessary for
-#  		 loading a kdump kernel into memory at system bootup time,
-#		 and for copying away a vmcore at system panic time.
-#
+### BEGIN INIT INFO
+# Provides: kdump 
+# Default-Start:  3 4 5
+# Default-Stop: 0 1 6
+# Short-Description: start and stop kdump crash recovery service 
+# Description:  The kdump init script provides the support necessary for
+#		loading a kdump kernel into memory at system bootup time,
+#		and for copying away a vmcore at system panic time. 
+### END INIT INFO
 #  Copyright 2005 Red Hat, Inc.
 #
 #  chkconfig: - 20 80
@@ -316,10 +317,12 @@ function stop()
 		$LOGGER "kexec: unloaded kdump kernel"
 		echo -n "Stopping kdump:"; success; echo
 		$LOGGER "stopped"
+		return 0
 	else
 		$LOGGER "kexec: failed to unload kdump kernel"
 		echo -n "Stopping kdump:"; failure; echo
 		$LOGGER "failed to stop"
+		return 1
 	fi
 }
 
