@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 72%{?dist}
+Release: 73%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -17,7 +17,7 @@ Source9: makedumpfile-1.1.1.tar.gz
 Source10: kexec-kdump-howto.txt
 Source11: firstboot_kdump.py
 Source12: mkdumprd.8
-Source13: pofiles.tar.gz
+Source13: kexec-tools-po.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires(pre): coreutils chkconfig sed 
 Requires: busybox >= 1.2.0
@@ -158,12 +158,11 @@ make %{?archdef}
 %ifarch %{ix86} x86_64 ia64 ppc64 ppc
 make -C makedumpfile
 %endif
-make -C po
+make -C kexec-tools-po
 
 %install
 rm -rf $RPM_BUILD_ROOT
 make install %{?archdef} DESTDIR=$RPM_BUILD_ROOT
-make -C po install DESTDIR=$RPM_BUILD_ROOT
 mkdir -p -m755 $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d
 mkdir -p -m755 $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
 mkdir -p -m755 $RPM_BUILD_ROOT%{_localstatedir}/crash
@@ -185,8 +184,8 @@ install -m 644 %{SOURCE12} $RPM_BUILD_ROOT%{_mandir}/man8/mkdumprd.8
 install -m 755 makedumpfile/makedumpfile $RPM_BUILD_ROOT/sbin/makedumpfile
 install -m 755 makedumpfile/makedumpfile-R.pl $RPM_BUILD_ROOT/sbin/makedumpfile-reasm
 %endif
-CHOMP_SIZE=`echo $RPM_BUILD_ROOT | wc -c`
-find $RPM_BUILD_ROOT -name '*.mo' | cut -b $CHOMP_SIZE- >> %{name}.lang
+make -C kexec-tools-po install DESTDIR=$RPM_BUILD_ROOT
+%find_lang %{name}
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -251,6 +250,9 @@ rm -f %{_datadir}/firstboot/modules/firstboot_kdump.py
 %doc kexec-kdump-howto.txt
 
 %changelog
+* Mon Jul 09 2007 Neil Horman <nhorman@redhat.com> - 1.101-73%{dist}
+- Fix up language files for kexec (bz 246508)
+
 * Thu Jul 05 2007 Neil Horman <nhorman@redhat.com> - 1.101-72%{dist}
 - Fixing up initscript for LSB (bz 246967)
 
