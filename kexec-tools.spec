@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 73%{?dist}
+Release: 74%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -88,6 +88,7 @@ Patch603: kexec-tools-1.101-page_h.patch
 Patch604: kexec-tools-1.101-elf-format.patch
 Patch605: kexec-tools-1.101-ifdown.patch
 Patch606: kexec-tools-1.101-reloc-update.patch
+Patch607: kexec-tools-1.101-x86-add_buffer_retry.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -138,6 +139,7 @@ tar -z -x -v -f %{SOURCE9}
 %patch604 -p1
 %patch605 -p1
 %patch606 -p1
+%patch607 -p1
 
 tar -z -x -v -f %{SOURCE13}
 
@@ -250,6 +252,9 @@ rm -f %{_datadir}/firstboot/modules/firstboot_kdump.py
 %doc kexec-kdump-howto.txt
 
 %changelog
+* Mon Jul 17 2007 Neil Horman <nhorman@redhat.com> - 1.101-74%{dist}
+- Fix up add_buff to retry locate_hole on segment overlap (bz 247989)
+
 * Mon Jul 09 2007 Neil Horman <nhorman@redhat.com> - 1.101-73%{dist}
 - Fix up language files for kexec (bz 246508)
 

@@ -1,0 +1,60 @@
+--- kexec-tools-1.101/kexec/arch/i386/crashdump-x86.c.orig	2007-07-17 08:33:59.000000000 -0400
++++ kexec-tools-1.101/kexec/arch/i386/crashdump-x86.c	2007-07-17 08:34:13.000000000 -0400
+@@ -663,6 +663,7 @@ int load_crashdump_segments(struct kexec
+ 	int nr_ranges, align = 1024;
+ 	long int nr_cpus = 0;
+ 	struct memory_range *mem_range, *memmap_p;
++	int i;
+ 
+ 	if (get_crash_memory_ranges(&mem_range, &nr_ranges) < 0)
+ 		return -1;
+@@ -720,8 +721,13 @@ int load_crashdump_segments(struct kexec
+ 	 * elf core header segment to 16K to avoid being placed in such gaps.
+ 	 * This is a makeshift solution until it is fixed in kernel.
+ 	 */
+-	elfcorehdr = add_buffer(info, tmp, sz, 16*1024, align, min_base,
+-							max_addr, -1);
++	for (i=0;i<KEXEC_MAX_SEGMENTS;i++) {
++		if ((memmap_p[i].start == 0) &&
++		    (memmap_p[i].end == 0))
++			break;
++	}
++	elfcorehdr = add_buffer(info, tmp, sz, 16*1024, align, min_base, 
++				memmap_p[i-1].end, -1);
+ 	dfprintf(stdout, "Created elf header segment at 0x%lx\n", elfcorehdr);
+ 	if (delete_memmap(memmap_p, elfcorehdr, sz) < 0)
+ 		return -1;
+--- kexec-tools-1.101/kexec/kexec.c.orig	2007-07-17 08:34:00.000000000 -0400
++++ kexec-tools-1.101/kexec/kexec.c	2007-07-17 08:34:13.000000000 -0400
+@@ -327,6 +327,7 @@ unsigned long add_buffer(struct kexec_in
+ 	unsigned long base;
+ 	int result;
+ 	int pagesize;
++	int i;
+ 
+ 	result = sort_segments(info);
+ 	if (result < 0) {
+@@ -336,11 +337,22 @@ unsigned long add_buffer(struct kexec_in
+ 	/* Round memsz up to a multiple of pagesize */
+ 	pagesize = getpagesize();
+ 	memsz = (memsz + (pagesize - 1)) & ~(pagesize - 1);
+-
++retry:
+ 	base = locate_hole(info, memsz, buf_align, buf_min, buf_max, buf_end);
+ 	if (base == ULONG_MAX) {
+ 		die("locate_hole failed\n");
+ 	}
++
++	for (i = 0; i < info->nr_segments; i++) {
++		if ((base < (info->segment[i].mem + info->segment[i].memsz)) &&
++			((base+memsz) > info->segment[i].mem)) {
++			/*
++			 *we have an overlap, bump down buf_max
++			 */
++			buf_max = (unsigned long)info->segment[i].mem;
++			goto retry;
++		}
++	}
+ 	
+ 	add_segment(info, buf, bufsz, base, memsz);
+ 	return base;
