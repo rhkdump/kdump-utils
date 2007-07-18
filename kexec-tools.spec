@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 74%{?dist}
+Release: 75%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -252,6 +252,9 @@ rm -f %{_datadir}/firstboot/modules/firstboot_kdump.py
 %doc kexec-kdump-howto.txt
 
 %changelog
+* Wed Jul 18 2007 Neil Horman <nhorman@redhat.com> - 1.101-75%{dist}
+- Updated fr.po translations (bz 248287)
+
 * Mon Jul 17 2007 Neil Horman <nhorman@redhat.com> - 1.101-74%{dist}
 - Fix up add_buff to retry locate_hole on segment overlap (bz 247989)
 
