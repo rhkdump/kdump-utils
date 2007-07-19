@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 75%{?dist}
+Release: 76%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -252,6 +252,9 @@ rm -f %{_datadir}/firstboot/modules/firstboot_kdump.py
 %doc kexec-kdump-howto.txt
 
 %changelog
+* Wed Jul 19 2007 Neil Horman <nhorman@redhat.com> - 1.101-76%{dist}
+- Fix mkdumprd to suppress informative messages (bz 248797)
+
 * Wed Jul 18 2007 Neil Horman <nhorman@redhat.com> - 1.101-75%{dist}
 - Updated fr.po translations (bz 248287)
 
