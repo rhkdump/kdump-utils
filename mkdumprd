@@ -971,7 +971,8 @@ if [ -n "$CORE_COLLECTOR" ]; then
         rm -rf $IMAGE
         exit 1
     fi
-    /sbin/makedumpfile -g $MNTIMAGE/etc/makedumpfile.config -x /usr/lib/debug/lib/modules/$RUN_KERN_VER/vmlinux > /dev/null
+    /sbin/makedumpfile -g $MNTIMAGE/etc/makedumpfile.config -x
+/usr/lib/debug/lib/modules/$RUN_KERN_VER/vmlinux > /dev/null 2>&1
     if [ $? != 0 ]; then
         echo "could not generate makedumpfile configuration.  aborting"
         rm -rf $MNTIMAGE
