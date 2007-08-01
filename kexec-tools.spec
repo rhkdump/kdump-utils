@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 76%{?dist}
+Release: 77%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -13,7 +13,7 @@ Source5: kdump.sysconfig.ppc64
 Source6: kdump.sysconfig.ia64
 Source7: mkdumprd
 Source8: kdump.conf
-Source9: makedumpfile-1.1.1.tar.gz
+Source9: makedumpfile-1.1.5.tar.gz
 Source10: kexec-kdump-howto.txt
 Source11: firstboot_kdump.py
 Source12: mkdumprd.8
@@ -252,6 +252,9 @@ rm -f %{_datadir}/firstboot/modules/firstboot_kdump.py
 %doc kexec-kdump-howto.txt
 
 %changelog
+* Wed Aug 01 2007 Neil Horman <nhorman@redhat.com> - 1.101-77%{dist}
+- Update mkdumprd to suppres notifications /rev makedumpfile (bz 250341)
+
 * Thu Jul 19 2007 Neil Horman <nhorman@redhat.com> - 1.101-76%{dist}
 - Fix mkdumprd to suppress informative messages (bz 248797)
 

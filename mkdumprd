@@ -888,7 +888,7 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
         core_collector)
             if [ -x /sbin/makedumpfile ]; then
                 CORE_COLLECTOR=$location
-                CORE_COLLECTOR=`echo $CORE_COLLECTOR | sed -e's/makedumpfile/makedumpfile -i \/etc\/makedumpfile.config/'`
+                CORE_COLLECTOR=`echo $CORE_COLLECTOR | sed -e's/makedumpfile/makedumpfile -i \/etc\/makedumpfile.config --message-level 1/'`
             else
                 echo "Cannot use the core_collector option on this arch"
                 rm -rf $MNTIMAGE
