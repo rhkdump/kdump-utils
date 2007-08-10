@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 77%{?dist}
+Release: 78%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -252,6 +252,9 @@ rm -f %{_datadir}/firstboot/modules/firstboot_kdump.py
 %doc kexec-kdump-howto.txt
 
 %changelog
+* Fri Aug 10 2007 Neil Horman <nhorman@redhat.com> - 1.101-78
+- Update init script to handle xen kernel cmdlnes (bz 250803)
+
 * Wed Aug 01 2007 Neil Horman <nhorman@redhat.com> - 1.101-77%{dist}
 - Update mkdumprd to suppres notifications /rev makedumpfile (bz 250341)
 
