@@ -42,7 +42,7 @@ function save_core()
 	coredir="/var/crash/`date +"%Y-%m-%d-%H:%M"`"
 
 	mkdir -p $coredir
-	cp /proc/vmcore $coredir/vmcore-incomplete
+	cp --sparse=always /proc/vmcore $coredir/vmcore-incomplete
 	if [ $? == 0 ]; then
 		mv $coredir/vmcore-incomplete $coredir/vmcore
 		$LOGGER "saved a vmcore to $coredir"

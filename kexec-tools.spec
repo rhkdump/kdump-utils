@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 78%{?dist}
+Release: 79%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -252,6 +252,9 @@ rm -f %{_datadir}/firstboot/modules/firstboot_kdump.py
 %doc kexec-kdump-howto.txt
 
 %changelog
+* Tue Aug 21 2007 Neil Horman <nhorman@redhat.com> - 1.101-79
+- Update kdump.init to always create sparse files (bz 253714)
+
 * Fri Aug 10 2007 Neil Horman <nhorman@redhat.com> - 1.101-78
 - Update init script to handle xen kernel cmdlnes (bz 250803)
 
