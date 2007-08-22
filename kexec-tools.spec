@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 79%{?dist}
+Release: 80%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -252,6 +252,9 @@ rm -f %{_datadir}/firstboot/modules/firstboot_kdump.py
 %doc kexec-kdump-howto.txt
 
 %changelog
+* Wed Aug 22 2007 Neil Horman <nhorman@redhat.com> - 1.101-80
+- Fix ability to determine space on nfs shares (bz 252170)
+
 * Tue Aug 21 2007 Neil Horman <nhorman@redhat.com> - 1.101-79
 - Update kdump.init to always create sparse files (bz 253714)
 

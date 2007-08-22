@@ -1475,7 +1475,7 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                     available_size=$(fdisk -s $location)
                     if [ $available_size -lt $memtotal ]; then
                         echo "Warning: There is not space enough to save a vmcore."
-                        echo "         The size of $location should be much greater than $memtotal bytes."
+                        echo "         The size of $config_val should be much greater than $memtotal kilo bytes."
                     fi
 
                     #setup raw case
@@ -1543,7 +1543,7 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                                    "Bad NFS mount $location"
                         mkdir -p $tmnt/$SAVE_PATH
                         tdir=`mktemp -dqp $tmnt/$SAVE_PATH`
-                        available_size=$(df $tdir | tail -1 | tr -s ' ' ':' | cut -d: -f4)
+                        available_size=$(df -P $tdir | tail -1 | tr -s ' ' ':' | cut -d: -f5)
 
                         rc=$? && rm -rf $tdir 
                         umount $tmnt
@@ -1564,7 +1564,7 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                         #check for available size is greater than $memtotal
                         if [ $available_size -lt $memtotal ]; then
                             echo "Warning: There is not space enough to save a vmcore."
-                            echo "         The size of $location should be much greater than $memtotal bytes."
+                            echo "         The size of $location should be much greater than $memtotal kilo bytes."
                         fi
     
                         #setup nfs case
@@ -1602,7 +1602,7 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                         #check for available size is greater than $memtotal
                         if [ $available_size -lt $memtotal ]; then
                             echo "Warning: There is not space enough to save a vmcore."
-                            echo "         The size of $rlocation:$tdir should be much greater than $memtotal bytes."
+                            echo "         The size of $rlocation:$tdir should be much greater than $memtotal kilo bytes."
                         fi
                         #We do this to remove the temp directory from above
                         ssh -q $s_opts $rlocation rmdir $tdir
@@ -1649,7 +1649,7 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                     #check for available size is greater than $memtotal
                     if [ $available_size -lt $memtotal ]; then
                         echo "Warning: There is not space enough to save a vmcore."
-                        echo "         The size of $location should be much greater than $memtotal bytes."
+                        echo "         The size of $location should be much greater than $memtotal kilo bytes."
                     fi
 
     
