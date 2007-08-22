@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 80%{?dist}
+Release: 81%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -89,6 +89,7 @@ Patch604: kexec-tools-1.101-elf-format.patch
 Patch605: kexec-tools-1.101-ifdown.patch
 Patch606: kexec-tools-1.101-reloc-update.patch
 Patch607: kexec-tools-1.101-x86-add_buffer_retry.patch
+Patch608: kexec-tools-1.101-makedumpfile-xen-syms.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -140,6 +141,7 @@ tar -z -x -v -f %{SOURCE9}
 %patch605 -p1
 %patch606 -p1
 %patch607 -p1
+%patch608 -p1 
 
 tar -z -x -v -f %{SOURCE13}
 
@@ -252,6 +254,9 @@ rm -f %{_datadir}/firstboot/modules/firstboot_kdump.py
 %doc kexec-kdump-howto.txt
 
 %changelog
+* Wed Aug 22 2007 Neil Horman <nhorman@redhat.com> - 1.101-81
+- Add xen-syms patch to makedumpfile (bz 250341)
+
 * Wed Aug 22 2007 Neil Horman <nhorman@redhat.com> - 1.101-80
 - Fix ability to determine space on nfs shares (bz 252170)
 
