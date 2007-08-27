@@ -31,8 +31,8 @@ Obsoletes: diskdumputils netdump
 # Patches 0 through 100 are meant for x86 kexec-tools enablement
 #
 Patch1: kexec-tools-1.101-kdump.patch
-Patch2: kexec-tools-1.101-elf-core-type.patch
-Patch3: kexec-tools-1.101-bzimage-options.patch
+Patch2: kexec-tools-1.102pre-elf-core-type.patch
+Patch3: kexec-tools-1.102pre-bzimage-options.patch
 Patch4: kexec-tools-1.101-relocatable-bzimage.patch
 
 #
@@ -64,7 +64,7 @@ Patch303: kexec-tools-1.101-ppc64-cliargs.patch
 Patch304: kexec-tools-1.101-ppc64-platform-fix.patch
 Patch305: kexec-tools-1.101-ppc64-64k-pages.patch
 Patch306: kexec-tools-1.101-ppc64-memory_regions.patch
-Patch307: kexec-tools-1.101-ppc64_rmo_top.patch
+Patch307: kexec-tools-1.102pre-ppc64_rmo_top.patch
 Patch308: kexec-tools-1.101-ppc-boots-ppc64.patch
 Patch309: kexec-tools-1.101-ppc64-align-dtstruct.patch
 Patch310: kexec-tools-1.101-ppc64-bootargs-align.patch
@@ -77,7 +77,7 @@ Patch401: kexec-tools-1.101-s390-fixup.patch
 #
 # Patches 501 through 600 are meant for ppc kexec-tools enablement
 #
-Patch501: kexec-tools-1.101-ppc-fixup.patch
+Patch501: kexec-tools-1.102pre-ppc-fixup.patch
 
 #
 # Patches 601 onward are generic patches
@@ -85,11 +85,12 @@ Patch501: kexec-tools-1.101-ppc-fixup.patch
 Patch601: kexec-tools-1.101-Makefile.patch
 Patch602: kexec-tools-1.101-et-dyn.patch
 Patch603: kexec-tools-1.101-page_h.patch
-Patch604: kexec-tools-1.101-elf-format.patch
+Patch604: kexec-tools-1.102pre-elf-format.patch
 Patch605: kexec-tools-1.101-ifdown.patch
 Patch606: kexec-tools-1.101-reloc-update.patch
-Patch607: kexec-tools-1.101-x86-add_buffer_retry.patch
-Patch608: kexec-tools-1.101-makedumpfile-xen-syms.patch
+Patch607: kexec-tools-1.102pre-x86-add_buffer_retry.patch
+Patch608: kexec-tools-1.102pre-makedumpfile-xen-syms.patch
+Patch609: kexec-tools-1.102pre-disable-kexec-test.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -144,6 +145,7 @@ tar -z -x -v -f %{SOURCE9}
 #%patch606 -p1
 %patch607 -p1
 %patch608 -p1 
+%patch609 -p1
 
 tar -z -x -v -f %{SOURCE13}
 
@@ -246,9 +248,6 @@ rm -f %{_datadir}/firstboot/modules/firstboot_kdump.py
 %config(noreplace,missingok) %{_sysconfdir}/kdump.conf
 %config %{_sysconfdir}/rc.d/init.d/kdump
 %dir %{_localstatedir}/crash
-%ifarch %{ix86} x86_64
-%{_libdir}/kexec-tools
-%endif
 %{_mandir}/man8/*
 %doc News
 %doc COPYING
