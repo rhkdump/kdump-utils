@@ -1,10 +1,10 @@
 Name: kexec-tools
-Version: 1.101
-Release: 81%{?dist}
+Version: 1.102pre 
+Release: 1%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
-Source0: %{name}-%{version}.tar.gz
+Source0: %{name}-testing-20070330.tar.bz2
 Source1: kdump.init
 Source2: kdump.sysconfig
 Source3: kdump.sysconfig.x86_64
@@ -99,47 +99,49 @@ binary and ancillary utilities that together form the userspace
 component of the kernel's kexec feature.
 
 %prep
-%setup -q -n %{name}-%{version}
+%setup -q -n %{name}-testing-20070330
 rm -f ../kexec-tools-1.101.spec
-%patch1 -p1
+#%patch1 -p1
 %patch2 -p1
 %patch3 -p1
-%patch4 -p1
-%patch101 -p1
-%patch102 -p1
-%patch201 -p1
-%patch202 -p1
-%patch203 -p1
-%patch204 -p1
-%patch205 -p1
-%patch206 -p1
-%patch207 -p1
-%patch208 -p1
-%patch209 -p1
-%patch210 -p1
-%patch301 -p1
-%patch302 -p1
-%patch303 -p1
-%patch304 -p1
-%patch305 -p1
-%patch306 -p1
+#%patch4 -p1
+#%patch101 -p1
+
+#%patch102 -p1
+#%patch201 -p1
+#%patch202 -p1
+
+#%patch203 -p1
+#%patch204 -p1
+#%patch205 -p1
+#%patch206 -p1
+#%patch207 -p1
+#%patch208 -p1
+#%patch209 -p1
+#%patch210 -p1
+#%patch301 -p1
+#%patch302 -p1
+#%patch303 -p1
+#%patch304 -p1
+#%patch305 -p1
+#%patch306 -p1
 %patch307 -p1
-%patch308 -p1
-%patch309 -p1
-%patch310 -p1 
-%patch401 -p1
+#%patch308 -p1
+#%patch309 -p1
+#%patch310 -p1 
+#%patch401 -p1
 %patch501 -p1
-%patch601 -p1
-%patch602 -p1
+#%patch601 -p1
+#%patch602 -p1
 
 mkdir -p -m755 kcp
 tar -z -x -v -f %{SOURCE9}
 
 
-%patch603 -p1
+#%patch603 -p1
 %patch604 -p1
-%patch605 -p1
-%patch606 -p1
+#%patch605 -p1
+#%patch606 -p1
 %patch607 -p1
 %patch608 -p1 
 
@@ -254,6 +256,9 @@ rm -f %{_datadir}/firstboot/modules/firstboot_kdump.py
 %doc kexec-kdump-howto.txt
 
 %changelog
+* Mon Aug 27 2007 Neil Horman <nhorman@redhat.com> - 1.102pre-1
+- Bumping revision to latest horms tree (bz 257201)
+
 * Wed Aug 22 2007 Neil Horman <nhorman@redhat.com> - 1.101-81
 - Add xen-syms patch to makedumpfile (bz 250341)
 
