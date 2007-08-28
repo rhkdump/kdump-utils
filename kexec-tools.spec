@@ -149,9 +149,9 @@ tar -z -x -v -f %{SOURCE9}
 
 tar -z -x -v -f %{SOURCE13}
 
-%ifarch ppc
-%define archdef ARCH=ppc64
-%endif
+#%ifarch ppc
+#%define archdef ARCH=ppc64
+#%endif
 
 %build
 %configure \
