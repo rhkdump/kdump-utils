@@ -30,10 +30,8 @@ Obsoletes: diskdumputils netdump
 #
 # Patches 0 through 100 are meant for x86 kexec-tools enablement
 #
-Patch1: kexec-tools-1.101-kdump.patch
-Patch2: kexec-tools-1.102pre-elf-core-type.patch
-Patch3: kexec-tools-1.102pre-bzimage-options.patch
-Patch4: kexec-tools-1.101-relocatable-bzimage.patch
+Patch1: kexec-tools-1.102pre-elf-core-type.patch
+Patch2: kexec-tools-1.102pre-bzimage-options.patch
 
 #
 # Patches 101 through 200 are meant for x86_64 kexec-tools enablement
@@ -44,35 +42,15 @@ Patch102: kexec-tools-1.101-x86_64-exactmap.patch
 #
 # Patches 201 through 300 are meant for ia64 kexec-tools enablement
 #
-Patch201: kexec-tools-1.101-ia64-fixup.patch
-Patch202: kexec-tools-1.101-ia64-tools.patch
-Patch203: kexec-tools-1.101-ia64-kdump.patch
-Patch204: kexec-tools-1.101-ia64-EFI.patch
-Patch205: kexec-tools-1.101-ia64-icache-align.patch
-Patch206: kexec-tools-1.101-ia64-noio.patch
-Patch207: kexec-tools-1.101-ia64-phdr-malloc.patch
-Patch208: kexec-tools-1.101-ia64-load-offset.patch
-Patch209: kexec-tools-1.101-ia64-noio-eat.patch
-Patch210: kexec-tools-1.101-ia64-dash-l-fix.patch
 
 #
 # Patches 301 through 400 are meant for ppc64 kexec-tools enablement
 #
-Patch301: kexec-tools-1.101-ppc64-ignore-args.patch
-Patch302: kexec-tools-1.101-ppc64-usage.patch
-Patch303: kexec-tools-1.101-ppc64-cliargs.patch
-Patch304: kexec-tools-1.101-ppc64-platform-fix.patch
-Patch305: kexec-tools-1.101-ppc64-64k-pages.patch
-Patch306: kexec-tools-1.101-ppc64-memory_regions.patch
-Patch307: kexec-tools-1.102pre-ppc64_rmo_top.patch
-Patch308: kexec-tools-1.101-ppc-boots-ppc64.patch
-Patch309: kexec-tools-1.101-ppc64-align-dtstruct.patch
-Patch310: kexec-tools-1.101-ppc64-bootargs-align.patch
+Patch301: kexec-tools-1.102pre-ppc64_rmo_top.patch
 
 #
 # Patches 401 through 500 are meant for s390 kexec-tools enablement
 #
-Patch401: kexec-tools-1.101-s390-fixup.patch
 
 #
 # Patches 501 through 600 are meant for ppc kexec-tools enablement
@@ -82,15 +60,10 @@ Patch501: kexec-tools-1.102pre-ppc-fixup.patch
 #
 # Patches 601 onward are generic patches
 #
-Patch601: kexec-tools-1.101-Makefile.patch
-Patch602: kexec-tools-1.101-et-dyn.patch
-Patch603: kexec-tools-1.101-page_h.patch
-Patch604: kexec-tools-1.102pre-elf-format.patch
-Patch605: kexec-tools-1.101-ifdown.patch
-Patch606: kexec-tools-1.101-reloc-update.patch
-Patch607: kexec-tools-1.102pre-x86-add_buffer_retry.patch
-Patch608: kexec-tools-1.102pre-makedumpfile-xen-syms.patch
-Patch609: kexec-tools-1.102pre-disable-kexec-test.patch
+Patch601: kexec-tools-1.102pre-elf-format.patch
+Patch602: kexec-tools-1.102pre-x86-add_buffer_retry.patch
+Patch603: kexec-tools-1.102pre-makedumpfile-xen-syms.patch
+Patch604: kexec-tools-1.102pre-disable-kexec-test.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -102,50 +75,21 @@ component of the kernel's kexec feature.
 %prep
 %setup -q -n %{name}-testing-20070330
 rm -f ../kexec-tools-1.101.spec
-#%patch1 -p1
+%patch1 -p1
 %patch2 -p1
-%patch3 -p1
-#%patch4 -p1
-#%patch101 -p1
 
-#%patch102 -p1
-#%patch201 -p1
-#%patch202 -p1
+%patch301 -p1
 
-#%patch203 -p1
-#%patch204 -p1
-#%patch205 -p1
-#%patch206 -p1
-#%patch207 -p1
-#%patch208 -p1
-#%patch209 -p1
-#%patch210 -p1
-#%patch301 -p1
-#%patch302 -p1
-#%patch303 -p1
-#%patch304 -p1
-#%patch305 -p1
-#%patch306 -p1
-%patch307 -p1
-#%patch308 -p1
-#%patch309 -p1
-#%patch310 -p1 
-#%patch401 -p1
 %patch501 -p1
-#%patch601 -p1
-#%patch602 -p1
 
 mkdir -p -m755 kcp
 tar -z -x -v -f %{SOURCE9}
 
 
-#%patch603 -p1
+%patch601 -p1
+%patch602 -p1
+%patch603 -p1 
 %patch604 -p1
-#%patch605 -p1
-#%patch606 -p1
-%patch607 -p1
-%patch608 -p1 
-%patch609 -p1
 
 tar -z -x -v -f %{SOURCE13}
 
@@ -240,6 +184,24 @@ fi
 %triggerun -- firstboot
 rm -f %{_datadir}/firstboot/modules/firstboot_kdump.py
 
+%triggerpostun -- kernel
+# List out the initrds here, strip out version nubmers
+# and search for corresponding kernel installs, if a kernel
+# is not found, remove the corresponding kdump initrd
+
+#start by getting a list of all the kdump initrds
+for i in `ls /boot/initrd*kdump.img`
+do
+	KDVER=`echo $i | sed -e's/^.*initrd-//' -e's/kdump.*$//'`
+	if [ ! -e /boot/vmlinuz-$KDVER ]
+	then
+		# We have found an initrd with no corresponding kernel
+		# so we should be able to remove it
+		rm -f $i
+	fi
+done
+
+
 %files -f %{name}.lang
 %defattr(-,root,root,-)
 /sbin/*
@@ -255,8 +217,9 @@ rm -f %{_datadir}/firstboot/modules/firstboot_kdump.py
 %doc kexec-kdump-howto.txt
 
 %changelog
-* Mon Aug 27 2007 Neil Horman <nhorman@redhat.com> - 1.102pre-1
-- Bumping revision to latest horms tree (bz 257201)
+* Mon Aug 30 2007 Neil Horman <nhorman@redhat.com> - 1.102pre-1
+- Bumping kexec version to latest horms tree (bz 257201)
+- Adding trigger to remove initrds when a kernel is removed
 
 * Wed Aug 22 2007 Neil Horman <nhorman@redhat.com> - 1.101-81
 - Add xen-syms patch to makedumpfile (bz 250341)
