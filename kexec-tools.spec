@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.102pre 
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -190,9 +190,10 @@ rm -f %{_datadir}/firstboot/modules/firstboot_kdump.py
 # is not found, remove the corresponding kdump initrd
 
 #start by getting a list of all the kdump initrds
-for i in `ls /boot/initrd*kdump.img`
+for i in /boot/initrd*kdump.img
 do
-	KDVER=`echo $i | sed -e's/^.*initrd-//' -e's/kdump.*$//'`
+	[ -e "$i" ] || continue
+	KDVER="${i##*initrd-}" ; KDVER="${KDVER%%kdump*}"
 	if [ ! -e /boot/vmlinuz-$KDVER ]
 	then
 		# We have found an initrd with no corresponding kernel
@@ -217,6 +218,9 @@ done
 %doc kexec-kdump-howto.txt
 
 %changelog
+* Mon Oct 01 2007 Neil Horman <nhorman@redhat.com> - 1.102pre-2
+- Fix triggerpostun script (bz 308151)
+
 * Mon Aug 30 2007 Neil Horman <nhorman@redhat.com> - 1.102pre-1
 - Bumping kexec version to latest horms tree (bz 257201)
 - Adding trigger to remove initrds when a kernel is removed
