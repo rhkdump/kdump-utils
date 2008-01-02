@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.102pre 
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -218,6 +218,9 @@ done
 %doc kexec-kdump-howto.txt
 
 %changelog
+* Wed Jan 02 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-3
+- Fix ARCH placement in kdump init script (bz 427201)
+
 * Mon Oct 01 2007 Neil Horman <nhorman@redhat.com> - 1.102pre-2
 - Fix triggerpostun script (bz 308151)
 

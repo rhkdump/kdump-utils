@@ -155,6 +155,7 @@ function load_kdump()
 		KDUMP_COMMANDLINE=`cat /proc/cmdline`
 	fi
 
+	ARCH=`uname -m`
 	if [ "$ARCH" == "ppc64" ]
 	then
 		MEM_RESERVED=`grep "crashkernel=[0-9]\+[MmKkGg]@[0-9]\+[MmGgKk]" /proc/cmdline`
@@ -168,7 +169,6 @@ function load_kdump()
 		return 1
 	fi
 
-	ARCH=`uname -m`
 	if [ "$ARCH" == "i686" -o "$ARCH" == "i386" ]
 	then
 
