@@ -19,9 +19,9 @@ Source11: firstboot_kdump.py
 Source12: mkdumprd.8
 Source13: kexec-tools-po.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-Requires(pre): coreutils chkconfig sed 
+Requires(pre): coreutils chkconfig sed zlib 
 Requires: busybox >= 1.2.0
-BuildRequires: zlib-devel elfutils-devel-static glib2-devel 
+BuildRequires: zlib-devel zlib elfutils-devel-static glib2-devel 
 BuildRequires: pkgconfig intltool gettext 
 %ifarch %{ix86} x86_64 ppc64 ia64 ppc
 Obsoletes: diskdumputils netdump
