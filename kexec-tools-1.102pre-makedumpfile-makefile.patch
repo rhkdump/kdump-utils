@@ -1,0 +1,15 @@
+diff -up kexec-tools-testing-20070330/makedumpfile/Makefile.orig kexec-tools-testing-20070330/makedumpfile/Makefile
+--- kexec-tools-testing-20070330/makedumpfile/Makefile.orig	2008-01-03 08:56:42.000000000 -0500
++++ kexec-tools-testing-20070330/makedumpfile/Makefile	2008-01-03 08:57:36.000000000 -0500
+@@ -4,9 +4,9 @@ VERSION=1.1.5
+ DATE=27 July 2007
+ 
+ CC	= gcc
+-CFLAGS = -g -O2 -Wall -D_FILE_OFFSET_BITS=64 \
++CFLAGS = -g -O2 -Wall -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE \
+ 	  -DVERSION='"$(VERSION)"' -DRELEASE_DATE='"$(DATE)"'
+-CFLAGS_ARCH	= -g -O2 -Wall -D_FILE_OFFSET_BITS=64
++CFLAGS_ARCH	= -g -O2 -Wall -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE
+ 
+ ARCH := $(shell uname -m | sed -e s/i.86/x86/ -e s/sun4u/sparc64/ \
+ 			       -e s/arm.*/arm/ -e s/sa110/arm/ \

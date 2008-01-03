@@ -21,8 +21,8 @@ Source13: kexec-tools-po.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires(pre): coreutils chkconfig sed 
 Requires: busybox >= 1.2.0
-BuildRequires: zlib-devel elfutils-libelf-devel glib2-devel pkgconfig
-BuildRequires: elfutils-libelf-devel elfutils-devel-static gettext
+BuildRequires: zlib-devel elfutils-devel-static glib2-devel 
+BuildRequires: pkgconfig intltool gettext 
 %ifarch %{ix86} x86_64 ppc64 ia64 ppc
 Obsoletes: diskdumputils netdump
 %endif
@@ -64,6 +64,7 @@ Patch601: kexec-tools-1.102pre-elf-format.patch
 Patch602: kexec-tools-1.102pre-x86-add_buffer_retry.patch
 Patch603: kexec-tools-1.102pre-makedumpfile-xen-syms.patch
 Patch604: kexec-tools-1.102pre-disable-kexec-test.patch
+Patch605: kexec-tools-1.102pre-makedumpfile-makefile.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -90,6 +91,7 @@ tar -z -x -v -f %{SOURCE9}
 %patch602 -p1
 %patch603 -p1 
 %patch604 -p1
+%patch605 -p1
 
 tar -z -x -v -f %{SOURCE13}
 
@@ -220,6 +222,8 @@ done
 %changelog
 * Wed Jan 02 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-3
 - Fix ARCH placement in kdump init script (bz 427201)
+- Fix BuildRequires
+- Fix Makedumpfile to build with new libelf
 
 * Mon Oct 01 2007 Neil Horman <nhorman@redhat.com> - 1.102pre-2
 - Fix triggerpostun script (bz 308151)
