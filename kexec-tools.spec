@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.102pre 
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -220,6 +220,9 @@ done
 %doc kexec-kdump-howto.txt
 
 %changelog
+* Tue Feb 19 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-5
+- Modifying mkdumprd to include dynamic executibles (bz 433350)
+
 * Wed Feb 12 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-4
 - bumping rev number for rebuild
 

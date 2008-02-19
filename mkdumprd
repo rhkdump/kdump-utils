@@ -814,7 +814,7 @@ emitdm()
     if [ -n "$UUID" ]; then
         UUID="--uuid $UUID"
     fi
-    emit "echo \"$(/sbin/dmsetup table $1)\" | /sbin/dmsetup.static create \"$1\" $UUID"
+    emit "echo \"$(/sbin/dmsetup table $1)\" | /sbin/dmsetup create \"$1\" $UUID"
 }
 
 emitdms()
@@ -830,7 +830,7 @@ emitdms()
             emitdm "$NAME"
             ;;
         part)
-            emit /sbin/kpartx.static -pp -a \"/dev/mapper/$NAME\"
+            emit /sbin/kpartx -pp -a \"/dev/mapper/$NAME\"
             ;;
         esac
     done
@@ -1269,7 +1269,7 @@ fi
 # FIXME -- this can really go poorly with clvm or duplicate vg names.
 # nash should do lvm probing for us and write its own configs.
 if [ -n "$vg_list" ]; then
-    inst /sbin/lvm.static "$MNTIMAGE/bin/lvm"
+    inst /sbin/lvm "$MNTIMAGE/bin/lvm"
     if [ -f /etc/lvm/lvm.conf ]; then
 	cp $verbose --parents /etc/lvm/lvm.conf $MNTIMAGE/
     fi
@@ -1419,7 +1419,7 @@ if [ -n "$vg_list" ]; then
     emit "      DM_NUM=\`echo \$DM_NUM 1 + p | dc\`"
     emit "      if [ -z \"\$noresume\" ]"
     emit "      then"
-    emit "        /sbin/dmsetup.static resume /dev/mapper/\$VGRP-\$i"
+    emit "        /sbin/dmsetup resume /dev/mapper/\$VGRP-\$i"
     emit "      fi"
     emit "   fi"
     emit "done"
@@ -1447,7 +1447,7 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
     emit "hwclock --hctosys \$TIME_FORMAT"
     emit "DATE=\`date +%Y-%m-%d-%T\`"
 
-    bin="/sbin/dmsetup.static /sbin/kpartx.static" 
+    bin="/sbin/dmsetup /sbin/kpartx" 
 
     if [ -n "$CORE_COLLECTOR" ]; then
         bin="$bin /sbin/makedumpfile"
