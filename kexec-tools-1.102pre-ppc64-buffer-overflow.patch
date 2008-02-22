@@ -1,0 +1,33 @@
+diff -up kexec-tools-testing-20070330/kexec/arch/ppc64/kexec-ppc64.c.orig kexec-tools-testing-20070330/kexec/arch/ppc64/kexec-ppc64.c
+--- kexec-tools-testing-20070330/kexec/arch/ppc64/kexec-ppc64.c.orig	2008-02-20 10:08:36.000000000 -0500
++++ kexec-tools-testing-20070330/kexec/arch/ppc64/kexec-ppc64.c	2008-02-20 10:10:32.000000000 -0500
+@@ -133,7 +133,7 @@ static int get_base_ranges()
+ 	int local_memory_ranges = 0;
+ 	char device_tree[256] = "/proc/device-tree/";
+ 	char fname[256];
+-	char buf[MAXBYTES-1];
++	char buf[MAXBYTES];
+ 	DIR *dir, *dmem;
+ 	FILE *file;
+ 	struct dirent *dentry, *mentry;
+@@ -253,7 +253,7 @@ static int get_devtree_details(unsigned 
+ 	unsigned int tce_size;
+ 	unsigned long long htab_base, htab_size;
+ 	unsigned long long kernel_end;
+-	char buf[MAXBYTES-1];
++	char buf[MAXBYTES];
+ 	char device_tree[256] = "/proc/device-tree/";
+ 	char fname[256];
+ 	DIR *dir, *cdir;
+diff -up kexec-tools-testing-20070330/kexec/arch/ppc64/crashdump-ppc64.c.orig kexec-tools-testing-20070330/kexec/arch/ppc64/crashdump-ppc64.c
+--- kexec-tools-testing-20070330/kexec/arch/ppc64/crashdump-ppc64.c.orig	2007-03-30 00:34:36.000000000 -0400
++++ kexec-tools-testing-20070330/kexec/arch/ppc64/crashdump-ppc64.c	2008-02-20 10:09:23.000000000 -0500
+@@ -101,7 +101,7 @@ static int get_crash_memory_ranges(struc
+ 	int memory_ranges = 0;
+ 	char device_tree[256] = "/proc/device-tree/";
+ 	char fname[256];
+-	char buf[MAXBYTES-1];
++	char buf[MAXBYTES];
+ 	DIR *dir, *dmem;
+ 	FILE *file;
+ 	struct dirent *dentry, *mentry;

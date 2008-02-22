@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.102pre 
-Release: 5%{?dist}
+Release: 6%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -36,8 +36,8 @@ Patch2: kexec-tools-1.102pre-bzimage-options.patch
 #
 # Patches 101 through 200 are meant for x86_64 kexec-tools enablement
 #
-Patch101: kexec-tools-1.101-disable-kdump-x8664.patch
-Patch102: kexec-tools-1.101-x86_64-exactmap.patch
+Patch101: kexec-tools-1.102pre-disable-kdump-x8664.patch
+Patch102: kexec-tools-1.102pre-x86_64-exactmap.patch
 
 #
 # Patches 201 through 300 are meant for ia64 kexec-tools enablement
@@ -47,6 +47,7 @@ Patch102: kexec-tools-1.101-x86_64-exactmap.patch
 # Patches 301 through 400 are meant for ppc64 kexec-tools enablement
 #
 Patch301: kexec-tools-1.102pre-ppc64_rmo_top.patch
+Patch302: kexec-tools-1.102pre-ppc64-buffer-overflow.patch
 
 #
 # Patches 401 through 500 are meant for s390 kexec-tools enablement
@@ -64,7 +65,8 @@ Patch601: kexec-tools-1.102pre-elf-format.patch
 Patch602: kexec-tools-1.102pre-x86-add_buffer_retry.patch
 Patch603: kexec-tools-1.102pre-makedumpfile-xen-syms.patch
 Patch604: kexec-tools-1.102pre-disable-kexec-test.patch
-Patch605: kexec-tools-1.102pre-makedumpfile-makefile.patch
+Patch605: kexec-tools-1.102pre-vmcoreinfo.patch
+Patch606: kexec-tools-1.102pre-makedumpfile-makefile.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -92,6 +94,7 @@ tar -z -x -v -f %{SOURCE9}
 %patch603 -p1 
 %patch604 -p1
 %patch605 -p1
+%patch606 -p1
 
 tar -z -x -v -f %{SOURCE13}
 
@@ -220,6 +223,10 @@ done
 %doc kexec-kdump-howto.txt
 
 %changelog
+* Fri Feb 22 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-6
+- Bringing rawhide up to date with bugfixes from RHEL5
+- Adding patch to prevent kexec buffer overflow on ppc (bz 428684)
+
 * Tue Feb 19 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-5
 - Modifying mkdumprd to include dynamic executibles (bz 433350)
 

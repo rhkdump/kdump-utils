@@ -25,6 +25,7 @@
 #       Guillaume Cottenceau <gc@mandrakesoft.com>
 #	Peter Jones <pjones@redhat.com>
 #       Neil Horman <nhorman@redhat.com>
+#       Jarod Wilson <jwilson@redhat.com>
 cmdname=`basename $0`
 
 umask 0022
@@ -68,6 +69,9 @@ vg_list=""
 net_list=""
 USING_METHOD=""
 SAVE_PATH=/var/crash
+bin=""
+KDUMP_POST=""
+extra_kdump_mods=""
 
 vecho()
 {
@@ -97,9 +101,7 @@ usage () {
     fi
 
     $cmd "usage: $cmdname [--version] [--help] [-v] [-d] [-f] [--preload <module>]"
-    $cmd "       [--force-ide-probe] [--force-scsi-probe | --omit-scsi-modules]"
-    $cmd "       [--image-version] [--force-scsi-probe | --omit-raid-modules]"
-    $cmd "       [--with=<module>] [--force-lvm-probe | --omit-lvm-modules]"
+    $cmd "       [--image-version] [--with-module]"
     $cmd "       [--builtin=<module>] [--omit-dmraid]"
     $cmd "       [--fstab=<fstab>] [--nocompress] <initrd-image> <kernel-version>"
     $cmd ""
@@ -191,18 +193,26 @@ findmodule() {
 	done
     fi
 
-    for modExt in o.gz o ko ; do
-	for modDir in /lib/modules/$kernel/updates /lib/modules/$kernel ; do
-	    if [ -d $modDir ]; then
-		fmPath=$(findone $modDir -name $modName.$modExt)
-	        if [ -f "$fmPath" ]; then
-		    break 2
-	        fi
-	    fi
-        done
-    done
+    fmPath=$(modprobe --set-version $kernel -l $modName 2>/dev/null)
 
-    if [ ! -f $fmPath ]; then
+    if [ ! -f "$fmPath" ]; then
+        for modExt in o.gz o ko
+        do
+            for modDir in /lib/modules/$kernel/updates /lib/modules/$kernel
+            do
+                if [ -d $modDir ]
+                then
+                    fmPath=$(findone $modDir -name $modName.$modExt)
+                    if [ -f "$fmPath" ]
+                    then
+                        break 2
+                    fi
+                fi
+            done
+        done
+    fi
+
+    if [ ! -f "$fmPath" ]; then
 	if [ -n "$skiperrors" ]; then
 	    return
 	fi
@@ -275,12 +285,13 @@ findstoragedriver () {
                 continue ;;
             *) handleddevices="$handleddevices $device" ;;
         esac
-        if [[ "$device" =~ "md[0-9]+" ]]; then
+        if [[ "$device" == "md[0-9]+" ]]; then
             vecho "Found RAID component $device"
             handleraid "$device"
             continue
         fi
         vecho "Looking for driver for device $device"
+        device=`echo $device | sed 's/\//\!/g'`
         sysfs=$(findone -type d /sys/block -name $device)
         [ -z "$sysfs" ] && return
         pushd $sysfs >/dev/null 2>&1
@@ -716,7 +727,7 @@ if [ "x$PROBE" == "xyes" ]; then
     if [ "$rootfs" == "nfs" ]; then
 	remote=$(echo $rootdev | cut -d : -f 1)
 	# FIXME: this doesn't handle ips properly
-	remoteip=$(host $remote | cut -d ' ' -f 4) 
+	remoteip=$(getent hosts $remote | cut -d ' ' -f 1) 
 	netdev=`/sbin/ip route get to $remoteip |sed 's|.*dev \(.*\).*|\1|g' |awk {'print $1;'} |head -n 1`	
 	net_list="$net_list $netdev"
     # check if it's root by label
@@ -777,7 +788,7 @@ if [ -n "$testdm" ]; then
         done
     fi
 fi
-	    
+    
 for n in $basicmodules; do
     findmodule $n
 done
@@ -840,104 +851,6 @@ if [ -z "$MNTIMAGE" -o -z "$IMAGE" ]; then
     error "Error creating temporaries.  Try again"
     exit 1
 fi
-if [ -n "$KDUMP_CONFIG_FILE" ]; then
-    while read type location; do
-
-        case "$type" in
-        net)
-            #grab remote host and xlate into numbers
-            rhost=`echo $location | sed 's/.*@//' | cut -d':' -f1`
-            USE_SSH=`echo $location | grep @`
-            if [ -n "$USE_SSH" ]; then
-                USING_METHOD="ssh"
-            else
-                USING_METHOD="nfs"
-            fi
-            need_dns=`echo $rhost|grep [a-zA-Z]`
-            [ -n "$need_dns" ] && rhost=`host $rhost|cut -d' ' -f4`
-
-            #find ethernet device used to route to remote host, ie eth0
-            netdev=`/sbin/ip route get to $rhost 2>&1`
-            [ $? != 0 ] && echo "Bad kdump location: $location" && exit 1 
-            #the field in the ip output changes if we go to another subnet
-            OFF_SUBNET=`echo $netdev | grep via`
-            if [ -n "$OFF_SUBNET" ]
-            then
-                # we are going to a different subnet
-                netdev=`echo $netdev|awk '{print $5;}'|head -n 1`
-            else
-                # we are on the same subnet
-                netdev=`echo $netdev|awk '{print $3}'|head -n 1`
-            fi
-           
-            #add the ethernet device to the list of modules 
-            mkdir -p $MNTIMAGE/etc/network/
-            handlenetdev $netdev
-            echo $netdev >> $MNTIMAGE/etc/iface_to_activate
-
-            #load nfs modules, if needed 
-            echo $location | grep -v "@" > /dev/null && findmodule nfs
-            ;;
-        raw)
-            USING_METHOD="raw"
-            if (echo $location | egrep -q "^(LABEL|UUID)="); then
-                location=$(findfs $location)
-            fi
-            handlelvordev $location
-            ;;
-        core_collector)
-            if [ -x /sbin/makedumpfile ]; then
-                CORE_COLLECTOR=$location
-                CORE_COLLECTOR=`echo $CORE_COLLECTOR | sed -e's/makedumpfile/makedumpfile -i \/etc\/makedumpfile.config --message-level 1/'`
-            else
-                echo "Cannot use the core_collector option on this arch"
-                rm -rf $MNTIMAGE
-                rm -rf $IMAGE
-                exit 1
-            fi
-            ;;
-        path)
-            SAVE_PATH=$location
-            ;;
-        link_delay)
-            LINK_DELAY=$location
-            ;;
-        default)
-            DEFAULT_ACTION=$location
-            ;;
-        *)
-            IS_COMMENT=`echo $type | grep ^#.*$`
-            if [ -n "$IS_COMMENT" -o -z "$location" ]
-            then
-                     #don't process comments or blank line
-                     continue
-            fi
-            USING_METHOD="filesystem"
-            if (echo $location | egrep -q "^(LABEL|UUID)="); then
-                location=$(findfs $location)
-            fi
-            handlelvordev $location
-            ;;
-        esac
-
-    done < $KDUMP_CONFIG_FILE
-fi
-
-if [ -n "$CORE_COLLECTOR" ]; then
-    if [ "$USING_METHOD" == "ssh" ] || [ "$USING_METHOD" == "raw" ]; then
-        echo "You may only use alternate core collectors with the NFS and Local Filesystem targets"
-        rm -rf $MNTIMAGE
-        rm -rf $IMAGE
-        exit 1
-    fi 
-
-    if [ -z "$USING_METHOD" ]
-    then
-        echo "Warning!  Lack of dump target specification means core_collector option is ignored!"
-        CORE_COLLECTOR=""
-    fi
-
-fi
 
 
 #START BUILDING INITRD HERE
@@ -960,26 +873,199 @@ mkdir -p $MNTIMAGE/etc/network/if-down.d
 mkdir -p $MNTIMAGE/etc/network/if-post-down.d
 ln -s bin $MNTIMAGE/sbin
 
+if [ -n "$KDUMP_CONFIG_FILE" ]; then
+    while read config_opt config_val; do
+
+        case "$config_opt" in
+        net)
+            #grab remote host and xlate into numbers
+            rhost=`echo $config_val | sed 's/.*@//' | cut -d':' -f1`
+            USE_SSH=`echo $config_val | grep @`
+            if [ -n "$USE_SSH" ]; then
+                USING_METHOD="ssh"
+            else
+                USING_METHOD="nfs"
+            fi
+            need_dns=`echo $rhost|grep [a-zA-Z]`
+            [ -n "$need_dns" ] && rhost=`getent hosts $rhost|cut -d' ' -f1`
+
+            #find ethernet device used to route to remote host, ie eth0
+            netdev=`/sbin/ip route get to $rhost 2>&1`
+            [ $? != 0 ] && echo "Bad kdump location: $config_val" && exit 1 
+            #the field in the ip output changes if we go to another subnet
+            OFF_SUBNET=`echo $netdev | grep via`
+            if [ -n "$OFF_SUBNET" ]
+            then
+                # we are going to a different subnet
+                netdev=`echo $netdev|awk '{print $5;}'|head -n 1`
+            else
+                # we are on the same subnet
+                netdev=`echo $netdev|awk '{print $3}'|head -n 1`
+            fi
+           
+            #add the ethernet device to the list of modules 
+            mkdir -p $MNTIMAGE/etc/network/
+            handlenetdev $netdev
+            echo $netdev >> $MNTIMAGE/etc/iface_to_activate
+
+            #load nfs modules, if needed 
+            echo $config_val | grep -v "@" > /dev/null && findmodule nfs
+            ;;
+        raw)
+            USING_METHOD="raw"
+            if (echo $config_val | egrep -q "^(LABEL|UUID)="); then
+                config_val=$(findfs $config_val)
+            fi
+            handlelvordev $config_val
+            ;;
+        core_collector)
+            if [ -x /sbin/makedumpfile ]; then
+                CORE_COLLECTOR=$config_val
+                grep -q control_d /proc/xen/capabilities 2>/dev/null
+                if [ $? -eq 0 ]
+                then
+                    if [ -e /sys/kernel/vmcoreinfo ]
+                    then
+                        CORE_COLLECTOR=`echo $CORE_COLLECTOR | sed -e's/makedumpfile/makedumpfile --message-level 1/'`
+                    else
+                        CORE_COLLECTOR=`echo $CORE_COLLECTOR | sed -e's/makedumpfile/makedumpfile --xen-vmcoreinfo \/etc\/makedumpfile.config --message-level 1/'`
+                    fi
+                else
+                    if [ -e /sys/kernel/vmcoreinfo ]
+                    then
+                        CORE_COLLECTOR=`echo $CORE_COLLECTOR | sed -e's/makedumpfile/makedumpfile --message-level 1/'`
+                    else
+                        CORE_COLLECTOR=`echo $CORE_COLLECTOR | sed -e's/makedumpfile/makedumpfile -i \/etc\/makedumpfile.config --message-level 1/'`
+                    fi
+                fi
+            else
+                echo "Cannot use the core_collector option on this arch"
+                rm -rf $MNTIMAGE
+                rm -rf $IMAGE
+                exit 1
+            fi
+            ;;
+        path)
+            SAVE_PATH=$config_val
+            ;;
+        link_delay)
+            LINK_DELAY=$config_val
+            ;;
+        kdump_post)
+            KDUMP_POST=$config_val
+            if [ ! -x "$KDUMP_POST" ]; then
+                echo "$KDUMP_POST not executable or not found"
+                exit 1
+            fi
+            bin="$bin $KDUMP_POST"
+            KDUMP_POST_INTERNAL=`echo $KDUMP_POST | sed -e's/\(^.*\/\)\(.*$\)/\/bin\/\2/'`
+            ;;
+        kdump_pre)
+            KDUMP_PRE=$config_val
+            if [ ! -x "$KDUMP_PRE" ]; then
+                echo "$KDUMP_PRE not executable or not found"
+                exit 1
+            fi
+            bin="$bin $KDUMP_PRE"
+            KDUMP_PRE_INTERNAL=`echo $KDUMP_PRE | sed -e's/\(^.*\/\)\(.*$\)/\/bin\/\2/'`
+            ;;
+        extra_bins)
+            bin="$bin $config_val"
+            ;;
+        extra_modules)
+            extra_kdump_mods="$extra_kdump_mods $config_val"
+            ;;
+        default)
+            DEFAULT_ACTION=$config_val
+            case $DEFAULT_ACTION in
+                reboot|shell)
+                        FINAL_ACTION="reboot -f"
+                        ;;
+                halt)
+                        FINAL_ACTION="halt -f"
+                        ;;
+            esac
+            ;;
+        *)
+            IS_COMMENT=`echo $config_opt | grep ^#.*$`
+            if [ -n "$IS_COMMENT" -o -z "$config_val" ]
+            then
+                     #don't process comments or blank line
+                     continue
+            fi
+            USING_METHOD="filesystem"
+            if (echo $config_val | egrep -q "^(LABEL|UUID)="); then
+                config_val=$(findfs $config_val)
+            fi
+            handlelvordev $config_val
+            ;;
+        esac
+
+    done < $KDUMP_CONFIG_FILE
+fi
+
 #if we are using makedumpfile here, then generate the config file
-if [ -n "$CORE_COLLECTOR" ]; then
-    RUN_KERN_VER=`uname -r`
-    if [ ! -f /usr/lib/debug/lib/modules/$RUN_KERN_VER/vmlinux ]
+#also only build this config if we don't have vmcoreinfo on this kernel
+if [ -n "$CORE_COLLECTOR" -a ! -e /sys/kernel/vmcoreinfo ]; then
+    if [ -z "$USING_METHOD" ]
     then
-        echo "kernel-debuginfo-$RUN_KERN_VER is not installed.  You need this to use makedumpfile!"
-        echo "please install it and restart the kdump service"
-        rm -rf $MNTIMAGE
-        rm -rf $IMAGE
-        exit 1
-    fi
-    /sbin/makedumpfile -g $MNTIMAGE/etc/makedumpfile.config -x
-/usr/lib/debug/lib/modules/$RUN_KERN_VER/vmlinux > /dev/null 2>&1
-    if [ $? != 0 ]; then
-        echo "could not generate makedumpfile configuration.  aborting"
-        rm -rf $MNTIMAGE
-        rm -rf $IMAGE
-        exit 1;
+        echo "Warning!  Lack of dump target specification means core_collector option is ignored!"
+        CORE_COLLECTOR=""
+    else
+        RUN_KERN_VER=`uname -r`
+        if [ ! -f /usr/lib/debug/lib/modules/$RUN_KERN_VER/vmlinux ]
+        then
+            echo "kernel-debuginfo-$RUN_KERN_VER is not installed.  You need this to use makedumpfile!"
+            echo "please install it and restart the kdump service"
+            rm -rf $MNTIMAGE
+            rm -rf $IMAGE
+            exit 1
+        fi
+        XEN_OPTS=""
+        grep -q control_d /proc/xen/capabilities 2>/dev/null
+        if [ $? -eq 0 ]
+        then
+            # This is a dom0 xen kernel so we need to add xen-syms to the
+            # makedumpefile config
+            RUN_XEN_VER=${RUN_KERN_VER%xen}
+            if [ ! -f /usr/lib/debug/boot/xen-syms-$RUN_XEN_VER.debug ]
+            then
+                echo "xen-syms.debug not found and is needed on this kernel to use makedumpfile!"
+                echo "please install it and restart the kdump service"
+                rm -rf $MNTIMAGE
+                rm -rf $IMAGE
+                exit 1
+            fi
+
+            XEN_OPTS="--xen-syms /usr/lib/debug/boot/xen-syms-$RUN_XEN_VER.debug"
+            /sbin/makedumpfile -g $MNTIMAGE/etc/makedumpfile.config $XEN_OPTS  > /dev/null 2>&1
+        else
+            /sbin/makedumpfile -g $MNTIMAGE/etc/makedumpfile.config -x /usr/lib/debug/lib/modules/$RUN_KERN_VER/vmlinux > /dev/null 2>&1
+        fi
+        if [ $? != 0 ]; then
+            echo "could not generate makedumpfile configuration.  aborting"
+            rm -rf $MNTIMAGE
+            rm -rf $IMAGE
+            exit 1;
+        fi
     fi
 fi
+
+#include extra user-specified modules for kdump initrd
+for n in $extra_kdump_mods; do
+    findmodule $n
+done
+
+if [ -z "$FINAL_ACTION" ]; then
+    FINAL_ACTION="reboot -f"
+else
+    if [ -z "$USING_METHOD" ]; then
+        echo "Warning!  Lack of dump target specification means default option is ignored!"
+        DEFAULT_ACTION=""
+        FINAL_ACTION="reboot -f"
+    fi
+fi
+	
 #copy in busybox and make symlinks to its supported utilities
 cp /sbin/busybox $MNTIMAGE/sbin/busybox
 cd $MNTIMAGE/sbin
@@ -990,6 +1076,16 @@ do
         ln -s busybox $MNTIMAGE/sbin/$i
 done
 cd - > /dev/null 2>&1
+
+if [ -f /etc/mdadm.conf ]
+then
+        cp /etc/mdadm.conf $MNTIMAGE/etc
+        bin="$bin /sbin/mdadm"
+        for i in `cat /etc/mdadm.conf | grep ARRAY | sed -e's/\(^.*level=\)\(.*$\)/\2/' | cut -d" " -f1`
+        do
+            findmodule $i
+        done
+fi
 
 #THIS IS WHERE WE GENERATE OUR ADDITINONAL UTILITIES
 #Busybox doesn't have a /bin/sh applet, 
@@ -1356,10 +1452,19 @@ done
 # this will make sure that we have all of our devices before trying
 # things like RAID or LVM
 emit "echo Creating Block Devices"
+emit "mkdir /dev/cciss"
+emit "mkdir /dev/ida"
 emit "for i in \`ls /sys/block\`; do"
 emit "  MAJOR_NUM=\`cat /sys/block/\$i/dev | cut -d":" -f1\`"
 emit "  MINOR_NUM=\`cat /sys/block/\$i/dev | cut -d":" -f2\`"
 emit "  MINOR_RANGE=\`cat /sys/block/\$i/range | cut -d":" -f2\`"
+emit "  PART_SEP=''"
+emit "  i=\`echo \$i | sed 's/\!/\//g'\`"
+emit "  if echo \$i | grep -q '^cciss'; then"
+emit "      PART_SEP='p'"
+emit "  elif echo \$i | grep -q '^ida'; then"
+emit "      PART_SEP='p'"
+emit "  fi"
 emit "  echo Creating block device \$i"
 emit "  mknod /dev/\$i b \$MAJOR_NUM \$MINOR_NUM"
 emit "  if [ \"\$MINOR_RANGE\" -gt 1 ]"
@@ -1371,12 +1476,21 @@ emit "    for j in \`seq \$MINOR_START 1 \$MINOR_END\`"
 emit "    do"
 emit "       if [ ! -e /dev/\$i\$PART_NUM ]"
 emit "       then"
-emit "            mknod /dev/\$i\$PART_NUM b \$MAJOR_NUM \$j"
+emit "            mknod /dev/\$i\$PART_SEP\$PART_NUM b \$MAJOR_NUM \$j"
 emit "       fi"
 emit "       PART_NUM=\`expr \$PART_NUM + 1\`"
 emit "    done"
 emit "  fi"
 emit "done"
+#now do any software raid devices we might have
+emit "if [ -f /etc/mdadm.conf ]"
+emit "then"
+emit "  for i in \`awk '/.*ARRAY.*/{print \$2}' /etc/mdadm.conf\`"
+emit "  do"
+emit "          MD_MIN=\`echo \$i | sed -e's/\(^.*\)\([0-9]\+$\)/\2/'\`"
+emit "          mknod \$i b 9 \$MD_MIN"
+emit "  done"
+emit "fi"
 
 if [ -n "$vg_list" ]; then
     emit "echo Making device-mapper control node"
@@ -1401,6 +1515,11 @@ if [ -n "$raiddevices" ]; then
 	emit "\#need code here to set up md devs"
     done
 fi
+
+emit "if [ -f /etc/mdadm.conf ]"
+emit "then"
+emit "  mdadm -A -s"
+emit "fi"
 
 if [ -n "$vg_list" ]; then
     emit "echo Scanning logical volumes"
@@ -1431,6 +1550,7 @@ kdump_chk()
     echo "$KDUMP_CONFIG_FILE: $2"
     exit 1
 }
+
 if [ -n "$KDUMP_CONFIG_FILE" ]; then
     memtotal=`cat /proc/meminfo | grep MemTotal | awk '{print $2}'`
     
@@ -1459,32 +1579,52 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
     k_extras="/$lib/libnss_compat.so.2 /$lib/libnss_files.so.2"
 
     #traverse the config file and setup each dump location
-    while read type location; do
-            [ -z "$type" ] && continue  #skip empty lines
-            [ "`echo $type| grep ^# `" ] && continue #skip comments
-            kdump_chk "test -n \"$location\"" "Need a location for $type"
+    while read config_opt config_val; do
+            [ -z "$config_opt" ] && continue  #skip empty lines
+            [ "`echo $config_opt | grep ^# `" ] && continue #skip comments
+            kdump_chk "test -n \"$config_val\"" "Need a location for $config_opt"
 
-            case "$type" in
+            case "$config_opt" in
                 \#*) continue;;    #skip comments
 
                 raw)
                     #test raw partition
-                    kdump_chk "dd if=$location count=1 of=/dev/null > /dev/null 2>&1" \
-                               "Bad raw partition $location"
+                    kdump_chk "dd if=$config_val count=1 of=/dev/null > /dev/null 2>&1" \
+                               "Bad raw partition $config_val"
                     #check for available size is greater than $memtotal
-                    available_size=$(fdisk -s $location)
+                    available_size=$(fdisk -s $config_val)
                     if [ $available_size -lt $memtotal ]; then
                         echo "Warning: There is not space enough to save a vmcore."
                         echo "         The size of $config_val should be much greater than $memtotal kilo bytes."
                     fi
 
                     #setup raw case
-                    emit "echo Saving to partition $location"
-                    emit "dd if=/proc/vmcore of=$location"
-                    emit "if [ \$? == 0 ]"
+                    if [ -n "$KDUMP_PRE_INTERNAL" ]
+                    then
+                        emit "$KDUMP_PRE_INTERNAL"
+                        emit "if [ $? -ne 0 ]"
+                        emit "then"
+                        emit "  echo kdump_pre script exited with non-zero status"
+                        emit "  $FINAL_ACTION"
+                        emit "fi"
+                    fi
+                    emit "echo Saving to partition $config_val"
+                    if [ -z "$CORE_COLLECTOR" ]
+                    then
+                        emit "dd if=/proc/vmcore of=$config_val"
+                    else
+                            CORE_COLLECTOR=`echo $CORE_COLLECTOR | sed -e's/\(^makedumpfile\)\(.*$\)/\1 -F \2/'`
+                            emit "$CORE_COLLECTOR /proc/vmcore | dd of=$config_val"
+                    fi
+                    emit "exitcode=\$?"
+                    emit "if [ \$exitcode == 0 ]"
                     emit "then"
-                    emit "  reboot -f"
+                    emit "  echo \"Saving core complete\""
                     emit "fi"
+                    if [ -x "$KDUMP_POST" ]; then
+                        emit "$KDUMP_POST \$exitcode"
+                    fi
+                    emit "[ \$exitcode == 0 ] && $FINAL_ACTION"
                     ;;
 
                 net)
@@ -1509,20 +1649,17 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                     then
                         emit "  echo \"Dropping to shell. exit to reboot\""
                         emit "  /bin/msh"
-                        emit "  reboot -f"
-                    elif [ "$DEFAULT_ACTION" == "reboot" ]
-                    then
-                        emit "  reboot -f"
-                    fi 
+                    fi
+                    emit "  $FINAL_ACTION"
                     emit "fi"
                     #grab remote host and xlate into numbers
-                    rhost=`echo $location | sed 's/.*@//' | cut -d':' -f1`
+                    rhost=`echo $config_val | sed 's/.*@//' | cut -d':' -f1`
                     need_dns=`echo $rhost|grep [a-zA-Z]`
-                    [ -n "$need_dns" ] && rhost=`host $rhost|cut -d' ' -f4`
+                    [ -n "$need_dns" ] && rhost=`getent hosts $rhost|cut -d' ' -f1`
 
                     #find the local ip being used as a route to remote ip
                     netdev=`/sbin/ip route get to $rhost 2>&1`
-                    [ $? != 0 ] && echo "Bad kdump location: $location" && exit 1 
+                    [ $? != 0 ] && echo "Bad kdump location: $config_val" && exit 1 
                     OFF_SUBNET=`echo $netdev | grep via`
                     if [ -n "$OFF_SUBNET" ]
                     then
@@ -1533,14 +1670,14 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                         lhost=`echo $netdev|awk '{print $5}'|head -n 1`
                     fi
  
-                    emit "echo Saving to remote location $location"
-                    if [ -z "`echo $location|grep @`" ]; then
+                    emit "echo Saving to remote location $config_val"
+                    if [ -z "`echo $config_val|grep @`" ]; then
                         #NFS path
                         #test nfs mount and directory creation
-                        rlocation=`echo $location| sed 's/.*:/'"$rhost"':/'`
+                        rlocation=`echo $config_val| sed 's/.*:/'"$rhost"':/'`
                         tmnt=`mktemp -dq`
                         kdump_chk "mount -t nfs -o nolock $rlocation $tmnt" \
-                                   "Bad NFS mount $location"
+                                   "Bad NFS mount $config_val"
                         mkdir -p $tmnt/$SAVE_PATH
                         tdir=`mktemp -dqp $tmnt/$SAVE_PATH`
                         available_size=$(df -P $tdir | tail -1 | tr -s ' ' ':' | cut -d: -f5)
@@ -1553,7 +1690,7 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                         fi
                         rm -rf $tmnt
                         if [ $rc != "0" ]; then 
-                            echo "Cannot create directory in $location: $SAVE_PATH"
+                            echo "Cannot create directory in $config_val: $SAVE_PATH"
                             exit 1 
                         fi
 
@@ -1564,40 +1701,62 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                         #check for available size is greater than $memtotal
                         if [ $available_size -lt $memtotal ]; then
                             echo "Warning: There is not space enough to save a vmcore."
-                            echo "         The size of $location should be much greater than $memtotal kilo bytes."
+                            echo "         The size of $config_val should be much greater than $memtotal kilo bytes."
                         fi
     
                         #setup nfs case
+                        if [ -n "$KDUMP_PRE_INTERNAL" ]
+                        then
+                            emit "$KDUMP_PRE_INTERNAL"
+                            emit "if [ $? -ne 0 ]"
+                            emit "then"
+                            emit "  echo kdump_pre script exited with non-zero status"
+                            emit "  $FINAL_ACTION"
+                            emit "fi"
+                        fi
+        
                         mkdir -p $MNTIMAGE/mnt
                         emit "mount -t nfs -o nolock $rlocation /mnt"
                         emit "if [ \$? == 0 ]"
                         emit "then"
                         emit "  mkdir -p /mnt/$SAVE_PATH/$lhost-\$DATE"
-                        emit "  $CORE_COLLECTOR /proc/vmcore /mnt/$SAVE_PATH/$lhost-\$DATE/vmcore-incomplete"
-                        emit "  if [ \$? == 0 ]"
+                        emit "  VMCORE=/mnt/$SAVE_PATH/$lhost-\$DATE/vmcore"
+                        emit "  export VMCORE"
+                        emit "  $CORE_COLLECTOR /proc/vmcore \$VMCORE-incomplete >/dev/null"
+                        emit "  exitcode=\$?"
+                        emit "  if [ \$exitcode == 0 ]"
                         emit "  then"
-                        emit "      mv /mnt/$SAVE_PATH/$lhost-\$DATE/vmcore-incomplete /mnt/$SAVE_PATH/$lhost-\$DATE/vmcore"
-                        emit "      umount /mnt"
-                        emit "      reboot -f"
+                        emit "      mv \$VMCORE-incomplete \$VMCORE"
+                        emit "      echo \"Saving core complete\""
                         emit "  fi"
+                        if [ -x "$KDUMP_POST" ]; then
+                            emit "  $KDUMP_POST \$exitcode"
+                        fi
                         emit "  umount /mnt"
+                        emit "  [ \$exitcode == 0 ] && $FINAL_ACTION"
                         emit "fi"
                     else
                         #SSH path
-                        #rebuild $location replacing machine name with ip address
+                        #rebuild $config_val replacing machine name with ip address
+                        if [ -n "$CORE_COLLECTOR" ]
+                        then
+                            CORE_COLLECTOR=`echo $CORE_COLLECTOR | sed -e's/\(^makedumpfile\)\(.*$\)/\1 -F \2/'`
+                        fi
+
                         bin="$bin /usr/bin/ssh /usr/bin/scp"
-                        rlocation=`echo $location|sed 's/@.*/@'"$rhost"'/'`
+                        rlocation=`echo $config_val|sed 's/@.*/@'"$rhost"'/'`
                         #test ssh path and directory creation
                         s_opts="-o BatchMode=yes -o StrictHostKeyChecking=no"
                         kdump_chk "ssh -q $s_opts $rlocation mkdir -p $SAVE_PATH </dev/null" \
-                                "Could not create $location:$SAVE_PATH, you probably need to run \"service kdump propagate\""
+                                "Could not create $config_val:$SAVE_PATH, you probably need to run \"service kdump propagate\""
                         tdir=`ssh -q $s_opts $rlocation mktemp -dqp $SAVE_PATH </dev/null`
                         if [ $? != "0" ]; then
-                            echo "$KDUMP_CONFIG_FILE: Could not create temp directory in $location:$SAVE_PATH"
+                            echo "$KDUMP_CONFIG_FILE: Could not create temp directory in $config_val:$SAVE_PATH"
                             exit 1
                         fi
-                        remote_df=`ssh -q $s_opts $rlocation df $tdir`
-                        available_size=$(echo $remote_df | tail -1 | tr -s ' ' '|' | cut -d\| -f10)
+
+                        remote_df=`ssh -q $s_opts $rlocation df -P $tdir | tail -1`
+                        available_size=$(echo $remote_df | tr -s ' ' '|' | cut -d\| -f4)
                        
                         #check for available size is greater than $memtotal
                         if [ $available_size -lt $memtotal ]; then
@@ -1608,6 +1767,16 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                         ssh -q $s_opts $rlocation rmdir $tdir
 
                         #setup ssh case, quick check to see if setup already
+                        if [ -n "$KDUMP_PRE_INTERNAL" ]
+                        then
+                            emit "$KDUMP_PRE_INTERNAL"
+                            emit "if [ $? -ne 0 ]"
+                            emit "then"
+                            emit "  echo kdump_pre script exited with non-zero status"
+                            emit "  $FINAL_ACTION"
+                            emit "fi"
+                        fi
+
                         if [ ! -r $MNTIMAGE/dev/urandom ]; then
                             #only need to do these once
                             mkdir -p $MNTIMAGE/root
@@ -1617,15 +1786,38 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                         fi
                         emit "dd if=/dev/mem of=/dev/urandom count=1 bs=512 skip=100" 
                         emit "ssh -q -o BatchMode=yes -o StrictHostKeyChecking=no $rlocation mkdir $SAVE_PATH/$lhost-\$DATE"
-                        emit "scp -q -o BatchMode=yes -o StrictHostKeyChecking=no /proc/vmcore $rlocation:$SAVE_PATH/$lhost-\$DATE/vmcore-incomplete"
-                        emit "if [ \$? == 0 ]"
+                        emit "VMCORE=$SAVE_PATH/$lhost-\$DATE/vmcore"
+                        emit "export VMCORE"
+                        if [ -z "$CORE_COLLECTOR" ]
+                        then
+                            emit "scp -q -o BatchMode=yes -o StrictHostKeyChecking=no /proc/vmcore $rlocation:\$VMCORE-incomplete"
+                        else
+                            emit "$CORE_COLLECTOR /proc/vmcore | ssh -o BatchMode=yes -o StrictHostKeyChecking=no $rlocation \"cat > $SAVE_PATH/$lhost-\$DATE/vmcore-incomplete\""
+                        fi
+                        emit "exitcode=\$?"
+                        emit "if [ \$exitcode == 0 ]"
                         emit "then"
-                        emit "  ssh -q -o BatchMode=yes -o StrictHostKeyChecking=no $rlocation mv $SAVE_PATH/$lhost-\$DATE/vmcore-incomplete $SAVE_PATH/$lhost-\$DATE/vmcore"
-                        emit "  reboot -f"
+                        if [ -z "$CORE_COLLECTOR" ]
+                        then
+                            emit "  ssh -q -o BatchMode=yes -o StrictHostKeyChecking=no $rlocation mv \$VMCORE-incomplete \$VMCORE"
+                        else
+                            emit "  ssh -q -o BatchMode=yes -o StrictHostKeyChecking=no $rlocation mv \$VMCORE-incomplete \$VMCORE.flat"
+                        fi
+                        emit "  echo \"Saving core complete\""
                         emit "fi"
+                        if [ -x "$KDUMP_POST" ]; then
+                            emit "$KDUMP_POST \$exitcode"
+                        fi
+                        emit "[ \$exitcode == 0 ] && $FINAL_ACTION"
                     fi
                     ;;
                 core_collector)
+                    ;;
+                kdump_post)
+                    ;;
+                extra_bins)
+                    ;;
+                extra_modules)
                     ;;
                 default)
                     ;;
@@ -1635,52 +1827,71 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                     ;;
                 *)
                     #test filesystem and directory creation
-                    kdump_chk "test -f /sbin/fsck.$type" "Unsupported type $type"
+                    kdump_chk "test -f /sbin/fsck.$config_opt" "Unsupported type $config_opt"
                     tmnt=`mktemp -dq`
-                    kdump_chk "mount -t $type $location $tmnt" "Bad mount point $location"
+                    kdump_chk "mount -t $config_opt $config_val $tmnt" "Bad mount point $config_val"
                     mkdir -p $tmnt/$SAVE_PATH
                     tdir=`mktemp -dqp $tmnt/$SAVE_PATH`
+                    rc=$?
                     available_size=$(df $tdir | tail -1 | tr -s ' ' ':' | cut -d: -f4)
-                    rc=$? && rm -rf $tdir && umount $tmnt
+                    rm -rf $tdir > /dev/null 2>&1
+                    umount $tmnt > /dev/null 2>&1
                     if [ $rc != "0" ]; then 
-                        echo "Cannot create directory in $location: $SAVE_PATH"
+                        echo "Cannot create directory in $config_val: $SAVE_PATH"
                         exit 1
                     fi
                     #check for available size is greater than $memtotal
                     if [ $available_size -lt $memtotal ]; then
                         echo "Warning: There is not space enough to save a vmcore."
-                        echo "         The size of $location should be much greater than $memtotal kilo bytes."
+                        echo "         The size of $config_val should be much greater than $memtotal kilo bytes."
                     fi
 
     
                     #setup filesystem case
+
+                    if [ -n "$KDUMP_PRE_INTERNAL" ]
+                    then
+                        emit "$KDUMP_PRE_INTERNAL"
+                        emit "if [ $? -ne 0 ]"
+                        emit "then"
+                        emit "  echo kdump_pre script exited with non-zero status"
+                        emit "  $FINAL_ACTION"
+                        emit "fi"
+                    fi
+
                     mkdir -p $MNTIMAGE/mnt
 		    touch $MNTIMAGE/etc/mtab
                     if [ -z "$CORE_COLLECTOR" ]; then
                         CORE_COLLECTOR="cp"
                     fi
-                    emit "echo Saving to the local filesystem $location"
-                    emit "DUMPDEV=$location"
+                    emit "echo Saving to the local filesystem $config_val"
+                    emit "DUMPDEV=$config_val"
                     emit "IS_LABEL=\`echo \$DUMPDEV | grep LABEL\`"
                     emit "IS_UUID=\`echo \$DUMPDEV | grep UUID\`"
                     emit "if [ -n \"\$IS_LABEL\" -o -n \"\$IS_UUID\" ] "
                     emit "then"
                     emit "  DUMPDEV=\`findfs \$DUMPDEV\`"
                     emit "fi"
-                    emit "fsck.$type \$DUMPDEV"
-                    emit "mount -t $type \$DUMPDEV /mnt"
+                    emit "fsck.$config_opt \$DUMPDEV"
+                    emit "mount -t $config_opt \$DUMPDEV /mnt"
                     emit "if [ \$? == 0 ]"
                     emit "then"
                     emit "  mkdir -p /mnt/$SAVE_PATH/127.0.0.1-\$DATE"
-                    emit "  $CORE_COLLECTOR /proc/vmcore /mnt/$SAVE_PATH/127.0.0.1-\$DATE/vmcore-incomplete"
-                    emit "  if [ \$? == 0 ]"
+                    emit "  VMCORE=/mnt/$SAVE_PATH/127.0.0.1-\$DATE/vmcore"
+                    emit "  export VMCORE"
+                    emit "  $CORE_COLLECTOR /proc/vmcore \$VMCORE-incomplete >/dev/null"
+                    emit "  exitcode=\$?"
+                    emit "  if [ \$exitcode == 0 ]"
                     emit "  then"
-                    emit "      mv /mnt/$SAVE_PATH/127.0.0.1-\$DATE/vmcore-incomplete /mnt/$SAVE_PATH/127.0.0.1-\$DATE/vmcore"
-                    emit "      umount /mnt"
-                    emit "      reboot -f"
+                    emit "      mv \$VMCORE-incomplete \$VMCORE"
+                    emit "      echo \"Saving core complete\""
                     emit "  fi"
+                    if [ -x "$KDUMP_POST" ]; then
+                        emit "  $KDUMP_POST \$exitcode"
+                    fi
                     emit "fi"
                     emit "umount /mnt"
+                    emit "[ \$exitcode == 0 ] && $FINAL_ACTION"
                     ;;
             esac
     done < $KDUMP_CONFIG_FILE
@@ -1691,17 +1902,29 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
         emit "echo dropping to initramfs shell"
         emit "echo exiting this shell will reboot your system"
         emit "/bin/msh"
-        emit "reboot -f"
-    elif [ "$DEFAULT_ACTION" == "reboot" ]
-    then
-        emit "reboot -f"
     fi
+    case $DEFAULT_ACTION in
+        reboot|halt|shell)
+            emit "$FINAL_ACTION"
+            ;;
+        *)
+            emit "echo Attempting to enter user-space to capture vmcore"
+            ;;
+    esac
                     
     #find the shared libraries.  this snippet taken from kboot
+    TEMPLDCFG=`mktemp`
+    for lib in `ls /etc/ld.so.conf.d/* | grep -v kernelcap`
+    do
+        echo "include " $lib >> $TEMPLDCFG
+    done 
+    /sbin/ldconfig -f $TEMPLDCFG
     kdump_libs=`for n in $bin; do 
         ldd "$n" 2>/dev/null | tr -s '\011' ' ' | 
         sed 's/.*=> *//;s/^ *//;/ *(0x.*)/s///p;d' 
     done | sort | uniq | sed '/^ *$/d'`
+    /sbin/ldconfig
+    rm -f $TEMPLDCFG 
 
     #copy the binaries and their shared libraries to the archive
     for n in $bin $kdump_libs $k_extras; do
@@ -1734,11 +1957,18 @@ emit "fi"
 emit "echo Checking root filesystem."
 emit "fsck \$ROOTDEV"
 emit "echo Mounting root filesystem."
-emit "FSTYPE=\`fsck -N \$ROOTDEV | awk '/.*sbin.*/ {print \$1}' | sed -e's/\\(^.*\\.\\)\\(.*\\)/\\2/'\`"
-emit "fsck -t \$FSTYPE \$ROOTDEV"
-emit "echo mount -t \$FSTYPE \$ROOTDEV /sysroot"
-emit "mount -t \$FSTYPE \$ROOTDEV /sysroot"
-emit "if [ \$? != 0 ]"
+emit "for FSTYPE in ext3 ext2 minix"
+emit "do"
+emit "  echo Trying mount -t \$FSTYPE \$ROOTDEV /sysroot"
+emit "  mount -t \$FSTYPE \$ROOTDEV /sysroot >/dev/null 2>&1 "
+emit "  if [ \$? == 0 ]"
+emit "  then"
+emit "      echo Using \$FSTYPE on root filesystem"
+emit "      ROOT_MOUNT_GOOD=1"
+emit "      break;"
+emit "  fi"
+emit "done"
+emit "if [ -z \"\$ROOT_MOUNT_GOOD\" ]"
 emit "then"
 emit "   echo unable to mount rootfs. Dropping to shell"
 emit "   /bin/msh"
@@ -1753,6 +1983,8 @@ emit "mount -o bind /dev /sysroot/dev"
 emit "touch /sysroot/fastboot"
 emit "echo Switching to new root and running init."
 emit "exec switch_root /sysroot /sbin/init"
+
+# END OF INIT SCRIPT
 
 chmod +x $RCFILE
 
