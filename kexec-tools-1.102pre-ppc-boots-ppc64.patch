@@ -1,0 +1,299 @@
+diff -up kexec-tools-testing-20070330/purgatory/purgatory.c.orig kexec-tools-testing-20070330/purgatory/purgatory.c
+--- kexec-tools-testing-20070330/purgatory/purgatory.c.orig	2007-03-30 00:34:36.000000000 -0400
++++ kexec-tools-testing-20070330/purgatory/purgatory.c	2008-02-28 10:46:42.000000000 -0500
+@@ -46,3 +46,5 @@ void purgatory(void)
+ 	verify_sha256_digest();
+ 	post_verification_setup_arch();
+ }
++
++#include "../util_lib/sha256.c"
+diff -up kexec-tools-testing-20070330/purgatory/arch/ppc64/Makefile.orig kexec-tools-testing-20070330/purgatory/arch/ppc64/Makefile
+--- kexec-tools-testing-20070330/purgatory/arch/ppc64/Makefile.orig	2007-03-30 00:34:36.000000000 -0400
++++ kexec-tools-testing-20070330/purgatory/arch/ppc64/Makefile	2008-02-28 10:46:42.000000000 -0500
+@@ -6,3 +6,5 @@ PURGATORY_S_SRCS+= purgatory/arch/ppc64/
+ PURGATORY_C_SRCS += purgatory/arch/ppc64/purgatory-ppc64.c
+ PURGATORY_C_SRCS += purgatory/arch/ppc64/console-ppc64.c
+ PURGATORY_C_SRCS += purgatory/arch/ppc64/crashdump_backup.c
++
++PCFLAGS += -m64 -mcall-aixdesc
+diff -up kexec-tools-testing-20070330/purgatory/Makefile.orig kexec-tools-testing-20070330/purgatory/Makefile
+--- kexec-tools-testing-20070330/purgatory/Makefile.orig	2007-03-30 00:34:36.000000000 -0400
++++ kexec-tools-testing-20070330/purgatory/Makefile	2008-02-28 10:50:37.000000000 -0500
+@@ -57,9 +57,9 @@ $(PURGATORY_S_OBJS): $(OBJDIR)/%.o: %.S 
+ 	$(MKDIR) -p $(@D)
+ 	$(CC) $(PCFLAGS) -o $@ -c $<
+ 
+-$(PURGATORY): $(PURGATORY_OBJS) $(UTIL_LIB)
++$(PURGATORY): $(PURGATORY_OBJS)
+ 	$(MKDIR) -p $(@D)
+-	$(LD) $(LDFLAGS) $(EXTRA_LDFLAGS) --no-undefined -e purgatory_start -r -o $@ $(PURGATORY_OBJS) $(UTIL_LIB)
++	$(LD) $(LDFLAGS) $(EXTRA_LDFLAGS) --no-undefined -e purgatory_start -r -o $@ $(PURGATORY_OBJS)
+ 
+ echo::
+ 	@echo "PURGATORY_C_SRCS $(PURGATORY_C_SRCS)"
+diff -up kexec-tools-testing-20070330/kexec/arch/ppc64/kexec-elf-rel-ppc64.c.orig kexec-tools-testing-20070330/kexec/arch/ppc64/kexec-elf-rel-ppc64.c
+--- kexec-tools-testing-20070330/kexec/arch/ppc64/kexec-elf-rel-ppc64.c.orig	2007-03-30 00:34:36.000000000 -0400
++++ kexec-tools-testing-20070330/kexec/arch/ppc64/kexec-elf-rel-ppc64.c	2008-02-28 10:46:42.000000000 -0500
+@@ -101,10 +101,10 @@ void machine_apply_elf_rel(struct mem_eh
+ 		break;
+ 
+ 	case R_PPC64_ADDR16_HIGHEST:
+-		*(uint16_t *)location = ((value>>48)  & 0xffff);
++		*(uint16_t *)location = (((uint64_t)value>>48)  & 0xffff);
+ 		break;
+ 	case R_PPC64_ADDR16_HIGHER:
+-		*(uint16_t *)location = ((value>>32)  & 0xffff);
++		*(uint16_t *)location = (((uint64_t)value>>32)  & 0xffff);
+ 		break;
+ 
+ 	default:
+diff -up kexec-tools-testing-20070330/kexec/arch/ppc64/kexec-ppc64.h.orig kexec-tools-testing-20070330/kexec/arch/ppc64/kexec-ppc64.h
+--- kexec-tools-testing-20070330/kexec/arch/ppc64/kexec-ppc64.h.orig	2007-03-30 00:34:36.000000000 -0400
++++ kexec-tools-testing-20070330/kexec/arch/ppc64/kexec-ppc64.h	2008-02-28 10:51:16.000000000 -0500
+@@ -14,7 +14,7 @@ int elf_ppc64_load(int argc, char **argv
+ void elf_ppc64_usage(void);
+ void reserve(unsigned long long where, unsigned long long length);
+ 
+-extern unsigned long initrd_base, initrd_size;
++extern uint64_t initrd_base, initrd_size;
+ extern int max_memory_ranges;
+ 
+ /* boot block version 2 as defined by the linux kernel */
+diff -up kexec-tools-testing-20070330/kexec/arch/ppc64/kexec-ppc64.c.orig kexec-tools-testing-20070330/kexec/arch/ppc64/kexec-ppc64.c
+--- kexec-tools-testing-20070330/kexec/arch/ppc64/kexec-ppc64.c.orig	2008-02-28 10:45:00.000000000 -0500
++++ kexec-tools-testing-20070330/kexec/arch/ppc64/kexec-ppc64.c	2008-02-28 10:54:54.000000000 -0500
+@@ -38,10 +38,10 @@
+ static struct memory_range *exclude_range = NULL;
+ static struct memory_range *memory_range = NULL;
+ static struct memory_range *base_memory_range = NULL;
+-static unsigned long long rmo_top;
+-unsigned long long memory_max = 0;
++static uint64_t rmo_top;
++uint64_t memory_max = 0;
+ static int nr_memory_ranges, nr_exclude_ranges;
+-unsigned long long crash_base, crash_size;
++uint64_t crash_base, crash_size;
+ unsigned int rtas_base, rtas_size;
+ int max_memory_ranges;
+ 
+@@ -175,10 +175,10 @@ static int get_base_ranges()
+ 				break;
+ 			}
+ 			base_memory_range[local_memory_ranges].start =
+-				((unsigned long long *)buf)[0];
++				((uint64_t *)buf)[0];
+ 			base_memory_range[local_memory_ranges].end  =
+ 				base_memory_range[local_memory_ranges].start +
+-				((unsigned long long *)buf)[1];
++				((uint64_t *)buf)[1];
+ 			base_memory_range[local_memory_ranges].type = RANGE_RAM;
+ 			local_memory_ranges++;
+ 			dfprintf(stderr, "%016llx-%016llx : %x\n",
+@@ -206,7 +206,7 @@ static int get_base_ranges()
+ static int sort_base_ranges()
+ {
+ 	int i, j;
+-	unsigned long long tstart, tend;
++	uint64_t tstart, tend;
+ 
+ 	for (i = 0; i < nr_memory_ranges - 1; i++) {
+ 		for (j = 0; j < nr_memory_ranges - i - 1; j++) {
+@@ -227,7 +227,7 @@ static int sort_base_ranges()
+ static int sort_ranges()
+ {
+ 	int i, j;
+-	unsigned long long tstart, tend;
++	uint64_t tstart, tend;
+ 	for (i = 0; i < nr_exclude_ranges - 1; i++) {
+ 		for (j = 0; j < nr_exclude_ranges - i - 1; j++) {
+ 			if (exclude_range[j].start > exclude_range[j+1].start) {
+@@ -248,11 +248,11 @@ static int sort_ranges()
+  */
+ static int get_devtree_details(unsigned long kexec_flags)
+ {
+-	unsigned long long rmo_base;
+-	unsigned long long tce_base;
++	uint64_t rmo_base;
++	uint64_t tce_base;
+ 	unsigned int tce_size;
+-	unsigned long long htab_base, htab_size;
+-	unsigned long long kernel_end;
++	uint64_t htab_base, htab_size;
++	uint64_t kernel_end;
+ 	char buf[MAXBYTES];
+ 	char device_tree[256] = "/proc/device-tree/";
+ 	char fname[256];
+@@ -288,7 +288,7 @@ static int get_devtree_details(unsigned 
+ 				closedir(dir);
+ 				return -1;
+ 			}
+-			if (fread(&kernel_end, sizeof(unsigned long), 1, file) != 1) {
++			if (fread(&kernel_end, sizeof(uint64_t), 1, file) != 1) {
+ 				perror(fname);
+ 				fclose(file);
+ 				closedir(cdir);
+@@ -313,7 +313,7 @@ static int get_devtree_details(unsigned 
+ 					closedir(dir);
+ 					return -1;
+ 				}
+-				if (fread(&crash_base, sizeof(unsigned long), 1,
++				if (fread(&crash_base, sizeof(uint64_t), 1,
+ 						file) != 1) {
+ 					perror(fname);
+ 					fclose(file);
+@@ -333,7 +333,7 @@ static int get_devtree_details(unsigned 
+ 					closedir(dir);
+ 					return -1;
+ 				}
+-				if (fread(&crash_size, sizeof(unsigned long), 1,
++				if (fread(&crash_size, sizeof(uint64_t), 1,
+ 						file) != 1) {
+ 					perror(fname);
+ 					fclose(file);
+@@ -366,7 +366,7 @@ static int get_devtree_details(unsigned 
+ 				closedir(dir);
+ 				return -1;
+ 			}
+-			if (fread(&htab_base, sizeof(unsigned long), 1, file) != 1) {
++			if (fread(&htab_base, sizeof(uint64_t), 1, file) != 1) {
+ 				perror(fname);
+ 				fclose(file);
+ 				closedir(cdir);
+@@ -383,7 +383,7 @@ static int get_devtree_details(unsigned 
+ 				closedir(dir);
+ 				return -1;
+ 			}
+-			if (fread(&htab_size, sizeof(unsigned long), 1, file) != 1) {
++			if (fread(&htab_size, sizeof(uint64_t), 1, file) != 1) {
+ 				perror(fname);
+ 				fclose(file);
+ 				closedir(cdir);
+@@ -452,8 +452,8 @@ static int get_devtree_details(unsigned 
+ 				closedir(dir);
+ 				return -1;
+ 			}
+-			rmo_base = ((unsigned long long *)buf)[0];
+-			rmo_top = rmo_base + ((unsigned long long *)buf)[1];
++			rmo_base = ((uint64_t *)buf)[0];
++			rmo_top = rmo_base + ((uint64_t *)buf)[1];
+ 			if (rmo_top > 0x07C00000UL)
+ 				rmo_top = 0x07C00000UL;
+ 
+@@ -474,7 +474,7 @@ static int get_devtree_details(unsigned 
+ 				closedir(dir);
+ 				return -1;
+ 			}
+-			if (fread(&tce_base, sizeof(unsigned long), 1, file) != 1) {
++			if (fread(&tce_base, sizeof(uint64_t), 1, file) != 1) {
+ 				perror(fname);
+ 				fclose(file);
+ 				closedir(cdir);
+diff -up kexec-tools-testing-20070330/kexec/arch/ppc64/crashdump-ppc64.h.orig kexec-tools-testing-20070330/kexec/arch/ppc64/crashdump-ppc64.h
+--- kexec-tools-testing-20070330/kexec/arch/ppc64/crashdump-ppc64.h.orig	2007-03-30 00:34:36.000000000 -0400
++++ kexec-tools-testing-20070330/kexec/arch/ppc64/crashdump-ppc64.h	2008-02-28 10:55:38.000000000 -0500
+@@ -23,8 +23,8 @@ void add_usable_mem_rgns(unsigned long l
+ #define _ALIGN_UP(addr,size)	(((addr)+((size)-1))&(~((size)-1)))
+ #define _ALIGN_DOWN(addr,size)	((addr)&(~((size)-1)))
+ 
+-extern unsigned long long crash_base;
+-extern unsigned long long crash_size;
++extern uint64_t crash_base;
++extern uint64_t crash_size;
+ extern unsigned int rtas_base;
+ extern unsigned int rtas_size;
+ 
+diff -up kexec-tools-testing-20070330/kexec/arch/ppc64/kexec-elf-ppc64.c.orig kexec-tools-testing-20070330/kexec/arch/ppc64/kexec-elf-ppc64.c
+--- kexec-tools-testing-20070330/kexec/arch/ppc64/kexec-elf-ppc64.c.orig	2007-03-30 00:34:36.000000000 -0400
++++ kexec-tools-testing-20070330/kexec/arch/ppc64/kexec-elf-ppc64.c	2008-02-28 10:46:42.000000000 -0500
+@@ -42,7 +42,7 @@
+ #define BOOTLOADER         "kexec"
+ #define BOOTLOADER_VERSION VERSION
+ 
+-unsigned long initrd_base, initrd_size;
++uint64_t initrd_base, initrd_size;
+ 
+ int create_flatten_tree(struct kexec_info *, unsigned char **, unsigned long *,
+ 			char *);
+@@ -76,19 +76,19 @@ int elf_ppc64_load(int argc, char **argv
+ 	char *cmdline, *modified_cmdline;
+ 	const char *ramdisk, *devicetreeblob;
+ 	int cmdline_len, modified_cmdline_len;
+-	unsigned long long max_addr, hole_addr;
++	uint64_t max_addr, hole_addr;
+ 	unsigned char *seg_buf = NULL;
+ 	off_t seg_size = 0;
+ 	struct mem_phdr *phdr;
+ 	size_t size;
+-	unsigned long long *rsvmap_ptr;
++	uint64_t *rsvmap_ptr;
+ 	struct bootblock *bb_ptr;
+ 	unsigned int nr_segments, i;
+ 	int result, opt;
+-	unsigned long my_kernel, my_dt_offset;
++	uint64_t my_kernel, my_dt_offset;
+ 	unsigned int my_panic_kernel;
+-	unsigned long my_stack, my_backup_start;
+-	unsigned long toc_addr;
++	uint64_t my_stack, my_backup_start;
++	uint64_t toc_addr;
+ 
+ #define OPT_APPEND     (OPT_ARCH_MAX+0)
+ #define OPT_RAMDISK     (OPT_ARCH_MAX+1)
+@@ -226,10 +226,10 @@ int elf_ppc64_load(int argc, char **argv
+ 		}
+ 		seg_buf = (unsigned char *)slurp_file(ramdisk, &seg_size);
+ 		add_buffer(info, seg_buf, seg_size, seg_size, 0, 0, max_addr, 1);
+-		hole_addr = (unsigned long long)
++		hole_addr = (uint64_t)
+ 			info->segment[info->nr_segments-1].mem;
+ 		initrd_base = hole_addr;
+-		initrd_size = (unsigned long long)
++		initrd_size = (uint64_t)
+ 			info->segment[info->nr_segments-1].memsz;
+ 	} /* ramdisk */
+ 
+@@ -259,25 +259,25 @@ int elf_ppc64_load(int argc, char **argv
+ 	 */
+ 	bb_ptr = (struct bootblock *)(
+ 		(unsigned char *)info->segment[(info->nr_segments)-1].buf);
+-	rsvmap_ptr = (unsigned long long *)(
++	rsvmap_ptr = (uint64_t *)(
+ 		(unsigned char *)info->segment[(info->nr_segments)-1].buf +
+ 		bb_ptr->off_mem_rsvmap);
+ 	while (*rsvmap_ptr || *(rsvmap_ptr+1))
+ 		rsvmap_ptr += 2;
+ 	rsvmap_ptr -= 2;
+-	*rsvmap_ptr = (unsigned long long)(
++	*rsvmap_ptr = (uint64_t)(
+ 		info->segment[(info->nr_segments)-1].mem);
+ 	rsvmap_ptr++;
+-	*rsvmap_ptr = (unsigned long long)bb_ptr->totalsize;
++	*rsvmap_ptr = (uint64_t)bb_ptr->totalsize;
+ 
+ 	nr_segments = info->nr_segments;
+ 
+ 	/* Set kernel */
+-	my_kernel = (unsigned long )info->segment[0].mem;
++	my_kernel = (uint64_t)info->segment[0].mem;
+ 	elf_rel_set_symbol(&info->rhdr, "kernel", &my_kernel, sizeof(my_kernel));
+ 
+ 	/* Set dt_offset */
+-	my_dt_offset = (unsigned long )info->segment[nr_segments-1].mem;
++	my_dt_offset = (uint64_t)info->segment[nr_segments-1].mem;
+ 	elf_rel_set_symbol(&info->rhdr, "dt_offset", &my_dt_offset,
+ 				sizeof(my_dt_offset));
+ 
+diff -up kexec-tools-testing-20070330/kexec/kexec-sha256.h.orig kexec-tools-testing-20070330/kexec/kexec-sha256.h
+--- kexec-tools-testing-20070330/kexec/kexec-sha256.h.orig	2007-03-30 00:34:36.000000000 -0400
++++ kexec-tools-testing-20070330/kexec/kexec-sha256.h	2008-02-28 10:46:42.000000000 -0500
+@@ -2,8 +2,8 @@
+ #define KEXEC_SHA256_H
+ 
+ struct sha256_region {
+-	const void *start;
+-	unsigned long len;
++	uint64_t start;
++	uint64_t len;
+ };
+ 
+ #define SHA256_REGIONS 16

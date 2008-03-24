@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.102pre 
-Release: 6%{?dist}
+Release: 7%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -48,7 +48,8 @@ Patch102: kexec-tools-1.102pre-x86_64-exactmap.patch
 #
 Patch301: kexec-tools-1.102pre-ppc64_rmo_top.patch
 Patch302: kexec-tools-1.102pre-ppc64-buffer-overflow.patch
-
+Patch303: kexec-tools-1.102pre-ppc-boots-ppc64.patch 
+Patch304: kexec-tools-1.102pre-ppc64-devtree.patch
 #
 # Patches 401 through 500 are meant for s390 kexec-tools enablement
 #
@@ -82,6 +83,9 @@ rm -f ../kexec-tools-1.101.spec
 %patch2 -p1
 
 %patch301 -p1
+%patch302 -p1
+%patch303 -p1
+%patch304 -p1
 
 %patch501 -p1
 
@@ -223,6 +227,9 @@ done
 %doc kexec-kdump-howto.txt
 
 %changelog
+* Mon Mar 24 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-7
+- Adding patches for bz 438661
+
 * Fri Feb 22 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-6
 - Bringing rawhide up to date with bugfixes from RHEL5
 - Adding patch to prevent kexec buffer overflow on ppc (bz 428684)
