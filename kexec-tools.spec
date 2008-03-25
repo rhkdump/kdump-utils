@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.102pre 
-Release: 7%{?dist}
+Release: 8%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -103,7 +103,7 @@ tar -z -x -v -f %{SOURCE9}
 tar -z -x -v -f %{SOURCE13}
 
 %ifarch ppc
-%define archdef ARCH=ppc
+%define archdef ARCH=ppc64
 %endif
 
 %build
@@ -227,6 +227,9 @@ done
 %doc kexec-kdump-howto.txt
 
 %changelog
+* Tue Mar 25 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-8
+- Fixing ARCH definition for bz 438661
+
 * Mon Mar 24 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-7
 - Adding patches for bz 438661
 
