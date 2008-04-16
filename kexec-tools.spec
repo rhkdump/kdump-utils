@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.102pre 
-Release: 8%{?dist}
+Release: 9%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -68,6 +68,7 @@ Patch603: kexec-tools-1.102pre-makedumpfile-xen-syms.patch
 Patch604: kexec-tools-1.102pre-disable-kexec-test.patch
 Patch605: kexec-tools-1.102pre-vmcoreinfo.patch
 Patch606: kexec-tools-1.102pre-makedumpfile-makefile.patch
+Patch607: kexec-tools-1.102pre-cmdline-length.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -99,6 +100,7 @@ tar -z -x -v -f %{SOURCE9}
 %patch604 -p1
 %patch605 -p1
 %patch606 -p1
+%patch607 -p1
 
 tar -z -x -v -f %{SOURCE13}
 
@@ -227,6 +229,9 @@ done
 %doc kexec-kdump-howto.txt
 
 %changelog
+* Wed Apr 16 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-9
+- Fix cmdline length issue
+
 * Tue Mar 25 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-8
 - Fixing ARCH definition for bz 438661
 
