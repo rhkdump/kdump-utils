@@ -1365,7 +1365,7 @@ fi
 # FIXME -- this can really go poorly with clvm or duplicate vg names.
 # nash should do lvm probing for us and write its own configs.
 if [ -n "$vg_list" ]; then
-    inst /sbin/lvm "$MNTIMAGE/bin/lvm"
+    bin="$bin /sbin/lvm"
     if [ -f /etc/lvm/lvm.conf ]; then
 	cp $verbose --parents /etc/lvm/lvm.conf $MNTIMAGE/
     fi
@@ -1567,7 +1567,7 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
     emit "hwclock --hctosys \$TIME_FORMAT"
     emit "DATE=\`date +%Y-%m-%d-%T\`"
 
-    bin="/sbin/dmsetup /sbin/kpartx" 
+    bin="$bin /sbin/dmsetup /sbin/kpartx" 
 
     if [ -n "$CORE_COLLECTOR" ]; then
         bin="$bin /sbin/makedumpfile"
