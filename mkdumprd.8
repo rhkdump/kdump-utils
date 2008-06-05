@@ -2,12 +2,12 @@
 .SH NAME
 mkdumprd \- creates initial ramdisk images for kdump crash recovery 
 .SH SYNOPSIS
-\fBmkdumprd\fR [--version] [-v] [-f] 
+\fBmkdumprd\fR [--version] [-v] [-f] [-d]
          [--preload=\fImodule\fR] [--omit-scsi-modules] 
          [--omit-raid-modules] [--omit-lvm-modules] 
-         [--with=\fImodule\fR] [--image-version]
+         [--image-version]
          [--fstab=\fIfstab\fR] [--nocompress]
-         [--builtin=\fImodule\fR] [--nopivot]
+         [--builtin=\fImodule\fR]
          \fIimage\fR \fIkernel-version\fR
 
 .SH DESCRIPTION
@@ -61,14 +61,6 @@ Normally the created initrd image is compressed with \fBgzip\fR. If this
 option is specified, the compression is skipped.
 
 .TP
-\fB-\-nopivot
-Do not use the \fBpivot_root\fR system call as part of the initrd. This
-lets \fBmkdumprd\fR build proper images for Linux 2.2 kernels at the expense
-of some features. In particular, some filesystems (such as ext3) will not
-work properly and filesystem options will not be used to mount root. This
-option is not recommended, and will be removed in future versions.
-
-.TP
 \fB-\-omit-lvm-modules 
 Do not load any lvm modules, even if /etc/fstab expects them.
 
@@ -93,15 +85,12 @@ Prints out verbose information while creating the image (normally
 the \fBmkdumprd\fR runs silently). 
 
 .TP
-\fB-\-version\fR
-Prints the version of \fBmkdumprd\fR that's being used and then exits.
+\fB-d\fR
+Query /etc/kdump for initrd construction configuration
 
 .TP
-\fB-\-with=\fR\fImodule\fR
-Load the modules \fImodule\fR in the initial ramdisk image. The module
-gets loaded after any SCSI modules which are specified in 
-\fI/etc/modprobe.conf\fR. This option may be used as many times as 
-necessary.
+\fB-\-version\fR
+Prints the version of \fBmkdumprd\fR that's being used and then exits.
 
 .SH FILES
 .PD 0

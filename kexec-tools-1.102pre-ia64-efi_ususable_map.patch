@@ -1,0 +1,48 @@
+diff -up kexec-tools-testing-20070330/purgatory/arch/ia64/purgatory-ia64.c.orig kexec-tools-testing-20070330/purgatory/arch/ia64/purgatory-ia64.c
+--- kexec-tools-testing-20070330/purgatory/arch/ia64/purgatory-ia64.c.orig	2007-03-30 00:34:36.000000000 -0400
++++ kexec-tools-testing-20070330/purgatory/arch/ia64/purgatory-ia64.c	2008-03-26 08:05:11.000000000 -0400
+@@ -123,6 +123,7 @@ typedef struct {
+ struct loaded_segment {
+         unsigned long start;
+         unsigned long end;
++        unsigned long reserved;
+ };
+ 
+ struct kexec_boot_params {
+@@ -201,7 +202,8 @@ patch_efi_memmap(struct kexec_boot_param
+ 			}
+ 			dst_md->phys_addr = seg->start;
+ 			dst_md->num_pages = mid_pages;
+-			dst_md->type = EFI_LOADER_DATA;
++			dst_md->type = seg->reserved ?
++				EFI_UNUSABLE_MEMORY:EFI_LOADER_DATA;
+ 			if (!end_pages)
+ 				break;
+ 			dest += boot_param->efi_memdesc_size;
+diff -up kexec-tools-testing-20070330/kexec/arch/ia64/crashdump-ia64.c.orig kexec-tools-testing-20070330/kexec/arch/ia64/crashdump-ia64.c
+--- kexec-tools-testing-20070330/kexec/arch/ia64/crashdump-ia64.c.orig	2007-03-30 00:34:36.000000000 -0400
++++ kexec-tools-testing-20070330/kexec/arch/ia64/crashdump-ia64.c	2008-03-26 08:05:11.000000000 -0400
+@@ -53,6 +53,7 @@ static unsigned long kernel_code_end;
+ struct loaded_segment {
+         unsigned long start;
+         unsigned long end;
++	unsigned long reserved;
+ };
+ 
+ #define MAX_LOAD_SEGMENTS	128
+@@ -87,6 +88,7 @@ static void add_loaded_segments_info(str
+                         start&~(ELF_PAGE_SIZE-1);
+                 loaded_segments[loaded_segments_num].end =
+                         (end + ELF_PAGE_SIZE - 1)&~(ELF_PAGE_SIZE - 1);
++		loaded_segments[loaded_segments_num].reserved = 0;
+ 		loaded_segments_num++;
+ 	}
+ }
+@@ -239,6 +241,7 @@ int load_crashdump_segments(struct kexec
+ 			loaded_segments[loaded_segments_num].start = elfcorehdr;
+ 			loaded_segments[loaded_segments_num].end = elfcorehdr +
+ 								   sz;
++			loaded_segments[loaded_segments_num].reserved = 1;
+ 			loaded_segments_num++;
+ 			cmdline_add_elfcorehdr(cmdline, elfcorehdr);
+ 		}

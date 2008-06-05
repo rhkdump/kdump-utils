@@ -73,6 +73,8 @@ bin=""
 KDUMP_POST=""
 extra_kdump_mods=""
 
+TMPDISKLIST=`mktemp /tmp/disklist.XXXXXX`
+
 vecho()
 {
     NONL=""
@@ -101,7 +103,7 @@ usage () {
     fi
 
     $cmd "usage: $cmdname [--version] [--help] [-v] [-d] [-f] [--preload <module>]"
-    $cmd "       [--image-version] [--with-module]"
+    $cmd "       [--image-version]"
     $cmd "       [--builtin=<module>] [--omit-dmraid]"
     $cmd "       [--fstab=<fstab>] [--nocompress] <initrd-image> <kernel-version>"
     $cmd ""
@@ -381,11 +383,13 @@ handlelvordev() {
         *)
             vg_list="$vg_list $vg"
             for device in `vgdisplay -v $vg 2>/dev/null | sed -n 's/PV Name//p'`; do
+                echo $device | sed -e's/\/dev\///' -e's/[0-9]\+//' >> $TMPDISKLIST 
                 findstoragedriver ${device##/dev/}
             done
             ;;
         esac
     else
+        echo $1 | sed -e's/\/dev\///' -e's/[0-9]\+//' >> $TMPDISKLIST 
         findstoragedriver ${1##/dev/}
     fi
 }
@@ -942,6 +946,7 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                 echo "Cannot use the core_collector option on this arch"
                 rm -rf $MNTIMAGE
                 rm -rf $IMAGE
+                rm -f $TMPDISKLIST
                 exit 1
             fi
             ;;
@@ -1019,6 +1024,7 @@ if [ -n "$CORE_COLLECTOR" -a ! -e /sys/kernel/vmcoreinfo ]; then
             echo "please install it and restart the kdump service"
             rm -rf $MNTIMAGE
             rm -rf $IMAGE
+            rm -f $TMPDISKLIST
             exit 1
         fi
         XEN_OPTS=""
@@ -1034,6 +1040,7 @@ if [ -n "$CORE_COLLECTOR" -a ! -e /sys/kernel/vmcoreinfo ]; then
                 echo "please install it and restart the kdump service"
                 rm -rf $MNTIMAGE
                 rm -rf $IMAGE
+                rm -f $TMPDISKLIST
                 exit 1
             fi
 
@@ -1046,6 +1053,7 @@ if [ -n "$CORE_COLLECTOR" -a ! -e /sys/kernel/vmcoreinfo ]; then
             echo "could not generate makedumpfile configuration.  aborting"
             rm -rf $MNTIMAGE
             rm -rf $IMAGE
+            rm -f $TMPDISKLIST
             exit 1;
         fi
     fi
@@ -1086,6 +1094,9 @@ then
             findmodule $i
         done
 fi
+
+#this provides us with a list of disks that we need to make sure we have available before we capture our core
+mv $TMPDISKLIST $MNTIMAGE/etc/critical_disks
 
 #THIS IS WHERE WE GENERATE OUR ADDITINONAL UTILITIES
 #Busybox doesn't have a /bin/sh applet, 
@@ -1314,6 +1325,102 @@ do
 done
 EOF
 
+cat >> $SCRIPTDIR/monitor_dd_progress << EOF
+#!/bin/msh
+SRC_FILE_SIZE=\`ls -l /proc/vmcore | awk '{print \$5}'\`
+BLOCK_SIZE=\$1
+SRC_FILE_MB=\`dc \$SRC_FILE_SIZE 1048576 / p\`
+
+while true
+do
+        DD_PID=\`ps | grep -v awk | awk '/dd/ {print \$1}'\`
+        if [ -n "\$DD_PID" ]
+        then
+                break
+        fi
+done
+
+while true
+do
+        sleep 5
+        if [ ! -d /proc/\$CP_PID ]
+        then
+                break
+        fi
+
+        kill -SIGUSR1 \$DD_PID
+        CURRENT_SIZE=\`tail -n 1 /tmp/dd_progress_file | sed "s/[^0-9].*//g"\`
+        CURRENT_MB=\`dc \$CURRENT_SIZE \$BLOCK_SIZE \* 1048576 / p\`
+        echo -n -e "Copied \$CURRENT_MB MB / \$SRC_FILE_MB MB\\\r"
+done
+
+rm -f /tmp/dd_progres_file
+EOF
+
+cat >> $SCRIPTDIR/monitor_scp_progress << EOF
+#!/bin/msh
+SRC_FILE_SIZE=\`ls -l /proc/vmcore | awk '{print \$5}'\`
+LOCATION=\$1
+REMOTE_FILE=\$2
+
+SRC_FILE_MB=\`dc \$SRC_FILE_SIZE 1048576 / p\`
+
+while true
+do
+        SCP_PID=\`ps | grep -v awk | awk '/scp/ {print \$1}'\`
+        if [ -n "\$SCP_PID" ]
+        then
+                break
+        fi
+done
+
+while true
+do
+        sleep 5
+        if [ ! -d /proc/\$SCP_PID ]
+        then
+                break
+        fi
+
+        SSH_OUTPUT=\`ssh -q -o BatchMode=yes -o StrictHostKeyChecking=no \$LOCATION ls -l \$REMOTE_FILE\`
+        REMOTE_SIZE=\`echo \$SSH_OUTPUT | awk '{print \$5}'\`
+        REMOTE_SIZE_MB=\`dc \$REMOTE_SIZE 1048576 / p\`
+        echo -n -e "Copied \$REMOTE_SIZE_MB MB / \$SRC_FILE_MB MB\\\r"
+done
+
+EOF
+
+cat >> $SCRIPTDIR/monitor_cp_progress <<EOF
+#!/bin/msh
+SRC_FILE_SIZE=\`ls -l /proc/vmcore | awk '{print \$5}'\`
+DST_FILE=\$1
+
+SRC_FILE_MB=\`dc \$SRC_FILE_SIZE 1048576 / p\`
+
+while true
+do
+        CP_PID=\`ps | grep -v awk | awk '/cp / {print \$1}'\`
+        if [ -n "\$CP_PID" ]
+        then
+                break
+        fi
+done
+
+while true
+do
+        sleep 5
+        if [ ! -d /proc/\$CP_PID ]
+        then
+                break
+        fi
+
+        LS_SIZE=\`ls -l \$DST_FILE | awk '{print \$5}'\`
+        LS_MB=\`dc \$LS_SIZE 1048576 / p\`
+        echo -n -e "Copied \$LS_MB MB / \$SRC_FILE_MB MB\\\r"
+done
+
+EOF
+
 #DONT ADD STUFF to SCRIPTDIR PAST HERE
 for i in `ls $SCRIPTDIR/*`
 do
@@ -1365,7 +1472,7 @@ fi
 # FIXME -- this can really go poorly with clvm or duplicate vg names.
 # nash should do lvm probing for us and write its own configs.
 if [ -n "$vg_list" ]; then
-    bin="$bin /sbin/lvm"
+    inst /sbin/lvm "$MNTIMAGE/bin/lvm"
     if [ -f /etc/lvm/lvm.conf ]; then
 	cp $verbose --parents /etc/lvm/lvm.conf $MNTIMAGE/
     fi
@@ -1399,9 +1506,6 @@ mknod /dev/ptmx c 5 2
 mknod /dev/rtc c 10 135
 mknod /dev/urandom c 1 9
 EOF
-if [ "$(uname -m)" == "ia64" ]; then
-    emit "mknod $MNTIMAGE/dev/efirtc c 10 136"
-fi
 
 # XXX really we need to openvt too, in case someting changes the
 # color palette and then changes vts on fbcon before gettys start.
@@ -1448,6 +1552,24 @@ EOF
     fi
 done
 
+
+# Before we create our block devices, we need to make sure that we have all the needed block devices discovered
+# Thats seems like a chicken and egg problem, I know, but we generated  a critcal_disks list when we build this initramfs
+# that tell us what devices we need to wait to see in /sys/block
+
+cat >> $MNTIMAGE/init << EOF
+echo "Waiting for required block device discovery"
+for i in \`cat /etc/critical_disks\`
+do
+    echo -n Waiting for \$i...
+    while [ ! -d /sys/block/\$i ]
+    do
+        sleep 1
+    done
+    echo Found
+done
+EOF
+    
 # HACK: module loading + device creation isn't necessarily synchronous...
 # this will make sure that we have all of our devices before trying
 # things like RAID or LVM
@@ -1527,18 +1649,18 @@ if [ -n "$vg_list" ]; then
     emit "echo Activating logical volumes"
     emit "lvm vgchange -a y --ignorelockingfailure"
     emit "DM_NUM=0"
-    emit "for i in \`lvm lvs | awk '{ if (NR > 1) print \$1}'\`"
+    emit "lvm lvs --noheadings -o lv_name,vg_name | while read i"
     emit "do"
-    emit "   VGRP=\`lvm lvs | grep \$i | cut -d\" \" -f4\`"
+    emit "   LV=\`echo \$i | awk '{ print \$1 }'\`"
+    emit "   VGRP=\`echo \$i | awk '{ print \$2 }'\`"
     emit "   mkdir -p /dev/\$VGRP"
-    emit "   if [ ! -e /dev/\$VGRP/\$i ]"
+    emit "   if [ ! -e /dev/\$VGRP/\$LV ]"
     emit "   then" 
-    emit "      ln -s /dev/mapper/\$VGRP-\$i /dev/\$VGRP/\$i"
-    emit "      ln -s /dev/mapper/\$VGRP-\$i /dev/dm-\$DM_NUM"
+    emit "      ln -s /dev/mapper/\$VGRP-\$LV /dev/\$VGRP/\$LV"
     emit "      DM_NUM=\`echo \$DM_NUM 1 + p | dc\`"
     emit "      if [ -z \"\$noresume\" ]"
     emit "      then"
-    emit "        /sbin/dmsetup resume /dev/mapper/\$VGRP-\$i"
+    emit "        /sbin/dmsetup resume /dev/mapper/\$VGRP-\$LV"
     emit "      fi"
     emit "   fi"
     emit "done"
@@ -1599,27 +1721,28 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                     fi
 
                     #setup raw case
-                    if [ -n "$KDUMP_PRE_INTERNAL" ]
+                    if [ -n "$KDUMP_PRE" ]
                     then
-                        emit "$KDUMP_PRE_INTERNAL"
-                        emit "if [ $? -ne 0 ]"
+                        emit "$KDUMP_PRE"
+                        emit "if [ \$? -ne 0 ]"
                         emit "then"
                         emit "  echo kdump_pre script exited with non-zero status"
                         emit "  $FINAL_ACTION"
                         emit "fi"
                     fi
                     emit "echo Saving to partition $config_val"
+                    emit "monitor_dd_progress 512 &"
                     if [ -z "$CORE_COLLECTOR" ]
                     then
-                        emit "dd if=/proc/vmcore of=$config_val"
+                        emit "dd if=/proc/vmcore of=$config_val bs=512 >> /tmp/dd_progress_file 2>&1"
                     else
                             CORE_COLLECTOR=`echo $CORE_COLLECTOR | sed -e's/\(^makedumpfile\)\(.*$\)/\1 -F \2/'`
-                            emit "$CORE_COLLECTOR /proc/vmcore | dd of=$config_val"
+                            emit "$CORE_COLLECTOR /proc/vmcore | dd of=$config_val bs=512 >> /tmp/dd_progress_file 2>&1"
                     fi
                     emit "exitcode=\$?"
                     emit "if [ \$exitcode == 0 ]"
                     emit "then"
-                    emit "  echo \"Saving core complete\""
+                    emit "  echo -e \"\\\033[0JSaving core complete\""
                     emit "fi"
                     if [ -x "$KDUMP_POST" ]; then
                         emit "$KDUMP_POST \$exitcode"
@@ -1705,10 +1828,10 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                         fi
     
                         #setup nfs case
-                        if [ -n "$KDUMP_PRE_INTERNAL" ]
+                        if [ -n "$KDUMP_PRE" ]
                         then
-                            emit "$KDUMP_PRE_INTERNAL"
-                            emit "if [ $? -ne 0 ]"
+                            emit "$KDUMP_PRE"
+                            emit "if [ \$? -ne 0 ]"
                             emit "then"
                             emit "  echo kdump_pre script exited with non-zero status"
                             emit "  $FINAL_ACTION"
@@ -1722,12 +1845,13 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                         emit "  mkdir -p /mnt/$SAVE_PATH/$lhost-\$DATE"
                         emit "  VMCORE=/mnt/$SAVE_PATH/$lhost-\$DATE/vmcore"
                         emit "  export VMCORE"
+                        emit "  monitor_cp_progress \$VMCORE-incomplete &"
                         emit "  $CORE_COLLECTOR /proc/vmcore \$VMCORE-incomplete >/dev/null"
                         emit "  exitcode=\$?"
                         emit "  if [ \$exitcode == 0 ]"
                         emit "  then"
                         emit "      mv \$VMCORE-incomplete \$VMCORE"
-                        emit "      echo \"Saving core complete\""
+                        emit "      echo -e \"\\\033[0JSaving core complete\""
                         emit "  fi"
                         if [ -x "$KDUMP_POST" ]; then
                             emit "  $KDUMP_POST \$exitcode"
@@ -1767,10 +1891,10 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                         ssh -q $s_opts $rlocation rmdir $tdir
 
                         #setup ssh case, quick check to see if setup already
-                        if [ -n "$KDUMP_PRE_INTERNAL" ]
+                        if [ -n "$KDUMP_PRE" ]
                         then
-                            emit "$KDUMP_PRE_INTERNAL"
-                            emit "if [ $? -ne 0 ]"
+                            emit "$KDUMP_PRE"
+                            emit "if [ \$? -ne 0 ]"
                             emit "then"
                             emit "  echo kdump_pre script exited with non-zero status"
                             emit "  $FINAL_ACTION"
@@ -1788,6 +1912,7 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                         emit "ssh -q -o BatchMode=yes -o StrictHostKeyChecking=no $rlocation mkdir $SAVE_PATH/$lhost-\$DATE"
                         emit "VMCORE=$SAVE_PATH/$lhost-\$DATE/vmcore"
                         emit "export VMCORE"
+                        emit "monitor_scp_progress $rlocation $SAVE_PATH/$lhost-\$DATE/vmcore-incomplete &"
                         if [ -z "$CORE_COLLECTOR" ]
                         then
                             emit "scp -q -o BatchMode=yes -o StrictHostKeyChecking=no /proc/vmcore $rlocation:\$VMCORE-incomplete"
@@ -1803,7 +1928,7 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                         else
                             emit "  ssh -q -o BatchMode=yes -o StrictHostKeyChecking=no $rlocation mv \$VMCORE-incomplete \$VMCORE.flat"
                         fi
-                        emit "  echo \"Saving core complete\""
+                        emit "  echo -e \"\\\033[0JSaving core complete\""
                         emit "fi"
                         if [ -x "$KDUMP_POST" ]; then
                             emit "$KDUMP_POST \$exitcode"
@@ -1812,6 +1937,8 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                     fi
                     ;;
                 core_collector)
+                    ;;
+                kdump_pre)
                     ;;
                 kdump_post)
                     ;;
@@ -1849,10 +1976,10 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
     
                     #setup filesystem case
 
-                    if [ -n "$KDUMP_PRE_INTERNAL" ]
+                    if [ -n "$KDUMP_PRE" ]
                     then
-                        emit "$KDUMP_PRE_INTERNAL"
-                        emit "if [ $? -ne 0 ]"
+                        emit "$KDUMP_PRE"
+                        emit "if [ \$? -ne 0 ]"
                         emit "then"
                         emit "  echo kdump_pre script exited with non-zero status"
                         emit "  $FINAL_ACTION"
@@ -1879,12 +2006,15 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                     emit "  mkdir -p /mnt/$SAVE_PATH/127.0.0.1-\$DATE"
                     emit "  VMCORE=/mnt/$SAVE_PATH/127.0.0.1-\$DATE/vmcore"
                     emit "  export VMCORE"
+                    if [ $CORE_COLLECTOR == "cp" ]; then
+                        emit "  monitor_cp_progress \$VMCORE-incomplete &"
+                    fi
                     emit "  $CORE_COLLECTOR /proc/vmcore \$VMCORE-incomplete >/dev/null"
                     emit "  exitcode=\$?"
                     emit "  if [ \$exitcode == 0 ]"
                     emit "  then"
                     emit "      mv \$VMCORE-incomplete \$VMCORE"
-                    emit "      echo \"Saving core complete\""
+                    emit "      echo -e \"\\\033[0JSaving core complete\""
                     emit "  fi"
                     if [ -x "$KDUMP_POST" ]; then
                         emit "  $KDUMP_POST \$exitcode"
@@ -1914,7 +2044,7 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                     
     #find the shared libraries.  this snippet taken from kboot
     TEMPLDCFG=`mktemp`
-    for lib in `ls /etc/ld.so.conf.d/* | grep -v kernelcap`
+    for lib in `ls /etc/ld.so.conf.d/* 2>/dev/null | grep -v kernelcap`
     do
         echo "include " $lib >> $TEMPLDCFG
     done 
@@ -1995,6 +2125,6 @@ if [ -n "$compress" ]; then
 else
     cp -a $IMAGE $target || rc=1
 fi
-rm -rf $MNTIMAGE $IMAGE
+rm -rf $MNTIMAGE $IMAGE $TMPDISKLIST
 if [ -n "$MNTPOINT" ]; then rm -rf $MNTPOINT ; fi
 exit $rc

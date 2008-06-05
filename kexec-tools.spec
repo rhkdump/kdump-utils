@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.102pre 
-Release: 10%{?dist}
+Release: 11%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -13,11 +13,12 @@ Source5: kdump.sysconfig.ppc64
 Source6: kdump.sysconfig.ia64
 Source7: mkdumprd
 Source8: kdump.conf
-Source9: makedumpfile-1.1.5.tar.gz
+Source9: makedumpfile-1.2.6.tar.gz
 Source10: kexec-kdump-howto.txt
 Source11: firstboot_kdump.py
 Source12: mkdumprd.8
 Source13: kexec-tools-po.tar.gz
+Source14: 98-kexec.rules
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires(pre): coreutils chkconfig sed zlib 
 Requires: busybox >= 1.2.0
@@ -27,29 +28,32 @@ BuildRequires: pkgconfig intltool gettext
 Obsoletes: diskdumputils netdump
 %endif
 
+
+#START INSERT
+
 #
 # Patches 0 through 100 are meant for x86 kexec-tools enablement
 #
 Patch1: kexec-tools-1.102pre-elf-core-type.patch
 Patch2: kexec-tools-1.102pre-bzimage-options.patch
+Patch3: kexec-tools-1.102pre-cmdline-length.patch
 
 #
 # Patches 101 through 200 are meant for x86_64 kexec-tools enablement
 #
-Patch101: kexec-tools-1.102pre-disable-kdump-x8664.patch
-Patch102: kexec-tools-1.102pre-x86_64-exactmap.patch
 
 #
 # Patches 201 through 300 are meant for ia64 kexec-tools enablement
 #
+Patch201: kexec-tools-1.102pre-ia64-efi_ususable_map.patch
+Patch202: kexec-tools-1.102pre-ia64-altix_vmcore.patch
 
 #
 # Patches 301 through 400 are meant for ppc64 kexec-tools enablement
 #
 Patch301: kexec-tools-1.102pre-ppc64_rmo_top.patch
-Patch302: kexec-tools-1.102pre-ppc64-buffer-overflow.patch
-Patch303: kexec-tools-1.102pre-ppc-boots-ppc64.patch 
-Patch304: kexec-tools-1.102pre-ppc64-devtree.patch
+Patch302: kexec-tools-1.102pre-ppc64-rtas.patch
+
 #
 # Patches 401 through 500 are meant for s390 kexec-tools enablement
 #
@@ -64,11 +68,9 @@ Patch501: kexec-tools-1.102pre-ppc-fixup.patch
 #
 Patch601: kexec-tools-1.102pre-elf-format.patch
 Patch602: kexec-tools-1.102pre-x86-add_buffer_retry.patch
-Patch603: kexec-tools-1.102pre-makedumpfile-xen-syms.patch
-Patch604: kexec-tools-1.102pre-disable-kexec-test.patch
-Patch605: kexec-tools-1.102pre-vmcoreinfo.patch
-Patch606: kexec-tools-1.102pre-makedumpfile-makefile.patch
-Patch607: kexec-tools-1.102pre-cmdline-length.patch
+Patch603: kexec-tools-1.102pre-disable-kexec-test.patch
+Patch604: kexec-tools-1.102pre-vmcoreinfo.patch
+Patch605: kexec-tools-1.102pre-x86-phys_base.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -79,14 +81,16 @@ component of the kernel's kexec feature.
 
 %prep
 %setup -q -n %{name}-testing-20070330
-rm -f ../kexec-tools-1.101.spec
+
 %patch1 -p1
 %patch2 -p1
+%patch3 -p1
+
+%patch201 -p1
+%patch202 -p1
 
 %patch301 -p1
 %patch302 -p1
-%patch303 -p1
-%patch304 -p1
 
 %patch501 -p1
 
@@ -96,19 +100,25 @@ tar -z -x -v -f %{SOURCE9}
 
 %patch601 -p1
 %patch602 -p1
-%patch603 -p1 
+%patch603 -p1
 %patch604 -p1
 %patch605 -p1
-%patch606 -p1
-%patch607 -p1
-
 tar -z -x -v -f %{SOURCE13}
 
 %ifarch ppc
-%define archdef ARCH=ppc64
+%define archdef ARCH=ppc
 %endif
 
 %build
+%ifarch ia64
+# ia64 gcc seems to have a problem adding -fexception -fstack-protect and
+# -param ssp-protect-size, like the %configure macro does
+# while that shouldn't be a problem, and it still builds fine, it results in
+# the kdump kernel hanging on kexec boot.  I don't yet know why, but since those
+# options aren't critical, I'm just overrideing them here for ia64
+export CFLAGS="-O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2"
+%endif
+
 %configure \
 %ifarch ppc64
     --host=powerpc64-redhat-linux-gnu \
@@ -117,21 +127,22 @@ tar -z -x -v -f %{SOURCE13}
     --sbindir=/sbin
 rm -f kexec-tools.spec.in
 cp %{SOURCE10} . 
-make %{?archdef}
-%ifarch %{ix86} x86_64 ia64 ppc64 ppc
+make
+%ifarch %{ix86} x86_64 ia64 ppc64
 make -C makedumpfile
 %endif
 make -C kexec-tools-po
 
 %install
 rm -rf $RPM_BUILD_ROOT
-make install %{?archdef} DESTDIR=$RPM_BUILD_ROOT
+make install DESTDIR=$RPM_BUILD_ROOT
 mkdir -p -m755 $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d
 mkdir -p -m755 $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
 mkdir -p -m755 $RPM_BUILD_ROOT%{_localstatedir}/crash
 mkdir -p -m755 $RPM_BUILD_ROOT%{_mandir}/man8/
 mkdir -p -m755 $RPM_BUILD_ROOT%{_docdir}
 mkdir -p -m755 $RPM_BUILD_ROOT%{_datadir}/kdump
+mkdir -p -m755 $RPM_BUILD_ROOT%{_sysconfdir}/udev/rules.d
 install -m 755 %{SOURCE1} $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/kdump
 if [ -f $RPM_SOURCE_DIR/kdump.sysconfig.%{_target_cpu} ]; then
 	install -m 644 $RPM_SOURCE_DIR/kdump.sysconfig.%{_target_cpu} $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/kdump
@@ -143,9 +154,10 @@ install -m 644 %{SOURCE8} $RPM_BUILD_ROOT%{_sysconfdir}/kdump.conf
 install -m 644 kexec/kexec.8 $RPM_BUILD_ROOT%{_mandir}/man8/kexec.8
 install -m 755 %{SOURCE11} $RPM_BUILD_ROOT%{_datadir}/kdump/firstboot_kdump.py
 install -m 644 %{SOURCE12} $RPM_BUILD_ROOT%{_mandir}/man8/mkdumprd.8
-%ifarch %{ix86} x86_64 ia64 ppc64 ppc
+install -m 644 %{SOURCE14} $RPM_BUILD_ROOT%{_sysconfdir}/udev/rules.d/98-kexec.rules
+
+%ifarch %{ix86} x86_64 ia64 ppc64
 install -m 755 makedumpfile/makedumpfile $RPM_BUILD_ROOT/sbin/makedumpfile
-install -m 755 makedumpfile/makedumpfile-R.pl $RPM_BUILD_ROOT/sbin/makedumpfile-reasm
 %endif
 make -C kexec-tools-po install DESTDIR=$RPM_BUILD_ROOT
 %find_lang %{name}
@@ -153,20 +165,27 @@ make -C kexec-tools-po install DESTDIR=$RPM_BUILD_ROOT
 %clean
 rm -rf $RPM_BUILD_ROOT
 
-
 %post
 touch /etc/kdump.conf
 /sbin/chkconfig --add kdump
-#This portion of the script is temporary.  Its only here
-#to fix up broken boxes that require special settings 
-#in /etc/sysconfig/kdump.  It will be removed when 
-#These systems are fixed.
+# This portion of the script is temporary.  Its only here
+# to fix up broken boxes that require special settings 
+# in /etc/sysconfig/kdump.  It will be removed when 
+# These systems are fixed.
 
-#This is for HP zx1 machines
-#They require machvec=dig on the kernel command line
 if [ -d /proc/bus/mckinley ]
 then
+	# This is for HP zx1 machines
+	# They require machvec=dig on the kernel command line
 	sed -e's/\(^KDUMP_COMMANDLINE_APPEND.*\)\("$\)/\1 machvec=dig"/' \
+	/etc/sysconfig/kdump > /etc/sysconfig/kdump.new
+	mv /etc/sysconfig/kdump.new /etc/sysconfig/kdump
+elif [ -d /proc/sgi_sn ]
+then
+	# This is for SGI SN boxes
+	# They require the --noio option to kexec 
+	# since they don't support legacy io
+	sed -e's/\(^KEXEC_ARGS.*\)\("$\)/\1 --noio"/' \
 	/etc/sysconfig/kdump > /etc/sysconfig/kdump.new
 	mv /etc/sysconfig/kdump.new /etc/sysconfig/kdump
 fi
@@ -186,33 +205,48 @@ fi
 exit 0
 
 %triggerin -- firstboot
+# we enable kdump everywhere except for paravirtualized xen domains; check here
+if [ -f /proc/xen/capabilities ]; then
+	if [ -z `grep control_d /proc/xen/capabilities` ]; then
+		exit 0
+	fi
+fi
 if [ ! -e %{_datadir}/firstboot/modules/firstboot_kdump.py ]
 then
 	ln -s %{_datadir}/kdump/firstboot_kdump.py %{_datadir}/firstboot/modules/firstboot_kdump.py
 fi
 
+%triggerin -- kernel-kdump
+touch %{_sysconfdir}/kdump.conf
+
 
 %triggerun -- firstboot
 rm -f %{_datadir}/firstboot/modules/firstboot_kdump.py
 
-%triggerpostun -- kernel
+%triggerpostun -- kernel kernel-xen kernel-debug kernel-PAE kernel-kdump
 # List out the initrds here, strip out version nubmers
 # and search for corresponding kernel installs, if a kernel
 # is not found, remove the corresponding kdump initrd
 
 #start by getting a list of all the kdump initrds
-for i in /boot/initrd*kdump.img
+MY_ARCH=`uname -m`
+if [ "$MY_ARCH" == "ia64" ]
+then
+	IMGDIR=/boot/efi/efi/redhat
+else
+	IMGDIR=/boot
+fi
+
+for i in `ls $IMGDIR/initrd*kdump.img 2>/dev/null`
 do
-	[ -e "$i" ] || continue
-	KDVER="${i##*initrd-}" ; KDVER="${KDVER%%kdump*}"
-	if [ ! -e /boot/vmlinuz-$KDVER ]
+	KDVER=`echo $i | sed -e's/^.*initrd-//' -e's/kdump.*$//'`
+	if [ ! -e $IMGDIR/vmlinuz-$KDVER ]
 	then
 		# We have found an initrd with no corresponding kernel
 		# so we should be able to remove it
 		rm -f $i
 	fi
 done
-
 
 %files -f %{name}.lang
 %defattr(-,root,root,-)
@@ -221,6 +255,7 @@ done
 %config(noreplace,missingok) %{_sysconfdir}/sysconfig/kdump
 %config(noreplace,missingok) %{_sysconfdir}/kdump.conf
 %config %{_sysconfdir}/rc.d/init.d/kdump
+%config %{_sysconfdir}/udev/rules.d/*
 %dir %{_localstatedir}/crash
 %{_mandir}/man8/*
 %doc News
@@ -228,7 +263,12 @@ done
 %doc TODO
 %doc kexec-kdump-howto.txt
 
+
 %changelog
+* Thu Jun 05 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-11
+- Update to latest makedumpfile from upstream
+- Mass import of RHEL fixes missing in rawhide
+
 * Thu Apr 24 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-10
 - Fix mkdumprd to properly pull in libs for lvm/mdadm (bz 443878)
 
