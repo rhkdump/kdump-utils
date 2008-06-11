@@ -1473,6 +1473,7 @@ fi
 # nash should do lvm probing for us and write its own configs.
 if [ -n "$vg_list" ]; then
     inst /sbin/lvm "$MNTIMAGE/bin/lvm"
+    bin="$bin /sbin/lvm"
     if [ -f /etc/lvm/lvm.conf ]; then
 	cp $verbose --parents /etc/lvm/lvm.conf $MNTIMAGE/
     fi

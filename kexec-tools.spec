@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.102pre 
-Release: 11%{?dist}
+Release: 12%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -265,6 +265,9 @@ done
 
 
 %changelog
+* Wed Jun 11 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-12
+- Added lvm to bin list (bz 443878)
+
 * Thu Jun 05 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-11
 - Update to latest makedumpfile from upstream
 - Mass import of RHEL fixes missing in rawhide
