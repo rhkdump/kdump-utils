@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.102pre 
-Release: 12%{?dist}
+Release: 13%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -265,6 +265,9 @@ done
 
 
 %changelog
+* Mon Jul 11 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-13
+- Fix mkdumprd to support dynamic busybox (bz 443878)
+
 * Wed Jun 11 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-12
 - Added lvm to bin list (bz 443878)
 

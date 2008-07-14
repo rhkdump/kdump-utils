@@ -1076,6 +1076,7 @@ fi
 	
 #copy in busybox and make symlinks to its supported utilities
 cp /sbin/busybox $MNTIMAGE/sbin/busybox
+bin="$bin /sbin/busybox"
 cd $MNTIMAGE/sbin
 for i in `/sbin/busybox | 
         awk 'BEGIN {found=0} /.*/ { if (found) print $0 } /Currently/ {found=1}' | 
