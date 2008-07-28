@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.102pre 
-Release: 13%{?dist}
+Release: 14%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -265,6 +265,9 @@ done
 
 
 %changelog
+* Mon Jul 28 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-14
+- Add video reset section to docs (bz 456572)
+
 * Mon Jul 11 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-13
 - Fix mkdumprd to support dynamic busybox (bz 443878)
 

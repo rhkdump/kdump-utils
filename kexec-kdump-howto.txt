@@ -470,30 +470,24 @@ kexec. Note that the kdump kernel should still be able to create a dump,
 and when the system reboots, video should be restored to normal.
 
 
-Notes on RHEL5 configuration:
+Notes on resetting video:
 
-The RHEL5 kexec-utils package contains two extra configuration files:
+Video is a notoriously difficult issue with kexec.  Video cards contain ROM code
+that controls their initial configuration and setup.  This code is nominally
+accessed and executed from the Bios, and otherwise not safely executable. Since
+the purpose of kexec is to reboot the system without re-executing the Bios, it
+is rather difficult if not impossible to reset video cards with kexec.  The
+result is, that if a system crashes while running in a graphical mode (i.e.
+running X), the screen may appear to become 'frozen' while the dump capture is
+taking place.  A serial console will of course reveal that the system is
+operating and capturing a vmcore image, but a casual observer will see the
+system as hung until the dump completes and a true reboot is executed.
 
-/etc/sysconfig/kdump
-	This file allows you to specify an alternate kernel to boot in the
-event of a panic (other than the kernel running at the moment), and allows you
-to override or append options on the kernel command line.  It also alows you
-to pass extra options to the kexec utility when the kdump service is starting.
-See documentation in the template kdump sysconfig file for exact usage
-
-/etc/kdump.conf
-	This file allows you to configure how kdump will record your core
-file.  Unlike the stock version of kdump, the RHEL5 version of kdump attempts
-to record your vmcore file from the initramfs, so as to still function
-properly in the event that your root file system is corrupted and unmountable.
-This file is interrogated on kdump service start and is used to populate the
-initramfs for the kdump kernel with the appropriate data and utilities to copy
-your core file to the desired location.  See documentation in /etc/kdump.conf
-for available config directives and targets.  Note especially the ifc option.
-kdump will attempt to determine which network interface to use when dumping to
-a remote server, but due to the possibility of interface renaming, or alternate
-module load strategies, the interface name may change in the kdump kernel.
-This option is used to override that guess, so that the appropriate interface
-will be activated in the kdump kernel.
-
-
+There are two possiblilties to work around this issue.  One is by adding
+--reset-vga to the kexec command line options in /etc/sysconfig/kdump.  This
+tells kdump to write some reasonable default values to the video card register
+file, in the hopes of returning it to a text mode such that boot messages are
+visible on the screen.  It does not work with all video cards however.
+Secondly, it may be worth trying to add vga15fb.ko to the extra_modules list in
+/etc/kdump.conf.  This will attempt to use the video card in framebuffer mode,
+which can blank the screen prior to the start of a dump capture.
