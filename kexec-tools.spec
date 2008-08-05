@@ -1,7 +1,7 @@
 Name: kexec-tools
 Version: 1.102pre 
-Release: 14%{?dist}
-License: GPL
+Release: 15%{?dist}
+License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
 Source0: %{name}-testing-20070330.tar.bz2
@@ -265,6 +265,9 @@ done
 
 
 %changelog
+* Tue Aug  5 2008 Tom "spot" Callaway <tcallawa@redhat.com> - 1.102pre-15
+- fix license tag
+
 * Mon Jul 28 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-14
 - Add video reset section to docs (bz 456572)
 
