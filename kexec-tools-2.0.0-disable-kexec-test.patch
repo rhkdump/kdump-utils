@@ -1,0 +1,14 @@
+diff -up kexec-tools-2.0.0/Makefile.in.orig kexec-tools-2.0.0/Makefile.in
+--- kexec-tools-2.0.0/Makefile.in.orig	2008-07-14 07:28:19.000000000 -0400
++++ kexec-tools-2.0.0/Makefile.in	2008-08-27 07:49:27.000000000 -0400
+@@ -104,8 +104,8 @@ PKGINCLUDEIR=$(INCLUDEDIR)/$(PACKAGE_NAM
+ 
+ MAN_PAGES:= kexec/kexec.8
+ MAN_PAGES+= kdump/kdump.8
+-BINARIES_i386:=  $(SBINDIR)/kexec $(PKGLIBDIR)/kexec_test
+-BINARIES_x86_64:=$(SBINDIR)/kexec $(PKGLIBDIR)/kexec_test
++BINARIES_i386:=  $(SBINDIR)/kexec
++BINARIES_x86_64:=$(SBINDIR)/kexec
+ BINARIES:=$(SBINDIR)/kexec $(SBINDIR)/kdump $(BINARIES_$(ARCH))
+ 
+ TARGETS:=$(BINARIES) $(MAN_PAGES)

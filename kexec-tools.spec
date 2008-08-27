@@ -1,10 +1,10 @@
 Name: kexec-tools
-Version: 1.102pre 
-Release: 16%{?dist}
+Version: 2.0.0 
+Release: 1%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
-Source0: %{name}-testing-20070330.tar.bz2
+Source0: %{name}-%{version}.tar.bz2
 Source1: kdump.init
 Source2: kdump.sysconfig
 Source3: kdump.sysconfig.x86_64
@@ -34,9 +34,6 @@ Obsoletes: diskdumputils netdump
 #
 # Patches 0 through 100 are meant for x86 kexec-tools enablement
 #
-Patch1: kexec-tools-1.102pre-elf-core-type.patch
-Patch2: kexec-tools-1.102pre-bzimage-options.patch
-Patch3: kexec-tools-1.102pre-cmdline-length.patch
 
 #
 # Patches 101 through 200 are meant for x86_64 kexec-tools enablement
@@ -45,14 +42,10 @@ Patch3: kexec-tools-1.102pre-cmdline-length.patch
 #
 # Patches 201 through 300 are meant for ia64 kexec-tools enablement
 #
-Patch201: kexec-tools-1.102pre-ia64-efi_ususable_map.patch
-Patch202: kexec-tools-1.102pre-ia64-altix_vmcore.patch
 
 #
 # Patches 301 through 400 are meant for ppc64 kexec-tools enablement
 #
-Patch301: kexec-tools-1.102pre-ppc64_rmo_top.patch
-Patch302: kexec-tools-1.102pre-ppc64-rtas.patch
 
 #
 # Patches 401 through 500 are meant for s390 kexec-tools enablement
@@ -61,15 +54,11 @@ Patch302: kexec-tools-1.102pre-ppc64-rtas.patch
 #
 # Patches 501 through 600 are meant for ppc kexec-tools enablement
 #
-Patch501: kexec-tools-1.102pre-ppc-fixup.patch
 
 #
 # Patches 601 onward are generic patches
 #
-Patch601: kexec-tools-1.102pre-elf-format.patch
-Patch602: kexec-tools-1.102pre-x86-add_buffer_retry.patch
-Patch603: kexec-tools-1.102pre-disable-kexec-test.patch
-Patch604: kexec-tools-1.102pre-vmcoreinfo.patch
+Patch603: kexec-tools-2.0.0-disable-kexec-test.patch
 Patch605: kexec-tools-1.102pre-x86-phys_base.patch
 
 %description
@@ -80,29 +69,14 @@ binary and ancillary utilities that together form the userspace
 component of the kernel's kexec feature.
 
 %prep
-%setup -q -n %{name}-testing-20070330
-
-%patch1 -p1
-%patch2 -p1
-%patch3 -p1
-
-%patch201 -p1
-%patch202 -p1
-
-%patch301 -p1
-%patch302 -p1
-
-%patch501 -p1
+%setup -q 
 
 mkdir -p -m755 kcp
 tar -z -x -v -f %{SOURCE9}
 
-
-%patch601 -p1
-%patch602 -p1
 %patch603 -p1
-%patch604 -p1
 %patch605 -p1
+
 tar -z -x -v -f %{SOURCE13}
 
 %ifarch ppc
@@ -265,6 +239,9 @@ done
 
 
 %changelog
+* Wed Aug 27 2008 Neil Horman <nhorman@redhat.com> - 2.0.0-1
+- Update kexec-tools to latest upstream version
+
 * Wed Aug 27 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-16
 - Fix mkdumprd to properly use UUID/LABEL search (bz 455998)
 
