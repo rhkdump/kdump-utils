@@ -265,7 +265,7 @@ done
 
 
 %changelog
-* Web Aug 27 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-16
+* Wed Aug 27 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-16
 - Fix mkdumprd to properly use UUID/LABEL search (bz 455998)
 
 * Tue Aug  5 2008 Tom "spot" Callaway <tcallawa@redhat.com> - 1.102pre-15

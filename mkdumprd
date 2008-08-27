@@ -383,13 +383,30 @@ handlelvordev() {
         *)
             vg_list="$vg_list $vg"
             for device in `vgdisplay -v $vg 2>/dev/null | sed -n 's/PV Name//p'`; do
-                echo $device | sed -e's/\/dev\///' -e's/[0-9]\+//' >> $TMPDISKLIST 
+                IS_UUID=`echo $device | grep UUID`
+                IS_LABEL=`echo $device | grep UUID`
+                if [ -n "$IS_UUID" -o -n "$IS_LABEL" ]
+                then
+                    devname=`findfs $device`
+                else
+                    devmame=$device
+                fi
+                echo $devname | sed -e's/\/dev\///' -e's/[0-9]\+//' >> $TMPDISKLIST 
                 findstoragedriver ${device##/dev/}
             done
             ;;
         esac
     else
-        echo $1 | sed -e's/\/dev\///' -e's/[0-9]\+//' >> $TMPDISKLIST 
+        IS_UUID=`echo $1 | grep UUID`
+        IS_LABEL=`echo $1 | grep UUID`
+        if [ -n "$IS_UUID" -o -n "$IS_LABEL" ]
+        then
+            devname=`findfs $1`
+        else
+            devmame=$1
+        fi
+               
+        echo $devname | sed -e's/\/dev\///' -e's/[0-9]\+//' >> $TMPDISKLIST 
         findstoragedriver ${1##/dev/}
     fi
 }
@@ -748,18 +765,15 @@ if [ "x$PROBE" == "xyes" ]; then
                 rootdev=$dev
 	    fi
         fi
+    elif echo  $rootdev | cut -c1-6 | grep -q "UUID=" ; then
+        vecho "Found root device $dev for $rootdev"
+        rootdev=`/sbin/findfs $rootdev | sed -e's/\(.*\/\)\(.*$\)/\2/' -e's/[0-9]\+//'`
     else
     	rootopts=$(echo $rootopts | sed -e 's/^r[ow],//' -e 's/,r[ow],$//' -e 's/,r[ow],/,/' \
                      -e 's/^r[ow]$/defaults/' -e 's/$/,ro/')
     fi
     [ "$rootfs" != "nfs" ] && handlelvordev $rootdev
 
-    # find the first swap dev which would get used for swsusp
-    swsuspdev=$(awk '/^[ \t]*[^#]/ { if ($3 == "swap") { print $1; }}' $fstab \
-                | head -n 1)
-    if ! echo $swsuspdev | cut -c1-6 | grep -q "LABEL=" ; then
-        handlelvordev $swsuspdev
-    fi
 fi
 
 # If we use LVM or dm-based raid, include dm-mod
