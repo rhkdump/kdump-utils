@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.102pre 
-Release: 15%{?dist}
+Release: 16%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -265,6 +265,9 @@ done
 
 
 %changelog
+* Web Aug 27 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-16
+- Fix mkdumprd to properly use UUID/LABEL search (bz 455998)
+
 * Tue Aug  5 2008 Tom "spot" Callaway <tcallawa@redhat.com> - 1.102pre-15
 - fix license tag
 
