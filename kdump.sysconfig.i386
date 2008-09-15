@@ -20,7 +20,7 @@ KDUMP_COMMANDLINE_APPEND="irqpoll maxcpus=1 reset_devices"
 #
 # Example:
 #   KEXEC_ARGS="--elf32-core-headers"
-KEXEC_ARGS=" --args-linux"
+KEXEC_ARGS=""
 
 #Where to find the boot image
 KDUMP_BOOTDIR="/boot"
