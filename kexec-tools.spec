@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -239,6 +239,9 @@ done
 
 
 %changelog
+* Wed Oct 29 2008 Neil Horman <nhorman@redhat.com> - 2.0.0-2
+- Fix mkdumprd typo (bz 469001)
+
 * Mon Sep 15 2008 Neil Horman <nhorman@redhat.com> - 2.0.0-2
 - Fix sysconfig files to not specify --args-linux on x86 (bz 461615)
 

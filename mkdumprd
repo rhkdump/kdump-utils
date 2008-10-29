@@ -389,7 +389,7 @@ handlelvordev() {
                 then
                     devname=`findfs $device`
                 else
-                    devmame=$device
+                    devname=$device
                 fi
                 echo $devname | sed -e's/\/dev\///' -e's/[0-9]\+//' >> $TMPDISKLIST 
                 findstoragedriver ${device##/dev/}
@@ -403,7 +403,7 @@ handlelvordev() {
         then
             devname=`findfs $1`
         else
-            devmame=$1
+            devname=$1
         fi
                
         echo $devname | sed -e's/\/dev\///' -e's/[0-9]\+//' >> $TMPDISKLIST 
