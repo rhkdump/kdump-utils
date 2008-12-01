@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -239,6 +239,9 @@ done
 
 
 %changelog
+* Mon Dec 01 2008 Ignacio Vazquez-Abrams <ivazqueznet+rpm@gmail.com> - 2.0.0-5
+- Rebuild for Python 2.6
+
 * Wed Nov 05 2008 Neil Horman <nhorman@redhat.com> - 2.0.0-3
 - Correct source file to use proper lang package (bz 335191)
 
