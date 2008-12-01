@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 5%{?dist}
+Release: 6%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -60,6 +60,7 @@ Obsoletes: diskdumputils netdump
 #
 Patch603: kexec-tools-2.0.0-disable-kexec-test.patch
 Patch605: kexec-tools-1.102pre-x86-phys_base.patch
+Patch606: kexec-tools-2.0.0-makedumpfile-manpage.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -76,6 +77,7 @@ tar -z -x -v -f %{SOURCE9}
 
 %patch603 -p1
 %patch605 -p1
+%patch606 -p1
 
 tar -z -x -v -f %{SOURCE13}
 
@@ -239,6 +241,9 @@ done
 
 
 %changelog
+* Mon Dec 01 2008 Neil Horman <nhorman@redhat.com> - 2.0.0.6
+- adding makedumpfile man page updates (bz 473212)
+
 * Mon Dec 01 2008 Ignacio Vazquez-Abrams <ivazqueznet+rpm@gmail.com> - 2.0.0-5
 - Rebuild for Python 2.6
 

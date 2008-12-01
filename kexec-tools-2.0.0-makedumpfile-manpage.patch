@@ -1,0 +1,19 @@
+diff -up kexec-tools-2.0.0/makedumpfile/makedumpfile.8.orig kexec-tools-2.0.0/makedumpfile/makedumpfile.8
+--- kexec-tools-2.0.0/makedumpfile/makedumpfile.8.orig	2008-06-05 01:31:22.000000000 -0400
++++ kexec-tools-2.0.0/makedumpfile/makedumpfile.8	2008-12-01 11:06:41.000000000 -0500
+@@ -73,6 +73,15 @@ data in the flattened format needs to be
+ .SH OPTIONS
+ 
+ .TP
++\fB\-b\fR
++Specify cache block order.
++.br
++makedumpfile attempts to accelerate dumping by caching disk access to ram, in an
++effort to consolidate writes.  The size of the application cached used for this
++purpose is controlled by this option.  It specifys that 2^b pages should be used
++for the cache.
++
++.TP
+ \fB\-c\fR
+ Compress dump data by each page.
+ .br
