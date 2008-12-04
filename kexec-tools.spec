@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 6%{?dist}
+Release: 7%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -241,6 +241,9 @@ done
 
 
 %changelog
+* Thu Dec 04 2008 Ignacio Vazquez-Abrams <ivazqueznet+rpm@gmail.com> - 2.0.0-7
+- Rebuild for Python 2.6
+
 * Mon Dec 01 2008 Neil Horman <nhorman@redhat.com> - 2.0.0.6
 - adding makedumpfile man page updates (bz 473212)
 
