@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 9%{?dist}
+Release: 10%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -242,6 +242,9 @@ done
 
 
 %changelog
+* Fri Apr 03 2009 Neil Horman <nhorman@redhat.com> - 2.0.0-10
+- Fix problem with quoted CORE_COLLECTOR string (bz 493707)
+
 * Thu Apr 02 2009 Orion Poplawski <orion@cora.nwra.com> - 2.0.0-9
 - Add BR glibc-static
 

@@ -2022,7 +2022,7 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                     emit "  mkdir -p /mnt/$SAVE_PATH/127.0.0.1-\$DATE"
                     emit "  VMCORE=/mnt/$SAVE_PATH/127.0.0.1-\$DATE/vmcore"
                     emit "  export VMCORE"
-                    if [ $CORE_COLLECTOR == "cp" ]; then
+                    if [ "$CORE_COLLECTOR" == "cp" ]; then
                         emit "  monitor_cp_progress \$VMCORE-incomplete &"
                     fi
                     emit "  $CORE_COLLECTOR /proc/vmcore \$VMCORE-incomplete >/dev/null"
