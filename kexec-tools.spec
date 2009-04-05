@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 10%{?dist}
+Release: 11%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -121,11 +121,12 @@ mkdir -p -m755 $RPM_BUILD_ROOT%{_docdir}
 mkdir -p -m755 $RPM_BUILD_ROOT%{_datadir}/kdump
 mkdir -p -m755 $RPM_BUILD_ROOT%{_sysconfdir}/udev/rules.d
 install -m 755 %{SOURCE1} $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/kdump
-if [ -f $RPM_SOURCE_DIR/kdump.sysconfig.%{_target_cpu} ]; then
-	install -m 644 $RPM_SOURCE_DIR/kdump.sysconfig.%{_target_cpu} $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/kdump
-else
-	install -m 644 %{SOURCE2} $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/kdump
-fi
+
+SYSCONFIG=$RPM_SOURCE_DIR/kdump.sysconfig.%{_target_cpu}
+[ -f $SYSCONFIG ] || SYSCONFIG=$RPM_SOURCE_DIR/kdump.sysconfig.%{_arch}
+[ -f $SYSCONFIG ] || SYSCONFIG=$RPM_SOURCE_DIR/kdump.sysconfig
+install -m 644 $SYSCONFIG $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/kdump
+
 install -m 755 %{SOURCE7} $RPM_BUILD_ROOT/sbin/mkdumprd
 install -m 644 %{SOURCE8} $RPM_BUILD_ROOT%{_sysconfdir}/kdump.conf
 install -m 644 kexec/kexec.8 $RPM_BUILD_ROOT%{_mandir}/man8/kexec.8
@@ -242,6 +243,9 @@ done
 
 
 %changelog
+* Sun Apr 05 2009 Lubomir Rintel <lkundrak@v3.sk> - 2.0.0-11
+- Install the correct configuration for i586
+
 * Fri Apr 03 2009 Neil Horman <nhorman@redhat.com> - 2.0.0-10
 - Fix problem with quoted CORE_COLLECTOR string (bz 493707)
 
