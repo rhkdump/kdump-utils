@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 11%{?dist}
+Release: 12%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -243,6 +243,9 @@ done
 
 
 %changelog
+* Tue Apr 07 2009 Neil Horman <nhorman@redhat.com> - 2.0.0-12
+- Simplifed rootfs mounting code in mkdumprd (bz 494416)
+
 * Sun Apr 05 2009 Lubomir Rintel <lkundrak@v3.sk> - 2.0.0-11
 - Install the correct configuration for i586
 
