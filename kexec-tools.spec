@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 12%{?dist}
+Release: 13%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -13,7 +13,7 @@ Source5: kdump.sysconfig.ppc64
 Source6: kdump.sysconfig.ia64
 Source7: mkdumprd
 Source8: kdump.conf
-Source9: makedumpfile-1.2.6.tar.gz
+Source9: makedumpfile-1.3.3.tar.gz
 Source10: kexec-kdump-howto.txt
 Source11: firstboot_kdump.py
 Source12: mkdumprd.8
@@ -59,9 +59,7 @@ Obsoletes: diskdumputils netdump
 #
 # Patches 601 onward are generic patches
 #
-Patch603: kexec-tools-2.0.0-disable-kexec-test.patch
-Patch605: kexec-tools-1.102pre-x86-phys_base.patch
-Patch606: kexec-tools-2.0.0-makedumpfile-manpage.patch
+Patch601: kexec-tools-2.0.0-disable-kexec-test.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -76,9 +74,7 @@ component of the kernel's kexec feature.
 mkdir -p -m755 kcp
 tar -z -x -v -f %{SOURCE9}
 
-%patch603 -p1
-%patch605 -p1
-%patch606 -p1
+%patch601 -p1
 
 tar -z -x -v -f %{SOURCE13}
 
@@ -106,7 +102,7 @@ rm -f kexec-tools.spec.in
 cp %{SOURCE10} . 
 make
 %ifarch %{ix86} x86_64 ia64 ppc64
-make -C makedumpfile
+make -C makedumpfile-1.3.3
 %endif
 make -C kexec-tools-po
 
@@ -135,7 +131,7 @@ install -m 644 %{SOURCE12} $RPM_BUILD_ROOT%{_mandir}/man8/mkdumprd.8
 install -m 644 %{SOURCE14} $RPM_BUILD_ROOT%{_sysconfdir}/udev/rules.d/98-kexec.rules
 
 %ifarch %{ix86} x86_64 ia64 ppc64
-install -m 755 makedumpfile/makedumpfile $RPM_BUILD_ROOT/sbin/makedumpfile
+install -m 755 makedumpfile-1.3.3/makedumpfile $RPM_BUILD_ROOT/sbin/makedumpfile
 %endif
 make -C kexec-tools-po install DESTDIR=$RPM_BUILD_ROOT
 %find_lang %{name}
@@ -243,6 +239,9 @@ done
 
 
 %changelog
+* Fri May 08 2009 Neil Horman <nhorman@redhat.com> - 2.0.0-13
+- Update makedumpfile to v 1.3.3 (bz 499849)
+
 * Tue Apr 07 2009 Neil Horman <nhorman@redhat.com> - 2.0.0-12
 - Simplifed rootfs mounting code in mkdumprd (bz 494416)
 
