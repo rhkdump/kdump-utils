@@ -1,0 +1,351 @@
+#!/bin/sh
+
+##########################################################
+#File: mkdumprd2
+#Author: Neil Horman <nhorman@redhat.com>
+#Copyright 2009 Red Hat, Inc.
+#Summary: A vastly simplified infrastructure for creating
+#         initramfs files for use with kdump
+#########################################################
+
+
+
+########################################################
+#Global Variables
+########################################################
+#BASE_DIR is the parent of both TEMP_DIR and STAGE_DIR
+BASE_DIR=""
+
+#TEMP_DIR is the directory where any temp files that we
+#         create during the build process go, that we
+#         do not want to wind up in our initramfs
+TEMP_DIR=""
+
+#STAGE_DIR is the directory we create to do all our
+#          initramfs creation in
+STAGE_DIR=""
+
+#IMG_FILE is the file that is our initramfs after cpio
+IMG_FILE=""
+
+########################################################
+#Cleanup functions so that we can get out easily and 
+#sanely when something goes wrong
+########################################################
+finish_and_exit()
+{
+	local EXIT_CODE=$1
+	local EXIT_MSG=$2
+
+	if [ -n "$EXIT_MSG" ]
+	then
+		echo $EXIT_MSG
+	fi
+	exit $EXIT_CODE
+}
+
+
+
+#########################################################
+#Clean up our various temporary files
+#And exit
+########################################################
+cleanup_and_exit()
+{
+	EXIT_CODE=$1
+
+	if [ -d $BASE_DIR ]
+	then
+		rm -rf $STAGE_DIR
+	fi
+
+	if [ -f $IMG_FILE ]
+	then
+		rm -f $IMG_FILE
+	fi
+	
+	finish_and_exit $EXIT_CODE ""
+}
+
+#########################################################
+#This creates the directory hierarchy that use to
+#start creating a new initramfs
+#########################################################
+create_new_initramfs_dir()
+{
+	local TMPDIR=`mktemp -d`
+	if [ ! -d $TMPDIR ]
+	then
+		return 1 
+	fi
+
+	mkdir $TMPDIR/stage
+	mkdir $TMPDIR/temp
+
+	BASE_DIR=$TMPDIR
+	STAGE_DIR=$TMPDIR/stage
+	TEMP_DIR=$TMPDIR/temp
+
+	return 0
+}
+
+
+#########################################################
+#Helper functions for stage_initramfs
+#########################################################
+create_initramfs_dirs()
+{
+	mkdir -p $STAGE_DIR/lib || return 1
+	mkdir -p $STAGE_DIR/lib64 || return 1
+	mkdir -p $STAGE_DIR/bin || return 1
+	mkdir -p $STAGE_DIR/etc || return 1
+	mkdir -p $STAGE_DIR/dev || return 1
+	mkdir -p $STAGE_DIR/proc || return 1
+	mkdir -p $STAGE_DIR/sys || return 1
+	mkdir -p $STAGE_DIR/tmp || return 1
+	mkdir -p $STAGE_DIR/sysroot || return 1
+	mkdir -p $STAGE_DIR/modules || return 1
+	mkdir -p $STAGE_DIR/usr/share/udhcpc || return 1
+	mkdir -p $STAGE_DIR/var/run || return 1
+	mkdir -p $STAGE_DIR/etc/network/if-pre-up.d || return 1
+	mkdir -p $STAGE_DIR/etc/network/if-up.d || return 1
+	mkdir -p $STAGE_DIR/etc/network/if-pre-down.d || return 1
+	mkdir -p $STAGE_DIR/etc/network/if-down.d || return 1
+	mkdir -p $STAGE_DIR/etc/network/if-post-down.d || return 1
+	cd $STAGE_DIR
+	ln -s bin sbin
+}
+
+load_dependent_libs()
+{
+	local BIN=$1
+	ldd $BIN | grep "not a dynamic executable"
+	if [ $? == 0 ]
+	then
+		#There are no dependencies, we're done
+		return
+	fi
+
+	ldd $BIN | grep "statically linked"
+	if [ $? == 0 ]
+	then
+		#There are no dependencies, we're done
+		return
+	fi
+
+	for LIB in `ldd $BIN | awk '/\// {if ($2 == "=>") { print $3} else {print $1}}'`
+	do
+		install_with_deps $LIB
+		if [ ! -f $STAGE_DIR/$LIB ]
+		then
+			install --mode=755 $LIB $STAGE_DIR/$LIB
+		fi
+	done
+	return
+}
+
+install_with_deps()
+{
+	local BIN=$1
+	local MODE=$2
+
+	install --mode=$MODE $BIN $STAGE_DIR/bin
+	install_with_deps $BIN 
+}	
+
+populate_std_files()
+{
+	# We of course need busybox
+	install_with_deps /sbin/busybox 755
+
+	# And we need to link all the apps busybox provides in
+	for i in `/sbin/busybox | 
+		awk 'BEGIN {found=0} /.*/ { if (found) print $0 } /Currently/ {found=1}' | 
+		sed -e's/,//g' -e's/busybox//g'`
+	do
+		ln -s busybox $STAGE_DIR/sbin/$i
+	done
+
+	# We always get kpartx, dmsetup, lvm and mdadm
+	for i in lvm kpartx mdadm dmsetup
+	do
+		install_wtih_deps $i 755
+	done
+
+	# We also want to suck in all the runtime scripts 
+	# that make life easier inside the initramfs
+	# These don't need deps, because they're all msh scripts
+	for i in `ls /usr/share/kexec-tools/advanced_config/kdump-scripts/`
+	do
+		install --mode=755 $i $STAGE_DIR/bin
+	done
+
+	/bin/sh
+}
+
+#########################################################
+#This function is the recepie for populating our initramfs
+#with the basic included functions/scripts, loading the 
+#manifest files, copying in the init script, and doing
+#site specific post processing
+#########################################################
+prep_std_initramfs()
+{
+	#start by creating the directories we need
+	create_initramfs_dirs
+
+	#copy in the standard included files 
+	populate_std_files
+}
+
+
+##########################################################
+#This function validates each line in the manifest file to 
+#ensure that we sanitize the input
+#Args are:
+#1 - file type
+#2 - File source
+#3 - destination path
+#4 - optional arguments
+##########################################################
+validate_minifest_line()
+{
+
+	case "$type" in
+	reg|ren)
+		# Regular file, make sure that the file exists
+		if [ ! -f $2 ]
+		then
+			return 1
+		fi
+		;;
+	gen)
+		# Generated file, make sure that the script
+		# exists and is executable
+		if [ ! -x $2 ]
+		then
+			return 1
+		fi
+		;;
+	null)
+		# Null files have no output, they simply
+		# provide a means by which to manipulate the
+		# the initramfs.  Just make sure the file exists
+		if [ ! -x $2 ]
+		then
+			return 1
+		fi
+		;;
+	*)
+		# Unknown manifest type, fail
+		return 1
+		;;
+	esac
+
+	return 0
+}
+
+##########################################################
+#This function reads in our manifest file and moves all 
+#the specified contents to their respective destinations
+#the manifest file has the following format
+#
+#{type} {source arg} {dest path}
+#
+#see the kexec-adv-manifest man page for details
+##########################################################
+populate_from_manifest()
+{
+	local type
+	local sarg
+	local dpath
+	local opts
+	local ddir
+
+	while read type sarg dpath opts
+	do
+		validate_manifest_line $type $sarg $dpath $opts
+		if [ $? != 0 ]
+		then
+			finish_and_exit 1 "$sarg: Invalid line in manifest"
+		fi
+
+		case "$type" in
+		reg|ren)
+			# Just do a raw copy from the source path
+			# to the dest path
+			if [ "$type" == "reg" ]
+			then
+				ddir=$STAGE_DIR/$dpath
+			else
+				ddir=$(dirname $STAGE_DIR/$dpath)
+			fi
+			mkdir -p $ddir
+			cp $sarg $STAGE_DIR/$dpath	
+			;;
+		gen)
+			# Generated file: run the sarg with the provided opts
+			# Assume that the binary will output the generated file
+			# to stdout
+			ddir=$(dirname $STAGE_DIR/$dpath)
+			mkdir -p $ddir
+			$sarg $opts > $STAGE_DIR/$dpath
+			if [ $? != 0 ]
+			then
+				finish_and_exit 1 "$sarg: Non-zero exit"
+			fi
+			;;
+		null)
+			# Just run $sarg as program, passing $BASE_DIR as the
+			# first argument, and $opts next.  This lets us
+			# manipulate the intiramfs without having to add
+			# anything to the file
+			$sarg $BASE_DIR $opts
+			if [ $? != 0 ]
+			then
+				finish_and_exit 1 "$sarg: Non-zero exit"
+			fi
+
+		esac
+	done < /etc/kdump-adv-conf/manifest
+}
+
+
+##########################################################
+# This function takes our stage directory, and makes an 
+# image file out of it
+##########################################################
+create_initramfs_image()
+{
+	IMG_FILE=$(mktemp $TEMP_DIR/initrd.img.XXXXXX)
+	(cd $STAGE_DIR; find . | cpio --quiet -c -o) > $IMG_FILE
+	if [ $? != 0 ]
+	then
+		finish_and_exit 1 " Could not create initramfs"
+	fi
+	target=NEED TO PASS IN TARGET KERNEL HERE
+}
+
+
+##########################################################
+#Start the actual code here
+##########################################################
+
+# Create a new staging area
+create_new_initramfs_dir
+if [ $? != 0 ]
+then
+	finish_and_exit 1 "Unable to stage a new initramfs area"
+fi
+
+# Do staging
+prep_std_initramfs
+
+# Pull in the user supplied manifest
+populate_from_manifest
+
+# Do image file creation
+create_initramfs_image
+
+# Cleanup
+cleanup_and_exit 0
