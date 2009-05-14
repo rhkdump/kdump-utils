@@ -323,13 +323,18 @@ create_initramfs_image()
 	then
 		finish_and_exit 1 " Could not create initramfs"
 	fi
-	target=NEED TO PASS IN TARGET KERNEL HERE
+
+	# Get running kernel version to name the initramfs with
+	target=$(uname -r)
+	gzip -9 -c $IMG_FILE > initrd-$target.img
 }
 
 
 ##########################################################
 #Start the actual code here
 ##########################################################
+
+# Get our passed in options
 
 # Create a new staging area
 create_new_initramfs_dir

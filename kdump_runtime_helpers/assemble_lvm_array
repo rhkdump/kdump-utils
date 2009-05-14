@@ -1,0 +1,24 @@
+#!/bin/msh
+#kdump-requires: /etc/lvm/lvm.conf
+#
+echo "Scanning logical volumes"
+lvm vgscan --ignorelockingfailure --mknodes
+echo "Activating logical volumes"
+lvm vgchange -a y --ignorelockingfailure
+DM_NUM=0
+for i in `lvm lvs --noheadings -o lv_name,vg_name | sed -e's/\+/:/g'`
+do
+	LV=`echo \$i | awk -F":" '{ print $2 }'`
+	VGRP=`echo $i | awk -F":" '{ print $3 }'`
+	mkdir -p /dev/$VGRP
+	if [ ! -e /dev/$VGRP/$LV ]
+	then
+		ln -s /dev/mapper/$VGRP-$LV /dev/$VGRP/$LV
+		DM_NUM=`echo $DM_NUM 1 + p | dc`
+		echo "Resuming /dev/mapper/"$VGRP-$LV
+		/sbin/dmsetup resume /dev/mapper/$VGRP-$LV
+	fi
+
+done
+echo "All LVM volumes reactivated"
+exit 0

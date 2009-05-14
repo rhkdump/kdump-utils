@@ -1,0 +1,11 @@
+#!/bin/msh
+#kdump-requires: /etc/module_load_list
+
+echo "Loading modules"
+
+while read module opts
+do
+	echo "Loading module" $module
+	insmod $module $opts
+done < /etc/module_load_list
+echo "Done loading modules"

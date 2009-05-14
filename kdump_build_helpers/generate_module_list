@@ -1,0 +1,28 @@
+#!/bin/sh
+
+BASE_DIR=$1
+STAGE_DIR=$BASE_DIR/stage
+
+#This build helper queries the currently loaded modules
+#copies them to the initrd, and builds the /etc/module_load_list file
+
+mkdir -p $STAGE_DIR/modules
+
+for i in `/sbin/lsmod | awk '{print $1}'`
+do
+	for j in `/sbin/modprobe --show-depends $i | awk '/^insmod/ {print $2}'`
+	do
+		bname=$(basename $j)
+		cp $j $STAGE_DIR/modules
+		grep -q $bname $STAGE_DIR/modules 2>/dev/null
+
+		# Add the module to the list if its not already there
+		# or if the list doesn't yet exist
+		if [ $? -ne 0 ]
+		then
+			echo /modules/$bname >> $STAGE_DIR/etc/module_load_list
+		fi
+
+	done
+done
+
