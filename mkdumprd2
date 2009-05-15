@@ -56,7 +56,7 @@ cleanup_and_exit()
 
 	if [ -d $BASE_DIR ]
 	then
-		rm -rf $STAGE_DIR
+		rm -rf $BASE_DIR
 	fi
 
 	if [ -f $IMG_FILE ]
@@ -64,7 +64,33 @@ cleanup_and_exit()
 		rm -f $IMG_FILE
 	fi
 	
-	finish_and_exit $EXIT_CODE ""
+	finish_and_exit $EXIT_CODE $2 
+}
+
+#########################################################
+# Setup appropriate environment things
+#########################################################
+setup_env()
+{
+	PATH=$PATH:/etc/kdump-adv-conf/kdump_build_helpers
+}
+
+
+#########################################################
+# Handle sigint so we clean up well
+#########################################################
+handle_sigint()
+{
+	cleanup_and_exit 2 "Caught Sigint"
+}
+
+
+#########################################################
+#Trap sigint so we can clean up
+#########################################################
+setup_traps()
+{
+	trap handle_sigint 2
 }
 
 #########################################################
@@ -112,21 +138,20 @@ create_initramfs_dirs()
 	mkdir -p $STAGE_DIR/etc/network/if-pre-down.d || return 1
 	mkdir -p $STAGE_DIR/etc/network/if-down.d || return 1
 	mkdir -p $STAGE_DIR/etc/network/if-post-down.d || return 1
-	cd $STAGE_DIR
-	ln -s bin sbin
+	$(cd $STAGE_DIR; ln -s bin sbin)
 }
 
 load_dependent_libs()
 {
 	local BIN=$1
-	ldd $BIN | grep "not a dynamic executable"
+	ldd $BIN | grep -q "not a dynamic executable"
 	if [ $? == 0 ]
 	then
 		#There are no dependencies, we're done
 		return
 	fi
 
-	ldd $BIN | grep "statically linked"
+	ldd $BIN | grep -q "statically linked"
 	if [ $? == 0 ]
 	then
 		#There are no dependencies, we're done
@@ -135,7 +160,7 @@ load_dependent_libs()
 
 	for LIB in `ldd $BIN | awk '/\// {if ($2 == "=>") { print $3} else {print $1}}'`
 	do
-		install_with_deps $LIB
+		load_dependent_libs $LIB
 		if [ ! -f $STAGE_DIR/$LIB ]
 		then
 			install --mode=755 $LIB $STAGE_DIR/$LIB
@@ -150,7 +175,7 @@ install_with_deps()
 	local MODE=$2
 
 	install --mode=$MODE $BIN $STAGE_DIR/bin
-	install_with_deps $BIN 
+	load_dependent_libs $BIN 
 }	
 
 populate_std_files()
@@ -167,20 +192,22 @@ populate_std_files()
 	done
 
 	# We always get kpartx, dmsetup, lvm and mdadm
-	for i in lvm kpartx mdadm dmsetup
+	for i in /sbin/lvm /sbin/kpartx /sbin/mdadm /sbin/dmsetup
 	do
-		install_wtih_deps $i 755
+		install_with_deps $i 755
 	done
 
 	# We also want to suck in all the runtime scripts 
 	# that make life easier inside the initramfs
 	# These don't need deps, because they're all msh scripts
-	for i in `ls /usr/share/kexec-tools/advanced_config/kdump-scripts/`
+	for i in `ls /etc/kdump-adv-conf/kdump_build_helpers/`
 	do
-		install --mode=755 $i $STAGE_DIR/bin
+		if [ -f $i ]
+		then
+			install --mode=755 $i $STAGE_DIR/bin
+		fi
 	done
 
-	/bin/sh
 }
 
 #########################################################
@@ -208,10 +235,10 @@ prep_std_initramfs()
 #3 - destination path
 #4 - optional arguments
 ##########################################################
-validate_minifest_line()
+validate_manifest_line()
 {
 
-	case "$type" in
+	case "$1" in
 	reg|ren)
 		# Regular file, make sure that the file exists
 		if [ ! -f $2 ]
@@ -222,21 +249,29 @@ validate_minifest_line()
 	gen)
 		# Generated file, make sure that the script
 		# exists and is executable
-		if [ ! -x $2 ]
+		TEST_BIN=$(which $2)
+		if [ ! -x $TEST_BIN ]
 		then
 			return 1
 		fi
 		;;
-	null)
-		# Null files have no output, they simply
+	exec)
+		# exec files have no output, they simply
 		# provide a means by which to manipulate the
 		# the initramfs.  Just make sure the file exists
-		if [ ! -x $2 ]
+		TEST_BIN=$(which $2)
+		if [ ! -x $TEST_BIN ]
 		then
 			return 1
 		fi
 		;;
 	*)
+		echo $1 | grep -q "^#"
+		if [ $? -eq 0 ]
+		then
+			# its a comment
+			continue
+		fi
 		# Unknown manifest type, fail
 		return 1
 		;;
@@ -267,7 +302,7 @@ populate_from_manifest()
 		validate_manifest_line $type $sarg $dpath $opts
 		if [ $? != 0 ]
 		then
-			finish_and_exit 1 "$sarg: Invalid line in manifest"
+			cleanup_and_exit 1 "$sarg: Invalid line in manifest"
 		fi
 
 		case "$type" in
@@ -292,10 +327,10 @@ populate_from_manifest()
 			$sarg $opts > $STAGE_DIR/$dpath
 			if [ $? != 0 ]
 			then
-				finish_and_exit 1 "$sarg: Non-zero exit"
+				cleanup_and_exit 1 "$sarg: Non-zero exit"
 			fi
 			;;
-		null)
+		exec)
 			# Just run $sarg as program, passing $BASE_DIR as the
 			# first argument, and $opts next.  This lets us
 			# manipulate the intiramfs without having to add
@@ -303,7 +338,7 @@ populate_from_manifest()
 			$sarg $BASE_DIR $opts
 			if [ $? != 0 ]
 			then
-				finish_and_exit 1 "$sarg: Non-zero exit"
+				cleanup_and_exit 1 "$sarg: Non-zero exit"
 			fi
 
 		esac
@@ -321,12 +356,12 @@ create_initramfs_image()
 	(cd $STAGE_DIR; find . | cpio --quiet -c -o) > $IMG_FILE
 	if [ $? != 0 ]
 	then
-		finish_and_exit 1 " Could not create initramfs"
+		cleanup_and_exit 1 " Could not create initramfs"
 	fi
 
 	# Get running kernel version to name the initramfs with
 	target=$(uname -r)
-	gzip -9 -c $IMG_FILE > initrd-$target.img
+	gzip -9 -c $IMG_FILE > ./initrd-$target.img
 }
 
 
@@ -336,11 +371,15 @@ create_initramfs_image()
 
 # Get our passed in options
 
+#setup working env
+setup_env
+setup_traps
+
 # Create a new staging area
 create_new_initramfs_dir
 if [ $? != 0 ]
 then
-	finish_and_exit 1 "Unable to stage a new initramfs area"
+	cleanup_and_exit 1 "Unable to stage a new initramfs area"
 fi
 
 # Do staging
@@ -353,4 +392,4 @@ populate_from_manifest
 create_initramfs_image
 
 # Cleanup
-cleanup_and_exit 0
+cleanup_and_exit 0 ""
