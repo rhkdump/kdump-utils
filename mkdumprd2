@@ -8,7 +8,7 @@
 #         initramfs files for use with kdump
 #########################################################
 
-
+. /etc/kdump-adv-conf/mkdumprd2_functions
 
 ########################################################
 #Global Variables
@@ -72,7 +72,7 @@ cleanup_and_exit()
 #########################################################
 setup_env()
 {
-	PATH=$PATH:/etc/kdump-adv-conf/kdump_build_helpers
+	PATH=/etc/kdump-adv-conf/kdump_build_helpers:$PATH
 }
 
 
@@ -141,74 +141,6 @@ create_initramfs_dirs()
 	$(cd $STAGE_DIR; ln -s bin sbin)
 }
 
-load_dependent_libs()
-{
-	local BIN=$1
-	ldd $BIN | grep -q "not a dynamic executable"
-	if [ $? == 0 ]
-	then
-		#There are no dependencies, we're done
-		return
-	fi
-
-	ldd $BIN | grep -q "statically linked"
-	if [ $? == 0 ]
-	then
-		#There are no dependencies, we're done
-		return
-	fi
-
-	for LIB in `ldd $BIN | awk '/\// {if ($2 == "=>") { print $3} else {print $1}}'`
-	do
-		load_dependent_libs $LIB
-		if [ ! -f $STAGE_DIR/$LIB ]
-		then
-			install --mode=755 $LIB $STAGE_DIR/$LIB
-		fi
-	done
-	return
-}
-
-install_with_deps()
-{
-	local BIN=$1
-	local MODE=$2
-
-	install --mode=$MODE $BIN $STAGE_DIR/bin
-	load_dependent_libs $BIN 
-}	
-
-populate_std_files()
-{
-	# We of course need busybox
-	install_with_deps /sbin/busybox 755
-
-	# And we need to link all the apps busybox provides in
-	for i in `/sbin/busybox | 
-		awk 'BEGIN {found=0} /.*/ { if (found) print $0 } /Currently/ {found=1}' | 
-		sed -e's/,//g' -e's/busybox//g'`
-	do
-		ln -s busybox $STAGE_DIR/sbin/$i
-	done
-
-	# We always get kpartx, dmsetup, lvm and mdadm
-	for i in /sbin/lvm /sbin/kpartx /sbin/mdadm /sbin/dmsetup
-	do
-		install_with_deps $i 755
-	done
-
-	# We also want to suck in all the runtime scripts 
-	# that make life easier inside the initramfs
-	# These don't need deps, because they're all msh scripts
-	for i in `ls /etc/kdump-adv-conf/kdump_build_helpers/`
-	do
-		if [ -f $i ]
-		then
-			install --mode=755 $i $STAGE_DIR/bin
-		fi
-	done
-
-}
 
 #########################################################
 #This function is the recepie for populating our initramfs
@@ -220,9 +152,6 @@ prep_std_initramfs()
 {
 	#start by creating the directories we need
 	create_initramfs_dirs
-
-	#copy in the standard included files 
-	populate_std_files
 }
 
 

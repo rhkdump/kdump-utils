@@ -1,0 +1,48 @@
+#!/bin/sh
+
+##########################################################
+#File: mkdumprd2
+#Author: Neil Horman <nhorman@redhat.com>
+#Copyright 2009 Red Hat, Inc.
+#Summary: A vastly simplified infrastructure for creating
+#         initramfs files for use with kdump
+#########################################################
+
+load_dependent_libs()
+{
+	local BIN=$1
+	local LIB=""
+
+	ldd $BIN | grep -q "not a dynamic executable"
+	if [ $? == 0 ]
+	then
+		#There are no dependencies, we're done
+		return
+	fi
+
+	ldd $BIN | grep -q "statically linked"
+	if [ $? == 0 ]
+	then
+		#There are no dependencies, we're done
+		return
+	fi
+
+	for LIB in `ldd $BIN | awk '/\// {if ($2 == "=>") { print $3} else {print $1}}'`
+	do
+		load_dependent_libs $LIB
+		if [ ! -e $STAGE_DIR/$LIB ]
+		then
+			install --mode=755 $LIB $STAGE_DIR/$LIB
+		fi
+	done
+        return
+}
+
+install_with_deps()
+{
+	local BIN=$1
+	local MODE=$2
+
+	install --mode=$MODE $BIN $STAGE_DIR/bin
+	load_dependent_libs $BIN 
+}	

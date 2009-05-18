@@ -14,7 +14,7 @@ do
 	do
 		bname=$(basename $j)
 		cp $j $STAGE_DIR/modules
-		grep -q $bname $STAGE_DIR/modules 2>/dev/null
+		grep -q $bname $STAGE_DIR/etc/module_load_list 2>/dev/null
 
 		# Add the module to the list if its not already there
 		# or if the list doesn't yet exist
