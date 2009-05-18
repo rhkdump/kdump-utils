@@ -8,7 +8,7 @@ STAGE_DIR=$BASE_DIR/stage
 
 mkdir -p $STAGE_DIR/modules
 
-for i in `/sbin/lsmod | awk '{print $1}'`
+for i in `/sbin/lsmod | awk '{print $1}' | tail --lines=+2`
 do
 	for j in `/sbin/modprobe --show-depends $i | awk '/^insmod/ {print $2}'`
 	do
