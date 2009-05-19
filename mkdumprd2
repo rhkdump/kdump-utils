@@ -1,5 +1,4 @@
 #!/bin/sh
-
 ##########################################################
 #File: mkdumprd2
 #Author: Neil Horman <nhorman@redhat.com>
@@ -168,6 +167,10 @@ validate_manifest_line()
 {
 
 	case "$1" in
+	creg|cren)
+		# Just like reg/ren, but check nothing
+		# we don't copy anything if its not there
+		;;
 	reg|ren)
 		# Regular file, make sure that the file exists
 		if [ ! -f $2 ]
@@ -195,10 +198,16 @@ validate_manifest_line()
 		fi
 		;;
 	*)
-		echo $1 | grep -q "^#"
+		echo $1 | grep -q "^#.*$"
 		if [ $? -eq 0 ]
 		then
 			# its a comment
+			continue
+		fi
+		echo $1 | grep -q "^ *$"
+		if [ $? -eq 0 ]
+		then
+			# Blank line
 			continue
 		fi
 		# Unknown manifest type, fail
@@ -235,6 +244,20 @@ populate_from_manifest()
 		fi
 
 		case "$type" in
+		creg|cren)
+			# Conditional regular copy/rename
+			if [ -f $sarg ]
+			then
+				if [ "$type" == "creg" ]
+				then
+					ddir=$STAGE_DIR/$dpath
+				else
+					ddir=$(dirname $STAGE_DIR/$dpath)
+				fi
+				mkdir -p $ddir
+				cp $sarg $STAGE_DIR/$dpath	
+			fi
+			;;
 		reg|ren)
 			# Just do a raw copy from the source path
 			# to the dest path
@@ -253,7 +276,7 @@ populate_from_manifest()
 			# to stdout
 			ddir=$(dirname $STAGE_DIR/$dpath)
 			mkdir -p $ddir
-			$sarg $opts > $STAGE_DIR/$dpath
+			/bin/sh -c "$sarg $opts > $STAGE_DIR/$dpath"
 			if [ $? != 0 ]
 			then
 				cleanup_and_exit 1 "$sarg: Non-zero exit"
