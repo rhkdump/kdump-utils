@@ -19,6 +19,12 @@ Source11: firstboot_kdump.py
 Source12: mkdumprd.8
 Source13: kexec-tools-po.tar.gz
 Source14: 98-kexec.rules
+
+#######################################
+# These are sources for mkdumprd2
+# Which is currently in development
+#######################################
+
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires(pre): coreutils chkconfig sed zlib 
 Requires: busybox >= 1.2.0

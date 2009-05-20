@@ -20,4 +20,13 @@ endef
 MAKEFILE_COMMON := $(shell $(checkout-makefile-common))
 endif
 
+mkdumprd2_tarball:
+	mkdir stage
+	ln -s ../kdump_build_helpers stage/kdump_build_helpers
+	ln -s ../kdump_runtime_helpers stage/kdump_runtime_helpers
+	ln -s ../kdump_initscripts stage/kdump_initscripts
+	cp mkdumprd2 stage
+	tar -C stage -j -c --exclude=CVS -f ./mkdumprd2-files.tbz2 .
+	rm -rf stage
+
 include $(MAKEFILE_COMMON)
