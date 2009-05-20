@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 13%{?dist}
+Release: 14%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -25,11 +25,11 @@ Source14: 98-kexec.rules
 # Which is currently in development
 #######################################
 Source100: mkdumprd2-files.tbz2
+Source101: mkdumprd2
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires(pre): coreutils chkconfig sed zlib 
 Requires: busybox >= 1.2.0
-BuildRequires: glibc-static
 BuildRequires: zlib-devel zlib zlib-static elfutils-devel-static glib2-devel 
 BuildRequires: pkgconfig intltool gettext 
 %ifarch %{ix86} x86_64 ppc64 ia64 ppc
@@ -143,6 +143,11 @@ install -m 755 makedumpfile-1.3.3/makedumpfile $RPM_BUILD_ROOT/sbin/makedumpfile
 make -C kexec-tools-po install DESTDIR=$RPM_BUILD_ROOT
 %find_lang %{name}
 
+# untar the mkdumprd2 package
+mkdir -p -m755 $RPM_BUILD_ROOT/etc/kdump-adv-conf
+tar -C $RPM_BUILD_ROOT/etc/kdump-adv-conf -jxvf %{SOURCE100}
+install -m 755 %{SOURCE101} $RPM_BUILD_ROOT/sbin
+
 %clean
 rm -rf $RPM_BUILD_ROOT
 
@@ -235,6 +240,10 @@ done
 %{_datadir}/kdump
 %config(noreplace,missingok) %{_sysconfdir}/sysconfig/kdump
 %config(noreplace,missingok) %{_sysconfdir}/kdump.conf
+%{_sysconfdir}/kdump-adv-conf/kdump_build_helpers/
+%{_sysconfdir}/kdump-adv-conf/kdump_runtime_helpers/
+%{_sysconfdir}/kdump-adv-conf/kdump_initscripts/
+%{_sysconfdir}/kdump-adv-conf/kdump_sample_manifests/
 %config %{_sysconfdir}/rc.d/init.d/kdump
 %config %{_sysconfdir}/udev/rules.d/*
 %dir %{_localstatedir}/crash
@@ -246,6 +255,9 @@ done
 
 
 %changelog
+* Wed May 20 2009 Neil Horman <nhorman@redhat.com> 2.0.0-14
+- Put early copy of mkdumprd2 out in the wild (bz 466392)
+
 * Fri May 08 2009 Neil Horman <nhorman@redhat.com> - 2.0.0-13
 - Update makedumpfile to v 1.3.3 (bz 499849)
 
