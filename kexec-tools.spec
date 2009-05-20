@@ -24,6 +24,7 @@ Source14: 98-kexec.rules
 # These are sources for mkdumprd2
 # Which is currently in development
 #######################################
+Source100: mkdumprd2-files.tbz2
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires(pre): coreutils chkconfig sed zlib 
