@@ -11,6 +11,7 @@
 # 1) reg
 #    reg <source file> <dest path>
 #    A regular file copy from the source to the dst directory
+#
 # 2) creg
 #    creg <source file> <dest path>
 #    like reg, but only copy if the source file exists
@@ -54,6 +55,12 @@ exec	populate_kdump_std_files
 # which can be used at runtime for module loading
 ###################################################
 exec	generate_module_list
+
+###################################################
+# If we have one, copy the critical disk list 
+# so we don't try to start lvm/mdraid to early
+###################################################
+creg	/etc/kdump-adv-conf/critical_disks	/etc
 
 ###################################################
 # Lets get all our lvm and mdraid configs on board

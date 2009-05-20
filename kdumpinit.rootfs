@@ -1,0 +1,19 @@
+#!/bin/msh
+
+##############################################################
+# This is the default init script for our initramfs
+# It does the following:
+# 1) loads all the available modules
+# 2) Waits for any critical disks
+# 3) starts lvm/mdraid if needed
+# 4) mounts the rootfs under /mnt/
+# 5) copies /proc/vmcore to /mnt/var/crash/<date>/vmcore
+# 6) reboots the system
+##############################################################
+
+
+# Set the path to something sane
+export PATH=/sbin:/bin
+
+load_available_modules
+
