@@ -30,6 +30,7 @@ Source101: mkdumprd2
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires(pre): coreutils chkconfig sed zlib 
 Requires: busybox >= 1.2.0
+BuildRequires: glibc-static
 BuildRequires: zlib-devel zlib zlib-static elfutils-devel-static glib2-devel 
 BuildRequires: pkgconfig intltool gettext 
 %ifarch %{ix86} x86_64 ppc64 ia64 ppc
