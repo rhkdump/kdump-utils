@@ -1,0 +1,33 @@
+#!/bin/msh
+
+###################################################
+# Start by setting up the console to work as a user
+# expects
+###################################################
+exec >/dev/console 2>&1
+export TERM=linux
+export PS1='initramfs-test:\w\$ '
+stty sane
+
+
+##################################################
+# Start udev up
+##################################################
+start_udev
+
+##################################################
+# Load all the modules based on 
+# /etc/module_load_list
+##################################################
+load_all_modules
+
+
+
+
+
+
+
+##################################################
+# Reboot the system to get back to production
+##################################################
+reboot -f

@@ -1,0 +1,24 @@
+#!/bin/sh
+
+. /etc/kdump-adv-conf/mkdumprd2_functions
+
+BASE_DIR=$1
+STAGE_DIR=$BASE_DIR/stage
+
+# This just grabs all the essential bits from udev into the initramfs
+for i in `rpm -qli udev | grep ^/ | grep -v man | grep -v doc`
+do
+	if [ ! -e $i ]
+	then
+		continue
+	fi
+
+	if [ -d $i ]
+	then
+		mkdir -p $STAGE_DIR/$i
+	else
+		MODE=`stat $i | grep "Access: (" | sed -e 's/\(Access: (\)\([0-7]\{4\}\)\(.*\)/\2/'`
+		install_with_deps $i $MODE 
+	fi
+done
+exit 0

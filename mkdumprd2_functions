@@ -13,7 +13,7 @@ load_dependent_libs()
 	local BIN=$1
 	local LIB=""
 
-	ldd $BIN | grep -q "not a dynamic executable"
+	ldd $BIN 2>/dev/null | grep -q "not a dynamic executable"
 	if [ $? == 0 ]
 	then
 		#There are no dependencies, we're done
