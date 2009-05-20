@@ -1,4 +1,4 @@
-#!/bin/msh
+#!/bin/sh
 
 ###################################################
 # Start by setting up the console to work as a user
@@ -19,7 +19,7 @@ start_udev
 # Load all the modules based on 
 # /etc/module_load_list
 ##################################################
-load_all_modules
+load_modules
 
 
 

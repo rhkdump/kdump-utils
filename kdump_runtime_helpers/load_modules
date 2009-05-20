@@ -1,4 +1,4 @@
-#!/bin/msh
+#!/bin/sh
 #kdump-requires: /etc/module_load_list
 
 echo "Loading modules"

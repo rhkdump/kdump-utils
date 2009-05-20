@@ -1,3 +1,5 @@
+#!/bin/sh
+
 if [ ! -x /bin/udevd ]
 then
 	echo "udev isn't installed in this initramfs!"

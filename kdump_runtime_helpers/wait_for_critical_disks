@@ -1,4 +1,4 @@
-#!/bin/msh
+#!/bin/sh
 #kdump-requires: /etc/critical-disks
 
 echo "Waiting for critical disks"
