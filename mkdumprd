@@ -294,9 +294,7 @@ findstoragedriver () {
         fi
         vecho "Looking for driver for device $device"
         device=`echo $device | sed 's/\//\!/g'`
-        sysfs=$(findone -type d /sys/block -name $device)
-        [ -z "$sysfs" ] && return
-        pushd $sysfs >/dev/null 2>&1
+        pushd $(readlink /sys/class/block/$device ) >/dev/null 2>&1 || return
         findstoragedriverinsys
         popd >/dev/null 2>&1
     done
@@ -384,7 +382,7 @@ handlelvordev() {
             vg_list="$vg_list $vg"
             for device in `vgdisplay -v $vg 2>/dev/null | sed -n 's/PV Name//p'`; do
                 IS_UUID=`echo $device | grep UUID`
-                IS_LABEL=`echo $device | grep UUID`
+                IS_LABEL=`echo $device | grep LABEL`
                 if [ -n "$IS_UUID" -o -n "$IS_LABEL" ]
                 then
                     devname=`findfs $device`
@@ -398,7 +396,7 @@ handlelvordev() {
         esac
     else
         IS_UUID=`echo $1 | grep UUID`
-        IS_LABEL=`echo $1 | grep UUID`
+        IS_LABEL=`echo $1 | grep LABEL`
         if [ -n "$IS_UUID" -o -n "$IS_LABEL" ]
         then
             devname=`findfs $1`
@@ -752,22 +750,12 @@ if [ "x$PROBE" == "xyes" ]; then
 	netdev=`/sbin/ip route get to $remoteip |sed 's|.*dev \(.*\).*|\1|g' |awk {'print $1;'} |head -n 1`	
 	net_list="$net_list $netdev"
     # check if it's root by label
-    elif echo $rootdev | cut -c1-6 | grep -q "LABEL=" ; then
-    	rootopts=$(echo $rootopts | sed -e 's/^r[ow],//' -e 's/,r[ow],$//' -e 's/,r[ow],/,/' \
-                     -e 's/^r[ow]$/defaults/' -e 's/$/,ro/')
-        majmin=$(get_numeric_dev dec /dev/root)
-        if [ -n "$majmin" ]; then
-            dev=$(findall /sys/block -name dev | while read device ; do \
-	          echo "$majmin" | cmp -s $device && echo $device ; done \
-	          | sed -e 's,.*/\([^/]\+\)/dev,\1,' )
-	    if [ -n "$dev" ]; then
-                vecho "Found root device $dev for $rootdev"
-                rootdev=$dev
-	    fi
+    elif echo  $rootdev | cut -c1-6 | grep -q "UUID=\|LABEL=" ; then
+        dev=`/sbin/findfs $rootdev | sed -e's/\(.*\/\)\(.*$\)/\2/' -e's/[0-9]\+//'`
+        if [ -n "$dev" ] ; then 
+            vecho "Found root device $dev for $rootdev"
+            rootdev=$dev
         fi
-    elif echo  $rootdev | cut -c1-6 | grep -q "UUID=" ; then
-        vecho "Found root device $dev for $rootdev"
-        rootdev=`/sbin/findfs $rootdev | sed -e's/\(.*\/\)\(.*$\)/\2/' -e's/[0-9]\+//'`
     else
     	rootopts=$(echo $rootopts | sed -e 's/^r[ow],//' -e 's/,r[ow],$//' -e 's/,r[ow],/,/' \
                      -e 's/^r[ow]$/defaults/' -e 's/$/,ro/')
