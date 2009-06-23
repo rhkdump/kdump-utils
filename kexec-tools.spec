@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 15%{?dist}
+Release: 16%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -256,6 +256,9 @@ done
 
 
 %changelog
+* Wed Jun 23 2009 Neil Horman <nhorman@redhat.com> 2.0.0-16
+- Fix up kdump so it works with latest firstboot
+
 * Mon Jun 15 2009 Neil Horman <nhorman@redhat.com> 2.0.0-15
 - Fixed some stat drive detect bugs by E. Biederman (bz505701)
 
