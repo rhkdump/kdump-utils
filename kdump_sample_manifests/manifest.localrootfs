@@ -11,6 +11,7 @@
 # 1) reg
 #    reg <source file> <dest path>
 #    A regular file copy from the source to the dst directory
+#
 # 2) creg
 #    creg <source file> <dest path>
 #    like reg, but only copy if the source file exists
@@ -74,7 +75,13 @@ creg	/etc/mdadm.conf /etc
 gen	awk	/etc/fstab	'/^[^#]/{print $1 " /mnt"$2 " "$3 " "$4 " "$5 " "$6}' /etc/fstab
 
 ###################################################
+# Grab /etc/clock so we can set the clock properly
+###################################################
+creg /etc/clock /etc
+
+###################################################
 # Grab the standard initscript to capture to the local
 # rootfs
 ###################################################
-#ren	/usr/share/kexec-tools/kdumpinit.rootfs	/init
+#
+ren	/usr/share/kexec-tools/kdumpinit.rootfs	/init
