@@ -84,4 +84,4 @@ creg /etc/clock /etc
 # rootfs
 ###################################################
 #
-ren	/usr/share/kexec-tools/kdumpinit.rootfs	/init
+ren	/etc/kdump-adv-conf/kdump_initscripts/kdumpinit.rootfs	/init

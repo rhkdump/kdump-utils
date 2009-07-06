@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 17%{?dist}
+Release: 18%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -30,7 +30,7 @@ Source101: mkdumprd2
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires(pre): coreutils chkconfig sed zlib 
 Requires: busybox >= 1.2.0
-BuildRequires: glibc-static
+BuildRequires: dash 
 BuildRequires: zlib-devel zlib zlib-static elfutils-devel-static glib2-devel 
 BuildRequires: pkgconfig intltool gettext 
 %ifarch %{ix86} x86_64 ppc64 ia64 ppc
@@ -107,7 +107,9 @@ export CFLAGS="-O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2"
 %endif
     --sbindir=/sbin
 rm -f kexec-tools.spec.in
+# setup the docs
 cp %{SOURCE10} . 
+
 make
 %ifarch %{ix86} x86_64 ia64 ppc64
 make -C makedumpfile-1.3.3
@@ -253,9 +255,15 @@ done
 %doc COPYING
 %doc TODO
 %doc kexec-kdump-howto.txt
+%doc kdumpinit.rootfs
 
 
 %changelog
+* Mon Jul 06 2009 Neil Horman <nhorman@redhat.com> 2.0.0-18
+- Updated initscript to use mkdumprd2 if manifest is present
+- Updated spec to require dash
+- Updated sample manifest to point to correct initscript
+
 * Mon Jul 06 2009 Neil Horman <nhorman@redhat.com> 2.0.0-17
 - Fixed mkdumprd2 tarball creation
 

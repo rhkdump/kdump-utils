@@ -26,6 +26,7 @@ mkdumprd2_tarball:
 	ln -s ../kdump_runtime_helpers stage/kdump_runtime_helpers
 	ln -s ../kdump_initscripts stage/kdump_initscripts
 	ln -s ../kdump_sample_manifests stage/kdump_sample_manifests
+	ln -s ../mkdumprd2_functions stage/mkdumprd2_functions
 	tar -C stage -j -h -c --exclude=CVS -f ./mkdumprd2-files.tbz2 .
 	rm -rf stage
 

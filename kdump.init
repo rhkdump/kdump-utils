@@ -53,6 +53,14 @@ function save_core()
 
 function check_config()
 {
+	if [ -f /etc/kdump-adv-conf ]
+	then
+		$LOGGER "Using Kdump advanced configuration service"
+		MKDUMPRD=/sbin/mkdumprd2
+	else
+		MKDUMPRD=/sbin/mkdumprd
+	fi
+
 	if [ -z "$KDUMP_KERNELVER" ]; then
 		local running_kernel=`uname -r`
 
@@ -73,7 +81,7 @@ function check_config()
 	if [ ! -f $kdump_initrd ]; then
 		echo  -n "No kdump initial ramdisk found."; warning; echo
 		echo "Rebuilding $kdump_initrd"
-		/sbin/mkdumprd -d -f $kdump_initrd $kdump_kver
+		$MKDUMPRD -d -f $kdump_initrd $kdump_kver
 		if [ $? != 0 ]; then
 			echo "Failed to run mkdumprd"
 			$LOGGER "mkdumprd: failed to make kdump initrd"
@@ -95,7 +103,7 @@ function check_config()
 	   [ "$kernel_time" -gt "$image_time" ]; then
 		echo "Detected $KDUMP_CONFIG_FILE or $kdump_kernel change"
 		echo "Rebuilding $kdump_initrd"
-		/sbin/mkdumprd -d -f $kdump_initrd $kdump_kver
+		$MKDUMPRD -d -f $kdump_initrd $kdump_kver
 		if [ $? != 0 ]; then
 			echo "Failed to run mkdumprd"
 			$LOGGER "mkdumprd: failed to make kdump initrd"
