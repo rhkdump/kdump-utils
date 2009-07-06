@@ -34,6 +34,7 @@ do
 done
 
 # make dash our default shell
+rm -f $STAGE_DIR/bin/sh
 $(cd $STAGE_DIR/bin; ln -s /bin/dash sh)
 
 exit 0

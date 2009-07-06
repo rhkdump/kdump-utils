@@ -57,6 +57,9 @@ function check_config()
 	then
 		$LOGGER "Using Kdump advanced configuration service"
 		MKDUMPRD=/sbin/mkdumprd2
+		# We always rebuild here, since it takes longer
+		# to figure out if anything has changed
+		touch /etc/kdump.conf
 	else
 		MKDUMPRD=/sbin/mkdumprd
 	fi

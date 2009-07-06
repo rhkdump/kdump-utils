@@ -263,6 +263,7 @@ done
 - Updated initscript to use mkdumprd2 if manifest is present
 - Updated spec to require dash
 - Updated sample manifest to point to correct initscript
+- Updated populate_std_files helper to fix sh symlink
 
 * Mon Jul 06 2009 Neil Horman <nhorman@redhat.com> 2.0.0-17
 - Fixed mkdumprd2 tarball creation

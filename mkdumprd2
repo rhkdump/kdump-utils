@@ -311,9 +311,9 @@ create_initramfs_image()
 		cleanup_and_exit 1 " Could not create initramfs"
 	fi
 
-	# Get running kernel version to name the initramfs with
-	target=$(uname -r)
-	gzip -9 -c $IMG_FILE > ./initrd-$target.img
+	# argument 1 is passed in and is the full path to the
+	# output initramfs name 
+	gzip -9 -c $IMG_FILE > $1 
 }
 
 
@@ -322,6 +322,17 @@ create_initramfs_image()
 ##########################################################
 
 # Get our passed in options
+INITRAMFS_NAME=$1
+
+#validate the options
+if [ -z "INITRAMFS_NAME" ]
+then
+	cleanup_and_exit 1 "Need an initramfs name"
+fi
+
+
+export INITRAMFS_NAME
+export KERNEL_NAME
 
 #setup working env
 setup_env
@@ -341,7 +352,7 @@ prep_std_initramfs
 populate_from_manifest
 
 # Do image file creation
-create_initramfs_image
+create_initramfs_image $INITRAMFS_NAME
 
 # Cleanup
 cleanup_and_exit 0 ""
