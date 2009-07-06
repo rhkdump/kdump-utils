@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 19%{?dist}
+Release: 20%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -68,6 +68,7 @@ Obsoletes: diskdumputils netdump
 # Patches 601 onward are generic patches
 #
 Patch601: kexec-tools-2.0.0-disable-kexec-test.patch
+Patch602: kexec-tools-2.0.0-makedumpfile-dynamic-build.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -83,6 +84,7 @@ mkdir -p -m755 kcp
 tar -z -x -v -f %{SOURCE9}
 
 %patch601 -p1
+%patch602 -p1
 
 tar -z -x -v -f %{SOURCE13}
 
@@ -258,6 +260,9 @@ done
 
 
 %changelog
+* Mon Jul 06 2009 Neil Horman <nhorman@redhat.com> 2.0.0-20
+- Make makedumpfile a dynamic binary
+
 * Mon Jul 06 2009 Neil Horman <nhorman@redhat.com> 2.0.0-19
 - Fix build issue 
 
