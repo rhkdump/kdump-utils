@@ -26,7 +26,7 @@ mkdumprd2_tarball:
 	ln -s ../kdump_runtime_helpers stage/kdump_runtime_helpers
 	ln -s ../kdump_initscripts stage/kdump_initscripts
 	ln -s ../kdump_sample_manifests stage/kdump_sample_manifests
-	tar -C stage -j -c --exclude=CVS -f ./mkdumprd2-files.tbz2 .
+	tar -C stage -j -h -c --exclude=CVS -f ./mkdumprd2-files.tbz2 .
 	rm -rf stage
 
 include $(MAKEFILE_COMMON)

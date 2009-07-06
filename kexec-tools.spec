@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 16%{?dist}
+Release: 17%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -256,6 +256,9 @@ done
 
 
 %changelog
+* Mon Jul 06 2009 Neil Horman <nhorman@redhat.com> 2.0.0-17
+- Fixed mkdumprd2 tarball creation
+
 * Wed Jun 23 2009 Neil Horman <nhorman@redhat.com> 2.0.0-16
 - Fix up kdump so it works with latest firstboot
 
