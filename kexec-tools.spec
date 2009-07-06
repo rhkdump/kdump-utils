@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 20%{?dist}
+Release: 21%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -249,6 +249,7 @@ done
 %{_sysconfdir}/kdump-adv-conf/kdump_runtime_helpers/
 %{_sysconfdir}/kdump-adv-conf/kdump_initscripts/
 %{_sysconfdir}/kdump-adv-conf/kdump_sample_manifests/
+%{_sysconfdir}/kdump-adv-conf/mkdumprd2_functions
 %config %{_sysconfdir}/rc.d/init.d/kdump
 %config %{_sysconfdir}/udev/rules.d/*
 %dir %{_localstatedir}/crash
@@ -260,6 +261,9 @@ done
 
 
 %changelog
+* Mon Jul 06 2009 Neil Horman <nhorman@redhat.com> 2.0.0-21
+- Fixed build break
+
 * Mon Jul 06 2009 Neil Horman <nhorman@redhat.com> 2.0.0-20
 - Make makedumpfile a dynamic binary
 
