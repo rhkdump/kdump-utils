@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 18%{?dist}
+Release: 19%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -255,10 +255,12 @@ done
 %doc COPYING
 %doc TODO
 %doc kexec-kdump-howto.txt
-%doc kdumpinit.rootfs
 
 
 %changelog
+* Mon Jul 06 2009 Neil Horman <nhorman@redhat.com> 2.0.0-19
+- Fix build issue 
+
 * Mon Jul 06 2009 Neil Horman <nhorman@redhat.com> 2.0.0-18
 - Updated initscript to use mkdumprd2 if manifest is present
 - Updated spec to require dash
