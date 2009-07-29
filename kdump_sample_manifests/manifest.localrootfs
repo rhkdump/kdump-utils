@@ -1,87 +1,9 @@
-######################################################
-# Generic kdump initramfs manifest
-# 1) Loads all modules
-# 2) Starts all mdraid, lvm partitions
-# 3) Mounts the rootfs
-# 4) Copies /proc/vmcore to /mnt/var/crash/<date>/vmcore
+#########################################################
+# Sample manifest for default kdump configuration
 #
-# Notes on syntax:
-# There are 6 major commands to use when generating manifest files
-# They are:
-# 1) reg
-#    reg <source file> <dest path>
-#    A regular file copy from the source to the dst directory
-#
-# 2) creg
-#    creg <source file> <dest path>
-#    like reg, but only copy if the source file exists
-#
-# 3) ren
-#    ren <src file> <dst file>
-#    rename a file into the initramfs
-#
-# 4) cren
-#    cren <src file> <dst file>
-#    like creg, but rename the dst file
-#
-# 5) gen
-#    gen <binary> <dst file> <options>
-#    execute the specified binary, redirecting stdout to <dst>
-#
-# 6) exec
-#    exec <binary> <options>
-#    execute the specified binary.  Option 1 is the 
-#    base dir where the initramfs is being built
-#    $1/temp is temp file space, $1/stage is the initramfs
-#    options passed on command line after that
-#####################################################
-
-####################################################
-#This script populates the initramfs with:
-# busybox
-# kpartx
-# lvm
-# dmsetup
-# It also symlinks all the supported apps in busybox to
-# busybox
-#################################################### 
-exec	populate_kdump_std_files
+# This manifest will build an initramfs which mounts the 
+# root filesystem and switchroots to it
+#########################################################
 
 
-#################################################### 
-# Pull in udev so that we can easily setup block 
-# devices for lvm and all that
-####################################################
-exec	populate_udev_files
-
-####################################################
-# This is a rudimentary module population script
-# It looks at the currently loaded modules, copies them
-# To the initramfs, and generates /etc/module_load_list
-# which is a dependency ordered list of those modules
-# which can be used at runtime for module loading
-###################################################
-exec	generate_module_list
-
-###################################################
-# Lets get all our lvm and mdraid configs on board
-###################################################
-creg	/etc/lvm/lvm.conf /etc/lvm
-creg	/etc/mdadm.conf /etc
-
-###################################################
-# Grab fstab, modifying it to mount under /mnt
-###################################################
-gen	awk	/etc/fstab	'/^[^#]/{print $1 " /mnt"$2 " "$3 " "$4 " "$5 " "$6}' /etc/fstab
-
-###################################################
-# Grab /etc/clock so we can set the clock properly
-###################################################
-creg /etc/clock /etc
-
-###################################################
-# Grab the standard initscript to capture to the local
-# rootfs
-###################################################
-#
-ren	/etc/kdump-adv-conf/kdump_initscripts/kdumpinit.rootfs	/init
+dracutmodules="base crypt lvm kernel-modules rootfs-block udev-rules"

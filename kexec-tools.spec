@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 22%{?dist}
+Release: 23%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -24,8 +24,7 @@ Source14: 98-kexec.rules
 # These are sources for mkdumprd2
 # Which is currently in development
 #######################################
-Source100: mkdumprd2-files.tbz2
-Source101: mkdumprd2
+Source100: dracut-files.tbz2
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires(pre): coreutils chkconfig sed zlib 
@@ -148,10 +147,13 @@ install -m 755 makedumpfile-1.3.3/makedumpfile $RPM_BUILD_ROOT/sbin/makedumpfile
 make -C kexec-tools-po install DESTDIR=$RPM_BUILD_ROOT
 %find_lang %{name}
 
-# untar the mkdumprd2 package
+# untar the dracut package
 mkdir -p -m755 $RPM_BUILD_ROOT/etc/kdump-adv-conf
 tar -C $RPM_BUILD_ROOT/etc/kdump-adv-conf -jxvf %{SOURCE100}
-install -m 755 %{SOURCE101} $RPM_BUILD_ROOT/sbin
+
+#and move the custom dracut modules to the dracut directory
+mkdir -p $RPM_BUILD_ROOT/usr/share/dracut/modules.d/
+mv $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/* $RPM_BUILD_ROOT/usr/share/dracut/modules.d/
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -245,13 +247,11 @@ done
 %{_datadir}/kdump
 %config(noreplace,missingok) %{_sysconfdir}/sysconfig/kdump
 %config(noreplace,missingok) %{_sysconfdir}/kdump.conf
-%{_sysconfdir}/kdump-adv-conf/kdump_build_helpers/
-%{_sysconfdir}/kdump-adv-conf/kdump_runtime_helpers/
 %{_sysconfdir}/kdump-adv-conf/kdump_initscripts/
 %{_sysconfdir}/kdump-adv-conf/kdump_sample_manifests/
-%{_sysconfdir}/kdump-adv-conf/mkdumprd2_functions
 %config %{_sysconfdir}/rc.d/init.d/kdump
 %config %{_sysconfdir}/udev/rules.d/*
+%{_datadir}/dracut/modules.d/*
 %dir %{_localstatedir}/crash
 %{_mandir}/man8/*
 %doc News
@@ -261,6 +261,9 @@ done
 
 
 %changelog
+* Wed Jul 29 2009 Neil Horman <nhorman@redhat.com> - 2.0,0-23
+- Remove mkdumprd2 and start replacement with dracut
+
 * Fri Jul 24 2009 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.0.0-22
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_12_Mass_Rebuild
 
