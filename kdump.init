@@ -56,7 +56,7 @@ function check_config()
 	if [ -f /etc/kdump-adv-conf/initramfs.conf ]
 	then
 		$LOGGER "Using Kdump advanced configuration service"
-		if [ -n "DRACUT_CMD" ]
+		if [ -n "$DRACUT_CMD" ]
 		then
 			MKDUMPRD=$DRACUT_CMD
 		else
