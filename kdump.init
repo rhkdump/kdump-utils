@@ -60,7 +60,7 @@ function check_config()
 		then
 			MKDUMPRD=$DRACUT_CMD
 		else
-			MKDUMPRD="dracut -c /etc/kdump-adv-conf/initramfs.conf"
+			MKDUMPRD="dracut -f -c /etc/kdump-adv-conf/initramfs.conf"
 		fi
 		# We always rebuild here, since it takes longer
 		# to figure out if anything has changed
@@ -111,7 +111,7 @@ function check_config()
 	   [ "$kernel_time" -gt "$image_time" ]; then
 		echo "Detected $KDUMP_CONFIG_FILE or $kdump_kernel change"
 		echo "Rebuilding $kdump_initrd"
-		$MKDUMPRD -d -f $kdump_initrd $kdump_kver
+		$MKDUMPRD $kdump_initrd $kdump_kver
 		if [ $? != 0 ]; then
 			echo "Failed to run mkdumprd"
 			$LOGGER "mkdumprd: failed to make kdump initrd"

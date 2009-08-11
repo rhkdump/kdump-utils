@@ -28,7 +28,7 @@ Source100: dracut-files.tbz2
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires(pre): coreutils chkconfig sed zlib 
-Requires: busybox >= 1.2.0
+Requires: busybox >= 1.2.0, dracut
 BuildRequires: dash 
 BuildRequires: zlib-devel zlib zlib-static elfutils-devel-static glib2-devel 
 BuildRequires: pkgconfig intltool gettext 

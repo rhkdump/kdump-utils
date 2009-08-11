@@ -6,4 +6,4 @@
 #########################################################
 
 
-dracutmodules="base crypt lvm kernel-modules rootfs-block udev-rules"
+dracutmodules="base kdumpbase crypt lvm kernel-modules rootfs-block udev-rules"

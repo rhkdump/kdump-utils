@@ -1,23 +1,3 @@
 #!/bin/bash
-dracut_install mount mknod mkdir modprobe pidof sleep chroot \
-    sed ls flock cp mv dmesg rm ln
-if [ ! -e "${initdir}/bin/sh" ]; then
-    dracut_install bash
-    (ln -s bash "${initdir}/bin/sh" || :)
-fi
-# install our scripts and hooks
+rm -f $initdir/init
 inst "/etc/kdump-adv-conf/init" "/init"
-inst "$moddir/initqueue" "/sbin/initqueue"
-mkdir -p ${initdir}/initqueue
-mkdir -p ${initdir}/tmp
-# Bail out if switch_root does not exist
-if which switch_root >/dev/null 2>&1; then
-    dracut_install switch_root 
-else
-    inst "$moddir/switch_root" "/sbin/switch_root" \
-	|| derror "Failed to install switch_root"
-fi
-inst "$moddir/dracut-lib.sh" "/lib/dracut-lib.sh"
-inst_hook cmdline 10 "$moddir/parse-root-opts.sh"
-inst_hook cmdline 20 "$moddir/parse-blacklist.sh"
-inst_hook pre-pivot 50 "$moddir/selinux-loadpolicy.sh"
