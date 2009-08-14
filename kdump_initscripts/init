@@ -174,60 +174,12 @@ while :; do
         && { flock -s 9 ; emergency_shell "Can't mount root filesystem"; } 9>/.console_lock
 done
 
-# pre pivot scripts are sourced just before we switch over to the new root.
-getarg 'rdbreak=pre-pivot' && emergency_shell "Break pre-pivot"
-source_all pre-pivot
+# We have the root file system mounted under $NEWROOT, so copy 
+# the vmcore there and call it a day
+#
+DATEDIR=`date +%d.%m.%y-%T`
+mkdir -p $NEWROOT/var/crash/$DATEDIR
+cp /proc/vmcore /var/crash/$DATEDIR/vmcore
 
-# by the time we get here, the root filesystem should be mounted.
-# Try to find init.
-for i in "$(getarg init=)" /sbin/init /etc/init /init /bin/sh; do
-    [ -f "$NEWROOT$i" -a -x "$NEWROOT$i" ] && { INIT="$i"; break; }
-done
-[ "$INIT" ] || {
-    echo "Cannot find init!"
-    echo "Please check to make sure you passed a valid root filesystem!"
-    emergency_shell
-}
-
-getarg rdbreak && emergency_shell "Break before switch_root"
-
-HARD=""
-while pidof udevd >/dev/null 2>&1; do 
-    for pid in $(pidof udevd); do
-	kill $HARD $pid >/dev/null 2>&1
-    done
-    HARD="-9"
-done
-
-# Clean up the environment
-for i in $(export -p); do
-    i=${i#declare -x}
-    i=${i#export}
-    i=${i%%=*}
-    [ "$i" = "root" -o "$i" = "PATH" -o "$i" = "HOME" -o "$i" = "TERM" ] || unset $i
-done
-
-initargs=""
-initrdargs="$initrdargs console BOOT_IMAGE rdbreak rdinitdebug rdudevinfo rdudevdebug rdnetdebug rdcopystate rdshell"
-
-for x in "$@"; do
-    for s in $initrdargs; do       
-	[ "${x%%=*}" = $s ] && continue 2
-    done
-    initargs="$initargs $x"
-done
-
-# Copy state
-mkdir /dev/.initramfs/
-if getarg rdcopystate; then
-    cp /tmp/* /dev/.initramfs/ >/dev/null 2>&1
-else
-    cp /tmp/net.* /dev/.initramfs/ >/dev/null 2>&1
-fi
-
-exec switch_root "$NEWROOT" "$INIT" $initargs || {
-    # davej doesn't like initrd bugs
-    echo "Something went very badly wrong in the initrd.  Please "
-    echo "file a bug against mkinitrd."
-    emergency_shell
-}
+# Once the copy is done, just reboot the system
+reboot -f
