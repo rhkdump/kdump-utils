@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 24%{?dist}
+Release: 25%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -261,6 +261,9 @@ done
 
 
 %changelog
+* Thu Sep 10 2009 Neil Horman <nhorman@redhat.com> - 2.0.0-25
+- Fix dracut module check file (bz 522486)
+
 * Thu Aug 13 2009 Neil Horman <nhorman@redhat.com> - 2.0.0-24
 - update kdump adv conf init script & dracut module
 
