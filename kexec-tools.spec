@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 25%{?dist}
+Release: 26%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -261,6 +261,9 @@ done
 
 
 %changelog
+* Fri Sep 11 2009 Neil Horman <nhorman@redhat.com> - 2.0.0-26
+- Rebuild for translation team (bz 522415)
+
 * Thu Sep 10 2009 Neil Horman <nhorman@redhat.com> - 2.0.0-25
 - Fix dracut module check file (bz 522486)
 
