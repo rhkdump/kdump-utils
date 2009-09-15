@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 26%{?dist}
+Release: 27%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -150,6 +150,9 @@ make -C kexec-tools-po install DESTDIR=$RPM_BUILD_ROOT
 # untar the dracut package
 mkdir -p -m755 $RPM_BUILD_ROOT/etc/kdump-adv-conf
 tar -C $RPM_BUILD_ROOT/etc/kdump-adv-conf -jxvf %{SOURCE100}
+chmod 755 $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99kdumpbase/check
+chmod 755 $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99kdumpbase/install
+
 
 #and move the custom dracut modules to the dracut directory
 mkdir -p $RPM_BUILD_ROOT/usr/share/dracut/modules.d/
@@ -261,6 +264,9 @@ done
 
 
 %changelog
+* Tue Sep 15 2009 Neil Horman <nhorman@redhat.com> - 2.0.0-27
+- Fixing permissions on dracut module files
+
 * Fri Sep 11 2009 Neil Horman <nhorman@redhat.com> - 2.0.0-26
 - Rebuild for translation team (bz 522415)
 

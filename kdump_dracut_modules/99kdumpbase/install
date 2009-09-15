@@ -2,4 +2,4 @@
 rm -f $initdir/init
 inst "/etc/kdump-adv-conf/init" "/init"
 inst "/bin/date" "/bin/date"
-inst "/usr/bin/reboot" "bin/reboot"
+inst "/usr/bin/reboot" "/bin/reboot"
