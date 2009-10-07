@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-02-19 14:50-0500\n"
+"POT-Creation-Date: 2009-10-05 11:50-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,28 +16,29 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: firstboot_kdump.py:47
+#: ../firstboot_kdump.py:49 ../firstboot_kdump.py:50 ../firstboot_kdump.py:54
 msgid "Kdump"
 msgstr ""
 
-#: firstboot_kdump.py:188 firstboot_kdump.py:209
+#. detected total amount of system memory
+#: ../firstboot_kdump.py:195 ../firstboot_kdump.py:216
 #, python-format
 msgid "%s"
 msgstr ""
 
-#: firstboot_kdump.py:189
+#: ../firstboot_kdump.py:196
 msgid "_Total System Memory (MB):"
 msgstr ""
 
-#: firstboot_kdump.py:201
+#: ../firstboot_kdump.py:208
 msgid "_Kdump Memory (MB):"
 msgstr ""
 
-#: firstboot_kdump.py:210
+#: ../firstboot_kdump.py:217
 msgid "_Usable System Memory (MB):"
 msgstr ""
 
-#: firstboot_kdump.py:224
+#: ../firstboot_kdump.py:231
 msgid ""
 "Kdump is a kernel crash dumping mechanism. In the event of a system crash, "
 "kdump will capture information from your system that can be invaluable in "
@@ -45,20 +46,20 @@ msgid ""
 "portion of system memory that will be unavailable for other uses."
 msgstr ""
 
-#: firstboot_kdump.py:284
+#: ../firstboot_kdump.py:289
 msgid "Sorry, your system does not have enough memory for kdump to be viable!"
 msgstr ""
 
-#: firstboot_kdump.py:290
+#: ../firstboot_kdump.py:295
 msgid "Sorry, Xen kernels do not support kdump at this time!"
 msgstr ""
 
-#: firstboot_kdump.py:296
+#: ../firstboot_kdump.py:301
 #, python-format
 msgid "Sorry, the %s architecture does not support kdump at this time!"
 msgstr ""
 
-#: firstboot_kdump.py:313
+#: ../firstboot_kdump.py:318
 #, python-format
 msgid ""
 "Changing Kdump settings requires rebooting the system to reallocate memory "
@@ -66,6 +67,6 @@ msgid ""
 "system after firstboot is complete?"
 msgstr ""
 
-#: firstboot_kdump.py:330
+#: ../firstboot_kdump.py:335
 msgid "Error! No bootloader config file found, aborting configuration!"
 msgstr ""
