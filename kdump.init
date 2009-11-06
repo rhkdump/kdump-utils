@@ -49,6 +49,17 @@ function save_core()
 	else
 		$LOGGER "failed to save a vmcore to $coredir"
 	fi
+
+	# pass the dmesg to Abrt tool if exists, in order
+	# to collect the kernel oops message.
+	# https://fedorahosted.org/abrt/
+	if [ -x /usr/bin/dumpoops ]; then
+		makedumpfile --dump-dmesg $coredir/vmcore $coredir/dmesg >/dev/null 2>&1
+		dumpoops -d $coredir/dmesg >/dev/null 2>&1
+		if [$? == 0]; then
+			$LOGGER "kernel oops has been collected by abrt tool"
+		fi
+	fi
 }
 
 function check_config()
