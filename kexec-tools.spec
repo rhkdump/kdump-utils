@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 28%{?dist}
+Release: 29%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -264,6 +264,9 @@ done
 
 
 %changelog
+* Mon Nov 23 2009 Neil Horman <nhorman@redhat.com> - 2.0.0-29
+- Updating firstboot script to RHEL-6 version (bz 539812)
+
 * Fri Nov 06 2009 Neil Horman <nhorman@redhat.com> - 2.0.0-28
 - Added abrt infrastructure to kdump init script (bz 533370)
 

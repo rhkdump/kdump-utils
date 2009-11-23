@@ -48,12 +48,13 @@ class moduleClass(Module):
 		self.priority = 100
 		self.sidebarTitle = N_("Kdump")
 		self.title = N_("Kdump")
+		self.reboot = False
 
 	# runPriority determines the order in which this module runs in firstboot
 	runPriority = 70
 	moduleName = _("Kdump")
 	windowName = moduleName
-	needsReboot = False
+	reboot = False
 
 	# possible bootloaders we'll need to adjust
 	#			 bootloader : (config file, kdump offset)
@@ -69,6 +70,9 @@ class moduleClass(Module):
 	# list of platforms that have a separate kernel-kdump
 	kernelKdumpArches = [ "ppc64" ]
 	kernelKdumpInstalled = False
+
+	def needsReboot(self):
+		return self.reboot
 
 	# toggle sensitivity of kdump config bits
 	def showHide(self, status):
@@ -139,6 +143,7 @@ class moduleClass(Module):
 		self.kdumpMem = 0
 		self.kdumpOffset = 0
 		self.origCrashKernel = ""
+		self.kdumpEnabled = False
 		chkConfigStatus=commands.getoutput('/sbin/chkconfig --list kdump')
 		if chkConfigStatus.find("on") > -1:
 			self.kdumpEnabled = True
@@ -148,13 +153,16 @@ class moduleClass(Module):
 					 cmdLine.split())[0].split("=")[1]
 			if self.doDebug:
 				print "crashString is %s" % crashString
-			(self.kdumpMem, self.kdumpOffset) = [int(m[:-1]) for m in crashString.split("@")]
+			if crashString.find("@") != -1:
+				(self.kdumpMem, self.kdumpOffset) = [int(m[:-1]) for m in crashString.split("@")]
+			else:
+				self.kdumpMem = int(crashString[:-1])
+				self.kdumpOffset = 0
 			self.availMem += self.kdumpMem
-			self.origCrashKernel = "%dM@%dM" % (self.kdumpMem, self.kdumpOffset)
+			self.origCrashKernel = "%dM" % (self.kdumpMem)
 			self.kdumpMemInitial = self.kdumpMem
 		else:
 			self.kdumpEnabled = False
-			self.kdumpMemInitial = 0
 		self.initialState = self.kdumpEnabled
 
 		# Do some sanity-checking and try to present only sane options.
@@ -325,10 +333,10 @@ class moduleClass(Module):
 			dlg.destroy()
 
 			if rc == gtk.RESPONSE_NO:
-				self.needsReboot = False
+				self.reboot = False
 				return RESULT_SUCCESS 
 			else:
-				self.needsReboot = True
+				self.reboot = True
 
 				# Find bootloader if it exists, and update accordingly
 				if self.getBootloader() == None:
@@ -341,8 +349,8 @@ class moduleClass(Module):
 
 				# Are we adding or removing the crashkernel param?
 				if self.kdumpEnabled:
-					grubbyCmd = "/sbin/grubby --%s --update-kernel=/boot/vmlinuz-%s --args=crashkernel=%iM@%iM" \
-								% (self.bootloader, self.runningKernel, reservedMem, self.offset)
+					grubbyCmd = "/sbin/grubby --%s --update-kernel=/boot/vmlinuz-%s --args=crashkernel=%iM" \
+								% (self.bootloader, self.runningKernel, reservedMem)
 					chkconfigStatus = "on"
 				else:
 					grubbyCmd = "/sbin/grubby --%s --update-kernel=/boot/vmlinuz-%s --remove-args=crashkernel=%s" \
@@ -358,7 +366,7 @@ class moduleClass(Module):
 					if self.bootloader == 'yaboot':
 						os.system('/sbin/ybin')
 		else:
-			self.needsReboot = False
+			self.reboot = False
 
 
 		return RESULT_SUCCESS
