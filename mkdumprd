@@ -188,6 +188,9 @@ findmodule() {
 	findmodule ieee1394
 	findmodule ohci1394
 	modName="sbp2"
+    elif [ "$modName" = "raid6" ]; then
+	findmodule raid456
+        modName="raid456"
     else
 	moduledep $modName
 	for i in $deps; do
