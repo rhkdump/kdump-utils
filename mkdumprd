@@ -996,6 +996,9 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                         ;;
             esac
             ;;
+        disk_timeout)
+            DISK_TIMEOUT=$config_val
+            ;;
         *)
             IS_COMMENT=`echo $config_opt | grep ^#.*$`
             if [ -n "$IS_COMMENT" -o -z "$config_val" ]
@@ -1566,12 +1569,18 @@ done
 
 cat >> $MNTIMAGE/init << EOF
 echo "Waiting for required block device discovery"
+timeout_count=0
 for i in \`cat /etc/critical_disks\`
 do
     echo -n Waiting for \$i...
     while [ ! -d /sys/block/\$i ]
     do
         sleep 1
+        if [ -n "$DISK_TIMEOUT" -a "\$timeout_count" -ge "$DISK_TIMEOUT" ]
+        then
+            break 2
+        fi
+        timeout_count=\`expr \$timeout_count + 1\`
     done
     echo Found
 done
@@ -1952,6 +1961,8 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                 extra_bins)
                     ;;
                 extra_modules)
+                    ;;
+                disk_timeout)
                     ;;
                 default)
                     ;;

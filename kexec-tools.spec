@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 31%{?dist}
+Release: 32%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -125,6 +125,7 @@ mkdir -p -m755 $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d
 mkdir -p -m755 $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
 mkdir -p -m755 $RPM_BUILD_ROOT%{_localstatedir}/crash
 mkdir -p -m755 $RPM_BUILD_ROOT%{_mandir}/man8/
+mkdir -p -m755 $RPM_BUILD_ROOT%{_mandir}/man5/
 mkdir -p -m755 $RPM_BUILD_ROOT%{_docdir}
 mkdir -p -m755 $RPM_BUILD_ROOT%{_datadir}/kdump
 mkdir -p -m755 $RPM_BUILD_ROOT%{_sysconfdir}/udev/rules.d
@@ -267,6 +268,9 @@ done
 
 
 %changelog
+* Wed Feb 17 2010 Neil Horman <nhorman@redhat.com> - 2.0.0-32
+- Fixed spec file error
+
 * Wed Feb 17 2010 Neil Horman <nhorman@redhat.com> - 2.0.0-31
 - Adding kdump.conf man page
 - Adding disk timeout parameter (bz 566135)

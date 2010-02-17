@@ -1,0 +1,165 @@
+.TH KDUMP.CONF 5 "07/23/2008" "kexec-tools"
+
+.SH NAME
+kdump.conf \- configuration file for kdump kernel.
+
+.SH DESCRIPTION 
+
+kdump.conf is a configuration file for the kdump kernel crash
+collection service.
+
+kdump.conf provides post-kexec instructions to the kdump kernel. It is
+stored in the initrd file managed by the kdump service. If you change
+this file and do not want to restart before it takes effect, restart
+the kdump service to rebuild to initrd.
+
+For most configurations, you can simply review the examples provided
+in the stock /etc/kdump.conf.
+
+.B NOTE: 
+kdump.conf only affects the behavior of the initramfs.  Please read the
+kdump operational flow section of kexec-kdump-howto.txt in the docs to better
+understand how this configuration file affects the behavior of kdump.
+
+.SH OPTIONS
+
+.B raw <partition>
+.RS
+Will dd /proc/vmcore into <partition>.
+.RE
+
+.B net <nfs mount>
+.RS
+Will mount fs and copy /proc/vmcore to <mnt>/var/crash/%HOST-%DATE/,
+supports DNS. Note that a fqdn should be used as the server name in the 
+mount point
+.RE
+
+.B net <user@server>
+.RS
+Will scp /proc/vmcore to <user@server>:/var/crash/%HOST-%DATE/,
+supports DNS. NOTE: make sure user has necessary write permissions on
+server and that a fqdn is used as the server name
+.RE
+
+.B <fs type> <partition>
+.RS
+Will mount -t <fs type> <partition> /mnt and copy /proc/vmcore to
+/mnt/var/crash/%DATE/.  NOTE: <partition> can be a device node, label
+or uuid.
+.RE
+
+.B path <path>
+.RS
+Append path to the filesystem device which you are dumping to.
+Ignored for raw device dumps.  If unset, will default to /var/crash.
+.RE
+
+.B disk_timeout <seconds>
+.RS
+Number of seconds to wait for disks to appear in sysfs prior to continuing
+Normally, the kdump initramfs waits for disks that it has determined it needs to
+use during the course of saving the vmcore.  By default, it pauses indefinately,
+but in certain cases, it may wait indefinately on disks that either wont ever
+appear (if a usb drive is removed for instance), or for disks that it actually
+doesn't need (depending on configuration).  This allows the pause to be
+terminated in those events.
+.RE
+
+.B core_collector makedumpfile <options> 
+.RS
+This directive allows you to use the dump filtering program
+makedumpfile to retrieve your core, which on some arches can
+drastically reduce core file size.  See /sbin/makedumpfile --help for
+a list of options.  Note that the -i and -g options are not needed
+here, as the initrd will automatically be populated with a config file
+appropriate for the running kernel.
+.RE
+
+.B link_delay <seconds> 
+.RS
+Some network cards take a long time to initialize, and some spanning
+tree enabled networks do not transmit user traffic for long periods
+after a link state changes.  This optional parameter defines a wait
+period after a link is activated in which the initramfs will wait
+before attempting to transmit user data.
+.RE
+
+.B kdump_post <binary | script>
+.RS
+This directive allows you to run a specified
+executable just after the memory dump process
+terminates. The exit status from the dump process
+is fed to the kdump_post executable, which can be
+used to trigger different actions for success or
+failure.
+.PP
+Note that scripts written for use with this
+directive must use the /bin/msh interpreter
+.RE
+
+.B kdump_pre <binary | script>
+.RS
+Works just like the kdump_post directive, but instead
+of running after the dump process, runs immediately
+before.  Exit status of this binary is interpreted
+as follows:
+.PP
+0 - continue with dump process as usual
+.PP
+non 0 - reboot/halt the system
+.PP
+Note that scripts written for this directive must use 
+the /bin/msh interpreter
+.RE
+
+.B extra_bins <binaries | shell scripts>
+.RS
+This directive allows you to specify additional
+binaries or shell scripts you'd like to include in
+your kdump initrd. Generally only useful in
+conjunction with a kdump_post binary or script that
+relies on other binaries or scripts.
+.RE
+
+.B extra_modules <module(s)>
+.RS
+This directive allows you to specify extra kernel
+modules that you want to be loaded in the kdump
+initrd, typically used to set up access to
+non-boot-path dump targets that might otherwise
+not be accessible in the kdump environment. Multiple
+modules can be listed, separated by a space, and any
+dependent modules will automatically be included.
+.RE
+
+.B options <module> <option list>
+.RS
+This directive allows you to specify options to apply to 
+modules in the initramfs.  This directive overrides options
+specified in /etc/modprobe.conf
+.RE
+
+.B default <reboot | halt | shell> 
+.RS
+Action to preform instead of mounting root fs and running init process
+reboot: If the default action is reboot simply reboot the system (this is what
+most people will want, as it returns the system to a nominal state).  shell: If the default
+action is shell, then drop to an msh session inside the initramfs from
+where you can manually preform additional recovery actions.  Exiting this shell
+reboots the system.  halt: bring the system to a halt, requiring manual reset
+NOTE: Since kdump.conf is only used to configure the kdump initramfs
+specifying a default action without also specifying a dump target
+will cause the default directive to be ignored.  A warning  will be issued
+on service start if this invalid configuration is specified.  Also note that if
+no default action is specified, reboot is implied.
+.RE
+
+.SH EXAMPLES
+
+see 
+.I /etc/kdump.conf
+
+.SH SEE ALSO
+
+kexec(8) mkdumprd(8)
