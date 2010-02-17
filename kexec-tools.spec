@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 30%{?dist}
+Release: 31%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -19,6 +19,7 @@ Source11: firstboot_kdump.py
 Source12: mkdumprd.8
 Source13: kexec-tools-po.tar.gz
 Source14: 98-kexec.rules
+Source15: kdump.conf.5
 
 #######################################
 # These are sources for mkdumprd2
@@ -140,6 +141,7 @@ install -m 644 kexec/kexec.8 $RPM_BUILD_ROOT%{_mandir}/man8/kexec.8
 install -m 755 %{SOURCE11} $RPM_BUILD_ROOT%{_datadir}/kdump/firstboot_kdump.py
 install -m 644 %{SOURCE12} $RPM_BUILD_ROOT%{_mandir}/man8/mkdumprd.8
 install -m 644 %{SOURCE14} $RPM_BUILD_ROOT%{_sysconfdir}/udev/rules.d/98-kexec.rules
+install -m 644 %{SOURCE15} $RPM_BUILD_ROOT%{_mandir}/man5/kdump.conf.5
 
 %ifarch %{ix86} x86_64 ia64 ppc64
 install -m 755 makedumpfile-1.3.3/makedumpfile $RPM_BUILD_ROOT/sbin/makedumpfile
@@ -257,6 +259,7 @@ done
 %{_datadir}/dracut/modules.d/*
 %dir %{_localstatedir}/crash
 %{_mandir}/man8/*
+%{_mandir}/man5/*
 %doc News
 %doc COPYING
 %doc TODO
@@ -264,6 +267,10 @@ done
 
 
 %changelog
+* Wed Feb 17 2010 Neil Horman <nhorman@redhat.com> - 2.0.0-31
+- Adding kdump.conf man page
+- Adding disk timeout parameter (bz 566135)
+
 * Tue Dec 01 2009 Neil Horman <nhorman@redhat.com> - 2.0.0-30
 - Fix raid support in mkdumprd (bz 519767)
 
