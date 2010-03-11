@@ -140,11 +140,11 @@ findone() {
 }
 
 findall() {
-    echo nash-find "$@" | /sbin/nash --force --quiet
+    find "$@"
 }
 
 dm_get_uuid() {
-    echo dm get_uuid "$1" | /sbin/nash --force --quiet
+    dmsetup info "$1" | awk '/^.*UUID.*/ {print $2}'
 }
 
 findmodule() {
@@ -260,12 +260,9 @@ inst() {
 }
 
 readlink() {
-    echo nash-readlink "$1" | /sbin/nash --force --quiet
+    readlink "$1"
 }
 
-access() {
-    echo nash-access -w $t | /sbin/nash --force --quiet
-}
 
 findstoragedriverinsys () {
     while [ ! -L device ]; do
@@ -645,7 +642,6 @@ modulefile=/etc/modprobe.conf
 TMPDIR=""
 for t in /tmp /var/tmp /root ${PWD}; do
     if [ ! -d $t ]; then continue; fi
-    if ! access -w $t ; then continue; fi
 
     fs=$(df -T $t 2>/dev/null | awk '{line=$1;} END {printf $2;}')
     if [ "$fs" != "tmpfs" ]; then

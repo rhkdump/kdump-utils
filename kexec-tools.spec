@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 32%{?dist}
+Release: 33%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -268,6 +268,9 @@ done
 
 
 %changelog
+* Thu Mar 11 2010 Neil Horman <nhorman@redhat.com> - 2.0.0-33
+- Remove nash references from mkdumprd
+
 * Wed Feb 17 2010 Neil Horman <nhorman@redhat.com> - 2.0.0-32
 - Fixed spec file error
 
