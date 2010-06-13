@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 36%{?dist}
+Release: 37%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -280,6 +280,9 @@ done
 
 
 %changelog
+* Sun Jun 13 2010 Lubomir Rintel <lkundrak@v3.sk> - 2.0.0-37
+- Fix a syntax error in kdump init script
+
 * Sun Jun 13 2010 Lubomir Rintel <lkundrak@v3.sk> - 2.0.0-36
 - Cosmetic mkdumprd fixes (drop an unused function, streamline another)
 
