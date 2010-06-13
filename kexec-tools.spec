@@ -1,10 +1,10 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 33%{?dist}
+Release: 36%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
-Source0: %{name}-%{version}.tar.bz2
+Source0: http://www.kernel.org/pub/linux/kernel/people/horms/kexec-tools/%{name}-%{version}.tar.bz2
 Source1: kdump.init
 Source2: kdump.sysconfig
 Source3: kdump.sysconfig.x86_64
@@ -13,7 +13,7 @@ Source5: kdump.sysconfig.ppc64
 Source6: kdump.sysconfig.ia64
 Source7: mkdumprd
 Source8: kdump.conf
-Source9: makedumpfile-1.3.3.tar.gz
+Source9: http://downloads.sourceforge.net/project/makedumpfile/makedumpfile/1.3.5/makedumpfile-1.3.5.tar.gz
 Source10: kexec-kdump-howto.txt
 Source11: firstboot_kdump.py
 Source12: mkdumprd.8
@@ -47,6 +47,8 @@ Obsoletes: diskdumputils netdump
 #
 # Patches 101 through 200 are meant for x86_64 kexec-tools enablement
 #
+Patch101: kexec-tools-2.0.0-fix-page-offset.patch
+Patch102: kexec-tools-2.0.0-x8664-kernel-text-size.patch
 
 #
 # Patches 201 through 300 are meant for ia64 kexec-tools enablement
@@ -69,6 +71,9 @@ Obsoletes: diskdumputils netdump
 #
 Patch601: kexec-tools-2.0.0-disable-kexec-test.patch
 Patch602: kexec-tools-2.0.0-makedumpfile-dynamic-build.patch
+Patch603: kexec-tools-2.0.0-makedumpfile-2.6.32-utsname.patch
+Patch604: kexec-tools-2.0.0-makedumpfile-boption.patch
+Patch605: kexec-tools-2.0.0-makedumpfile-2.6.32-sparsemem.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -83,8 +88,14 @@ component of the kernel's kexec feature.
 mkdir -p -m755 kcp
 tar -z -x -v -f %{SOURCE9}
 
+%patch101 -p1
+%patch102 -p1
+
 %patch601 -p1
 %patch602 -p1
+%patch603 -p1
+%patch604 -p1
+%patch605 -p1
 
 tar -z -x -v -f %{SOURCE13}
 
@@ -114,7 +125,7 @@ cp %{SOURCE10} .
 
 make
 %ifarch %{ix86} x86_64 ia64 ppc64
-make -C makedumpfile-1.3.3
+make -C makedumpfile-1.3.5
 %endif
 make -C kexec-tools-po
 
@@ -145,7 +156,8 @@ install -m 644 %{SOURCE14} $RPM_BUILD_ROOT%{_sysconfdir}/udev/rules.d/98-kexec.r
 install -m 644 %{SOURCE15} $RPM_BUILD_ROOT%{_mandir}/man5/kdump.conf.5
 
 %ifarch %{ix86} x86_64 ia64 ppc64
-install -m 755 makedumpfile-1.3.3/makedumpfile $RPM_BUILD_ROOT/sbin/makedumpfile
+install -m 755 makedumpfile-1.3.5/makedumpfile $RPM_BUILD_ROOT/sbin/makedumpfile
+install -m 644 makedumpfile-1.3.5/makedumpfile.8.gz $RPM_BUILD_ROOT/%{_mandir}/man8/makedumpfile.8.gz
 %endif
 make -C kexec-tools-po install DESTDIR=$RPM_BUILD_ROOT
 %find_lang %{name}
@@ -268,6 +280,52 @@ done
 
 
 %changelog
+* Sun Jun 13 2010 Lubomir Rintel <lkundrak@v3.sk> - 2.0.0-36
+- Cosmetic mkdumprd fixes (drop an unused function, streamline another)
+
+* Sat May 29 2010 CAI Qian <caiqian@redhat.com> - 2.0.0-35
+- Forward-port from F13
+- Fixed kernel text area search in kcore (bz 587750)
+
+* Sat May 29 2010 CAI Qian <caiqian@redhat.com> - 2.0.0-34
+- Massive forward-port from RHEL6
+- Update kexec-kdump-howto.txt
+- Update docs to reflect use of ext4
+- Update mkdumprd to pull in all modules needed
+- Fix mkdumprd typo
+- Removed universal add of ata_piix from mkdumprd
+- Fix infinite loop from modprobe changes
+- Fixed kexec-kdump-howto.doc for RHEL6
+- Update makedumpfile to 1.3.5
+- Improved mkdumprd run time
+- Cai's fix for broken regex
+- Fixing crashkernel syntax parsing
+- Fix initscript to return proper LSB return codes
+- Fixed bad call to resolve_dm_name
+- Added poweroff option to mkdumprd
+- Fixed readlink issue
+- Fixed x86_64 page_offset specifictaion
+- Fixed lvm setup loop to not hang
+- Added utsname support to makedumpfile for 2.6.32
+- Fix critical_disks list to exclude cciss/md
+- Add help info for -b option
+- Add ability to handle firmware hotplug events
+- Update mkdumprd to deal with changes in busybox fsck
+- Vitaly's fix to detect need for 64 bit elf
+- Fix major/minor numbers on /dev/rtc
+- Fix ssh id propogation w/ selinux
+- Add blacklist feature to kdump.conf
+- Removed rhpl code from firstboot
+- Fixed firstboot enable sense
+- Remove bogus debug comment from mkdumprd.
+- Handle SPARSEMEM properly
+- Fix scp monitoring script
+- Fix firstboot to find grub on EFI systems
+- Fixed mkdumprd to remove dup insmod
+- Fixed kdump fsck pause
+- Fixed kdump option handling
+- fixed raid5 module detection
+
 * Thu Mar 11 2010 Neil Horman <nhorman@redhat.com> - 2.0.0-33
 - Remove nash references from mkdumprd
 

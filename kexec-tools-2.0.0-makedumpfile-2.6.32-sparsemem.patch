@@ -1,0 +1,66 @@
+From: Masayuki Igawa <igawa@mxs.nes.nec.co.jp>
+Date: Tue, 6 Apr 2010 04:50:45 +0000 (+0900)
+Subject: [PATCH] handle !SPARSEMEM_EX properly.
+X-Git-Url: http://makedumpfile.git.sourceforge.net/git/gitweb.cgi?p=makedumpfile%2Fmakedumpfile;a=commitdiff_plain;h=27b71566ec11128c5b061a350e467546f2d26be6
+
+[PATCH] handle !SPARSEMEM_EX properly.
+
+In !SPARSEMEM_EX case, the symbol mem_section points a array of struct
+mem_section, doesn't point a array of pointer to mem_section[], so I
+think the check:
+
+	if (!is_kvaddr(mem_sec[SECTION_NR_TO_ROOT(nr)]))
+		return NOT_KV_ADDR;
+
+in nr_to_section() is not a valid check in this case.
+
+To make the matters worse, if CONFIG_CGROUP_MEM_RES_CTLR is enabled, the
+end of struct mem_section is padded with 0.
+
+So, reading mem_section by "rd" of crash will look like:
+
+	crash> rd mem_section 128
+	c08b71e0:  c9002003 c9001200 f7000000 00000000
+	c08b71f0:  c9002003 c9001260 f6980000 00000000
+	c08b7200:  c9002003 c90012c0 f6300000 00000000
+	c08b7210:  c9002003 c9001320 f5c80000 00000000
+
+This means nr_to_section() will return 0 when "nr" is 3,7,11,... because
+it meets the condition(mem_sec[SECTION_NR_TO_ROOT(nr)] == mem_sec[nr]
+== 0 == !is_kvaddr).
+
+As a result, mem_map for section 3,7,11,... cannot be handled properly.
+
+This patch is a fix for this problem. nr_to_section() will check "addr"
+by is_kvaddr() later anyway, so this patch just removes the problematic
+check.
+
+Signed-off-by: Masayuki Igawa <igawa@mxs.nes.nec.co.jp>
+Signed-off-by: Daisuke Nishimura <nishimura@mxp.nes.nec.co.jp>
+---
+
+diff -up kexec-tools-2.0.0/makedumpfile-1.3.5/makedumpfile.c.orig kexec-tools-2.0.0/makedumpfile-1.3.5/makedumpfile.c
+--- kexec-tools-2.0.0/makedumpfile-1.3.5/makedumpfile.c.orig	2010-04-06 17:01:15.858262785 +0200
++++ kexec-tools-2.0.0/makedumpfile-1.3.5/makedumpfile.c	2010-04-06 17:01:15.865290984 +0200
+@@ -3550,9 +3550,6 @@ nr_to_section(unsigned long nr, unsigned
+ {
+ 	unsigned long addr;
+ 
+-	if (!is_kvaddr(mem_sec[SECTION_NR_TO_ROOT(nr)]))
+-		return NOT_KV_ADDR;
+-
+ 	if (is_sparsemem_extreme())
+ 		addr = mem_sec[SECTION_NR_TO_ROOT(nr)] +
+ 		    (nr & SECTION_ROOT_MASK()) * SIZE(mem_section);
+diff -up kexec-tools-2.0.0/makedumpfile-1.3.5/makedumpfile.h.orig kexec-tools-2.0.0/makedumpfile-1.3.5/makedumpfile.h
+--- kexec-tools-2.0.0/makedumpfile-1.3.5/makedumpfile.h.orig	2009-11-11 01:44:51.000000000 +0100
++++ kexec-tools-2.0.0/makedumpfile-1.3.5/makedumpfile.h	2010-04-06 17:02:36.471367908 +0200
+@@ -449,7 +449,7 @@ do { \
+ #define KVER_MIN_SHIFT 16
+ #define KERNEL_VERSION(x,y,z) (((x) << KVER_MAJ_SHIFT) | ((y) << KVER_MIN_SHIFT) | (z))
+ #define OLDEST_VERSION		KERNEL_VERSION(2, 6, 15)/* linux-2.6.15 */
+-#define LATEST_VERSION		KERNEL_VERSION(2, 6, 31)/* linux-2.6.31 */
++#define LATEST_VERSION		KERNEL_VERSION(2, 6, 32)/* linux-2.6.32 */
+ 
+ /*
+  * vmcoreinfo in /proc/vmcore

@@ -136,39 +136,8 @@ function check_config()
 # 4GB of ram available. Returns 1 if we do, 0 if we dont
 function need_64bit_headers()
 {
-
-	MEMSZ=`sed -e's/\(^[0-9]\+.*\)/0x\1/' -e's/\(-\)\(.*\)/ 0x\2/' /proc/iomem | \
-	awk 'BEGIN {
-		totalmem=0;
-		segmentmem=0;
-	     }
-	     /.*RAM.*/ {
-		start = strtonum($1);
-		end = strtonum($2);
-		segmentmem=end-start;
-		totalmem=totalmem+(segmentmem/1024);
-		if (end >= 4194304) {
-			totalmem=totalmem+4194304;
-		}
-	     }
-	     END {
-		printf "%d", (totalmem+1);
-	     }'`
-
-	#The AWK script above computes the total number of KB 
-	#in the RAM areas of /proc/iomem
-	#Note also that we set totalmem to 4GB in the event that
-	#any physical address is larger than 4GB.  This lets us
-	#default to 64 bit ELF headers for PAE kernels, which 
-	#need then to access those higher addresses.
-
-	#This comparison tells us if the above amount is more than 
-	#4GB (4096 KB).  I do the funny math to avoid overflow
-	if [ $MEMSZ -ge 4194304 ]
-	then
-		return 1
-	fi
-	return 0
+    return `tail -n 1 /proc/iomem | awk '{ split ($1, r, "-"); \
+    print (strtonum("0x" r[2]) > strtonum("0xffffffff")); }'`
 }
 
 # Load the kdump kerel specified in /etc/sysconfig/kdump
@@ -186,6 +155,10 @@ function load_kdump()
 	if [ "$ARCH" == "ppc64" ]
 	then
 		MEM_RESERVED=`grep "crashkernel=[0-9]\+[MmKkGg]@[0-9]\+[MmGgKk]" /proc/cmdline`
+		if [ -z "$MEM_RESERVED" ] 
+		then
+			MEM_RESERVED=`grep "crashkernel=[0-9]\+[MmKkGg]" /proc/cmdline`
+		fi
 	else
 		MEM_RESERVED=`grep "Crash kernel" /proc/iomem | grep -v "00000000-00000000"`
 	fi
@@ -220,7 +193,7 @@ function load_kdump()
 		fi
 	fi
 
-	KDUMP_COMMANDLINE=`echo $KDUMP_COMMANDLINE | sed -e 's/crashkernel=[0-9]\+[MmKkGg]@[0-9]\+[MmGgKk]//'`
+	KDUMP_COMMANDLINE=`echo $KDUMP_COMMANDLINE | sed -e 's/crashkernel=[^ ]*//'`
 	KDUMP_COMMANDLINE="${KDUMP_COMMANDLINE} ${KDUMP_COMMANDLINE_APPEND}"
 
 	$KEXEC $KEXEC_ARGS $standard_kexec_args \
@@ -284,10 +257,10 @@ function propagate_ssh_key()
 	SSH_SERVER=`echo $SSH_TARGET | sed -e's/\(.*@\)\(.*$\)/\2/'`
  
 	#now send the found key to the found server
-	cat $KEYFILE | ssh -x $SSH_USER@$SSH_SERVER "mkdir -p ~$SSH_USER/.ssh; chmod 700 ~$SSH_USER/.ssh;  cat >> ~$SSH_USER/.ssh/authorized_keys2; chmod 600 ~$SSH_USER/.ssh/authorized_keys2"
+	ssh-copy-id -i $KEYFILE $SSH_USER@$SSH_SERVER &>/dev/null
 	RET=$?
 	if [ $RET == 0 ]; then
-		echo $KEYFILE has been added to ~$SSH_USER/.ssh/authorized_keys2 on $SSH_SERVER
+		echo $KEYFILE has been added to ~$SSH_USER/.ssh/authorized_keys on $SSH_SERVER
 		$LOGGER "propagated ssh key (ssh server: $SSH_SERVER)"
 		return 0
 	else
@@ -377,14 +350,15 @@ case "$1" in
 	case "$?" in
 	0)
 		echo "Kdump is operational"
+		EXIT_CODE=0
 		;;
 	1)
 		echo "Kdump is not operational"
-		EXIT_CODE=1
+		EXIT_CODE=3
 		;;
 	2)
 		echo "Kdump is unsupported on this kernel"
-		EXIT_CODE=1
+		EXIT_CODE=3
 		;;
 	esac
 	exit $EXIT_CODE

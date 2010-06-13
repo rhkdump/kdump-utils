@@ -32,15 +32,13 @@ import time
 import gtk
 import gobject
 import commands
-import rhpl.executil as executil
 from firstboot.config import *
 from firstboot.constants import *
 from firstboot.functions import *
 from firstboot.module import *
-
-from rhpl.translate import _, N_
-from rhpl import translate
-translate.textdomain("firstboot")
+import gettext
+_ = lambda x: gettext.ldgettext("firstboot", x)
+N_ = lambda x: x
 
 class moduleClass(Module):
 	def __init__(self):
@@ -58,9 +56,9 @@ class moduleClass(Module):
 
 	# possible bootloaders we'll need to adjust
 	#			 bootloader : (config file, kdump offset)
-	bootloaders = { "grub"   : ("/boot/grub/grub.conf", 16),
-					"yaboot" : ("/boot/etc/yaboot.conf", 32),
-					"elilo"  : ("/boot/efi/EFI/redhat/elilo.conf", 256) }
+	bootloaders = { "grub"   : (["/boot/grub/grub.conf", "/boot/efi/EFI/redhat/grub.conf"], [16, 256]),
+					"yaboot" : (["/boot/etc/yaboot.conf"], [32]),
+					"elilo"  : (["/boot/efi/EFI/redhat/elilo.conf"], [256]) }
 	bootloader = None
 	offset = 0
 
@@ -94,9 +92,17 @@ class moduleClass(Module):
 
 	def getBootloader(self):
 		for (name, (conf, offset)) in self.bootloaders.items():
-			if os.access(conf, os.W_OK):
-				self.bootloader = name
-		return self.bootloader
+			i = 0
+			for c in conf:
+				if os.access(c, os.W_OK):
+					self.bootloader = name
+					self.offset = i
+					return self.bootloader
+				i += 1
+
+		self.offset = None
+		self.bootloader = None
+		return None
 
 	def createScreen(self, doDebug = None):
 		self.doDebug = doDebug
@@ -161,6 +167,7 @@ class moduleClass(Module):
 			self.availMem += self.kdumpMem
 			self.origCrashKernel = "%dM" % (self.kdumpMem)
 			self.kdumpMemInitial = self.kdumpMem
+			self.kdumpEnabled = True
 		else:
 			self.kdumpEnabled = False
 		self.initialState = self.kdumpEnabled
@@ -344,8 +351,6 @@ class moduleClass(Module):
 					self.enableKdumpCheck.set_active(False)
 					self.showHide(False)
 					return RESULT_FAILURE 
-				else:
-					self.offset = self.bootloaders[self.bootloader][1]
 
 				# Are we adding or removing the crashkernel param?
 				if self.kdumpEnabled:

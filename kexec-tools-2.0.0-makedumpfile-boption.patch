@@ -1,0 +1,27 @@
+diff -up kexec-tools-2.0.0/makedumpfile-1.3.5/makedumpfile.8.orig kexec-tools-2.0.0/makedumpfile-1.3.5/makedumpfile.8
+--- kexec-tools-2.0.0/makedumpfile-1.3.5/makedumpfile.8.orig	2009-11-10 19:44:51.000000000 -0500
++++ kexec-tools-2.0.0/makedumpfile-1.3.5/makedumpfile.8	2010-03-22 09:20:57.000000000 -0400
+@@ -446,6 +446,10 @@ it is necessary to specfiy [\-x \fIVMLIN
+ Print debugging message.
+ 
+ .TP
++\fB-b <order>\fR
++cache 2^order pages in ram when generating vmcore info before writing to output
++
++.TP
+ \fB\-h\fR
+ Show help message.
+ 
+diff -up kexec-tools-2.0.0/makedumpfile-1.3.5/makedumpfile.c.orig kexec-tools-2.0.0/makedumpfile-1.3.5/makedumpfile.c
+--- kexec-tools-2.0.0/makedumpfile-1.3.5/makedumpfile.c.orig	2010-03-22 09:20:33.000000000 -0400
++++ kexec-tools-2.0.0/makedumpfile-1.3.5/makedumpfile.c	2010-03-22 09:21:06.000000000 -0400
+@@ -738,6 +738,9 @@ print_usage(void)
+ 	MSG("  [-D]:\n");
+ 	MSG("      Print debugging message.\n");
+ 	MSG("\n");
++	MSG("  [-b <order>]:\n");
++	MSG("      Specify the block write size of makedumpfile. 2^order pages are cached on each write\n");
++	MSG("\n");
+ 	MSG("  [-f]:\n");
+ 	MSG("      Overwrite DUMPFILE even if it already exists.\n");
+ 	MSG("\n");

@@ -1,0 +1,12 @@
+diff -up kexec-tools-2.0.0/kexec/arch/x86_64/crashdump-x86_64.h.orig kexec-tools-2.0.0/kexec/arch/x86_64/crashdump-x86_64.h
+--- kexec-tools-2.0.0/kexec/arch/x86_64/crashdump-x86_64.h.orig	2010-01-29 09:12:07.000000000 -0500
++++ kexec-tools-2.0.0/kexec/arch/x86_64/crashdump-x86_64.h	2010-01-29 09:12:19.000000000 -0500
+@@ -5,7 +5,7 @@ int load_crashdump_segments(struct kexec
+ 				unsigned long max_addr, unsigned long min_base);
+ 
+ #define __START_KERNEL_map      0xffffffff80000000UL
+-#define PAGE_OFFSET		0xffff810000000000UL
++#define PAGE_OFFSET		0xffff880000000000UL
+ #define __pa(x)                 (((unsigned long)(x)>=__START_KERNEL_map)?(unsigned long)(x) - (unsigned long)__START_KERNEL_map:(unsigned long)(x) - PAGE_OFFSET)
+ 
+ #define MAXMEM           0x3fffffffffffUL

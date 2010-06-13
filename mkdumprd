@@ -122,7 +122,6 @@ moduledep() {
 	exit 1
     fi
 
-    vecho -n "Looking for deps of module $1"
     deps=$(awk 'BEGIN { searched=ARGV[2]; ARGV[2]=""; rc=1 } \
                 function modname(filename) { match(filename, /\/([^\/]+)\.k?o:?$/, ret); return ret[1] } \
                 function show() { if (orig == searched) { print dep; orig=""; rc=0; exit } } \
@@ -131,24 +130,108 @@ moduledep() {
                            if ($2) { for (i = 2; i <= NF; i++) { dep=sprintf("%s %s", dep, modname($i)); } } } \
                 /^	/ { dep=sprintf("%s %s", dep, modname($1));  } \
                 END      { show(); exit(rc) }' /lib/modules/$kernel/modules.dep $1)
+    for i in `modprobe --show-depends $1 2>/dev/null | awk '/insmod/ {print $2}'`
+    do
+       modname=`basename $i | sed -e's/\.ko//'`
+       if [ "$modname" == "$1" ]
+       then
+          continue
+       fi
+       deps="$deps $modname"
+    done
     [ -n "$deps" ] && vecho ":$deps" || vecho
 }
 
 findone() {
-    echo nash-find "$@" | /sbin/nash --force --quiet \
-	| /bin/awk '{ print $1; exit; }'
-}
-
-findall() {
-    find "$@"
+    find "$@" -print -quit
 }
 
 dm_get_uuid() {
     dmsetup info "$1" | awk '/^.*UUID.*/ {print $2}'
 }
 
+depsolve_modlist()
+{
+	local TMPINMODS=$MODULES
+	local TMPOUTMODS=""
+	local i
+	local j
+	local mname
+	local dpcnt
+	local scnt
+
+	#
+	# So, basically, we just do this until TMPINMODS
+	# is an empty list
+	#
+	while [ -n "$TMPINMODS" ]
+	do
+	   for i in $TMPINMODS
+	   do
+	      mname=`basename $i | sed -e's/\.ko//'`
+	      dpcnt=`modprobe --show-depends $mname 2>/dev/null | awk '/insmod/ {print $2}' | wc -l`
+	      if [ $dpcnt -le 1 ]
+	      then
+	         # we have no dependencies, just add it to the list
+		 echo "$TMPOUTMODS" | grep -q $i
+		 if [ $? -ne 0 ]
+		 then
+			 TMPOUTMODS="$TMPOUTMODS $i"
+		 fi
+		 continue
+	      fi
+              # We should start this counter at 1, since we expect that the last
+              # line output by modprobe --show-depends will be the module we
+              # specify as mname below, but since modprobe is busted and
+              # sometimes doesn't do that, we start at zero, and increment an
+              # extra time below if we are searching for a dependency on ourself
+	      let scnt=0
+	      for j in `modprobe --show-depends $mname 2>/dev/null | awk '/insmod/ {print $2}'`
+	      do
+		 echo $TMPOUTMODS | grep -q $j
+	         if [ $? -eq 0 ]
+	         then
+	            let scnt=$scnt+1
+	         fi
+                 # here we are looking to see if the insmod line is for the
+                 # module that we are searching for dependencies on.  We do this
+                 # because modprobe is busted in its show-depends line
+                 echo $j | grep -q $i
+                 if [ $? -eq  0 ]
+                 then
+                    let scnt=$scnt+1
+                 fi
+	      done
+	      if [ "$scnt" == "$dpcnt" ]
+	      then
+		 echo "$TMPOUTMODS" | grep -q $i
+		 if [ $? -ne 0 ]
+		 then
+			 TMPOUTMODS="$TMPOUTMODS $i"
+		 fi
+	      fi
+	   #Finish for i loop
+	   done
+	   for j in $TMPOUTMODS
+	   do
+	        TMPTMPMODS=""
+		for z in $TMPINMODS
+		do
+		   if [ "$j" == "$z" ]
+		   then
+			continue
+		   fi
+		   TMPTMPMODS="$TMPTMPMODS $z"
+		done
+		TMPINMODS=$TMPTMPMODS
+	   done
+	done
+	MODULES=$TMPOUTMODS
+}
+
 findmodule() {
-    skiperrors=""
+    local skiperrors=""
+
 
     if [ $1 == "--skiperrors" ]; then
 	skiperrors=--skiperrors
@@ -156,6 +239,7 @@ findmodule() {
     fi
 
     local modName=$1
+    local skipdeps=$2
 
     if [ "$modName" = "off" -o "$modName" = "null" ]; then
 	return
@@ -176,6 +260,12 @@ findmodule() {
     fi
 
     # special cases
+    case "$modName" in
+        raid[456])
+            modName=raid456
+            ;;
+    esac
+
     if [ "$modName" = "i2o_block" ]; then
 	findmodule i2o_core
 	findmodule -i2o_pci
@@ -192,32 +282,31 @@ findmodule() {
 	findmodule raid456
         modName="raid456"
     else
-	moduledep $modName
-	for i in $deps; do
-	    findmodule $i
-	done
+	if [ -z "$skipdeps" ]
+	then
+		moduledep $modName
+		for i in $deps; do
+		    findmodule $i
+		done
+	fi
     fi
 
     fmPath=$(modprobe --set-version $kernel -l $modName 2>/dev/null)
-
-    if [ ! -f "$fmPath" ]; then
-        for modExt in o.gz o ko
-        do
-            for modDir in /lib/modules/$kernel/updates /lib/modules/$kernel
-            do
-                if [ -d $modDir ]
-                then
-                    fmPath=$(findone $modDir -name $modName.$modExt)
-                    if [ -f "$fmPath" ]
-                    then
-                        break 2
-                    fi
+    if [ ! -f "/lib/modules/$kernel/$fmPath" ]; then
+    	for modDir in /lib/modules/$kernel/updates /lib/modules/$kernel
+    	do
+		if [ -d $modDir ]
+		then
+			fmPath=$(findone $modDir -name $modName.ko)
+			if [ -f "$fmPath" ]
+			then
+				break 2
+			fi
                 fi
-            done
-        done
+    	done
     fi
 
-    if [ ! -f "$fmPath" ]; then
+    if [ ! -f "/lib/modules/$kernel/$fmPath" ]; then
 	if [ -n "$skiperrors" ]; then
 	    return
 	fi
@@ -239,7 +328,7 @@ findmodule() {
     fi
 
     # only need to add each module once
-    MODULES="$MODULES $fmPath"
+    MODULES="$MODULES /lib/modules/$kernel/$fmPath"
 
     # need to handle prescsimods here -- they need to go _after_ scsi_mod
     if [ "$modName" = "scsi_mod" ]; then
@@ -249,6 +338,17 @@ findmodule() {
     fi
 }
 
+do_blacklist()
+{
+    local modName=$1
+
+    if echo "$modName" | grep -q "\/" ; then
+        local dirName="/lib/modules/$kernel/$modName"
+        find $dirName -xtype f -exec basename {} \; | sed "s/^\(.*\).ko/blacklist \1/g" >> $MNTIMAGE/etc/blacklist-kdump.conf
+    else
+        echo "blacklist $modName" >> $MNTIMAGE/etc/blacklist-kdump.conf
+    fi
+}
 
 inst() {
     if [ "$#" != "2" ];then
@@ -258,11 +358,6 @@ inst() {
     vecho "$1 -> $2"
     cp $1 $2
 }
-
-readlink() {
-    readlink "$1"
-}
-
 
 findstoragedriverinsys () {
     while [ ! -L device ]; do
@@ -278,23 +373,39 @@ findstoragedriverinsys () {
     for driver in $(modprobe --set-version $kernel --show-depends $modalias 2>/dev/null| awk '{ print gensub(".*/","","g",$2) }') ; do
         findmodule ${driver%%.ko}
     done
+    # Handle special needs for missing deps or wierd modalias lines
+    case $modalias in
+        "scsi:t-0x00")
+            findmodule ata_generic
+           ;;
+        *)
+            ;;
+    esac
 }
 
 findstoragedriver () {
     for device in $@ ; do
+        basedev=`echo $device | sed -e's/\/dev\///' -e's/[0-9]\+//'`
+        if [ -d /sys/block/$basedev ]
+        then
+            #only add devices which have a presence in sysfs
+            echo $basedev >> $TMPDISKLIST
+        fi
         case " $handleddevices " in
             *" $device "*)
                 continue ;;
             *) handleddevices="$handleddevices $device" ;;
         esac
-        if [[ "$device" == "md[0-9]+" ]]; then
+        echo $device | grep -q "md[0-9]\+"
+        if [ $? == 0 ]; then
             vecho "Found RAID component $device"
             handleraid "$device"
             continue
         fi
-        vecho "Looking for driver for device $device"
         device=`echo $device | sed 's/\//\!/g'`
-        pushd $(readlink /sys/class/block/$device ) >/dev/null 2>&1 || return
+        sysfs=$(findone -L /sys/block -maxdepth 2 -type d -name $device)
+        [ -z "$sysfs" ] && return
+        pushd $sysfs >/dev/null 2>&1
         findstoragedriverinsys
         popd >/dev/null 2>&1
     done
@@ -331,6 +442,7 @@ findnetdriver() {
 }
 
 handleraid() {
+    echo IN HANDLERAID
     local start=0
 
     if [ -n "$noraid" -o ! -f /proc/mdstat ]; then
@@ -389,7 +501,6 @@ handlelvordev() {
                 else
                     devname=$device
                 fi
-                echo $devname | sed -e's/\/dev\///' -e's/[0-9]\+//' >> $TMPDISKLIST 
                 findstoragedriver ${device##/dev/}
             done
             ;;
@@ -404,7 +515,6 @@ handlelvordev() {
             devname=$1
         fi
                
-        echo $devname | sed -e's/\/dev\///' -e's/[0-9]\+//' >> $TMPDISKLIST 
         findstoragedriver ${1##/dev/}
     fi
 }
@@ -785,15 +895,17 @@ if [ -n "$testdm" ]; then
 	fi
     fi
     if [ -x /sbin/dmraid -a -z "$nodmraid" ]; then
-        for raid in $(/sbin/dmraid -s -craidname 2>/dev/null | grep -vi "no raid disks" ) ; do
-            dmname=$(resolve_dm_name $raid)
-            if [ -n "$dmname" ]; then
-                DMRAIDS="$DMRAIDS $dmname"
-            fi
-        done
+        NOBLK=`/sbin/dmraid -s -craidname 2>/dev/null | grep  "no block devices"`
+        NORAD=`/sbin/dmraid -s -craidname 2>/dev/null | grep  "no raid disks"`
+        if [ -z "$NOBLK" ] && [ -z "$NORAD" ]
+        then
+            for raid in $(/sbin/dmraid -s -craidname 2>/dev/null) ; do
+                DMRAIDS="$DMRAIDS $raid"
+            done
+        fi
     fi
 fi
-    
+   
 for n in $basicmodules; do
     findmodule $n
 done
@@ -858,6 +970,21 @@ if [ -z "$MNTIMAGE" -o -z "$IMAGE" ]; then
 fi
 
 
+# Just get all the modules that are currently loaded
+# We're likely to need them
+for i in `lsmod | tail --lines=+2 | awk '{print $1}'`
+do
+    findmodule -$i skip
+    echo $MODULES | grep -q $i
+    if [ $? -ne 0 ]
+    then
+        ALTERNATE=`echo $i | sed -e's/_/-/g'`
+        findmodule $ALTERNATE skip
+    fi
+
+done
+
+
 #START BUILDING INITRD HERE
 mkdir -p $MNTIMAGE
 mkdir -p $MNTIMAGE/lib
@@ -880,7 +1007,6 @@ ln -s bin $MNTIMAGE/sbin
 
 if [ -n "$KDUMP_CONFIG_FILE" ]; then
     while read config_opt config_val; do
-
         case "$config_opt" in
         net)
             #grab remote host and xlate into numbers
@@ -981,6 +1107,11 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
         extra_modules)
             extra_kdump_mods="$extra_kdump_mods $config_val"
             ;;
+        blacklist)
+            blacklist_mods="$blacklist_mods $config_val"
+            ;;
+	options)
+	    ;;
         default)
             DEFAULT_ACTION=$config_val
             case $DEFAULT_ACTION in
@@ -990,17 +1121,34 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                 halt)
                         FINAL_ACTION="halt -f"
                         ;;
+                poweroff)
+                        FINAL_ACTION="poweroff -f"
+                        ;;
             esac
             ;;
         disk_timeout)
             DISK_TIMEOUT=$config_val
             ;;
         *)
-            IS_COMMENT=`echo $config_opt | grep ^#.*$`
-            if [ -n "$IS_COMMENT" -o -z "$config_val" ]
+            IS_COMMENT=`echo $config_opt | grep "^#.*$"`
+            if [ -n "$IS_COMMENT" -o -z "$config_opt" ]
             then
                      #don't process comments or blank line
                      continue
+            fi
+	    let grep_rc=0
+            echo $config_opt | grep -q "ext[234]"
+            ga_rc=$?
+            echo $config_opt | grep -q "minix"
+            gb_rc=$?
+            echo $config_opt | grep -q "xfs"
+            gc_rc=$?
+            echo $config_opt | grep -q "btrfs"
+            gd_rc=$?
+            if [ $ga_rc -ne 0 -a $gb_rc -ne 0 -a $gc_rc -ne 0 -a $gd_rc -ne 0 ]
+            then
+                echo "Unknown parameter " $config_opt
+                exit 1
             fi
             USING_METHOD="filesystem"
             if (echo $config_val | egrep -q "^(LABEL|UUID)="); then
@@ -1068,6 +1216,14 @@ for n in $extra_kdump_mods; do
     findmodule $n
 done
 
+# After we get all the modules, lets depsolve the list
+# so that we load them in proper order
+depsolve_modlist
+
+for n in $blacklist_mods; do 
+    do_blacklist $n 
+done
+
 if [ -z "$FINAL_ACTION" ]; then
     FINAL_ACTION="reboot -f"
 else
@@ -1100,8 +1256,15 @@ then
         done
 fi
 
+# we need the fstab file so that we can fsck properly
+cp /etc/fstab $MNTIMAGE/etc/fstab
+bin="$bin /sbin/fsck.ext2 /sbin/fsck.ext3 /sbin/fsck.ext4"
+
 #this provides us with a list of disks that we need to make sure we have available before we capture our core
-mv $TMPDISKLIST $MNTIMAGE/etc/critical_disks
+# don't block on cciss or md devices, parsing them in sysfs takes a special case and they are there
+# as soon as the driver loads
+egrep -v '(^cciss|^md)' $TMPDISKLIST > $MNTIMAGE/etc/critical_disks
+rm -f $TMPDISKLIST
 
 #THIS IS WHERE WE GENERATE OUR ADDITINONAL UTILITIES
 #Busybox doesn't have a /bin/sh applet, 
@@ -1426,6 +1589,34 @@ done
 
 EOF
 
+cat >> $SCRIPTDIR/handle_event <<EOF
+#!/bin/msh
+
+FIRMWARE_DIRS="/lib/firmware"
+
+if [ "\$ACTION" != "add" ]
+then
+	exit 0
+fi
+
+if [ "\$SUBSYSTEM" != "firmware" ]
+then
+	exit 0
+fi
+
+for DIR in \$FIRMWARE_DIRS; do
+	if [ ! -f \$DIR/\$FIRMWARE ]
+	then
+		continue
+	fi
+	echo 1 > /sys\$DEVPATH/loading
+	cat "\$DIR/\$FIRMWARE" > /sys\$DEVPATH/data
+	echo 0 > /sys\$DEVPATH/loading
+	exit 0
+done
+
+EOF
+
 #DONT ADD STUFF to SCRIPTDIR PAST HERE
 for i in `ls $SCRIPTDIR/*`
 do
@@ -1469,7 +1660,6 @@ done
 mknod $MNTIMAGE/dev/tty c 5 0
 mknod $MNTIMAGE/dev/console c 5 1
 mknod $MNTIMAGE/dev/ptmx c 5 2
-mknod $MNTIMAGE/dev/rtc c 10 135
 if [ "$(uname -m)" == "ia64" ]; then
     mknod $MNTIMAGE/dev/efirtc c 10 136
 fi
@@ -1484,6 +1674,10 @@ if [ -n "$vg_list" ]; then
     fi
 fi
 
+# Firmware, we need to suck it all in, just in case...
+mkdir -p $MNTIMAGE/lib/firmware
+cp -r /lib/firmware/* $MNTIMAGE/lib/firmware/
+
 echo -n >| $RCFILE
 cat >> $MNTIMAGE/init << EOF
 #!/bin/msh
@@ -1492,6 +1686,7 @@ mount -t proc /proc /proc
 echo Mounting proc filesystem
 echo Mounting sysfs filesystem
 mount -t sysfs /sys /sys
+echo "/scriptfns/handle_event" > /sys/kernel/uevent_helper
 echo 1 > /proc/sys/vm/dirty_background_ratio
 echo 5 > /proc/sys/vm/dirty_ratio
 echo 10 > /proc/sys/vm/dirty_writeback_centisecs
@@ -1509,7 +1704,7 @@ mknod /dev/systty c 4 0
 mknod /dev/tty c 5 0
 mknod /dev/console c 5 1
 mknod /dev/ptmx c 5 2
-mknod /dev/rtc c 10 135
+mknod /dev/rtc c 254 0
 mknod /dev/urandom c 1 9
 EOF
 
@@ -1530,6 +1725,13 @@ for MODULE in $MODULES; do
     fullmodule=`echo $MODULE | sed "s|.*/||"`
 
     options=`sed -n -e "s/^options[ 	][ 	]*$module[ 	][ 	]*//p" $modulefile 2>/dev/null`
+    options2=`sed -n -e "s/^options[    ][      ]*$module[      ][      ]*//p" $KDUMP_CONFIG_FILE 2>/dev/null`
+
+    # Overwrite options if option is specified in kdump.conf
+    if [ -n "$options2" ]; then
+        options=$options2
+    fi
+
 
     if [ -n "$options" ]; then
         vecho "Adding module $module$text with options $options"
@@ -1661,18 +1863,18 @@ if [ -n "$vg_list" ]; then
     emit "echo Activating logical volumes"
     emit "lvm vgchange -a y --ignorelockingfailure"
     emit "DM_NUM=0"
-    emit "lvm lvs --noheadings -o lv_name,vg_name | while read i"
+    emit "for i in \`lvm lvs --noheadings -o lv_name,vg_name | sed -e's/ \\+/:/g'\`"
     emit "do"
-    emit "   LV=\`echo \$i | awk '{ print \$1 }'\`"
-    emit "   VGRP=\`echo \$i | awk '{ print \$2 }'\`"
+    emit "   LV=\`echo \$i | awk -F\":\" '{ print \$2 }'\`"
+    emit "   VGRP=\`echo \$i | awk -F\":\" '{ print \$3 }'\`"
     emit "   mkdir -p /dev/\$VGRP"
     emit "   if [ ! -e /dev/\$VGRP/\$LV ]"
-    emit "   then" 
+    emit "   then"
     emit "      ln -s /dev/mapper/\$VGRP-\$LV /dev/\$VGRP/\$LV"
     emit "      DM_NUM=\`echo \$DM_NUM 1 + p | dc\`"
     emit "      if [ -z \"\$noresume\" ]"
     emit "      then"
-    emit "        /sbin/dmsetup resume /dev/mapper/\$VGRP-\$LV"
+    emit "        /sbin/dmsetup.static resume /dev/mapper/\$VGRP-\$LV"
     emit "      fi"
     emit "   fi"
     emit "done"
@@ -1756,6 +1958,7 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                     emit "then"
                     emit "  echo -e \"\\\033[0JSaving core complete\""
                     emit "fi"
+                    emit "sync"
                     if [ -x "$KDUMP_POST" ]; then
                         emit "$KDUMP_POST \$exitcode"
                     fi
@@ -1960,6 +2163,10 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                     ;;
                 disk_timeout)
                     ;;
+                blacklist)
+                    ;;
+		options)
+		    ;;
                 default)
                     ;;
                 link_delay)
@@ -2013,7 +2220,7 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                     emit "then"
                     emit "  DUMPDEV=\`findfs \$DUMPDEV\`"
                     emit "fi"
-                    emit "fsck.$config_opt \$DUMPDEV"
+                    emit "fsck.$config_opt -y \$DUMPDEV"
                     emit "mount -t $config_opt \$DUMPDEV /mnt"
                     emit "if [ \$? == 0 ]"
                     emit "then"
@@ -2030,6 +2237,7 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                     emit "      mv \$VMCORE-incomplete \$VMCORE"
                     emit "      echo -e \"\\\033[0JSaving core complete\""
                     emit "  fi"
+                    emit "  sync"
                     if [ -x "$KDUMP_POST" ]; then
                         emit "  $KDUMP_POST \$exitcode"
                     fi
@@ -2048,7 +2256,7 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
         emit "/bin/msh"
     fi
     case $DEFAULT_ACTION in
-        reboot|halt|shell)
+        reboot|halt|poweroff|shell)
             emit "$FINAL_ACTION"
             ;;
         *)
@@ -2099,7 +2307,7 @@ emit "   ROOTDEV=/dev/rootdev"
 emit "fi"
 
 emit "echo Checking root filesystem."
-emit "fsck \$ROOTDEV"
+emit "fsck -y \$ROOTDEV"
 emit "echo Mounting root filesystem: mount -t $rootfs \$ROOTDEV /sysroot"
 emit "mount -t $rootfs \$ROOTDEV /sysroot >/dev/null 2>&1 "
 emit "if [ \$? != 0 ]"
@@ -2114,6 +2322,16 @@ emit "mount -t proc proc /sysroot/proc"
 emit "umount /sys"
 emit "mount -t sysfs sysfs /sysroot/sys"
 emit "mount -o bind /dev /sysroot/dev"
+
+if [ -f $MNTIMAGE/etc/blacklist-kdump.conf ] ; then
+    emit "tdir=\`mktemp -d\`"
+    emit "mkdir -p \$tdir"
+    emit "cp -r /sysroot/etc/modprobe.d/* \$tdir/"
+    emit "mount -t ramfs ramfs /sysroot/etc/modprobe.d"
+    emit "cp -r \$tdir/* /sysroot/etc/modprobe.d/"
+    emit "cp /etc/blacklist-kdump.conf /sysroot/etc/modprobe.d/"
+fi
+
 emit "touch /sysroot/fastboot"
 emit "echo Switching to new root and running init."
 emit "exec switch_root /sysroot /sbin/init"
@@ -2122,7 +2340,7 @@ emit "exec switch_root /sysroot /sbin/init"
 
 chmod +x $RCFILE
 
-(cd $MNTIMAGE; findall . | cpio --quiet -c -o) >| $IMAGE || exit 1
+(cd $MNTIMAGE; find | cpio --quiet -c -o) >| $IMAGE || exit 1
 
 if [ -n "$compress" ]; then
     gzip -9 < $IMAGE >| $target || rc=1

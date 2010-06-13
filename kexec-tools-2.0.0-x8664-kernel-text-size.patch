@@ -1,0 +1,12 @@
+diff -up kexec-tools-2.0.0/kexec/arch/x86_64/crashdump-x86_64.h.orig kexec-tools-2.0.0/kexec/arch/x86_64/crashdump-x86_64.h
+--- kexec-tools-2.0.0/kexec/arch/x86_64/crashdump-x86_64.h.orig	2010-04-30 15:14:13.000000000 -0400
++++ kexec-tools-2.0.0/kexec/arch/x86_64/crashdump-x86_64.h	2010-04-30 15:14:20.000000000 -0400
+@@ -11,7 +11,7 @@ int load_crashdump_segments(struct kexec
+ #define MAXMEM           0x3fffffffffffUL
+ 
+ /* Kernel text size */
+-#define KERNEL_TEXT_SIZE  (40UL*1024*1024)
++#define KERNEL_TEXT_SIZE  (512UL*1024*1024)
+ 
+ #define CRASH_MAX_MEMMAP_NR	(KEXEC_MAX_SEGMENTS + 1)
+ #define CRASH_MAX_MEMORY_RANGES	(MAX_MEMORY_RANGES + 2)
