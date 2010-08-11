@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 37%{?dist}
+Release: 38%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -280,6 +280,9 @@ done
 
 
 %changelog
+* Wed Aug 11 2010 David Malcolm <dmalcolm@redhat.com> - 2.0.0-38
+- recompiling .py files against Python 2.7 (rhbz#623327)
+
 * Sun Jun 13 2010 Lubomir Rintel <lkundrak@v3.sk> - 2.0.0-37
 - Fix a syntax error in kdump init script
 
