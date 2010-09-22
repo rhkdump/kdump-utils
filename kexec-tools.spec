@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 38%{?dist}
+Release: 39%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -280,6 +280,9 @@ done
 
 
 %changelog
+* Wed Sep 22 2010 Neil Horman <nhorman@redhat.com> - 2.0.0-39
+- fix finding modalias/mkdumprd hang (bz 635893)
+
 * Wed Aug 11 2010 David Malcolm <dmalcolm@redhat.com> - 2.0.0-38
 - recompiling .py files against Python 2.7 (rhbz#623327)
 
