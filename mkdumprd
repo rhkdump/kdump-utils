@@ -369,7 +369,9 @@ findstoragedriverinsys () {
         [ "$PWD" = "/sys/devices" ] && return
         cd ..
     done
-    modalias=$(cat modalias)
+
+    modalias=$(cat $(find /sys/devices -name modalias | grep $(basename $(readlink ./device))))
+
     for driver in $(modprobe --set-version $kernel --show-depends $modalias 2>/dev/null| awk '{ print gensub(".*/","","g",$2) }') ; do
         findmodule ${driver%%.ko}
     done
