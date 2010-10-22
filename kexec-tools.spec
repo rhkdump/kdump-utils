@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 40%{?dist}
+Release: 41%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -280,6 +280,9 @@ done
 
 
 %changelog
+* Fri Oct 22 2010 Neil Horman <nhorman@redhat.com> - 2.0.0-41
+- Fixed dhcp retry mechanism (bz 645734)
+
 * Wed Sep 29 2010 jkeating - 2.0.0-40
 - Rebuilt for gcc bug 634757
 
