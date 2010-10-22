@@ -1313,6 +1313,11 @@ case "\$1" in
             echo nameserver \$i >> /etc/resolv.conf 
         done
         ;;
+
+    *)
+        echo "Unable to get a DHCP address retry..."
+        exit 1
+        ;;
 esac
 
 exit 0
