@@ -947,25 +947,6 @@ emitdm()
     emit "echo \"$(/sbin/dmsetup table $1)\" | /sbin/dmsetup create \"$1\" $UUID"
 }
 
-emitdms()
-{
-    [ -z "$MPATHS" -a -z "$DMRAIDS" ] && return 0
-    echo dm list $MPATHS $DMRAIDS | nash --force --quiet | \
-            while read ACTION NAME ; do
-        case $ACTION in
-        rmparts)
-            emit rmparts "$NAME"
-            ;;
-        create)
-            emitdm "$NAME"
-            ;;
-        part)
-            emit /sbin/kpartx -pp -a \"/dev/mapper/$NAME\"
-            ;;
-        esac
-    done
-}
-
 if [ -z "$MNTIMAGE" -o -z "$IMAGE" ]; then
     error "Error creating temporaries.  Try again"
     exit 1
@@ -1849,8 +1830,6 @@ if [ -n "$net_list" ]; then
 	#emit $network
     done
 fi
-
-emitdms
 
 if [ -n "$raiddevices" ]; then
     for dev in $raiddevices; do
