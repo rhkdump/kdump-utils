@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 43%{?dist}
+Release: 44%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -74,6 +74,7 @@ Patch602: kexec-tools-2.0.0-makedumpfile-dynamic-build.patch
 Patch603: kexec-tools-2.0.0-makedumpfile-2.6.32-utsname.patch
 Patch604: kexec-tools-2.0.0-makedumpfile-boption.patch
 Patch605: kexec-tools-2.0.0-makedumpfile-2.6.32-sparsemem.patch
+Patch606: kexec-tools-2.0.0-purgatory-makefile.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -96,6 +97,7 @@ tar -z -x -v -f %{SOURCE9}
 %patch603 -p1
 %patch604 -p1
 %patch605 -p1
+%patch606 -p1
 
 tar -z -x -v -f %{SOURCE13}
 
@@ -280,6 +282,9 @@ done
 
 
 %changelog
+* Thu Mar 10 2011 Neil Horman <nhorman@redhat.com> - 2.0.0-44
+- Fix build break in purgatory makefile
+
 * Thu Mar 10 2011 Neil Horman <nhorman@redhat.com> - 2.0.0-43
 - Remove vestigual emitdms code and call from mkdumprd
 
