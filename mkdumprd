@@ -370,7 +370,9 @@ findstoragedriverinsys () {
         cd ..
     done
 
-    modalias=$(cat $(find /sys/devices -name modalias | grep $(basename $(readlink ./device))))
+    [ -e modalias ] && modalias=$(cat modalias)
+    [ -e device ] && modalias=$(cat $(find /sys/devices -name modalias
+        | grep $(basename $(readlink ./device))))
 
     for driver in $(modprobe --set-version $kernel --show-depends $modalias 2>/dev/null| awk '{ print gensub(".*/","","g",$2) }') ; do
         findmodule ${driver%%.ko}
@@ -1713,13 +1715,13 @@ for MODULE in $MODULES; do
     fullmodule=`echo $MODULE | sed "s|.*/||"`
 
     options=`sed -n -e "s/^options[ 	][ 	]*$module[ 	][ 	]*//p" $modulefile 2>/dev/null`
-    options2=`sed -n -e "s/^options[    ][      ]*$module[      ][      ]*//p" $KDUMP_CONFIG_FILE 2>/dev/null`
-
-    # Overwrite options if option is specified in kdump.conf
-    if [ -n "$options2" ]; then
-        options=$options2
+    if [ -f "$KDUMP_CONFIG_FILE" ]; then
+        options2=`sed -n -e "s/^options[    ][      ]*$module[      ][      ]*//p" $KDUMP_CONFIG_FILE 2>/dev/null`
+        # Overwrite options if option is specified in kdump.conf
+        if [ -n "$options2" ]; then
+            options=$options2
+        fi
     fi
-
 
     if [ -n "$options" ]; then
         vecho "Adding module $module$text with options $options"

@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 44%{?dist}
+Release: 45%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -282,6 +282,9 @@ done
 
 
 %changelog
+* Mon Mar 28 2011 Neil Horman <nhorman@redhat.com> - 2.0.0-45
+- Fix misuse of basename in mkdumprd (bz 683769)
+
 * Thu Mar 10 2011 Neil Horman <nhorman@redhat.com> - 2.0.0-44
 - Fix build break in purgatory makefile
 
