@@ -23,14 +23,14 @@ to the modules as they are loaded by the initial ramdisk.
 be loaded in the initramfs (based on configuration retrieved from
 \fI/etc/kdump.conf)\fR
 
-\fBmkdumprd\fR was origionally derived from the \fBmkinitrd\fR utility (hence
-the simmilarity in option sets), however mkdumprds purpose and mission is
+\fBmkdumprd\fR was originally derived from the \fBmkinitrd\fR utility (hence
+the similarity in option sets), however mkdumprds purpose and mission is
 significantly different than that of \fBmkinitrd\fR.  As such, while most of the
-options still exist, and may work, they are largely vestigual at this point.
+options still exist, and may work, they are largely historic remnants.
 \fBmkdumprd\fR was not intended for casual use outside of the service
 initialization script for the kdump utility, and should not be run manually.  If
 you require a custom kdump initramfs image, it is suggested that you use the
-kdump service infrastrucutre to create one, and then manually unpack, modify and
+kdump service infrastructure to create one, and then manually unpack, modify and
 repack the image.
 
 
