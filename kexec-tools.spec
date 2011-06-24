@@ -1,6 +1,6 @@
 Name: kexec-tools
-Version: 2.0.0 
-Release: 47%{?dist}
+Version: 2.0.2
+Release: 1%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -47,8 +47,6 @@ Obsoletes: diskdumputils netdump
 #
 # Patches 101 through 200 are meant for x86_64 kexec-tools enablement
 #
-Patch101: kexec-tools-2.0.0-fix-page-offset.patch
-Patch102: kexec-tools-2.0.0-x8664-kernel-text-size.patch
 
 #
 # Patches 201 through 300 are meant for ia64 kexec-tools enablement
@@ -74,7 +72,7 @@ Patch602: kexec-tools-2.0.0-makedumpfile-dynamic-build.patch
 Patch603: kexec-tools-2.0.0-makedumpfile-2.6.32-utsname.patch
 Patch604: kexec-tools-2.0.0-makedumpfile-boption.patch
 Patch605: kexec-tools-2.0.0-makedumpfile-2.6.32-sparsemem.patch
-Patch606: kexec-tools-2.0.0-purgatory-makefile.patch
+Patch606: kexec-tools-2.0.2-purgatory-makefile.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -89,8 +87,6 @@ component of the kernel's kexec feature.
 mkdir -p -m755 kcp
 tar -z -x -v -f %{SOURCE9}
 
-%patch101 -p1
-%patch102 -p1
 
 %patch601 -p1
 %patch602 -p1
@@ -282,6 +278,9 @@ done
 
 
 %changelog
+* Fri Jun 24 2011 Neil Horman <nhorman@redhat.com> - 2.0.2-1
+- Updated to upstream version 2.0.2
+
 * Mon Jun 02 2011 Neil Horman <nhorman@redhat.com> - 2.0.0-47
 - Fixed misuse of readlink command after directory change (bz 710744)
 
