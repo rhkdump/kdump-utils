@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.2
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -20,6 +20,7 @@ Source12: mkdumprd.8
 Source13: kexec-tools-po.tar.gz
 Source14: 98-kexec.rules
 Source15: kdump.conf.5
+Source16: kdump.service
 
 #######################################
 # These are sources for mkdumprd2
@@ -138,6 +139,7 @@ mkdir -p -m755 $RPM_BUILD_ROOT%{_mandir}/man5/
 mkdir -p -m755 $RPM_BUILD_ROOT%{_docdir}
 mkdir -p -m755 $RPM_BUILD_ROOT%{_datadir}/kdump
 mkdir -p -m755 $RPM_BUILD_ROOT%{_sysconfdir}/udev/rules.d
+mkdir -p $RPM_BUILD_ROOT/lib/systemd/system/
 install -m 755 %{SOURCE1} $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/kdump
 
 SYSCONFIG=$RPM_SOURCE_DIR/kdump.sysconfig.%{_target_cpu}
@@ -152,6 +154,7 @@ install -m 755 %{SOURCE11} $RPM_BUILD_ROOT%{_datadir}/kdump/firstboot_kdump.py
 install -m 644 %{SOURCE12} $RPM_BUILD_ROOT%{_mandir}/man8/mkdumprd.8
 install -m 644 %{SOURCE14} $RPM_BUILD_ROOT%{_sysconfdir}/udev/rules.d/98-kexec.rules
 install -m 644 %{SOURCE15} $RPM_BUILD_ROOT%{_mandir}/man5/kdump.conf.5
+install -m 644 %{SOURCE16} $RPM_BUILD_ROOT/lib/systemd/system/kdump.service
 
 %ifarch %{ix86} x86_64 ia64 ppc64
 install -m 755 makedumpfile-1.3.5/makedumpfile $RPM_BUILD_ROOT/sbin/makedumpfile
@@ -203,11 +206,13 @@ fi
 %postun
 
 if [ "$1" -ge 1 ]; then
+	systemctl try-restart kdump.service &> /dev/null ||
 	/sbin/service kdump condrestart > /dev/null 2>&1 || :
 fi
 
 %preun
 if [ "$1" = 0 ]; then
+	systemctl disable kdump.service &> /dev/null ||
 	/sbin/service kdump stop > /dev/null 2>&1 || :
 	/sbin/chkconfig --del kdump
 fi
@@ -271,6 +276,7 @@ done
 %dir %{_localstatedir}/crash
 %{_mandir}/man8/*
 %{_mandir}/man5/*
+/lib/systemd/system/*
 %doc News
 %doc COPYING
 %doc TODO
@@ -278,6 +284,9 @@ done
 
 
 %changelog
+* Mon Jul 04 2011 Neil Horman <nhorman@redhat.com> - 2.0.2-2
+- Added systemd unit file (bz 716994)
+
 * Fri Jun 24 2011 Neil Horman <nhorman@redhat.com> - 2.0.2-1
 - Updated to upstream version 2.0.2
 
