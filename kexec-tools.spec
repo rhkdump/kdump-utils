@@ -1,11 +1,11 @@
 Name: kexec-tools
 Version: 2.0.2
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
 Source0: http://www.kernel.org/pub/linux/kernel/people/horms/kexec-tools/%{name}-%{version}.tar.bz2
-Source1: kdump.init
+Source1: kdumpctl
 Source2: kdump.sysconfig
 Source3: kdump.sysconfig.x86_64
 Source4: kdump.sysconfig.i386
@@ -140,7 +140,8 @@ mkdir -p -m755 $RPM_BUILD_ROOT%{_docdir}
 mkdir -p -m755 $RPM_BUILD_ROOT%{_datadir}/kdump
 mkdir -p -m755 $RPM_BUILD_ROOT%{_sysconfdir}/udev/rules.d
 mkdir -p $RPM_BUILD_ROOT/lib/systemd/system/
-install -m 755 %{SOURCE1} $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/kdump
+mkdir -p -m755 $RPM_BUILD_ROOT%{_bindir}
+install -m 755 %{SOURCE1} $RPM_BUILD_ROOT%{_bindir}/kdumpctl
 
 SYSCONFIG=$RPM_SOURCE_DIR/kdump.sysconfig.%{_target_cpu}
 [ -f $SYSCONFIG ] || SYSCONFIG=$RPM_SOURCE_DIR/kdump.sysconfig.%{_arch}
@@ -206,15 +207,12 @@ fi
 %postun
 
 if [ "$1" -ge 1 ]; then
-	systemctl try-restart kdump.service &> /dev/null ||
-	/sbin/service kdump condrestart > /dev/null 2>&1 || :
+	systemctl try-restart kdump.service &> /dev/null || :
 fi
 
 %preun
 if [ "$1" = 0 ]; then
-	systemctl disable kdump.service &> /dev/null ||
-	/sbin/service kdump stop > /dev/null 2>&1 || :
-	/sbin/chkconfig --del kdump
+	systemctl disable kdump.service &> /dev/null || :
 fi
 exit 0
 
@@ -265,12 +263,12 @@ done
 %files -f %{name}.lang
 %defattr(-,root,root,-)
 /sbin/*
+%{_bindir}/*
 %{_datadir}/kdump
 %config(noreplace,missingok) %{_sysconfdir}/sysconfig/kdump
 %config(noreplace,missingok) %{_sysconfdir}/kdump.conf
 %{_sysconfdir}/kdump-adv-conf/kdump_initscripts/
 %{_sysconfdir}/kdump-adv-conf/kdump_sample_manifests/
-%config %{_sysconfdir}/rc.d/init.d/kdump
 %config %{_sysconfdir}/udev/rules.d/*
 %{_datadir}/dracut/modules.d/*
 %dir %{_localstatedir}/crash
@@ -284,6 +282,9 @@ done
 
 
 %changelog
+* Wed Jul 06 2011 Neil Horman <nhorman@redhat.com> - 2.0.2-3
+- Removed sysv init script from package
+
 * Mon Jul 04 2011 Neil Horman <nhorman@redhat.com> - 2.0.2-2
 - Added systemd unit file (bz 716994)
 
