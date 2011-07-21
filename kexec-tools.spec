@@ -268,8 +268,6 @@ done
 %{_datadir}/kdump
 %config(noreplace,missingok) %{_sysconfdir}/sysconfig/kdump
 %config(noreplace,missingok) %{_sysconfdir}/kdump.conf
-%{_sysconfdir}/kdump-adv-conf/kdump_initscripts/
-%{_sysconfdir}/kdump-adv-conf/kdump_sample_manifests/
 %config %{_sysconfdir}/udev/rules.d/*
 %{_datadir}/dracut/modules.d/*
 %dir %{_localstatedir}/crash
