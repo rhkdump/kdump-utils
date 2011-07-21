@@ -1,5 +1,8 @@
 #!/bin/bash
-rm -f $initdir/init
-inst "/etc/kdump-adv-conf/init" "/init"
+
 inst "/bin/date" "/bin/date"
+inst "/bin/sync" "/bin/sync"
 inst "/usr/bin/reboot" "/bin/reboot"
+inst "/sbin/makedumpfile" "/sbin/makedumpfile"
+inst_hook pre-pivot 01 "$moddir/kdump_localfs.sh"
+

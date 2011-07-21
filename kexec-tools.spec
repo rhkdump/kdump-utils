@@ -169,6 +169,7 @@ mkdir -p -m755 $RPM_BUILD_ROOT/etc/kdump-adv-conf
 tar -C $RPM_BUILD_ROOT/etc/kdump-adv-conf -jxvf %{SOURCE100}
 chmod 755 $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99kdumpbase/check
 chmod 755 $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99kdumpbase/install
+chmod 755 $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99kdumpbase/kdump_localfs.sh
 
 
 #and move the custom dracut modules to the dracut directory
@@ -282,6 +283,10 @@ done
 
 
 %changelog
+* Thu Jul 21 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-4
+- Update initramfs infrastructure to make it working
+  with dracut.
+
 * Wed Jul 06 2011 Neil Horman <nhorman@redhat.com> - 2.0.2-3
 - Removed sysv init script from package
 

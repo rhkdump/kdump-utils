@@ -1,9 +1,0 @@
-#########################################################
-# Sample manifest for default kdump configuration
-#
-# This manifest will build an initramfs which mounts the 
-# root filesystem and switchroots to it
-#########################################################
-
-
-dracutmodules="base kdumpbase crypt lvm kernel-modules rootfs-block udev-rules"
