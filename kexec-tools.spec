@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.2
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -281,6 +281,9 @@ done
 
 
 %changelog
+* Thu Jul 21 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-5
+- Bypass '-d' option.
+
 * Thu Jul 21 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-4
 - Update initramfs infrastructure to make it working
   with dracut.

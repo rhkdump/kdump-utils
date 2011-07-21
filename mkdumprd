@@ -18,6 +18,9 @@ add_dracut_arg() {
 
 while [ $# -gt 0 ]; do
     case $1 in
+    -d)
+        shift
+        ;;
     --noconf)
         conf_file=""
         shift
