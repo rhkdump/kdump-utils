@@ -9,6 +9,7 @@ KDUMP_KERNELVER=""
 KDUMP_COMMANDLINE=""
 KEXEC_ARGS=""
 KDUMP_CONFIG_FILE="/etc/kdump.conf"
+MKDUMPRD="/sbin/mkdumprd -d -f"
 
 LOGGER="/usr/bin/logger -p info -t kdump"
 
@@ -45,26 +46,8 @@ function save_core()
 
 function check_config()
 {
-	if [ -f /etc/kdump-adv-conf/initramfs.conf ]
-	then
-		$LOGGER "Using Kdump advanced configuration service"
-		if [ -n "$DRACUT_CMD" ]
-		then
-			MKDUMPRD=$DRACUT_CMD
-		else
-			MKDUMPRD="dracut -f -c /etc/kdump-adv-conf/initramfs.conf"
-		fi
-		# We always rebuild here, since it takes longer
-		# to figure out if anything has changed
-		touch /etc/kdump.conf
-	else
-		MKDUMPRD="/sbin/mkdumprd -d -f"
-	fi
-
 	if [ -z "$KDUMP_KERNELVER" ]; then
-		local running_kernel=`uname -r`
-
-		kdump_kver=`echo $running_kernel | sed 's/smp//g'`
+		kdump_kver=`uname -r`
 	else
 		kdump_kver=$KDUMP_KERNELVER
 	fi

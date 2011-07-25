@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.2
-Release: 6%{?dist}
+Release: 7%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -281,6 +281,9 @@ done
 
 
 %changelog
+* Mon Jul 25 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-7
+- Remove obsolete code in kdumpctl.
+
 * Mon Jul 25 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-6
 - Support core_collector and extran_bins.
 
