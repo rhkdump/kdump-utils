@@ -47,11 +47,6 @@ dump_remote() {
     return
 }
 
-# $1 action
-set_default() {
-    return
-}
-
 if [ -n "$conf_file" ]; then
     while read config_opt config_val;
     do
@@ -69,21 +64,18 @@ if [ -n "$conf_file" ]; then
             add_dracut_arg "--add network"
             dump_remote "$config_val"
             ;;
+        core_collector)
+            add_dracut_arg "-I ${config_val% *}"
+            ;;
+        extra_bins)
+            add_dracut_arg "-I $config_val"
+            ;;
         *)
             if [ -n $(echo $config_opt | grep "^#.*$") ]
             then
                 continue
             fi
             dump_local ""
-            ;;
-        esac
-    done < $conf_file
-    #Now parse the default actions
-    while read config_opt config_val;
-    do
-        case "$config_opt" in
-        default)
-            set_default "$config_val"
             ;;
         esac
     done < $conf_file
