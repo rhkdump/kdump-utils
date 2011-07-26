@@ -2,6 +2,7 @@
 
 KDUMP_PATH="/var/crash"
 CORE_COLLECTOR="makedumpfile -d 31 -c"
+DEFAULT_ACTION="reboot -f"
 
 read_kdump_conf()
 {
@@ -17,7 +18,21 @@ read_kdump_conf()
 		CORE_COLLECTOR="$config_val"
                 ;;
             default)
-                ;;
+                case $config_val in
+                    shell)
+                           DEFAULT_ACTION="/bin/sh"
+                           ;;
+                    reboot)
+                            DEFAULT_ACTION="reboot -f"
+                            ;;
+                    halt)
+                            DEFAULT_ACTION="halt -f"
+                            ;;
+                    poweroff)
+                            DEFAULT_ACTION="poweroff -f"
+                            ;;
+                esac
+	        ;;
 	    esac
         done < $conf_file
     fi
@@ -25,6 +40,6 @@ read_kdump_conf()
 
 do_default_action()
 {
-    return
+    $DEFAULT_ACTION
 }
 

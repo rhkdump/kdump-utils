@@ -14,5 +14,5 @@ mkdir -p $NEWROOT/$KDUMP_PATH/$DATEDIR
 $CORE_COLLECTOR /proc/vmcore $NEWROOT/$KDUMP_PATH/$DATEDIR/vmcore
 sync
 
-# Once the copy is done, just reboot the system
-reboot -f
+do_default_action
+
