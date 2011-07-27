@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.2
-Release: 9%{?dist}
+Release: 10%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -30,7 +30,7 @@ Source100: dracut-files.tbz2
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires(pre): coreutils chkconfig sed zlib 
-Requires: busybox >= 1.2.0, dracut
+Requires: dracut
 BuildRequires: dash 
 BuildRequires: zlib-devel zlib zlib-static elfutils-devel-static glib2-devel 
 BuildRequires: pkgconfig intltool gettext 
@@ -281,6 +281,9 @@ done
 
 
 %changelog
+* Wed Jul 27 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-10
+- Don't depend on busybox, as it doesn't save much space.
+
 * Tue Jul 26 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-9
 - Parse default action.
 
