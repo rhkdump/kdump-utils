@@ -10,7 +10,7 @@ export IN_KDUMP=1
 
 conf_file="/etc/kdump.conf"
 extra_modules=""
-dracut_args="-H"
+dracut_args="-H -o i18n -o plymouth"
 
 add_dracut_arg() {
     dracut_args="$dracut_args $*"
@@ -70,6 +70,20 @@ if [ -n "$conf_file" ]; then
         extra_bins)
             add_dracut_arg "-I $config_val"
             ;;
+        default)
+            case $config_val in
+                reboot)
+                    add_dracut_arg "-I reboot"
+                    ;;
+                halt)
+                    add_dracut_arg "-I halt"
+                    ;;
+                poweroff)
+                    add_dracut_arg "-I poweroff"
+                    ;;
+            esac
+            ;;
+
         *)
             if [ -n $(echo $config_opt | grep "^#.*$") ]
             then

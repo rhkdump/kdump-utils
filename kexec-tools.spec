@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.2
-Release: 11%{?dist}
+Release: 12%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -281,6 +281,9 @@ done
 
 
 %changelog
+* Wed Jul 27 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-12
+- Don't use consolehelper, use real reboot/halt/poweroff.
+
 * Wed Jul 27 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-11
 - Rename initrd to initramfs.
 
