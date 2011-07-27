@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.2
-Release: 12%{?dist}
+Release: 13%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -281,6 +281,9 @@ done
 
 
 %changelog
+* Wed Jul 27 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-13
+- Use absolute path of reboot/halt/poweroff.
+
 * Wed Jul 27 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-12
 - Don't use consolehelper, use real reboot/halt/poweroff.
 

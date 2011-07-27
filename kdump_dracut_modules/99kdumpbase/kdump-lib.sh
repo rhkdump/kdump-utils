@@ -23,13 +23,13 @@ read_kdump_conf()
                            DEFAULT_ACTION="emergency_shell"
                            ;;
                     reboot)
-                            DEFAULT_ACTION="reboot -f"
+                            DEFAULT_ACTION="/usr/bin/reboot -f"
                             ;;
                     halt)
-                            DEFAULT_ACTION="halt -f"
+                            DEFAULT_ACTION="/usr/bin/halt -f"
                             ;;
                     poweroff)
-                            DEFAULT_ACTION="poweroff -f"
+                            DEFAULT_ACTION="/usr/bin/poweroff -f"
                             ;;
                 esac
 	        ;;
