@@ -70,20 +70,6 @@ if [ -n "$conf_file" ]; then
         extra_bins)
             add_dracut_arg "-I $config_val"
             ;;
-        default)
-            case $config_val in
-                reboot)
-                    add_dracut_arg "-I reboot"
-                    ;;
-                halt)
-                    add_dracut_arg "-I halt"
-                    ;;
-                poweroff)
-                    add_dracut_arg "-I poweroff"
-                    ;;
-            esac
-            ;;
-
         *)
             if [ -n $(echo $config_opt | grep "^#.*$") ]
             then

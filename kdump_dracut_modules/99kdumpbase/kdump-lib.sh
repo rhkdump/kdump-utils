@@ -1,5 +1,7 @@
 #!/bin/sh
 
+. /lib/dracut-lib.sh
+
 KDUMP_PATH="/var/crash"
 CORE_COLLECTOR="makedumpfile -d 31 -c"
 DEFAULT_ACTION="reboot -f"
@@ -20,16 +22,16 @@ read_kdump_conf()
             default)
                 case $config_val in
                     shell)
-                           DEFAULT_ACTION="emergency_shell"
+                           DEFAULT_ACTION="sh -i -l"
                            ;;
                     reboot)
-                            DEFAULT_ACTION="/usr/bin/reboot -f"
+                            DEFAULT_ACTION="reboot -f"
                             ;;
                     halt)
-                            DEFAULT_ACTION="/usr/bin/halt -f"
+                            DEFAULT_ACTION="halt -f"
                             ;;
                     poweroff)
-                            DEFAULT_ACTION="/usr/bin/poweroff -f"
+                            DEFAULT_ACTION="poweroff -f"
                             ;;
                 esac
 	        ;;
@@ -40,6 +42,7 @@ read_kdump_conf()
 
 do_default_action()
 {
+    wait_for_loginit
     $DEFAULT_ACTION
 }
 
