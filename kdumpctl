@@ -53,7 +53,7 @@ function check_config()
 	fi
 
 	kdump_kernel="${KDUMP_BOOTDIR}/${KDUMP_IMG}-${kdump_kver}${KDUMP_IMG_EXT}"
-	kdump_initrd="${KDUMP_BOOTDIR}/initrd-${kdump_kver}kdump.img"
+	kdump_initrd="${KDUMP_BOOTDIR}/initramfs-${kdump_kver}kdump.img"
 
 	if [ ! -f $kdump_kernel ]; then
 		echo -n "No kdump kernel image found."; echo
