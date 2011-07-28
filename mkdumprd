@@ -10,7 +10,7 @@ export IN_KDUMP=1
 
 conf_file="/etc/kdump.conf"
 extra_modules=""
-dracut_args="-H -o i18n -o plymouth"
+dracut_args="-H -o i18n -o plymouth --add shutdown -c /dev/null"
 
 add_dracut_arg() {
     dracut_args="$dracut_args $*"
@@ -38,12 +38,12 @@ done
 
 # $1 target device
 # $2 if this is a raw dump
-dump_local() {
+check_local() {
     return
 }
 
 # $1 remote target
-dump_remote() {
+check_remote() {
     return
 }
 
@@ -55,14 +55,14 @@ if [ -n "$conf_file" ]; then
             extra_modules="$extra_modules $config_val"
             ;;
         ext[234]|xfs|btrfs|minix)
-            dump_local "$config_val" 0
+            check_local "$config_val" 0
             ;;
         raw)
-            dump_local "$config_val" 1
+            check_local "$config_val" 1
             ;;
         net)
             add_dracut_arg "--add network"
-            dump_remote "$config_val"
+            check_remote "$config_val"
             ;;
         core_collector)
             add_dracut_arg "-I ${config_val% *}"
@@ -75,7 +75,6 @@ if [ -n "$conf_file" ]; then
             then
                 continue
             fi
-            dump_local ""
             ;;
         esac
     done < $conf_file
@@ -87,4 +86,5 @@ then
 fi
 
 dracut $dracut_args "$@"
+exit $?
 
