@@ -52,6 +52,27 @@ pull_dracut_modules() {
     unset MAJOR MINOR
 }
 
+to_udev_name()
+{
+    local dev="$1"
+
+    case "$dev" in
+    UUID=*)
+        dev=`blkid -U "${dev#UUID=}"`
+        ;;
+    LABEL=*)
+        dev=`blkid -L "${dev#LABEL=}"`
+        ;;
+    esac
+    echo ${dev#/dev/}
+}
+
+add_udev_rules()
+{
+    udevmatch $1 >> $moddir/99-localfs.rules
+    printf ", SYMLINK+=$(to_udev_name $1)" >> $moddir/99-localfs.rules
+}
+
 depends() {
     local _deps="base shutdown"
     while read config_opt config_val;
@@ -59,6 +80,7 @@ depends() {
         case "$config_opt" in
         ext[234]|xfs|btrfs|minix|raw)
             _deps="$_deps `pull_dracut_modules "$config_val"`"
+            add_udev_rules $config_val
             ;;
         esac
     done < /etc/kdump.conf
@@ -72,6 +94,6 @@ install() {
     inst "/sbin/makedumpfile" "/sbin/makedumpfile"
     inst "/etc/kdump.conf" "/etc/kdump.conf"
     inst_hook pre-pivot 01 "$moddir/kdump.sh"
-    inst_hook pre-udev 40 "$moddir/block-genrules.sh"
+    inst_rules "$moddir/99-localfs.rules"
 }
 

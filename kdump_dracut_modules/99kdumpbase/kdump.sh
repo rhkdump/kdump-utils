@@ -38,9 +38,25 @@ add_to_fstab()
     echo "$_mp"
 }
 
+to_dev_name()
+{
+    local dev="$1"
+
+    case "$dev" in
+    UUID=*)
+        dev=`blkid -U "${dev#UUID=}"`
+        ;;
+    LABEL=*)
+        dev=`blkid -L "${dev#LABEL=}"`
+        ;;
+    esac
+    echo $dev
+}
+
 dump_localfs()
 {
-    local _mp=`add_to_fstab $1`
+    local _dev=`to_dev_name $1`
+    local _mp=`add_to_fstab $_dev`
     mount $_mp || return 1
     mkdir -p $_mp/$KDUMP_PATH/$DATEDIR
     $CORE_COLLECTOR /proc/vmcore $_mp/$KDUMP_PATH/$DATEDIR/vmcore || return 1
@@ -82,21 +98,6 @@ dump_ssh()
     return 0
 }
 
-to_dev_name()
-{
-    local dev="$1"
-
-    case "$dev" in
-    UUID=*)
-        dev=`blkid -U "${dev#UUID=}"`
-        ;;
-    LABEL=*)
-        dev=`blkid -L "${dev#LABEL=}"`
-        ;;
-    esac
-    echo $dev
-}
-
 read_kdump_conf()
 {
     local conf_file="/etc/kdump.conf"
@@ -105,7 +106,7 @@ read_kdump_conf()
         do
 	    case "$config_opt" in
             ext[234]|xfs|btrfs|minix)
-                add_dump_code "dump_localfs "$(to_dev_name $config_val)" || do_default_action"
+                add_dump_code "dump_localfs $config_val || do_default_action"
                 ;;
             raw)
                 add_dump_code "dump_raw $config_val || do_default_action"
