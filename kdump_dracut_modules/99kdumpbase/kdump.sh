@@ -25,13 +25,25 @@ add_dump_code()
     fi
 }
 
+add_to_fstab()
+{
+    local _mp
+    while read dev mp fs opts rest; do
+        if [ "$dev" = "$1" ]; then
+            _mp=$NEWROOT$mp
+            echo "$dev $NEWROOT$mp $fs ${opts},ro $rest"
+            break
+        fi
+    done < "$NEWROOT/etc/fstab" >> /etc/fstab
+    echo "$_mp"
+}
+
 dump_localfs()
 {
-    mount -o remount,rw $NEWROOT/ || return 1
-    [ -d $NEWROOT/mnt ] || mkdir -p $NEWROOT/mnt
-    mount -t $1 $2 $NEWROOT/mnt || return 1
-    mkdir -p $NEWROOT/mnt/$KDUMP_PATH/$DATEDIR
-    $CORE_COLLECTOR /proc/vmcore $NEWROOT/mnt/$KDUMP_PATH/$DATEDIR/vmcore || return 1
+    local _mp=`add_to_fstab $1`
+    mount $_mp || return 1
+    mkdir -p $_mp/$KDUMP_PATH/$DATEDIR
+    $CORE_COLLECTOR /proc/vmcore $_mp/$KDUMP_PATH/$DATEDIR/vmcore || return 1
     umount /mnt || return 1
     return 0
 }
@@ -72,14 +84,17 @@ dump_ssh()
 
 to_dev_name()
 {
-    local _dev=$1
-    local _is_uuid=`echo $1 | grep UUID`
-    local _is_label=`echo $1 | grep LABEL`
-    if [ -n "$_is_uuid" -o -n "$_is_label" ]
-    then
-        _dev=`findfs $1`
-    fi
-    echo $_dev
+    local dev="$1"
+
+    case "$dev" in
+    UUID=*)
+        dev=`blkid -U "${dev#UUID=}"`
+        ;;
+    LABEL=*)
+        dev=`blkid -L "${dev#LABEL=}"`
+        ;;
+    esac
+    echo $dev
 }
 
 read_kdump_conf()
@@ -90,7 +105,7 @@ read_kdump_conf()
         do
 	    case "$config_opt" in
             ext[234]|xfs|btrfs|minix)
-                add_dump_code "dump_localfs $config_opt "$(to_dev_name $config_val)" || do_default_action"
+                add_dump_code "dump_localfs "$(to_dev_name $config_val)" || do_default_action"
                 ;;
             raw)
                 add_dump_code "dump_raw $config_val || do_default_action"

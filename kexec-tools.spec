@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.2
-Release: 18%{?dist}
+Release: 19%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -168,6 +168,7 @@ make -C kexec-tools-po install DESTDIR=$RPM_BUILD_ROOT
 mkdir -p -m755 $RPM_BUILD_ROOT/etc/kdump-adv-conf
 tar -C $RPM_BUILD_ROOT/etc/kdump-adv-conf -jxvf %{SOURCE100}
 chmod 755 $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99kdumpbase/module-setup.sh
+chmod 755 $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99kdumpbase/block-genrules.sh
 chmod 755 $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99kdumpbase/kdump.sh
 
 
@@ -280,6 +281,9 @@ done
 
 
 %changelog
+* Mon Aug 1 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-19
+- Generate udev rules to handle device names.
+
 * Mon Aug 1 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-18
 - Fix dump to local filesystem and raw dump.
 
