@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.2
-Release: 16%{?dist}
+Release: 17%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -30,7 +30,7 @@ Source100: dracut-files.tbz2
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires(pre): coreutils chkconfig sed zlib 
-Requires: dracut
+Requires: dracut dracut-network
 BuildRequires: dash 
 BuildRequires: zlib-devel zlib zlib-static elfutils-devel-static glib2-devel 
 BuildRequires: pkgconfig intltool gettext 
@@ -280,6 +280,9 @@ done
 
 
 %changelog
+* Mon Aug 1 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-17
+- Depend on dracut-network.
+
 * Mon Aug 1 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-16
 - Move dracut module detection code to module-setup.sh.
 
