@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.2
-Release: 20%{?dist}
+Release: 21%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -280,6 +280,9 @@ done
 
 
 %changelog
+* Tue Aug 2 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-21
+- Fix udev rules in module-setup.sh
+
 * Mon Aug 1 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-20
 - Generate udev rules in module-setup.sh
 

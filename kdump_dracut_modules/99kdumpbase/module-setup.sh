@@ -67,10 +67,22 @@ to_udev_name()
     echo ${dev#/dev/}
 }
 
+udevmatch() {
+    case "$1" in
+    UUID=????????-????-????-????-????????????|LABEL=*)
+        printf 'ENV{ID_FS_%s}=="%s"' "${1%%=*}" "${1#*=}"
+        ;;
+    UUID=*)
+        printf 'ENV{ID_FS_UUID}=="%s*"' "${1#*=}"
+        ;;
+    /dev/?*) printf 'KERNEL=="%s"' "${1#/dev/}" ;;
+    esac
+    printf ', SYMLINK+="'$(to_udev_name $1)'"\n' 
+}
+
 add_udev_rules()
 {
     udevmatch $1 >> $moddir/99-localfs.rules
-    printf ", SYMLINK+=$(to_udev_name $1)" >> $moddir/99-localfs.rules
 }
 
 depends() {
@@ -80,7 +92,6 @@ depends() {
         case "$config_opt" in
         ext[234]|xfs|btrfs|minix|raw)
             _deps="$_deps `pull_dracut_modules "$config_val"`"
-            add_udev_rules $config_val
             ;;
         esac
     done < /etc/kdump.conf
@@ -89,6 +100,16 @@ depends() {
 }
 
 install() {
+    echo -n "" > "$moddir/99-localfs.rules"
+    while read config_opt config_val;
+    do
+        case "$config_opt" in
+        ext[234]|xfs|btrfs|minix|raw)
+            add_udev_rules $config_val
+            ;;
+        esac
+    done < /etc/kdump.conf
+
     inst "/bin/date" "/bin/date"
     inst "/bin/sync" "/bin/sync"
     inst "/sbin/makedumpfile" "/sbin/makedumpfile"
