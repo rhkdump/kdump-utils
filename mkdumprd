@@ -10,10 +10,14 @@ export IN_KDUMP=1
 
 conf_file="/etc/kdump.conf"
 extra_modules=""
-dracut_args="-H -o i18n -o plymouth --add shutdown -c /dev/null"
+dracut_args="-m kdumpbase --add dash -c /dev/null"
 
 add_dracut_arg() {
     dracut_args="$dracut_args $*"
+}
+
+add_dracut_module() {
+    add_dracut_arg "--add $1"
 }
 
 while [ $# -gt 0 ]; do
@@ -61,8 +65,8 @@ if [ -n "$conf_file" ]; then
             check_local "$config_val" 1
             ;;
         net)
-            add_dracut_arg "--add network"
             check_remote "$config_val"
+            add_dracut_module "nfs"
             ;;
         core_collector)
             add_dracut_arg "-I ${config_val% *}"
@@ -85,6 +89,6 @@ then
     add_dracut_arg "--add-drivers $extra_modules"
 fi
 
-dracut $dracut_args "$@"
+dracut $dracut_args -M "$@"
 exit $?
 

@@ -1,9 +1,0 @@
-#!/bin/bash
-
-#kdumpctl sets this explicitly
-if [ -z "$IN_KDUMP" ]
-then
-	exit 1
-fi
-exit 0
-
