@@ -69,7 +69,7 @@ depends() {
 install() {
     inst "/bin/date" "/bin/date"
     inst "/bin/sync" "/bin/sync"
-    inst "/usr/bin/reboot" "/bin/reboot"
+    inst "/sbin/findfs" "/sbin/findfs"
     inst "/sbin/makedumpfile" "/sbin/makedumpfile"
     inst "/etc/kdump.conf" "/etc/kdump.conf"
     inst_hook pre-pivot 01 "$moddir/kdump.sh"

@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.2
-Release: 17%{?dist}
+Release: 18%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -280,6 +280,9 @@ done
 
 
 %changelog
+* Mon Aug 1 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-18
+- Fix dump to local filesystem and raw dump.
+
 * Mon Aug 1 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-17
 - Depend on dracut-network.
 
