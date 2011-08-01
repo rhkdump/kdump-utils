@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.2
-Release: 15%{?dist}
+Release: 16%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -167,8 +167,7 @@ make -C kexec-tools-po install DESTDIR=$RPM_BUILD_ROOT
 # untar the dracut package
 mkdir -p -m755 $RPM_BUILD_ROOT/etc/kdump-adv-conf
 tar -C $RPM_BUILD_ROOT/etc/kdump-adv-conf -jxvf %{SOURCE100}
-chmod 755 $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99kdumpbase/check
-chmod 755 $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99kdumpbase/install
+chmod 755 $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99kdumpbase/module-setup.sh
 chmod 755 $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99kdumpbase/kdump.sh
 
 
@@ -281,6 +280,9 @@ done
 
 
 %changelog
+* Mon Aug 1 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-16
+- Move dracut module detection code to module-setup.sh.
+
 * Wed Jul 28 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-15
 - Use shutdown module of dracut to handle reboot/shutdown/halt.
 
