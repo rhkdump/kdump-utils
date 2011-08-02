@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.2
-Release: 23%{?dist}
+Release: 24%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -280,6 +280,9 @@ done
 
 
 %changelog
+* Tue Aug 2 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-24
+- Fix default action handling.
+
 * Tue Aug 2 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-23
 - Install modified kdump.conf in initrd.
 

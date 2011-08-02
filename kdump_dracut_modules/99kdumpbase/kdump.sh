@@ -5,7 +5,7 @@
 set -x
 KDUMP_PATH="/var/crash"
 CORE_COLLECTOR="makedumpfile -d 31 -c"
-DEFAULT_ACTION="reboot -f"
+DEFAULT_ACTION="dump_rootfs"
 DATEDIR=`date +%d.%m.%y-%T`
 DUMP_INSTRUCTION=""
 
@@ -57,7 +57,12 @@ dump_localfs()
 {
     local _dev=`to_dev_name $1`
     local _mp=`add_to_fstab $_dev`
-    mount $_mp || return 1
+    if [ $_mp = "$NEWROOT/" ] || [ $_mp = "$NEWROOT" ]
+    then
+        mount -o remount,rw $_mp || return 1
+    else
+        mount $_mp || return 1
+    fi
     mkdir -p $_mp/$KDUMP_PATH/$DATEDIR
     $CORE_COLLECTOR /proc/vmcore $_mp/$KDUMP_PATH/$DATEDIR/vmcore || return 1
     umount $_mp || return 1
@@ -77,6 +82,7 @@ dump_rootfs()
     mkdir -p $NEWROOT/$KDUMP_PATH/$DATEDIR
     $CORE_COLLECTOR /proc/vmcore $NEWROOT/$KDUMP_PATH/$DATEDIR/vmcore || return 1
     sync
+    reboot -f
     return 0
 }
 
@@ -150,10 +156,9 @@ read_kdump_conf
 
 if [ -n "$DUMP_INSTRUCTION" ]
 then
-    eval "$DUMP_INSTRUCTION"
+    eval "$DUMP_INSTRUCTION && reboot -f"
 else
     dump_rootfs
-    do_default_action
 fi
 
 
