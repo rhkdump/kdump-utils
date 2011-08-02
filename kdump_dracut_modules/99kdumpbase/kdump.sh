@@ -31,7 +31,7 @@ add_to_fstab()
     while read dev mp fs opts rest; do
         if [ "$dev" = "$1" ]; then
             _mp=$NEWROOT$mp
-            echo "$dev $NEWROOT$mp $fs ${opts},ro $rest"
+            echo "$dev $NEWROOT$mp $fs ${opts},rw $rest"
             break
         fi
     done < "$NEWROOT/etc/fstab" >> /etc/fstab
@@ -60,7 +60,7 @@ dump_localfs()
     mount $_mp || return 1
     mkdir -p $_mp/$KDUMP_PATH/$DATEDIR
     $CORE_COLLECTOR /proc/vmcore $_mp/$KDUMP_PATH/$DATEDIR/vmcore || return 1
-    umount /mnt || return 1
+    umount $_mp || return 1
     return 0
 }
 

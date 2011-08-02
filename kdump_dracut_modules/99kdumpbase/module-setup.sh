@@ -52,8 +52,7 @@ pull_dracut_modules() {
     unset MAJOR MINOR
 }
 
-to_udev_name()
-{
+to_udev_name() {
     local dev="$1"
 
     case "$dev" in
@@ -65,6 +64,15 @@ to_udev_name()
         ;;
     esac
     echo ${dev#/dev/}
+}
+
+add_lvm_code() {
+    local dev="/dev/$(to_udev_name $1)"
+    local lv
+    printf '#!/bin/sh\n' > $moddir/kdump-prepare.sh
+    printf "lvm lvchange -ay --sysinit ">> $moddir/kdump-prepare.sh
+    lv=$(lvm lvdisplay $dev | awk '/LV Name/ {print $3}')
+    echo ${lv#/dev/} >> $moddir/kdump-prepare.sh
 }
 
 udevmatch() {
@@ -80,9 +88,8 @@ udevmatch() {
     printf ', SYMLINK+="'$(to_udev_name $1)'"\n' 
 }
 
-add_udev_rules()
-{
-    udevmatch $1 >> $moddir/99-localfs.rules
+add_udev_rules() {
+    udevmatch $1 >> $moddir/90-localfs.rules
 }
 
 depends() {
@@ -100,12 +107,14 @@ depends() {
 }
 
 install() {
-    echo -n "" > "$moddir/99-localfs.rules"
+    echo -n "" > $moddir/90-localfs.rules
+    chmod +x $moddir/kdump-prepare.sh
     while read config_opt config_val;
     do
         case "$config_opt" in
         ext[234]|xfs|btrfs|minix|raw)
             add_udev_rules $config_val
+            add_lvm_code $config_val 
             ;;
         esac
     done < /etc/kdump.conf
@@ -114,7 +123,8 @@ install() {
     inst "/bin/sync" "/bin/sync"
     inst "/sbin/makedumpfile" "/sbin/makedumpfile"
     inst "/etc/kdump.conf" "/etc/kdump.conf"
-    inst_hook pre-pivot 01 "$moddir/kdump.sh"
-    inst_rules "$moddir/99-localfs.rules"
+    inst_hook pre-pivot 01 "$moddir/kdump-prepare.sh"
+    inst_hook pre-pivot 02 "$moddir/kdump.sh"
+    inst_rules "$moddir/90-localfs.rules"
 }
 
