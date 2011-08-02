@@ -69,7 +69,6 @@ to_udev_name() {
 add_lvm_code() {
     local dev="/dev/$(to_udev_name $1)"
     local lv
-    printf '#!/bin/sh\n' > $moddir/kdump-prepare.sh
     printf "lvm lvchange -ay --sysinit ">> $moddir/kdump-prepare.sh
     lv=$(lvm lvdisplay $dev | awk '/LV Name/ {print $3}')
     echo ${lv#/dev/} >> $moddir/kdump-prepare.sh
@@ -92,6 +91,14 @@ add_udev_rules() {
     udevmatch $1 >> $moddir/90-localfs.rules
 }
 
+gen_new_conf () {
+    if [ ! -f $2 ]
+    then
+        sed -ne '/^#/!p' /etc/kdump.conf > $2
+    fi
+    sed -i -e "s#$1#/dev/$(to_udev_name $1)#" $2
+}
+
 depends() {
     local _deps="base shutdown"
     while read config_opt config_val;
@@ -108,13 +115,16 @@ depends() {
 
 install() {
     echo -n "" > $moddir/90-localfs.rules
+    printf '#!/bin/sh\n' > $moddir/kdump-prepare.sh
     chmod +x $moddir/kdump-prepare.sh
+
     while read config_opt config_val;
     do
         case "$config_opt" in
         ext[234]|xfs|btrfs|minix|raw)
             add_udev_rules $config_val
             add_lvm_code $config_val 
+            gen_new_conf $config_val /tmp/$$-kdump.conf
             ;;
         esac
     done < /etc/kdump.conf
@@ -122,7 +132,7 @@ install() {
     inst "/bin/date" "/bin/date"
     inst "/bin/sync" "/bin/sync"
     inst "/sbin/makedumpfile" "/sbin/makedumpfile"
-    inst "/etc/kdump.conf" "/etc/kdump.conf"
+    inst "/tmp/$$-kdump.conf" "/etc/kdump.conf"
     inst_hook pre-pivot 01 "$moddir/kdump-prepare.sh"
     inst_hook pre-pivot 02 "$moddir/kdump.sh"
     inst_rules "$moddir/90-localfs.rules"
