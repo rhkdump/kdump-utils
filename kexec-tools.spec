@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.2
-Release: 24%{?dist}
+Release: 29%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -21,19 +21,23 @@ Source13: kexec-tools-po.tar.gz
 Source14: 98-kexec.rules
 Source15: kdump.conf.5
 Source16: kdump.service
+Source17: mkdumpramfs
 
 #######################################
-# These are sources for mkdumprd2
+# These are sources for mkdumpramfs
 # Which is currently in development
 #######################################
 Source100: dracut-files.tbz2
 
-BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-Requires(pre): coreutils chkconfig sed zlib 
-Requires: dracut dracut-network
+Requires(post): systemd-units
+Requires(preun): systemd-units
+Requires(postun): systemd-units
+Requires(pre): coreutils sed zlib 
+Requires: busybox >= 1.2.0, dracut
 BuildRequires: dash 
 BuildRequires: zlib-devel zlib zlib-static elfutils-devel-static glib2-devel 
 BuildRequires: pkgconfig intltool gettext 
+BuildRequires: systemd-units
 %ifarch %{ix86} x86_64 ppc64 ia64 ppc
 Obsoletes: diskdumputils netdump
 %endif
@@ -129,7 +133,6 @@ make -C makedumpfile-1.3.5
 make -C kexec-tools-po
 
 %install
-rm -rf $RPM_BUILD_ROOT
 make install DESTDIR=$RPM_BUILD_ROOT
 mkdir -p -m755 $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d
 mkdir -p -m755 $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
@@ -149,13 +152,14 @@ SYSCONFIG=$RPM_SOURCE_DIR/kdump.sysconfig.%{_target_cpu}
 install -m 644 $SYSCONFIG $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/kdump
 
 install -m 755 %{SOURCE7} $RPM_BUILD_ROOT/sbin/mkdumprd
+install -m 755 %{SOURCE17} $RPM_BUILD_ROOT/sbin/mkdumpramfs
 install -m 644 %{SOURCE8} $RPM_BUILD_ROOT%{_sysconfdir}/kdump.conf
 install -m 644 kexec/kexec.8 $RPM_BUILD_ROOT%{_mandir}/man8/kexec.8
 install -m 755 %{SOURCE11} $RPM_BUILD_ROOT%{_datadir}/kdump/firstboot_kdump.py
 install -m 644 %{SOURCE12} $RPM_BUILD_ROOT%{_mandir}/man8/mkdumprd.8
 install -m 644 %{SOURCE14} $RPM_BUILD_ROOT%{_sysconfdir}/udev/rules.d/98-kexec.rules
 install -m 644 %{SOURCE15} $RPM_BUILD_ROOT%{_mandir}/man5/kdump.conf.5
-install -m 644 %{SOURCE16} $RPM_BUILD_ROOT/lib/systemd/system/kdump.service
+install -m 644 %{SOURCE16} $RPM_BUILD_ROOT%{_unitdir}/kdump.service
 
 %ifarch %{ix86} x86_64 ia64 ppc64
 install -m 755 makedumpfile-1.3.5/makedumpfile $RPM_BUILD_ROOT/sbin/makedumpfile
@@ -175,10 +179,11 @@ chmod 755 $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99kdumpbase/kd
 mkdir -p $RPM_BUILD_ROOT/usr/share/dracut/modules.d/
 mv $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/* $RPM_BUILD_ROOT/usr/share/dracut/modules.d/
 
-%clean
-rm -rf $RPM_BUILD_ROOT
-
 %post
+if [ $1 -eq 1 ] ; then 
+    # Initial installation 
+    /bin/systemctl daemon-reload >/dev/null 2>&1 || :
+fi
 touch /etc/kdump.conf
 /sbin/chkconfig --add kdump
 # This portion of the script is temporary.  Its only here
@@ -205,16 +210,29 @@ fi
 
 
 %postun
-
-if [ "$1" -ge 1 ]; then
-	systemctl try-restart kdump.service &> /dev/null || :
+/bin/systemctl daemon-reload >/dev/null 2>&1 || :
+if [ $1 -ge 1 ] ; then
+    # Package upgrade, not uninstall
+    /bin/systemctl try-restart kdump.service >/dev/null 2>&1 || :
 fi
 
 %preun
-if [ "$1" = 0 ]; then
-	systemctl disable kdump.service &> /dev/null || :
+if [ $1 -eq 0 ] ; then
+    # Package removal, not upgrade
+    /bin/systemctl --no-reload disable kdump.service > /dev/null 2>&1 || :
+    /bin/systemctl stop kdump.service > /dev/null 2>&1 || :
 fi
-exit 0
+
+%triggerun -- kexec-tools < 2.0.2-3
+# Save the current service runlevel info
+# User must manually run systemd-sysv-convert --apply kdump
+# to migrate them to systemd targets
+/usr/bin/systemd-sysv-convert --save kdump >/dev/null 2>&1 ||:
+
+# Run these because the SysV package being removed won't do them
+/sbin/chkconfig --del kdump >/dev/null 2>&1 || :
+/bin/systemctl try-restart kdump.service >/dev/null 2>&1 || :
+
 
 %triggerin -- firstboot
 # we enable kdump everywhere except for paravirtualized xen domains; check here
@@ -261,7 +279,6 @@ do
 done
 
 %files -f %{name}.lang
-%defattr(-,root,root,-)
 /sbin/*
 %{_bindir}/*
 %{_datadir}/kdump
@@ -272,7 +289,7 @@ done
 %dir %{_localstatedir}/crash
 %{_mandir}/man8/*
 %{_mandir}/man5/*
-/lib/systemd/system/*
+%{_unitdir}/kdump.service
 %doc News
 %doc COPYING
 %doc TODO
@@ -280,6 +297,22 @@ done
 
 
 %changelog
+* Fri Sep 9 2011 Tom Callaway <spot@fedoraproject.org> - 2.0.2-29
+- fix systemd scriptlets
+
+* Wed Sep 7 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-28
+- Rename mkdumprd2 to mkdumpramfs.
+
+* Wed Aug 31 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-27
+- Add debug_mem_level debugging option, from Jan Stancek.
+  Resolve Bug 731395.
+
+* Mon Aug 15 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-26
+- Fix several issues caused by the previous revert.
+
+* Mon Aug 15 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-25
+- Switch back to old mkdumprd and also keep the new one.
+
 * Tue Aug 2 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-24
 - Fix default action handling.
 
