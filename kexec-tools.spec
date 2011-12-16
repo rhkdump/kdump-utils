@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.2
-Release: 29%{?dist}
+Release: 30%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -21,7 +21,6 @@ Source13: kexec-tools-po.tar.gz
 Source14: 98-kexec.rules
 Source15: kdump.conf.5
 Source16: kdump.service
-Source17: mkdumpramfs
 
 #######################################
 # These are sources for mkdumpramfs
@@ -152,7 +151,6 @@ SYSCONFIG=$RPM_SOURCE_DIR/kdump.sysconfig.%{_target_cpu}
 install -m 644 $SYSCONFIG $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/kdump
 
 install -m 755 %{SOURCE7} $RPM_BUILD_ROOT/sbin/mkdumprd
-install -m 755 %{SOURCE17} $RPM_BUILD_ROOT/sbin/mkdumpramfs
 install -m 644 %{SOURCE8} $RPM_BUILD_ROOT%{_sysconfdir}/kdump.conf
 install -m 644 kexec/kexec.8 $RPM_BUILD_ROOT%{_mandir}/man8/kexec.8
 install -m 755 %{SOURCE11} $RPM_BUILD_ROOT%{_datadir}/kdump/firstboot_kdump.py
@@ -168,6 +166,7 @@ install -m 644 makedumpfile-1.3.5/makedumpfile.8.gz $RPM_BUILD_ROOT/%{_mandir}/m
 make -C kexec-tools-po install DESTDIR=$RPM_BUILD_ROOT
 %find_lang %{name}
 
+
 # untar the dracut package
 mkdir -p -m755 $RPM_BUILD_ROOT/etc/kdump-adv-conf
 tar -C $RPM_BUILD_ROOT/etc/kdump-adv-conf -jxvf %{SOURCE100}
@@ -175,9 +174,10 @@ chmod 755 $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99kdumpbase/mo
 chmod 755 $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99kdumpbase/kdump.sh
 
 
+%define dracutlibdir %{_prefix}/lib/dracut
 #and move the custom dracut modules to the dracut directory
-mkdir -p $RPM_BUILD_ROOT/usr/share/dracut/modules.d/
-mv $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/* $RPM_BUILD_ROOT/usr/share/dracut/modules.d/
+mkdir -p $RPM_BUILD_ROOT/%{dracutlibdir}/modules.d/
+mv $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/* $RPM_BUILD_ROOT/%{dracutlibdir}/modules.d/
 
 %post
 if [ $1 -eq 1 ] ; then 
@@ -285,7 +285,7 @@ done
 %config(noreplace,missingok) %{_sysconfdir}/sysconfig/kdump
 %config(noreplace,missingok) %{_sysconfdir}/kdump.conf
 %config %{_sysconfdir}/udev/rules.d/*
-%{_datadir}/dracut/modules.d/*
+%{dracutlibdir}/modules.d/*
 %dir %{_localstatedir}/crash
 %{_mandir}/man8/*
 %{_mandir}/man5/*
@@ -297,6 +297,9 @@ done
 
 
 %changelog
+* Fri Dec 16 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-30
+- Update kdump dracut module to use the latest dracut feature.
+
 * Fri Sep 9 2011 Tom Callaway <spot@fedoraproject.org> - 2.0.2-29
 - fix systemd scriptlets
 
