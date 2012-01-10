@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.2
-Release: 30%{?dist}
+Release: 31%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -297,6 +297,9 @@ done
 
 
 %changelog
+* Tue Jan 10 2012 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-31
+- Update kdump dracut module with the latest dracut kdump branch.
+
 * Fri Dec 16 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-30
 - Update kdump dracut module to use the latest dracut feature.
 

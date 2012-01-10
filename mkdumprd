@@ -92,7 +92,7 @@ if [ -n "$conf_file" ]; then
             check_remote "$config_val"
             if strstr "$config_val" "@";
             then
-                add_dracut_module "scp"
+                add_dracut_module "ssh-client"
             else
                 add_dracut_module "nfs"
                 add_dracut_mount "$(to_mount $config_val)"
@@ -120,5 +120,6 @@ then
 fi
 
 dracut "${dracut_args[@]}" -M "$@"
+sync
 exit $?
 
