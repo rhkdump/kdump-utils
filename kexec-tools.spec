@@ -34,7 +34,7 @@ Requires(postun): systemd-units
 Requires(pre): coreutils sed zlib 
 Requires: busybox >= 1.2.0, dracut
 BuildRequires: dash 
-BuildRequires: zlib-devel zlib zlib-static elfutils-devel-static glib2-devel bzip2-libs
+BuildRequires: zlib-devel zlib zlib-static elfutils-devel-static glib2-devel bzip2-devel
 BuildRequires: pkgconfig intltool gettext 
 BuildRequires: systemd-units
 %ifarch %{ix86} x86_64 ppc64 ia64 ppc
