@@ -71,7 +71,8 @@ Obsoletes: diskdumputils netdump
 #
 # Patches 601 onward are generic patches
 #
-Patch601: kexec-tools-2.0.0-makedumpfile-dynamic-build.patch
+Patch601: kexec-tools-2.0.3-makedumpfile-dynamic-build.patch
+Patch602: kexec-tools-2.0.3-disable-kexec-test.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -88,6 +89,7 @@ tar -z -x -v -f %{SOURCE9}
 
 
 %patch601 -p1
+%patch602 -p1
 
 tar -z -x -v -f %{SOURCE13}
 
