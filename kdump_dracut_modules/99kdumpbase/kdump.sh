@@ -87,7 +87,7 @@ dump_nfs()
 {
     mount -o remount,rw $NEWROOT/ || return 1
     [ -d $NEWROOT/mnt ] || mkdir -p $NEWROOT/mnt
-    mount -o nolock -o tcp -t nfs $1 $NEWROOT/mnt/
+    mount -o nolock -o tcp -t nfs $1 $NEWROOT/mnt/ || return 1
     mkdir -p $NEWROOT/mnt/$KDUMP_PATH/$DATEDIR || return 1
     $CORE_COLLECTOR /proc/vmcore $NEWROOT/mnt/$KDUMP_PATH/$DATEDIR/vmcore || return 1
     umount $NEWROOT/mnt/ || return 1
