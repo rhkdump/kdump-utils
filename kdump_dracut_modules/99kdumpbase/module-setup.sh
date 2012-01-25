@@ -24,25 +24,18 @@ to_udev_name() {
     echo ${dev#/dev/}
 }
 
-gen_new_conf () {
-    if [ ! -f $2 ]
-    then
-        sed -ne '/^#/!p' /etc/kdump.conf > $2
-    fi
-    sed -i -e "s#$1#/dev/$(to_udev_name $1)#" $2
-}
-
 depends() {
     echo "base shutdown"
     return 0
 }
 
 install() {
+    sed -ne '/^#/!p' /etc/kdump.conf > /tmp/$$-kdump.conf
     while read config_opt config_val;
     do
         case "$config_opt" in
         ext[234]|xfs|btrfs|minix|raw)
-            gen_new_conf $config_val /tmp/$$-kdump.conf
+            sed -i -e "s#$1#/dev/$(to_udev_name $1)#" /tmp/$$-kdump.conf
             ;;
         esac
     done < /etc/kdump.conf

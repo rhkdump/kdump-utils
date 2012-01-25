@@ -10,7 +10,7 @@ export IN_KDUMP=1
 
 conf_file="/etc/kdump.conf"
 extra_modules=""
-dracut_args=("-m" "kdumpbase" "--add" "dash" "--add" "fstab-sys" "-c" "/dev/null" "-I" "/sbin/makedumpfile")
+dracut_args=("-m" "kdumpbase" "--add" "dash" "--add" "fstab-sys" "--add" "kernel-modules" "-c" "/dev/null" "-I" "/sbin/makedumpfile")
 
 add_dracut_arg() {
     while [ $# -gt 0 ];
@@ -79,6 +79,19 @@ check_remote() {
     return
 }
 
+add_mount() {
+    local _dev=$(to_dev_name "$1")
+    local _mnt=$(to_mount "$1")
+    if [ "$_dev" = "$(get_rootdev)" ]; then
+        :
+    elif [ -n "$_mnt" ]; then
+        add_dracut_mount "$_mnt"
+    else
+	return 1
+    fi
+    return 0
+}
+
 add_dracut_mount "$(to_mount "$(get_rootdev)")"
 if [ -n "$conf_file" ]; then
     while read config_opt config_val;
@@ -88,13 +101,8 @@ if [ -n "$conf_file" ]; then
             extra_modules="$extra_modules $config_val"
             ;;
         ext[234]|xfs|btrfs|minix)
-            _dev=$(to_dev_name "$config_val")
-            _mnt=$(to_mount "$config_val")
-            if [ "$_dev" = "$(get_rootdev)" ]; then
-                :
-            elif [ -n "$_mnt" ]; then
-                add_dracut_mount "$_mnt"
-            else
+            add_mount "$config_val"
+            if [ $? -ne 0 ]
                 echo "Dump target $config_val is probably not mounted."
                 exit 1
             fi
@@ -109,11 +117,15 @@ if [ -n "$conf_file" ]; then
                 add_dracut_module "ssh-client"
             else
                 add_dracut_module "nfs"
-                add_dracut_mount "$(to_mount $config_val)"
+                add_mount "$config_val"
+                if [ $? -ne 0 ]
+                    echo "Dump target $config_val is probably not mounted."
+                    exit 1
+                fi
             fi
             ;;
         core_collector)
-            add_dracut_arg "-I" "${config_val% *}"
+            add_dracut_arg "-I" "${config_val%% *}"
             ;;
         extra_bins)
             add_dracut_arg "-I" "$config_val"

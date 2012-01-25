@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.3
-Release: 34%{?dist}
+Release: 35%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -289,6 +289,9 @@ done
 
 
 %changelog
+* Wed Jan 25 2012 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-35
+- Fix various bugs for nfs dump.
+
 * Wed Jan 25 2012 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-34
 - kdump.sh cleanup for fstab handling, from Dave Young.
 
