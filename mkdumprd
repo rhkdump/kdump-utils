@@ -65,6 +65,10 @@ to_dev_name() {
     echo $dev
 }
 
+get_rootdev() {
+    mount | grep 'on / ' | grep -v rootfs | awk '{print $1}'
+}
+
 to_mount() {
     local _dev=$(to_dev_name $1)
     echo "$(grep "$_dev" /proc/mounts | cut -d' ' -f1-4)"
@@ -75,6 +79,7 @@ check_remote() {
     return
 }
 
+add_dracut_mount "$(to_mount "$(get_rootdev)")"
 if [ -n "$conf_file" ]; then
     while read config_opt config_val;
     do
@@ -83,7 +88,16 @@ if [ -n "$conf_file" ]; then
             extra_modules="$extra_modules $config_val"
             ;;
         ext[234]|xfs|btrfs|minix)
-            add_dracut_mount "$(to_mount $config_val)"
+            _dev=$(to_dev_name "$config_val")
+            _mnt=$(to_mount "$config_val")
+            if [ "$_dev" = "$(get_rootdev)" ]; then
+                :
+            elif [ -n "$_mnt" ]; then
+                add_dracut_mount "$_mnt"
+            else
+                echo "Dump target $config_val is probably not mounted."
+                exit 1
+            fi
             ;;
         raw)
             #TODO
@@ -120,6 +134,7 @@ then
 fi
 
 dracut "${dracut_args[@]}" -M "$@"
+_rc=$?
 sync
-exit $?
+exit $_rc
 
