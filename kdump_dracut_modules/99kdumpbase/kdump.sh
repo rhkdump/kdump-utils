@@ -25,16 +25,15 @@ add_dump_code()
     fi
 }
 
-add_to_fstab()
+get_mp()
 {
     local _mp
     while read dev mp fs opts rest; do
         if [ "$dev" = "$1" ]; then
-            _mp=$NEWROOT$mp
-            echo "$dev $NEWROOT$mp $fs ${opts},rw $rest"
+            _mp="$mp"
             break
         fi
-    done < "$NEWROOT/etc/fstab" >> /etc/fstab
+    done < /proc/mounts
     echo "$_mp"
 }
 
@@ -56,12 +55,10 @@ to_dev_name()
 dump_localfs()
 {
     local _dev=`to_dev_name $1`
-    local _mp=`add_to_fstab $_dev`
-    if [ $_mp = "$NEWROOT/" ] || [ $_mp = "$NEWROOT" ]
+    local _mp=`get_mp $_dev`
+    if [ "$_mp" = "$NEWROOT/" ] || [ "$_mp" = "$NEWROOT" ]
     then
         mount -o remount,rw $_mp || return 1
-    else
-        mount $_mp || return 1
     fi
     mkdir -p $_mp/$KDUMP_PATH/$DATEDIR
     $CORE_COLLECTOR /proc/vmcore $_mp/$KDUMP_PATH/$DATEDIR/vmcore || return 1
