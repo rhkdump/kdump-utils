@@ -102,7 +102,7 @@ if [ -n "$conf_file" ]; then
             ;;
         ext[234]|xfs|btrfs|minix)
             add_mount "$config_val"
-            if [ $? -ne 0 ]
+            if [ $? -ne 0 ]; then
                 echo "Dump target $config_val is probably not mounted."
                 exit 1
             fi
@@ -118,7 +118,7 @@ if [ -n "$conf_file" ]; then
             else
                 add_dracut_module "nfs"
                 add_mount "$config_val"
-                if [ $? -ne 0 ]
+                if [ $? -ne 0 ]; then
                     echo "Dump target $config_val is probably not mounted."
                     exit 1
                 fi
