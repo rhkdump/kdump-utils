@@ -121,8 +121,7 @@ read_kdump_conf()
 		CORE_COLLECTOR="$config_val"
                 ;;
             net)
-                if [ -n "$(echo $config_val | grep @)" ]
-                then
+                if [[ "$config_val" =~ "@" ]]; then
                     add_dump_code "dump_ssh $config_val || do_default_action"
                 else
                     add_dump_code "dump_nfs $config_val || do_default_action"

@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.3
-Release: 36%{?dist}
+Release: 37%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -289,6 +289,9 @@ done
 
 
 %changelog
+* Fri Jan 27 2012 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-37
+- Add initial NFS dump support, experimental.
+
 * Wed Jan 25 2012 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-36
 - Really upload the dracut module.
 
