@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.3
-Release: 38%{?dist}
+Release: 39%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -123,7 +123,6 @@ make -C kexec-tools-po
 
 %install
 make install DESTDIR=$RPM_BUILD_ROOT
-mkdir -p -m755 $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d
 mkdir -p -m755 $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
 mkdir -p -m755 $RPM_BUILD_ROOT%{_localstatedir}/crash
 mkdir -p -m755 $RPM_BUILD_ROOT%{_mandir}/man8/
@@ -175,7 +174,6 @@ if [ $1 -eq 1 ] ; then
     /bin/systemctl daemon-reload >/dev/null 2>&1 || :
 fi
 touch /etc/kdump.conf
-/sbin/chkconfig --add kdump
 # This portion of the script is temporary.  Its only here
 # to fix up broken boxes that require special settings 
 # in /etc/sysconfig/kdump.  It will be removed when 
@@ -287,6 +285,10 @@ done
 
 
 %changelog
+* Tue Feb 14 2012 Orion Poplawski <orion@cora.nwra.com> - 2.0.2-39
+- Fixup sysytemd service file (bug 741272)
+- Drop chkconfig (bug 786938)
+ 
 * Fri Jan 27 2012 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-38
 - Pull the latest makedumpfile release, 1.4.2.
 
