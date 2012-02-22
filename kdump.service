@@ -8,5 +8,5 @@ ExecStart=/usr/bin/kdumpctl start
 ExecStop=/usr/bin/kdumpctl stop
 RemainAfterExit=yes
 
-
-
+[Install]
+WantedBy=multi-user.target
