@@ -10,6 +10,9 @@ KDUMP_COMMANDLINE=""
 KEXEC_ARGS=""
 KDUMP_CONFIG_FILE="/etc/kdump.conf"
 MKDUMPRD="/sbin/mkdumprd -d -f"
+SAVE_PATH=/var/crash
+SSH_KEY_LOCATION="/root/.ssh/kdump_id_rsa"
+DUMP_TARGET=""
 
 LOGGER="/usr/bin/logger -p info -t kdump"
 
@@ -171,8 +174,56 @@ function load_kdump()
 	fi
 }
 
+function check_ssh_config()
+{
+	while read config_opt config_val; do
+		case "$config_opt" in
+		sshkey)
+			if [ -f "$config_val" ]; then
+				# canonicalize the path
+				SSH_KEY_LOCATION=$(/usr/bin/readlink -m $config_val)
+			else
+				echo "WARNING: '$config_val' doesn't exist, using default value '$SSH_KEY_LOCATION'"
+			fi
+			;;
+		path)
+			SAVE_PATH=$config_val
+			;;
+		net)
+			DUMP_TARGET=$config_val
+			;;
+		*)
+			;;
+		esac
+	done < $KDUMP_CONFIG_FILE
+
+	#make sure they've configured kdump.conf for ssh dumps
+	local SSH_TARGET=`echo -n $DUMP_TARGET|sed '/.*@/p'`
+	if [ -z "$SSH_TARGET" ]; then
+		return 1
+	fi
+	return 0
+}
+
+function check_ssh_target()
+{
+    ssh -q -i $SSH_KEY_LOCATION -o BatchMode=yes $DUMP_TARGET mkdir -p $SAVE_PATH
+    if [ $? -ne 0 ]; then
+        echo "Could not create $DUMP_TARGET:$SAVE_PATH, you probably need to run \"service kdump propagate\""
+        exit $?
+    fi
+    return 0
+}
+
 function propagate_ssh_key()
 {
+	check_ssh_config
+	if [ $? -ne 0 ]; then
+		echo "No ssh config specified in $KDUMP_CONFIG_FILE.  Can't propagate"
+		$LOGGER "$errmsg, no ssh config specified in $KDUMP_CONFIG_FILE"
+		exit 1
+	fi
+
 	#Check if selinux is on... must flip to permissive mode
 	#for the moment to create key, then flip back...
 	se_enforce=`/usr/sbin/sestatus | grep -c "^Current mode.*enforcing"`
@@ -180,33 +231,15 @@ function propagate_ssh_key()
 		/usr/sbin/setenforce 0 2>&1 > /dev/null
 	fi
 
-	#Use dedicated key for kdump
-	if [ ! -d /root/.ssh ]; then
-		mkdir /root/.ssh
-		chmod 700 /root/.ssh
-	fi
-	if [ ! -e /root/.ssh/config ]; then
-		echo "IdentityFile ~/.ssh/kdump_id_rsa" >> /root/.ssh/config
-	elif [ `grep -c kdump_id_rsa /root/.ssh/config` -eq 0 ]; then
-		echo "IdentityFile ~/.ssh/kdump_id_rsa" >> /root/.ssh/config
-	fi
-	local KEYFILE=/root/.ssh/kdump_id_rsa.pub
+	local KEYFILE=$SSH_KEY_LOCATION
 	local errmsg="Failed to propagate ssh key"
-
-	#make sure they've configured kdump.conf for ssh dumps
-	local SSH_TARGET=`awk '/^\ *net.*@.*$/ {print $0}' $KDUMP_CONFIG_FILE`
-	if [ -z "$SSH_TARGET" ]; then
-		echo "No ssh config specified in $KDUMP_CONFIG_FILE.  Can't propagate"
-		$LOGGER "$errmsg, no ssh config specified in $KDUMP_CONFIG_FILE"
-		exit 1
-	fi
 
 	#Check to see if we already created key, if not, create it.
 	if [ -f $KEYFILE ]; then
 		echo "Using existing keys..."
 	else
 		echo -n "Generating new ssh keys... "
-		/usr/bin/ssh-keygen -t rsa -f /root/.ssh/kdump_id_rsa -N "" 2>&1 > /dev/null
+		/usr/bin/ssh-keygen -t rsa -f $KEYFILE -N "" 2>&1 > /dev/null
 		echo "done."
 	fi
 
@@ -216,11 +249,11 @@ function propagate_ssh_key()
 	fi
 	
 	#now find the target ssh user and server to contact.
-	SSH_USER=`echo $SSH_TARGET | cut -d\  -f2 | cut -d@ -f1`
-	SSH_SERVER=`echo $SSH_TARGET | sed -e's/\(.*@\)\(.*$\)/\2/'`
+	SSH_USER=`echo $DUMP_TARGET | cut -d\  -f2 | cut -d@ -f1`
+	SSH_SERVER=`echo $DUMP_TARGET | sed -e's/\(.*@\)\(.*$\)/\2/'`
  
 	#now send the found key to the found server
-	ssh-copy-id -i $KEYFILE $SSH_USER@$SSH_SERVER &>/dev/null
+	ssh-copy-id -i $KEYFILE $SSH_USER@$SSH_SERVER
 	RET=$?
 	if [ $RET == 0 ]; then
 		echo $KEYFILE has been added to ~$SSH_USER/.ssh/authorized_keys on $SSH_SERVER
@@ -262,6 +295,9 @@ function start()
 			return 0
 		fi
 	fi
+
+        check_ssh_config && check_ssh_target
+
 	check_config
 	if [ $? != 0 ]; then
 		echo -n "Starting kdump:"; echo

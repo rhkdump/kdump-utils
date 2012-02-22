@@ -9,6 +9,7 @@
 export IN_KDUMP=1
 
 conf_file="/etc/kdump.conf"
+SSH_KEY_LOCATION="/root/.ssh/kdump_id_rsa"
 extra_modules=""
 dracut_args=("-m" "kdumpbase" "--add" "dash" "--add" "fstab-sys" "--add" "kernel-modules" "-c" "/dev/null" "-I" "/sbin/makedumpfile")
 
@@ -26,6 +27,10 @@ add_dracut_module() {
 
 add_dracut_mount() {
     add_dracut_arg "--mount" "$1"
+}
+
+add_dracut_sshkey() {
+    add_dracut_arg "--sshkey" "$1"
 }
 
 while [ $# -gt 0 ]; do
@@ -94,6 +99,13 @@ add_mount() {
 
 add_dracut_mount "$(to_mount "$(get_rootdev)")"
 if [ -n "$conf_file" ]; then
+    # firstly get right SSH_KEY_LOCATION
+    keyfile=$(awk '/sshkey/ {print $2}' $conf_file)
+    if [ -f "$keyfile" ]; then
+        # canonicalize the path
+        SSH_KEY_LOCATION=$(/usr/bin/readlink -m $keyfile)
+    fi
+
     while read config_opt config_val;
     do
         case "$config_opt" in
@@ -115,6 +127,7 @@ if [ -n "$conf_file" ]; then
             if strstr "$config_val" "@";
             then
                 add_dracut_module "ssh-client"
+		add_dracut_sshkey "$SSH_KEY_LOCATION"
             else
                 add_dracut_module "nfs"
                 add_mount "$config_val"

@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.3
-Release: 38%{?dist}
+Release: 39%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -287,6 +287,9 @@ done
 
 
 %changelog
+* Wed Feb 22 2012 Dave Young <ruyang@redhat.com> - 2.0.2-39
+- Add ssh dump support, resolve bug 789253.
+
 * Fri Jan 27 2012 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-38
 - Pull the latest makedumpfile release, 1.4.2.
 

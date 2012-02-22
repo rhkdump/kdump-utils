@@ -8,6 +8,15 @@ CORE_COLLECTOR="makedumpfile -d 31 -c"
 DEFAULT_ACTION="dump_rootfs"
 DATEDIR=`date +%d.%m.%y-%T`
 DUMP_INSTRUCTION=""
+SSH_KEY_LOCATION="/root/.ssh/kdump_id_rsa"
+
+# we use manual setup nics in udev rules,
+# so we need to test network is really ok
+wait_for_net_ok() {
+    local ip=$(getarg ip)
+    local iface=`echo $ip|cut -d':' -f1`
+    return $(wait_for_route_ok $iface)
+}
 
 do_default_action()
 {
@@ -96,8 +105,8 @@ dump_nfs()
 
 dump_ssh()
 {
-    ssh -q -o BatchMode=yes -o StrictHostKeyChecking=yes $1 mkdir -p $KDUMP_PATH/$DATEDIR || return 1
-    scp -q -o BatchMode=yes -o StrictHostKeyChecking=yes /proc/vmcore "$1:$KDUMP_PATH/$DATEDIR"  || return 1
+    ssh -q -i $1 -o BatchMode=yes -o StrictHostKeyChecking=yes $2 mkdir -p $KDUMP_PATH/$DATEDIR || return 1
+    scp -q -i $1 -o BatchMode=yes -o StrictHostKeyChecking=yes /proc/vmcore "$2:$KDUMP_PATH/$DATEDIR"  || return 1
     return 0
 }
 
@@ -105,26 +114,19 @@ read_kdump_conf()
 {
     local conf_file="/etc/kdump.conf"
     if [ -f "$conf_file" ]; then
+        # first get the necessary variables
         while read config_opt config_val;
         do
-	    case "$config_opt" in
-            ext[234]|xfs|btrfs|minix)
-                add_dump_code "dump_localfs $config_val || do_default_action"
-                ;;
-            raw)
-                add_dump_code "dump_raw $config_val || do_default_action"
-                ;;
-	    path)
+            case "$config_opt" in
+            path)
                 KDUMP_PATH="$config_val"
-	        ;;
-            core_collector)
-		CORE_COLLECTOR="$config_val"
                 ;;
-            net)
-                if [[ "$config_val" =~ "@" ]]; then
-                    add_dump_code "dump_ssh $config_val || do_default_action"
-                else
-                    add_dump_code "dump_nfs $config_val || do_default_action"
+            core_collector)
+                CORE_COLLECTOR="$config_val"
+                ;;
+            sshkey)
+                if [ -f "$config_val" ]; then
+                    SSH_KEY_LOCATION=$config_val
                 fi
                 ;;
             default)
@@ -142,8 +144,29 @@ read_kdump_conf()
                         DEFAULT_ACTION="poweroff -f"
                         ;;
                 esac
-	        ;;
-	    esac
+                ;;
+            esac
+        done < $conf_file
+
+        # rescan for add code for dump target
+        while read config_opt config_val;
+        do
+            case "$config_opt" in
+            ext[234]|xfs|btrfs|minix)
+                add_dump_code "dump_localfs $config_val || do_default_action"
+                ;;
+            raw)
+                add_dump_code "dump_raw $config_val || do_default_action"
+                ;;
+            net)
+                wait_for_net_ok
+                if [[ "$config_val" =~ "@" ]]; then
+                    add_dump_code "dump_ssh $SSH_KEY_LOCATION $config_val || do_default_action"
+                else
+                    add_dump_code "dump_nfs $config_val || do_default_action"
+                fi
+                ;;
+            esac
         done < $conf_file
     fi
 }
