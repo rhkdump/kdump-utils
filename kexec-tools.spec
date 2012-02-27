@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.3
-Release: 40%{?dist}
+Release: 41%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -285,8 +285,11 @@ done
 
 
 %changelog
+* Mon Feb 27 2012 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-41
+- Bump this version.
+
 * Wed Feb 22 2012 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-40
-- Fixup sysytemd service file
+- Fixup sysytemd service file.
 
 * Wed Feb 22 2012 Dave Young <ruyang@redhat.com> - 2.0.2-39
 - Add ssh dump support, resolve bug 789253.
