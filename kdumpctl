@@ -198,7 +198,7 @@ function check_ssh_config()
 	done < $KDUMP_CONFIG_FILE
 
 	#make sure they've configured kdump.conf for ssh dumps
-	local SSH_TARGET=`echo -n $DUMP_TARGET|sed '/.*@/p'`
+	local SSH_TARGET=`echo -n $DUMP_TARGET | sed -n '/.*@/p'`
 	if [ -z "$SSH_TARGET" ]; then
 		return 1
 	fi
