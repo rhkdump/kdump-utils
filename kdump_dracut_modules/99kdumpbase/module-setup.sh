@@ -57,6 +57,9 @@ install() {
                 _server=$(echo $config_val | sed -e 's#\(.*\):.*#\1#')
             fi
 
+            _need_dns=`echo $_server|grep "[a-zA-Z]"`
+            [ -n $need_dns ] && _server=`getent hosts $_server|cut -d' ' -f1`
+
             _netdev=`/sbin/ip route get to $_server 2>&1`
             [ $? != 0 ] && echo "Bad kdump location: $config_val" && exit 1
             #the field in the ip output changes if we go to another subnet
