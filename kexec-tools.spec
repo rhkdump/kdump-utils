@@ -285,15 +285,15 @@ done
 
 
 %changelog
-* Wed Apr 11 2012 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-43
+* Wed Apr 11 2012 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.3-43
 - variable name fix from Dave Young.
 
-* Fri Mar 30 2012 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-42
+* Fri Mar 30 2012 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.3-42
 - get ip addr with getent
 - spec: depends on dracut-network
 - Handle net option for nfs in kdump.conf correctly
 
-* Mon Feb 27 2012 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-41
+* Mon Feb 27 2012 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.3-41
 - Bump this version.
 
 * Wed Feb 22 2012 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-40
