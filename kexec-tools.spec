@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.3
-Release: 42%{?dist}
+Release: 43%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -285,6 +285,9 @@ done
 
 
 %changelog
+* Wed Apr 11 2012 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-43
+- variable name fix from Dave Young.
+
 * Fri Mar 30 2012 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-42
 - get ip addr with getent
 - spec: depends on dracut-network
