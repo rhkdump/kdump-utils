@@ -13,7 +13,7 @@ KDUMP_COMMANDLINE=""
 
 # This variable lets us append arguments to the current kdump commandline
 # As taken from either KDUMP_COMMANDLINE above, or from /proc/cmdline
-KDUMP_COMMANDLINE_APPEND="irqpoll maxcpus=1 noirqdistrib reset_devices"
+KDUMP_COMMANDLINE_APPEND="irqpoll maxcpus=1 noirqdistrib reset_devices cgroup_disable=memory"
 
 # Any additional kexec arguments required.  In most situations, this should
 # be left empty
@@ -26,7 +26,7 @@ KEXEC_ARGS=""
 KDUMP_BOOTDIR="/boot"
 
 #What is the image type used for kdump
-KDUMP_IMG="vmlinux"
+KDUMP_IMG="vmlinuz"
 
 #What is the images extension.  Relocatable kernels don't have one
-KDUMP_IMG_EXT="kdump"
+KDUMP_IMG_EXT=""
