@@ -52,10 +52,13 @@ install() {
             ;;
         net)
             if strstr "$config_val" "@"; then
-                _server=$(echo $config_val | sed -e 's#.*@\(.*\):.*#\1#')
+                _server=`echo $config_val | sed 's/.*@//' | cut -d':' -f1`
             else
                 _server=$(echo $config_val | sed -e 's#\(.*\):.*#\1#')
             fi
+
+            _need_dns=`echo $_server|grep "[a-zA-Z]"`
+            [ -n "$_need_dns" ] && _server=`getent hosts $_server|cut -d' ' -f1`
 
             _netdev=`/sbin/ip route get to $_server 2>&1`
             [ $? != 0 ] && echo "Bad kdump location: $config_val" && exit 1
@@ -68,7 +71,7 @@ install() {
                 # we are on the same subnet
                 _netdev=`echo $_netdev|awk '{print $3}'|head -n 1`
             fi
-            echo " ip=$_netdev:dhcp" > ${initdir}/etc/cmdline.d/40ip.conf
+            echo " ip=$_netdev:dhcp rd.neednet=1" > ${initdir}/etc/cmdline.d/40ip.conf
             if is_bridge "$_netdev"; then
                 echo " bridge=$_netdev:$(cd /sys/class/net/$_netdev/brif/; echo *)" > ${initdir}/etc/cmdline.d/41bridge.conf
             elif is_bond "$_netdev"; then
@@ -84,8 +87,8 @@ install() {
 
     inst "/bin/date" "/bin/date"
     inst "/bin/sync" "/bin/sync"
+    inst "/bin/cut" "/bin/cut"
     inst "/sbin/makedumpfile" "/sbin/makedumpfile"
     inst "/tmp/$$-kdump.conf" "/etc/kdump.conf"
-    inst_hook pre-pivot 93 "$moddir/kdump.sh"
+    inst_hook pre-pivot 0000 "$moddir/kdump.sh"
 }
-

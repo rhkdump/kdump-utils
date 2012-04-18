@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.3
-Release: 39%{?dist}
+Release: 43%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -32,7 +32,7 @@ Requires(post): systemd-units
 Requires(preun): systemd-units
 Requires(postun): systemd-units
 Requires(pre): coreutils sed zlib 
-Requires: busybox >= 1.2.0, dracut
+Requires: busybox >= 1.2.0, dracut, dracut-network
 BuildRequires: dash 
 BuildRequires: zlib-devel zlib zlib-static elfutils-devel-static glib2-devel bzip2-devel
 BuildRequires: pkgconfig intltool gettext 
@@ -285,10 +285,23 @@ done
 
 
 %changelog
-* Tue Feb 14 2012 Orion Poplawski <orion@cora.nwra.com> - 2.0.2-39
-- Fixup sysytemd service file (bug 741272)
-- Drop chkconfig (bug 786938)
- 
+* Wed Apr 11 2012 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.3-43
+- variable name fix from Dave Young.
+
+* Fri Mar 30 2012 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.3-42
+- get ip addr with getent
+- spec: depends on dracut-network
+- Handle net option for nfs in kdump.conf correctly
+
+* Mon Feb 27 2012 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.3-41
+- Bump this version.
+
+* Wed Feb 22 2012 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-40
+- Fixup sysytemd service file.
+
+* Wed Feb 22 2012 Dave Young <ruyang@redhat.com> - 2.0.2-39
+- Add ssh dump support, resolve bug 789253.
+
 * Fri Jan 27 2012 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-38
 - Pull the latest makedumpfile release, 1.4.2.
 
