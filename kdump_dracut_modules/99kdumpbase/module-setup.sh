@@ -71,7 +71,8 @@ install() {
                 # we are on the same subnet
                 _netdev=`echo $_netdev|awk '{print $3}'|head -n 1`
             fi
-            echo " ip=$_netdev:dhcp rd.neednet=1" > ${initdir}/etc/cmdline.d/40ip.conf
+            _netmac=`ip addr show $_netdev 2>/dev/null|awk '/ether/{ print $2 }'`
+            echo " ip=$_netdev:dhcp ifname=$_netdev:$_netmac rd.neednet=1" > ${initdir}/etc/cmdline.d/40ip.conf
             if is_bridge "$_netdev"; then
                 echo " bridge=$_netdev:$(cd /sys/class/net/$_netdev/brif/; echo *)" > ${initdir}/etc/cmdline.d/41bridge.conf
             elif is_bond "$_netdev"; then
