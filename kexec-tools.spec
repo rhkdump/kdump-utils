@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.3
-Release: 43%{?dist}
+Release: 44%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -285,6 +285,11 @@ done
 
 
 %changelog
+* Thu Apr 19 2012 Dave Young <dyoung@redhat.com> - 2.0.3-44
+- update ppc64 sysconfig, resolve bug 811449
+- deal with nic rename issue, resolve bug 810107
+- update x86_64 sysconfig, resolve bug 813711
+
 * Wed Apr 11 2012 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.3-43
 - variable name fix from Dave Young.
 
