@@ -95,5 +95,5 @@ install() {
     inst "/bin/cut" "/bin/cut"
     inst "/sbin/makedumpfile" "/sbin/makedumpfile"
     inst "/tmp/$$-kdump.conf" "/etc/kdump.conf"
-    inst_hook pre-pivot 0000 "$moddir/kdump.sh"
+    inst_hook pre-pivot 9999 "$moddir/kdump.sh"
 }
