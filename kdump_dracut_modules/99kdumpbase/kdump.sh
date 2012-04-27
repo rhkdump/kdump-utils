@@ -36,6 +36,7 @@ add_dump_code()
 get_mp()
 {
     local _mp
+    local dev mp fs opts rest
     while read dev mp fs opts rest; do
         if [ "$dev" = "$1" ]; then
             _mp="$mp"
