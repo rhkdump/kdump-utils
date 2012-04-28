@@ -281,6 +281,41 @@ function status()
 	fi
 }
 
+function save_raw()
+{
+	local kdump_dir
+	local raw_target
+
+	raw_target=$(awk '$1 ~ /^raw$/ { print $2; }' $KDUMP_CONFIG_FILE)
+	[ -z "$raw_target" ] && return 0
+	[ -b "$raw_target" ] || {
+		echo "raw partition $raw_target not found"
+		return 1
+	}
+	kdump_dir=`grep ^path $KDUMP_CONFIG_FILE | cut -d' '  -f2-`
+	if [ -z "${kdump_dir}" ]; then
+		coredir="/var/crash/`date +"%Y-%m-%d-%H:%M"`"
+	else
+		coredir="${kdump_dir}/`date +"%Y-%m-%d-%H:%M"`"
+	fi
+
+	mkdir -p "$coredir"
+	[ -d "$coredir" ] || {
+		echo "failed to create $coredir"
+		return 1
+	}
+	if makedumpfile -R $coredir/vmcore <$raw_target >/dev/null 2>&1; then
+		# dump found
+		echo "Dump saved to $coredir/vmcore"
+		# wipe makedumpfile header
+		dd if=/dev/zero of=$raw_target bs=1b count=1 2>/dev/null
+	else
+		rm -rf "$coredir"
+	fi
+
+	return 0
+}
+
 function start()
 {
 	local nr
@@ -290,7 +325,13 @@ function start()
 		return 1
 	}
 
-	#TODO check raw partition for core dump image
+	save_raw
+	if [ $? -ne 0 ]; then
+		echo -n "Starting kdump:"; echo
+		$LOGGER "failed to start up"
+		return 1
+	fi
+
 	status 
 	rc=$?
 	if [ $rc == 2 ]; then
@@ -337,6 +378,11 @@ function stop()
 		return 1
 	fi
 }
+
+if [ ! -f "$KDUMP_CONFIG_FILE" ]; then
+	echo -n "No kdump config file found!"; echo
+	exit 1
+fi
 
 case "$1" in
   start)

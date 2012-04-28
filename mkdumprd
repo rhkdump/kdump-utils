@@ -33,6 +33,33 @@ add_dracut_sshkey() {
     add_dracut_arg "--sshkey" "$1"
 }
 
+#Function: get_raw_size
+#$1=dump target
+get_raw_size() {
+        echo -n $(fdisk -s "$1")
+}
+
+#Function: check_size
+#$1: dump type string ('raw', 'local', 'ssh', 'nfs')
+#$2: dump target
+check_size() {
+    local avail memtotal
+
+    memtotal=$(awk '/MemTotal/{print $2}' /proc/meminfo)
+    case "$1" in
+        raw)
+            avail=$(get_raw_size "$2")
+            ;;
+        *)
+            return
+    esac
+
+    if [ $avail -lt $memtotal ]; then
+        echo "Warning: There is not enough space to save a vmcore."
+        echo "         The size of $2 should be much greater than $memtotal kilo bytes."
+    fi
+}
+
 while [ $# -gt 0 ]; do
     case $1 in
     -d)
@@ -98,60 +125,67 @@ add_mount() {
 }
 
 add_dracut_mount "$(to_mount "$(get_rootdev)")"
-if [ -n "$conf_file" ]; then
-    # firstly get right SSH_KEY_LOCATION
-    keyfile=$(awk '/sshkey/ {print $2}' $conf_file)
-    if [ -f "$keyfile" ]; then
-        # canonicalize the path
-        SSH_KEY_LOCATION=$(/usr/bin/readlink -m $keyfile)
-    fi
 
-    while read config_opt config_val;
-    do
-        case "$config_opt" in
-        extra_modules)
-            extra_modules="$extra_modules $config_val"
-            ;;
-        ext[234]|xfs|btrfs|minix)
+# firstly get right SSH_KEY_LOCATION
+keyfile=$(awk '/sshkey/ {print $2}' $conf_file)
+if [ -f "$keyfile" ]; then
+    # canonicalize the path
+    SSH_KEY_LOCATION=$(/usr/bin/readlink -m $keyfile)
+fi
+
+while read config_opt config_val;
+do
+    case "$config_opt" in
+    extra_modules)
+        extra_modules="$extra_modules $config_val"
+        ;;
+    ext[234]|xfs|btrfs|minix)
+        add_mount "$config_val"
+        if [ $? -ne 0 ]; then
+            echo "Dump target $config_val is probably not mounted."
+            exit 1
+        fi
+        ;;
+    raw)
+        #checking raw disk writable
+        dd if=$config_val count=1 of=/dev/null > /dev/null 2>&1 || {
+            echo "Bad raw disk $config_val"
+            exit 1
+        }
+        check_size raw $config_val
+        ;;
+    net)
+        check_remote "$config_val"
+        if strstr "$config_val" "@";
+        then
+            add_dracut_module "ssh-client"
+		add_dracut_sshkey "$SSH_KEY_LOCATION"
+        else
+            add_dracut_module "nfs"
             add_mount "$config_val"
             if [ $? -ne 0 ]; then
                 echo "Dump target $config_val is probably not mounted."
                 exit 1
             fi
-            ;;
-        raw)
-            #TODO
-            ;;
-        net)
-            check_remote "$config_val"
-            if strstr "$config_val" "@";
-            then
-                add_dracut_module "ssh-client"
-		add_dracut_sshkey "$SSH_KEY_LOCATION"
-            else
-                add_dracut_module "nfs"
-                add_mount "$config_val"
-                if [ $? -ne 0 ]; then
-                    echo "Dump target $config_val is probably not mounted."
-                    exit 1
-                fi
-            fi
-            ;;
-        core_collector)
-            add_dracut_arg "-I" "${config_val%% *}"
-            ;;
-        extra_bins)
-            add_dracut_arg "-I" "$config_val"
-            ;;
-        *)
-            if [ -n $(echo $config_opt | grep "^#.*$") ]
-            then
-                continue
-            fi
-            ;;
-        esac
-    done < $conf_file
-fi
+        fi
+        ;;
+    core_collector)
+        if grep -q "^raw" $conf_file && [ "${config_val%% *}" != "makedumpfile" ]; then
+            echo "Warning: specifying a non-makedumpfile core collector, you will have to recover the vmcore manually."
+        fi
+        add_dracut_arg "-I" "${config_val%% *}"
+        ;;
+    extra_bins)
+        add_dracut_arg "-I" "$config_val"
+        ;;
+    *)
+        if [ -n $(echo $config_opt | grep "^#.*$") ]
+        then
+            continue
+        fi
+        ;;
+    esac
+done < $conf_file
 
 if [ -n "$extra_modules" ]
 then

@@ -4,11 +4,15 @@
 
 set -x
 KDUMP_PATH="/var/crash"
-CORE_COLLECTOR="makedumpfile -d 31 -c"
+CORE_COLLECTOR="makedumpfile -c --message-level 1 -d 31"
 DEFAULT_ACTION="dump_rootfs"
 DATEDIR=`date +%d.%m.%y-%T`
 DUMP_INSTRUCTION=""
 SSH_KEY_LOCATION="/root/.ssh/kdump_id_rsa"
+KDUMP_SCRIPT_DIR="/kdumpscripts"
+DD_BLKSIZE=512
+
+export PATH=$PATH:$KDUMP_SCRIPT_DIR
 
 # we use manual setup nics in udev rules,
 # so we need to test network is really ok
@@ -72,8 +76,20 @@ dump_localfs()
 
 dump_raw()
 {
+    [ -b "$1" ] || return 1
+
+    echo "Saving to raw disk $1"
+    if $(echo -n $CORE_COLLECTOR|grep -q makedumpfile); then
+        _src_size_mb="Unknown"
+    else
+        _src_size=`ls -l /proc/vmcore | cut -d' ' -f5`
+        _src_size_mb=$(($_src_size / 1048576))
+    fi
+
+    monitor_dd_progress $_src_size_mb &
+
     CORE_COLLECTOR=`echo $CORE_COLLECTOR | sed -e's/\(^makedumpfile\)\(.*$\)/\1 -F \2/'`
-    $CORE_COLLECTOR /proc/vmcore | dd of=$1 bs=512 || return 1
+    $CORE_COLLECTOR /proc/vmcore | dd of=$1 bs=$DD_BLKSIZE >> /tmp/dd_progress_file 2>&1 || return 1
     return 0
 }
 
@@ -117,7 +133,7 @@ read_kdump_conf()
                 KDUMP_PATH="$config_val"
                 ;;
             core_collector)
-                CORE_COLLECTOR="$config_val"
+                [ -n "$config_val" ] && CORE_COLLECTOR="$config_val"
                 ;;
             sshkey)
                 if [ -f "$config_val" ]; then
