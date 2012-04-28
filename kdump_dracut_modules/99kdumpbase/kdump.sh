@@ -26,12 +26,7 @@ do_default_action()
 
 add_dump_code()
 {
-    if [ -z "$DUMP_INSTRUCTION" ]
-    then
-        DUMP_INSTRUCTION="$1"
-    else
-        DUMP_INSTRUCTION="$DUMP_INSTRUCTION && $1"
-    fi
+    DUMP_INSTRUCTION="$1"
 }
 
 get_mp()
