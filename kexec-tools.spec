@@ -26,7 +26,9 @@ Source16: kdump.service
 # These are sources for mkdumpramfs
 # Which is currently in development
 #######################################
-Source100: dracut-files.tbz2
+Source100: dracut-kdump.sh
+Source101: dracut-module-setup.sh
+Source102: dracut-monitor_dd_progress
 
 Requires(post): systemd-units
 Requires(preun): systemd-units
@@ -155,12 +157,16 @@ install -m 644 makedumpfile-1.4.2/makedumpfile.8.gz $RPM_BUILD_ROOT/%{_mandir}/m
 make -C kexec-tools-po install DESTDIR=$RPM_BUILD_ROOT
 %find_lang %{name}
 
+%define remove_dracut_prefix() %(echo -n %1|sed 's/.*dracut-//g')
 
-# untar the dracut package
-mkdir -p -m755 $RPM_BUILD_ROOT/etc/kdump-adv-conf
-tar -C $RPM_BUILD_ROOT/etc/kdump-adv-conf -jxvf %{SOURCE100}
-chmod 755 $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99kdumpbase/module-setup.sh
-chmod 755 $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99kdumpbase/kdump.sh
+# deal with dracut modules
+mkdir -p -m755 $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99kdumpbase
+cp %{SOURCE100} $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99kdumpbase/%{remove_dracut_prefix %{SOURCE100}}
+cp %{SOURCE101} $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99kdumpbase/%{remove_dracut_prefix %{SOURCE101}}
+cp %{SOURCE102} $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99kdumpbase/%{remove_dracut_prefix %{SOURCE102}}
+
+chmod 755 $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99kdumpbase/%{remove_dracut_prefix %{SOURCE100}}
+chmod 755 $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99kdumpbase/%{remove_dracut_prefix %{SOURCE101}}
 
 
 %define dracutlibdir %{_prefix}/lib/dracut
