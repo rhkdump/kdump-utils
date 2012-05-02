@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.3
-Release: 45%{?dist}
+Release: 46%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -285,6 +285,13 @@ done
 
 
 %changelog
+* Wed May 2 2012 Dave Young <ruyang@redhat.com> - 2.0.3-46
+- mkdumprd: Start using --hostonly and --add kdumpbase while calling dracut
+- get_mp function cleanup
+- move kdump script order to the end of pre pivot
+- port raw dump from rhel6
+- remove multi dump
+
 * Mon Apr 23 2012 Dave Young <ruyang@redhat.com> - 2.0.3-45
 - update dracut-files.tbz2
 
