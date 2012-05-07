@@ -30,7 +30,7 @@ do_default_action()
 
 add_dump_code()
 {
-    DUMP_INSTRUCTION="$1"
+    DUMP_INSTRUCTION="$1 || do_default_action"
 }
 
 get_mp()
@@ -165,17 +165,17 @@ read_kdump_conf()
         do
             case "$config_opt" in
             ext[234]|xfs|btrfs|minix)
-                add_dump_code "dump_localfs $config_val || do_default_action"
+                add_dump_code "dump_localfs $config_val"
                 ;;
             raw)
-                add_dump_code "dump_raw $config_val || do_default_action"
+                add_dump_code "dump_raw $config_val"
                 ;;
             net)
                 wait_for_net_ok
                 if [[ "$config_val" =~ "@" ]]; then
-                    add_dump_code "dump_ssh $SSH_KEY_LOCATION $config_val || do_default_action"
+                    add_dump_code "dump_ssh $SSH_KEY_LOCATION $config_val"
                 else
-                    add_dump_code "dump_nfs $config_val || do_default_action"
+                    add_dump_code "dump_nfs $config_val"
                 fi
                 ;;
             esac
