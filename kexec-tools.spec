@@ -21,7 +21,7 @@ Source13: kexec-tools-po.tar.gz
 Source14: 98-kexec.rules
 Source15: kdump.conf.5
 Source16: kdump.service
-Source17: rhcrashkernel-param.sh
+Source17: rhcrashkernel-param
 
 #######################################
 # These are sources for mkdumpramfs
@@ -151,7 +151,7 @@ install -m 644 %{SOURCE14} $RPM_BUILD_ROOT%{_sysconfdir}/udev/rules.d/98-kexec.r
 install -m 644 %{SOURCE15} $RPM_BUILD_ROOT%{_mandir}/man5/kdump.conf.5
 install -m 644 %{SOURCE16} $RPM_BUILD_ROOT%{_unitdir}/kdump.service
 mkdir -p $RPM_BUILD_ROOT/usr/sbin
-install -m 755 %{SOURCE17} $RPM_BUILD_ROOT/usr/sbin/rhcrashkernel-param.sh
+install -m 755 %{SOURCE17} $RPM_BUILD_ROOT/usr/sbin/rhcrashkernel-param
 
 %ifarch %{ix86} x86_64 ia64 ppc64
 install -m 755 makedumpfile-1.4.2/makedumpfile $RPM_BUILD_ROOT/sbin/makedumpfile
