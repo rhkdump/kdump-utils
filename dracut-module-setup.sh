@@ -39,6 +39,24 @@ kdump_is_bond() {
      [ -d /sys/class/net/"$1"/bonding ]
 }
 
+# Setup dracut to bringup a given network interface
+kdump_setup_netdev() {
+    local _netdev=$1
+
+    _netmac=`ip addr show $_netdev 2>/dev/null|awk '/ether/{ print $2 }'`
+    echo " ip=$_netdev:dhcp ifname=$_netdev:$_netmac rd.neednet=1" > ${initdir}/etc/cmdline.d/40ip.conf
+
+    if kdump_is_bridge "$_netdev"; then
+        echo " bridge=$_netdev:$(cd /sys/class/net/$_netdev/brif/; echo *)" > ${initdir}/etc/cmdline.d/41bridge.conf
+    elif kdump_is_bond "$_netdev"; then
+        echo " bond=$_netdev:\"$(cat /sys/class/net/$_netdev/bonding/slaves)\"" > ${initdir}/etc/cmdline.d/42bond.conf
+        #TODO
+        #echo "bondoptions=\"$bondoptions\"" >> /tmp/$$-bond
+    else
+        :
+    fi
+}
+
 #Function:kdump_install_net
 #$1: config values of net line in kdump.conf
 kdump_install_net() {
@@ -68,18 +86,7 @@ kdump_install_net() {
         _netdev=`echo $_netdev|awk '{print $3}'|head -n 1`
     fi
 
-    _netmac=`ip addr show $_netdev 2>/dev/null|awk '/ether/{ print $2 }'`
-    echo " ip=$_netdev:dhcp ifname=$_netdev:$_netmac rd.neednet=1" > ${initdir}/etc/cmdline.d/40ip.conf
-
-    if kdump_is_bridge "$_netdev"; then
-        echo " bridge=$_netdev:$(cd /sys/class/net/$_netdev/brif/; echo *)" > ${initdir}/etc/cmdline.d/41bridge.conf
-    elif kdump_is_bond "$_netdev"; then
-        echo " bond=$_netdev:\"$(cat /sys/class/net/$_netdev/bonding/slaves)\"" > ${initdir}/etc/cmdline.d/42bond.conf
-        #TODO
-        #echo "bondoptions=\"$bondoptions\"" >> /tmp/$$-bond
-    else
-        :
-    fi
+    kdump_setup_netdev "${_netdev}"
 }
 
 #install kdump.conf and what user specifies in kdump.conf
