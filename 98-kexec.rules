@@ -1,4 +1,4 @@
-SUBSYSTEM=="cpu", ACTION=="online", PROGRAM="/etc/init.d/kdump restart"
-SUBSYSTEM=="cpu", ACTION=="offline", PROGRAM="/etc/init.d/kdump restart"
-SUBSYSTEM=="memory", ACTION=="add", PROGRAM="/etc/init.d/kdump restart"
-SUBSYSTEM=="memory", ACTION=="remove", PROGRAM="/etc/init.d/kdump restart"
+SUBSYSTEM=="cpu", ACTION=="online", PROGRAM="/bin/systemctl try-restart kdump.service"
+SUBSYSTEM=="cpu", ACTION=="offline", PROGRAM="/bin/systemctl try-restart kdump.service"
+SUBSYSTEM=="memory", ACTION=="add", PROGRAM="/bin/systemctl try-restart kdump.service"
+SUBSYSTEM=="memory", ACTION=="remove", PROGRAM="/bin/systemctl try-restart kdump.service"
