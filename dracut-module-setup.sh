@@ -108,6 +108,132 @@ kdump_install_conf() {
     inst "/tmp/$$-kdump.conf" "/etc/kdump.conf"
 }
 
+kdump_iscsi_get_rec_val() {
+
+    local result
+
+    # The open-iscsi 742 release changed to using flat files in
+    # /var/lib/iscsi.
+
+    result=$(/sbin/iscsiadm --show -m session -r ${1} | grep "^${2} = ")
+    result=${result##* = }
+    echo $result
+}
+
+kdump_get_iscsi_initiator() {
+    local _initiator
+    local initiator_conf="/etc/iscsi/initiatorname.iscsi"
+
+    [ -f "$initiator_conf" ] || return 1
+
+    while read _initiator; do
+        [ -z "${_initiator%%#*}" ] && continue # Skip comment lines
+
+        case $_initiator in
+            InitiatorName=*)
+                initiator=${_initiator#InitiatorName=}
+                echo "rd.iscsi.initiator=${initiator}"
+                return 0;;
+            *) ;;
+        esac
+    done < ${initiator_conf}
+
+    return 1
+}
+
+# No ibft handling yet.
+kdump_setup_iscsi_device() {
+    local path=$1
+    local tgt_name; local tgt_ipaddr;
+    local username; local password; local userpwd_str;
+    local username_in; local password_in; local userpwd_in_str;
+    local netdev
+    local idev
+    local netroot_str ; local initiator_str;
+    local netroot_conf="${initdir}/etc/cmdline.d/50iscsi.conf"
+    local initiator_conf="/etc/iscsi/initiatorname.iscsi"
+
+    dinfo "Found iscsi component $1"
+
+    # Check once before getting explicit values, so we can output a decent
+    # error message.
+
+    if ! /sbin/iscsiadm -m session -r ${path} >/dev/null ; then
+        derror "Unable to find iscsi record for $path"
+        return 1
+    fi
+
+    tgt_name=$(kdump_iscsi_get_rec_val ${path} "node.name")
+    tgt_ipaddr=$(kdump_iscsi_get_rec_val ${path} "node.conn\[0\].address")
+
+    # get and set username and password details
+    username=$(kdump_iscsi_get_rec_val ${path} "node.session.auth.username")
+    [ "$username" == "<empty>" ] && username=""
+    password=$(kdump_iscsi_get_rec_val ${path} "node.session.auth.password")
+    [ "$password" == "<empty>" ] && password=""
+    username_in=$(kdump_iscsi_get_rec_val ${path} "node.session.auth.username_in")
+    [ -n "$username" ] && userpwd_str="$username:$password"
+
+    # get and set incoming username and password details
+    [ "$username_in" == "<empty>" ] && username_in=""
+    password_in=$(kdump_iscsi_get_rec_val ${path} "node.session.auth.password_in")
+    [ "$password_in" == "<empty>" ] && password_in=""
+
+    [ -n "$username_in" ] && userpwd_in_str=":$username_in:$password_in"
+
+    netdev=$(/sbin/ip route get to ${tgt_ipaddr} | \
+        sed 's|.*dev \(.*\).*|\1|g' | awk '{ print $1; exit }')
+
+    kdump_setup_netdev $netdev
+
+    # prepare netroot= command line
+    # FIXME: IPV6 addresses require explicit [] around $tgt_ipaddr
+    # FIXME: Do we need to parse and set other parameters like protocol, port
+    #        iscsi_iface_name, netdev_name, LUN etc.
+
+    netroot_str="netroot=iscsi:${userpwd_str}${userpwd_in_str}@$tgt_ipaddr::::$tgt_name"
+
+    [[ -f $netroot_conf ]] || touch $netroot_conf
+
+    # If netroot target does not exist already, append.
+    if ! grep -q $netroot_str $netroot_conf; then
+         echo $netroot_str >> $netroot_conf
+         dinfo "Appended $netroot_str to $netroot_conf"
+    fi
+
+    # Setup initator
+    initiator_str=$(kdump_get_iscsi_initiator)
+    [ $? -ne "0" ] && derror "Failed to get initiator name" && return 1
+
+    # If initiator details do not exist already, append.
+    if ! grep -q "$initiator_str" $netroot_conf; then
+         echo "$initiator_str" >> $netroot_conf
+         dinfo "Appended "$initiator_str" to $netroot_conf"
+    fi
+}
+
+kdump_check_iscsi_targets () {
+    # If our prerequisites are not met, fail anyways.
+    type -P iscsistart >/dev/null || return 1
+
+    kdump_check_setup_iscsi() (
+        local _dev
+        _dev=$(get_maj_min $1)
+
+        [[ -L /sys/dev/block/$_dev ]] || return
+        cd "$(readlink -f /sys/dev/block/$_dev)"
+        until [[ -d sys || -d iscsi_session ]]; do
+            cd ..
+        done
+        [[ -d iscsi_session ]] && kdump_setup_iscsi_device "$PWD"
+    )
+
+    [[ $hostonly ]] || [[ $mount_needs ]] && {
+        for_each_host_dev_fs kdump_check_setup_iscsi
+    }
+}
+
+
 install() {
     kdump_install_conf
     inst "$moddir/monitor_dd_progress" "/kdumpscripts/monitor_dd_progress"
@@ -119,4 +245,9 @@ install() {
     inst "/bin/cut" "/bin/cut"
     inst "/sbin/makedumpfile" "/sbin/makedumpfile"
     inst_hook pre-pivot 9999 "$moddir/kdump.sh"
+
+    # Check for all the devices and if any device is iscsi, bring up iscsi
+    # target. Ideally all this should be pushed into dracut iscsi module
+    # at some point of time.
+    kdump_check_iscsi_targets
 }
