@@ -39,12 +39,32 @@ kdump_is_bond() {
      [ -d /sys/class/net/"$1"/bonding ]
 }
 
+#$1: netdev name
+#checking /etc/sysconfig/network-scripts/ifcfg-$1,
+#if it use static ip echo it, or echo null
+kdump_static_ip() {
+    . /etc/sysconfig/network-scripts/ifcfg-$1
+    if [ -n "$IPADDR" ]; then
+       [ -z "$NETMASK" -a -n "$PREFIX" ] && \
+           NETMASK=$(ipcalc -m $IPADDR/$PREFIX | cut -d'=' -f2)
+       echo -n "${IPADDR}::${GATEWAY}:${NETMASK}::"
+    fi
+}
+
 # Setup dracut to bringup a given network interface
 kdump_setup_netdev() {
     local _netdev=$1
+    local _static _proto
 
     _netmac=`ip addr show $_netdev 2>/dev/null|awk '/ether/{ print $2 }'`
-    echo " ip=$_netdev:dhcp ifname=$_netdev:$_netmac rd.neednet=1" > ${initdir}/etc/cmdline.d/40ip.conf
+    _static=$(kdump_static_ip $_netdev)
+    if [ -n "$_static" ]; then
+        _proto=none
+    else
+        _proto=dhcp
+    fi
+
+    echo " ip=${_static}$_netdev:${_proto} ifname=$_netdev:$_netmac rd.neednet=1" > ${initdir}/etc/cmdline.d/40ip.conf
 
     if kdump_is_bridge "$_netdev"; then
         echo " bridge=$_netdev:$(cd /sys/class/net/$_netdev/brif/; echo *)" > ${initdir}/etc/cmdline.d/41bridge.conf
@@ -60,8 +80,7 @@ kdump_setup_netdev() {
 #Function:kdump_install_net
 #$1: config values of net line in kdump.conf
 kdump_install_net() {
-    local _server
-    local _netdev
+    local _server _netdev
     local config_val="$1"
 
     if strstr "$config_val" "@"; then
