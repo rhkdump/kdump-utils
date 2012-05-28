@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.3
-Release: 47%{?dist}
+Release: 48%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -295,6 +295,13 @@ done
 
 
 %changelog
+* Mon May 28 2012 Dave Young <ruyang@redhat.com> - 2.0.3-48
+- do_default_action cleanup, Resolves: bz805773
+- add rhcrashkernel-param for anaconda use, Resolves: bz707441
+- Basic iscsi target dump support (software initiator), Resolves bz822701
+- Static ip configuratio support, Resolves: bz822739
+- udev rules fix, Resolves: bz808817
+
 * Thu May 3 2012 Dave Young <ruyang@redhat.com> - 2.0.3-47
 - remove dracut-files.tgz2
 
