@@ -11,7 +11,7 @@ export IN_KDUMP=1
 conf_file="/etc/kdump.conf"
 SSH_KEY_LOCATION="/root/.ssh/kdump_id_rsa"
 extra_modules=""
-dracut_args=("--hostonly" "--add" "kdumpbase" "--add" "dash" "--add" "fstab-sys" "--add" "kernel-modules" "-c" "/dev/null" "-I" "/sbin/makedumpfile")
+dracut_args=("--hostonly" "--add" "kdumpbase" "--add" "fstab-sys" "--add" "kernel-modules" "-c" "/dev/null" "-I" "/sbin/makedumpfile" "-o" "plymouth")
 
 add_dracut_arg() {
     while [ $# -gt 0 ];
