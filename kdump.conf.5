@@ -76,15 +76,6 @@ here, as the initrd will automatically be populated with a config file
 appropriate for the running kernel.
 .RE
 
-.B link_delay <seconds> 
-.RS
-Some network cards take a long time to initialize, and some spanning
-tree enabled networks do not transmit user traffic for long periods
-after a link state changes.  This optional parameter defines a wait
-period after a link is activated in which the initramfs will wait
-before attempting to transmit user data.
-.RE
-
 .B kdump_post <binary | script>
 .RS
 This directive allows you to run a specified
