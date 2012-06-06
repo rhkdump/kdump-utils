@@ -62,10 +62,6 @@ check_size() {
 
 while [ $# -gt 0 ]; do
     case $1 in
-    --noconf)
-        conf_file=""
-        shift
-        ;;
     --debug)
         add_dracut_arg "-v"
         set -x
