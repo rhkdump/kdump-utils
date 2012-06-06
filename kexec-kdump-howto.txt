@@ -403,20 +403,11 @@ example, 'path /data/coredumps' would lead to vmcore files being written to
 that the path option is ingnored if your kdump configuration results in the
 core being saved from the initscripts in the root filesystem.
 
-Kdump Post-Capture Executable
-
-It is possible to specify a custom script or binary you wish to run following 
-an attempt to capture a vmcore. The executable is passed an exit code from 
-the capture process, which can be used to trigger different actions from
-within your post-capture executable.
-
 Extra Binaries
 
 If you have specific binaries or scripts you want to have made available
 within your kdump initrd, you can specify them by their full path, and they
 will be included in your kdump initrd, along with all dependent libraries.
-This may be particularly useful for those running post-capture scripts that
-rely on other binaries.
 
 Extra Modules
 
