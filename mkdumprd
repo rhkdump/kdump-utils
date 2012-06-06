@@ -60,19 +60,6 @@ check_size() {
     fi
 }
 
-while [ $# -gt 0 ]; do
-    case $1 in
-    --debug)
-        add_dracut_arg "-v"
-        set -x
-        shift
-        ;;
-    *)
-        break
-        ;;
-    esac
-done
-
 # Generic substring function.  If $2 is in $1, return 0.
 strstr() { [[ $1 =~ $2 ]]; }
 
