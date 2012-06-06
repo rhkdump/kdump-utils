@@ -100,9 +100,10 @@ Action to preform in case dumping to intended target fails. If no default
 action is specified saving vmcore to root fs is assumed default.
 reboot: If the default action is reboot simply reboot the system (this is what
 most people will want, as it returns the system to a nominal state).  shell: If the default
-action is shell, then drop to an msh session inside the initramfs from
+action is shell, then drop to an shell session inside the initramfs from
 where you can manually preform additional recovery actions.  Exiting this shell
 reboots the system.  halt: bring the system to a halt, requiring manual reset
+Note: kdump uses bash as the default shell.
 .RE
 
 .SH EXAMPLES
