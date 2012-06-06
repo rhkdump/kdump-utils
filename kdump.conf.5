@@ -55,17 +55,6 @@ Append path to the filesystem device which you are dumping to.
 Ignored for raw device dumps.  If unset, will default to /var/crash.
 .RE
 
-.B disk_timeout <seconds>
-.RS
-Number of seconds to wait for disks to appear in sysfs prior to continuing
-Normally, the kdump initramfs waits for disks that it has determined it needs to
-use during the course of saving the vmcore.  By default, it pauses indefinately,
-but in certain cases, it may wait indefinately on disks that either wont ever
-appear (if a usb drive is removed for instance), or for disks that it actually
-doesn't need (depending on configuration).  This allows the pause to be
-terminated in those events.
-.RE
-
 .B core_collector makedumpfile <options> 
 .RS
 This directive allows you to use the dump filtering program
