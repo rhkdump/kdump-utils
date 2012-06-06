@@ -42,6 +42,12 @@ supports DNS. NOTE: make sure user has necessary write permissions on
 server and that a fqdn is used as the server name
 .RE
 
+.B sshkey <path>
+.RS
+Specifies the path of the ssh key you want to use when do ssh dump,
+the default value is /root/.ssh/kdump_id_rsa.
+.RE
+
 .B <fs type> <partition>
 .RS
 Will mount -t <fs type> <partition> /mnt and copy /proc/vmcore to
