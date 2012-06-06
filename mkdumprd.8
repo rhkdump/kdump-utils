@@ -2,7 +2,7 @@
 .SH NAME
 mkdumprd \- creates initial ramdisk images for kdump crash recovery 
 .SH SYNOPSIS
-\fBmkdumprd\fR [--version] [-v] [-f] [-d]
+\fBmkdumprd\fR [--version] [-v] [-f]
          [--preload=\fImodule\fR] [--omit-scsi-modules] 
          [--omit-raid-modules] [--omit-lvm-modules] 
          [--image-version]
@@ -83,10 +83,6 @@ This option may be used as many times as necessary.
 \fB-v\fR
 Prints out verbose information while creating the image (normally
 the \fBmkdumprd\fR runs silently). 
-
-.TP
-\fB-d\fR
-Query /etc/kdump for initrd construction configuration
 
 .TP
 \fB-\-version\fR
