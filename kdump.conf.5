@@ -61,14 +61,32 @@ Append path to the filesystem device which you are dumping to.
 Ignored for raw device dumps.  If unset, will default to /var/crash.
 .RE
 
-.B core_collector makedumpfile <options> 
+.B core_collector <command> <options>
 .RS
-This directive allows you to use the dump filtering program
-makedumpfile to retrieve your core, which on some arches can
-drastically reduce core file size.  See /sbin/makedumpfile --help for
-a list of options.  Note that the -i and -g options are not needed
-here, as the initrd will automatically be populated with a config file
-appropriate for the running kernel.
+This allows you to specify the command to copy the vmcore.
+You could use the dump filtering program makedumpfile, the default one,
+to retrieve your core, which on some arches can drastically reduce
+core file size.  See /sbin/makedumpfile --help for a list of options.
+Note that the -i and -g options are not needed here, as the initrd
+will automatically be populated with a config file appropriate
+for the running kernel.
+.PP
+Note 1: About default core collector:
+Default core_collector for raw dump is:
+"makedumpfile -F -c --message-level 1 -d 31".
+Default core_collector for other targets is:
+"makedumpfile -c --message-level 1 -d 31".
+Even if core_collector option is commented out in kdump.conf, makedumpfile
+is default core collector and kdump uses it internally.
+If one does not want makedumpfile as default core_collector, then they
+need to specify one using core_collector option to change the behavior.
+.PP
+Note 2: If "makedumpfile -F" is used then you will get a flattened format
+vmcore.flat, you will need to use "makedumpfile -R" to rearrange the
+dump data from stdard input to a normal dumpfile (readable with analysis
+tools).
+ie. "makedumpfile -R vmcore < vmcore.flat"
+
 .RE
 
 .B extra_bins <binaries | shell scripts>
@@ -103,8 +121,48 @@ Note: kdump uses bash as the default shell.
 .RE
 
 .SH EXAMPLES
+Here is some examples for core_collector option:
+.PP
+Core collector command format depends on dump target type. Typically for
+filesystem (local/remote), core_collector should accept two arguments.
+First one is source file and second one is target file. For ex.
+.TP
+ex1.
+core_collector "cp --sparse=always"
 
-see 
+Above will effectively be translated to:
+
+cp --sparse=always /proc/vmcore <dest-path>/vmcore
+.TP
+ex2.
+core_collector "makedumpfile -c --message-level 1 -d 31"
+
+Above will effectively be translated to:
+
+makedumpfile -c --message-level 1 -d 31 /proc/vmcore <dest-path>/vmcore
+.PP
+For dump targets like raw, in general, core collector should expect
+one argument (source file) and should output the processed core on standard
+output. This standard output will be saved to destination using appropriate
+commands.
+
+raw dumps examples:
+.TP
+ex3.
+core_collector "cat"
+
+Above will effectively be translated to.
+
+cat /proc/vmcore | dd of=<target-device>
+.TP
+ex4.
+core_collector "makedumpfile -F -c --message-level 1 -d 31"
+
+Above will effectively be translated to.
+
+makedumpfile -F -c --message-level 1 -d 31 | dd of=<target-device>
+.PP
+examples for other options please see
 .I /etc/kdump.conf
 
 .SH SEE ALSO

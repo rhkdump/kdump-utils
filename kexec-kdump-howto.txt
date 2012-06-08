@@ -440,18 +440,74 @@ is a dump filtering and compression utility provided with kexec-tools. On
 some architectures, it can drastically reduce the size of your vmcore files,
 which becomes very useful on systems with large amounts of memory.
 
-A typical setup is 'core_collector makedumpfile -c', but check the output of
-'/sbin/makedumpfile --help' for a list of all available options (-i and -g
-don't need to be specified, they're automatically taken care of). Note that
-use of makedumpfile requires that the kernel-debuginfo package corresponding
-with your running kernel be installed.
+A typical setup is 'core_collector makedumpfile -F -c --message-level 1 -d 31',
+but check the output of '/sbin/makedumpfile --help' for a list of all available
+options (-i and -g don't need to be specified, they're automatically taken care
+of). Note that use of makedumpfile requires that the kernel-debuginfo package
+corresponding with your running kernel be installed.
 
-Also note that makedumpfile is only used from the initramfs.  Saving a
-core from the initscript in the root filesystem is considered a last ditch
-effort, only used when the initramfs has failed to save the core properly.
-As such only the cp utiltiy is used in the initscripts.  The implication
-here is that in order to use makedumpfile as your core collector, you must
-specify a dump target in /etc/kdump.conf.
+Core collector command format depends on dump target type. Typically for
+filesystem (local/remote), core_collector should accept two arguments.
+First one is source file and second one is target file. For ex.
+
+ex1.
+---
+core_collector "cp --sparse=always"
+
+Above will effectively be translated to:
+
+cp --sparse=always /proc/vmcore <dest-path>/vmcore
+
+ex2.
+---
+core_collector "makedumpfile -c --message-level 1 -d 31"
+
+Above will effectively be translated to:
+
+makedumpfile -c --message-level 1 -d 31 /proc/vmcore <dest-path>/vmcore
+
+
+For dump targets like raw, in general, core collector should expect
+one argument (source file) and should output the processed core on standard
+output. This standard output will be saved to destination using appropriate
+commands.
+
+raw dumps core_collector examples:
+---------
+ex3.
+---
+core_collector "cat"
+
+Above will effectively be translated to.
+
+cat /proc/vmcore | dd of=<target-device>
+
+ex4.
+---
+core_collector "makedumpfile -F -c --message-level 1 -d 31"
+
+Above will effectively be translated to.
+
+makedumpfile -F -c --message-level 1 -d 31 | dd of=<target-device>
+
+About default core collector
+----------------------------
+Default core_collector for ssh/raw dump is:
+"makedumpfile -F -c --message-level 1 -d 31".
+Default core_collector for other targets is:
+"makedumpfile -c --message-level 1 -d 31".
+
+Even if core_collector option is commented out in kdump.conf, makedumpfile
+is default core collector and kdump uses it internally.
+
+If one does not want makedumpfile as default core_collector, then they
+need to specify one using core_collector option to change the behavior.
+
+Note: If "makedumpfile -F" is used then you will get a flattened format
+vmcore.flat, you will need to use "makedumpfile -R" to rearrange the
+dump data from stdard input to a normal dumpfile (readable with analysis
+tools).
+For example: "makedumpfile -R vmcore < vmcore.flat"
 
 Caveats:
 
