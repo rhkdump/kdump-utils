@@ -39,6 +39,10 @@ kdump_is_bond() {
      [ -d /sys/class/net/"$1"/bonding ]
 }
 
+kdump_is_vlan() {
+     [ -f /proc/net/vlan/"$1" ]
+}
+
 #$1: netdev name
 #checking /etc/sysconfig/network-scripts/ifcfg-$1,
 #if it use static ip echo it, or echo null
@@ -73,6 +77,14 @@ kdump_setup_bond() {
     #echo "bondoptions=\"$bondoptions\"" >> ${initdir}/etc/cmdline.d/42bond.conf
 }
 
+kdump_setup_vlan() {
+    local _netdev=$1
+    local _phydev="$(awk '/^Device:/{print $2}' /proc/net/vlan/"$_netdev")"
+    local _netmac="$(kdump_get_mac_addr $_phydev)"
+    echo -n " ifname=$_phydev:$_netmac" > ${initdir}/etc/cmdline.d/43vlan.conf
+    echo " vlan=$_netdev:$_phydev" >> ${initdir}/etc/cmdline.d/43vlan.conf
+}
+
 # Setup dracut to bringup a given network interface
 kdump_setup_netdev() {
     local _netdev=$1
@@ -92,6 +104,8 @@ kdump_setup_netdev() {
         kdump_setup_bridge "$_netdev"
     elif kdump_is_bond "$_netdev"; then
         kdump_setup_bond "$_netdev"
+    elif kdump_is_vlan "$_netdev"; then
+        kdump_setup_vlan "$_netdev"
     else
         echo -n " ip=${_static}$_netdev:${_proto}" > ${initdir}/etc/cmdline.d/40ip.conf
         echo " ifname=$_netdev:$(kdump_get_mac_addr $_netdev)" >> ${initdir}/etc/cmdline.d/40ip.conf
