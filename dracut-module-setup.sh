@@ -51,6 +51,18 @@ kdump_static_ip() {
     fi
 }
 
+kdump_get_mac_addr() {
+    echo `ip addr show $1 2>/dev/null|awk '/ether/{ print $2 }'`
+}
+
+kdump_setup_bridge() {
+    local _netdev=$1
+    for _dev in `ls /sys/class/net/$_netdev/brif/`; do
+        echo -n " ifname=$_dev:$(kdump_get_mac_addr $_dev)" >> ${initdir}/etc/cmdline.d/41bridge.conf
+    done
+    echo " bridge=$_netdev:$(cd /sys/class/net/$_netdev/brif/; echo * | sed -e 's/ /,/g')" >> ${initdir}/etc/cmdline.d/41bridge.conf
+}
+
 # Setup dracut to bringup a given network interface
 kdump_setup_netdev() {
     local _netdev=$1
@@ -64,16 +76,17 @@ kdump_setup_netdev() {
         _proto=dhcp
     fi
 
-    echo " ip=${_static}$_netdev:${_proto} ifname=$_netdev:$_netmac rd.neednet=1" > ${initdir}/etc/cmdline.d/40ip.conf
+    echo " ip=${_static}$_netdev:${_proto}" > ${initdir}/etc/cmdline.d/40ip.conf
 
     if kdump_is_bridge "$_netdev"; then
-        echo " bridge=$_netdev:$(cd /sys/class/net/$_netdev/brif/; echo *)" > ${initdir}/etc/cmdline.d/41bridge.conf
+        kdump_setup_bridge "$_netdev"
     elif kdump_is_bond "$_netdev"; then
         echo " bond=$_netdev:\"$(cat /sys/class/net/$_netdev/bonding/slaves)\"" > ${initdir}/etc/cmdline.d/42bond.conf
         #TODO
         #echo "bondoptions=\"$bondoptions\"" >> /tmp/$$-bond
     else
-        :
+        echo -n " ip=${_static}$_netdev:${_proto}" > ${initdir}/etc/cmdline.d/40ip.conf
+        echo " ifname=$_netdev:$(kdump_get_mac_addr $_netdev)" >> ${initdir}/etc/cmdline.d/40ip.conf
     fi
 }
 
