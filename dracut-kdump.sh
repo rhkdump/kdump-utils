@@ -100,8 +100,6 @@ dump_rootfs()
     mkdir -p $NEWROOT/$KDUMP_PATH/$DATEDIR
     $CORE_COLLECTOR /proc/vmcore $NEWROOT/$KDUMP_PATH/$DATEDIR/vmcore || return 1
     sync
-    reboot -f
-    return 0
 }
 
 dump_nfs()
@@ -185,11 +183,8 @@ read_kdump_conf()
 
 read_kdump_conf
 
-if [ -n "$DUMP_INSTRUCTION" ]
-then
-    eval "$DUMP_INSTRUCTION && reboot -f"
-else
-    dump_rootfs
+if [ -z "$DUMP_INSTRUCTION" ]; then
+    add_dump_code "dump_rootfs"
 fi
 
-
+eval "$DUMP_INSTRUCTION && reboot -f"
