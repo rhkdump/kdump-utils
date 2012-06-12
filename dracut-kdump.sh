@@ -11,6 +11,8 @@ DUMP_INSTRUCTION=""
 SSH_KEY_LOCATION="/root/.ssh/kdump_id_rsa"
 KDUMP_SCRIPT_DIR="/kdumpscripts"
 DD_BLKSIZE=512
+FINAL_ACTION="reboot -f"
+DUMP_RETVAL=0
 
 export PATH=$PATH:$KDUMP_SCRIPT_DIR
 
@@ -30,7 +32,7 @@ do_default_action()
 
 add_dump_code()
 {
-    DUMP_INSTRUCTION="$1 || do_default_action"
+    DUMP_INSTRUCTION=$1
 }
 
 get_mp()
@@ -187,4 +189,10 @@ if [ -z "$DUMP_INSTRUCTION" ]; then
     add_dump_code "dump_rootfs"
 fi
 
-eval "$DUMP_INSTRUCTION; reboot -f"
+$DUMP_INSTRUCTION
+DUMP_RETVAL=$?
+if [ $DUMP_RETVAL -ne 0 ]; then
+    do_default_action
+fi
+
+$FINAL_ACTION
