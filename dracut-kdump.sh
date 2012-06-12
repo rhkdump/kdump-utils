@@ -187,4 +187,4 @@ if [ -z "$DUMP_INSTRUCTION" ]; then
     add_dump_code "dump_rootfs"
 fi
 
-eval "$DUMP_INSTRUCTION && reboot -f"
+eval "$DUMP_INSTRUCTION; reboot -f"
