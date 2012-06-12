@@ -62,6 +62,7 @@ Obsoletes: diskdumputils netdump
 #
 # Patches 301 through 400 are meant for ppc64 kexec-tools enablement
 #
+Patch301: kexec-tools-2.0.3-ppc-ppc64-compile-purgatory-code-with-gcc-option-msoft-float.patch
 
 #
 # Patches 401 through 500 are meant for s390 kexec-tools enablement
@@ -89,6 +90,7 @@ mkdir -p -m755 kcp
 tar -z -x -v -f %{SOURCE9}
 
 
+%patch301 -p1
 %patch601 -p1
 
 tar -z -x -v -f %{SOURCE13}

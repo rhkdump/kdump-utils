@@ -1,0 +1,43 @@
+From: Vivek Goyal <vgoyal@redhat.com>
+Recently we faced an issue on power7 machine where kernel hanged in purgatory.
+Some investigation revealed that gcc is generating hardware FPU instructions.
+I have been told we can't use it at this point of time and as kernel is
+compiled with -msoft-float for ppc/ppc64, so should be purgatory (as it runs
+inside kernel context).
+
+Thanks to Jakub Jelinek and Lingzhu Xiang for debugging and coming up with
+a fix for this issue.
+
+Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
+Tested-by: Lingzhu Xiang <lxiang@redhat.com>
+Tested-by: Suzuki K. Poulose <suzuki@in.ibm.com>
+---
+ purgatory/arch/ppc/Makefile   |    2 ++
+ purgatory/arch/ppc64/Makefile |    2 +-
+ 2 files changed, 3 insertions(+), 1 deletion(-)
+
+Index: kexec-tools/purgatory/arch/ppc64/Makefile
+===================================================================
+--- kexec-tools.orig/purgatory/arch/ppc64/Makefile	2012-02-20 14:45:25.000000000 -0500
++++ kexec-tools/purgatory/arch/ppc64/Makefile	2012-06-06 16:19:09.000696306 -0400
+@@ -9,7 +9,7 @@ ppc64_PURGATORY_SRCS += purgatory/arch/p
+ ppc64_PURGATORY_SRCS += purgatory/arch/ppc64/crashdump_backup.c
+ ppc64_PURGATORY_SRCS += purgatory/arch/ppc64/misc.S
+
+-ppc64_PURGATORY_EXTRA_CFLAGS += -m64 -mcall-aixdesc
++ppc64_PURGATORY_EXTRA_CFLAGS += -m64 -mcall-aixdesc -msoft-float
+ ppc64_PURGATORY_EXTRA_ASFLAGS += -m64 -mcall-aixdesc
+ ppc64_PURGATORY_EXTRA_LDFLAGS += -melf64ppc
+
+Index: kexec-tools/purgatory/arch/ppc/Makefile
+===================================================================
+--- kexec-tools.orig/purgatory/arch/ppc/Makefile	2011-03-18 17:09:38.000000000 -0400
++++ kexec-tools/purgatory/arch/ppc/Makefile	2012-06-06 16:33:50.444406235 -0400
+@@ -7,6 +7,8 @@ ppc_PURGATORY_SRCS += purgatory/arch/ppc
+ ppc_PURGATORY_SRCS += purgatory/arch/ppc/purgatory-ppc.c
+ ppc_PURGATORY_SRCS += purgatory/arch/ppc/console-ppc.c
+
++ppc_PURGATORY_EXTRA_CFLAGS += -msoft-float
++
+ dist += purgatory/arch/ppc/Makefile $(ppc_PURGATORY_SRCS)		\
+	purgatory/arch/ppc/purgatory-ppc.h purgatory/arch/ppc/ppc_asm.h
