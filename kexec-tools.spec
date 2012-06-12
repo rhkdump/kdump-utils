@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.3
-Release: 48%{?dist}
+Release: 49%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -295,6 +295,29 @@ done
 
 
 %changelog
+* Tue Jun 12 2012 Dave Young <ruyang@redhat.com> - 2.0.3-49
+- cleanup DUMP_INSTRUCTION handling
+- final reboot behavior fix
+- dump_rootfs for default target fix
+- add vlan support
+- fix and refactor bond handling code
+- fix and refactor bridge handling code
+- core_collector doc basic fix
+- omit plymouth module, Resolves: bz821997
+- mkdumprd manpage cleanup manpage
+- mkdumprd: remove --debug
+- mkdumprd: remove noconf
+- makedumprd: remove -d
+- kdump.conf add sshkey
+- kdump.conf remove disk_timeout
+- kdump.conf make path uncommented
+- kdump.conf.5 add default poweroff
+- kdump.conf default shell fix
+- kdump.conf default default action fix
+- kdump.conf.5 remove module option
+- kdump.conf remove kdump_pre/kdump_post
+- kdump.conf: remove link_delay
+
 * Mon May 28 2012 Dave Young <ruyang@redhat.com> - 2.0.3-48
 - do_default_action cleanup, Resolves: bz805773
 - add rhcrashkernel-param for anaconda use, Resolves: bz707441
