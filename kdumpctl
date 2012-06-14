@@ -1,10 +1,6 @@
 #! /bin/sh
 KEXEC=/sbin/kexec
 
-# Will be different for ia64, for example.  For now, that architecture isn't
-# supported.  Code needs to be added here when we do.
-BOOTDIR="/boot"
-
 KDUMP_KERNELVER=""
 KDUMP_COMMANDLINE=""
 KEXEC_ARGS=""
@@ -47,8 +43,43 @@ function save_core()
 	fi
 }
 
+function rebuild_initrd()
+{
+	$MKDUMPRD $kdump_initrd $kdump_kver
+	if [ $? != 0 ]; then
+		echo "Failed to run mkdumprd"
+		$LOGGER "mkdumprd: failed to make kdump initrd"
+		return 1
+	fi
+}
+
+#$1: the files to be checked with IFS=' '
+function check_exist()
+{
+	for file in $1; do
+		if [ ! -f "$file" ]; then
+			echo -n "Error: $file not found."; echo
+			return 1
+		fi
+	done
+}
+
+#$1: the files to be checked with IFS=' '
+function check_executable()
+{
+	for file in $1; do
+		if [ ! -x "$file" ]; then
+			echo -n "Error: $file is not executable."; echo
+			return 1
+		fi
+	done
+}
+
 function check_config()
 {
+	local extra_modules modified_files=""
+	local force_rebuild=0
+
 	if [ -z "$KDUMP_KERNELVER" ]; then
 		kdump_kver=`uname -r`
 	else
@@ -58,45 +89,46 @@ function check_config()
 	kdump_kernel="${KDUMP_BOOTDIR}/${KDUMP_IMG}-${kdump_kver}${KDUMP_IMG_EXT}"
 	kdump_initrd="${KDUMP_BOOTDIR}/initramfs-${kdump_kver}kdump.img"
 
-	if [ ! -f $kdump_kernel ]; then
-		echo -n "No kdump kernel image found."; echo
-		echo "Tried to locate ${kdump_kernel}"
-		return 0
+	#will rebuild every time if extra_modules are specified
+	extra_modules=`grep ^extra_modules $KDUMP_CONFIG_FILE`
+	[ -n "$extra_modules" ] && force_rebuild=1
+
+	#check to see if dependent files has been modified
+	#since last build of the image file
+	if [ -f $kdump_initrd ]; then
+		image_time=`stat -c "%Y" $kdump_initrd 2>/dev/null`
+	else
+		image_time=0
 	fi
 
-	if [ ! -f $kdump_initrd ]; then
+
+	EXTRA_BINS=`grep ^extra_bins $KDUMP_CONFIG_FILE | cut -d\  -f2-`
+	files="$KDUMP_CONFIG_FILE $kdump_kernel $EXTRA_BINS"
+
+	check_exist "$files" && check_executable "$EXTRA_BINS"
+	[ $? -ne 0 ] && return 1
+
+	for file in $files; do
+		time_stamp=`stat -c "%Y" $file`
+		if [ "$time_stamp" -gt "$image_time" ]; then
+			modified_files="$modified_files $file"
+		fi
+	done
+
+	if [ $image_time -eq 0 ]; then
 		echo  -n "No kdump initial ramdisk found."; echo
-		echo "Rebuilding $kdump_initrd"
-		$MKDUMPRD $kdump_initrd $kdump_kver
-		if [ $? != 0 ]; then
-			echo "Failed to run mkdumprd"
-			$LOGGER "mkdumprd: failed to make kdump initrd"
-			exit 1
-		fi
+	elif [ "$force_rebuild" -ne 0 ]; then
+		echo -n "Force rebuild $kdump_initrd"; echo
+	elif [ -n "$modified_files" ]; then
+		echo "Detected change(s) the following file(s):"
+		echo -n "  "; echo "$modified_files" | sed 's/\s/\n  /g'
+	else
 		return 0
 	fi
 
-	#check to see if config file has been modified after
-	#last build of the image file
-	config_time=0
-	if [ -f $KDUMP_CONFIG_FILE ]; then
-		config_time=`stat -c "%Y" $KDUMP_CONFIG_FILE`
-	fi
-	kernel_time=`stat -c "%Y" $kdump_kernel`
-	image_time=`stat -c "%Y" $kdump_initrd`
-
-	if [ "$config_time" -gt "$image_time" ] ||
-	   [ "$kernel_time" -gt "$image_time" ]; then
-		echo "Detected $KDUMP_CONFIG_FILE or $kdump_kernel change"
-		echo "Rebuilding $kdump_initrd"
-		$MKDUMPRD $kdump_initrd $kdump_kver
-		if [ $? != 0 ]; then
-			echo "Failed to run mkdumprd"
-			$LOGGER "mkdumprd: failed to make kdump initrd"
-			return 1
-		fi
-	fi
-
+	echo "Rebuilding $kdump_initrd"
+	rebuild_initrd
+	return $?
 }
 
 # This function check iomem and determines if we have more than
