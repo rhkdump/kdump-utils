@@ -91,6 +91,24 @@ check_remote() {
     return
 }
 
+is_ssh_dump_target()
+{
+    grep -q "^net.*@" $conf_file
+}
+
+# $1: core_collector config value
+verify_core_collector() {
+    if grep -q "^raw" $conf_file && [ "${1%% *}" != "makedumpfile" ]; then
+        echo "Warning: specifying a non-makedumpfile core collector, you will have to recover the vmcore manually."
+    fi
+    if is_ssh_dump_target && [ "${1%% *}" = "makedumpfile" ]; then
+        ! strstr "$1" "-F" && {
+            echo "The specified dump target needs makedumpfile \"-F\" option."
+            exit 1
+        }
+    fi
+}
+
 add_mount() {
     local _dev=$(to_dev_name "$1")
     local _mnt=$(to_mount "$1")
@@ -150,9 +168,7 @@ do
         fi
         ;;
     core_collector)
-        if grep -q "^raw" $conf_file && [ "${config_val%% *}" != "makedumpfile" ]; then
-            echo "Warning: specifying a non-makedumpfile core collector, you will have to recover the vmcore manually."
-        fi
+        verify_core_collector "$config_val"
         add_dracut_arg "-I" "${config_val%% *}"
         ;;
     extra_bins)

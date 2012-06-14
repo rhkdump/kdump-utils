@@ -4,7 +4,8 @@
 
 set -x
 KDUMP_PATH="/var/crash"
-CORE_COLLECTOR="makedumpfile -c --message-level 1 -d 31"
+CORE_COLLECTOR=""
+DEFAULT_CORE_COLLECTOR="makedumpfile -c --message-level 1 -d 31"
 DEFAULT_ACTION="dump_rootfs"
 DATEDIR=`date +%d.%m.%y-%T`
 DUMP_INSTRUCTION=""
@@ -118,9 +119,23 @@ dump_nfs()
 
 dump_ssh()
 {
-    ssh -q -i $1 -o BatchMode=yes -o StrictHostKeyChecking=yes $2 mkdir -p $KDUMP_PATH/$DATEDIR || return 1
-    scp -q -i $1 -o BatchMode=yes -o StrictHostKeyChecking=yes /proc/vmcore "$2:$KDUMP_PATH/$DATEDIR"  || return 1
-    return 0
+    local _opt="-i $1 -o BatchMode=yes -o StrictHostKeyChecking=yes"
+    local _dir="$KDUMP_PATH/$DATEDIR"
+
+    ssh -q $_opt $2 mkdir -p $_dir || return 1
+
+    if [ "${CORE_COLLECTOR%% *}" = "scp" ]; then
+        scp -q $_opt /proc/vmcore "$2:$_dir/vmcore-incomplete" || return 1
+        ssh $_opt $2 "mv $_dir/vmcore-incomplete $_dir/vmcore" || return 1
+    else
+        $CORE_COLLECTOR /proc/vmcore | ssh $_opt $2 "dd bs=512 of=$_dir/vmcore-incomplete" || return 1
+        ssh $_opt $2 "mv $_dir/vmcore-incomplete $_dir/vmcore.flat" || return 1
+    fi
+}
+
+is_ssh_dump_target()
+{
+    grep -q "^net.*@" $conf_file
 }
 
 read_kdump_conf()
@@ -187,6 +202,11 @@ read_kdump_conf()
 }
 
 read_kdump_conf
+
+if [ -z "$CORE_COLLECTOR" ];then
+    CORE_COLLECTOR=$DEFAULT_CORE_COLLECTOR
+    is_ssh_dump_target && CORE_COLLECTOR="$CORE_COLLECTOR -F"
+fi
 
 if [ -z "$DUMP_INSTRUCTION" ]; then
     add_dump_code "dump_rootfs"

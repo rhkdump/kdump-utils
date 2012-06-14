@@ -467,10 +467,10 @@ Above will effectively be translated to:
 makedumpfile -c --message-level 1 -d 31 /proc/vmcore <dest-path>/vmcore
 
 
-For dump targets like raw, in general, core collector should expect
+For dump targets like raw and ssh, in general, core collector should expect
 one argument (source file) and should output the processed core on standard
-output. This standard output will be saved to destination using appropriate
-commands.
+output (There is one exception of "scp", discussed later). This standard
+output will be saved to destination using appropriate commands.
 
 raw dumps core_collector examples:
 ---------
@@ -489,6 +489,36 @@ core_collector "makedumpfile -F -c --message-level 1 -d 31"
 Above will effectively be translated to.
 
 makedumpfile -F -c --message-level 1 -d 31 | dd of=<target-device>
+
+ssh dumps core_collector examples:
+---------
+ex5.
+---
+core_collector "cat"
+
+Above will effectively be translated to.
+
+cat /proc/vmcore | ssh <options> <remote-location> "dd of=path/vmcore"
+
+ex6.
+---
+core_collector "makedumpfile -F -c --message-level 1 -d 31"
+
+Above will effectively be translated to.
+
+makedumpfile -F -c --message-level 1 -d 31 | ssh <options> <remote-location> "dd of=path/vmcore"
+
+There is one exception to standard output rule for ssh dumps. And that is
+scp. As scp can handle ssh destinations for file transfers, one can
+specify "scp" as core collector for ssh targets (no output on stdout).
+
+ex7.
+----
+core_collector "scp"
+
+Above will effectively be translated to.
+
+scp /proc/vmcore <user@host>:path/vmcore
 
 About default core collector
 ----------------------------

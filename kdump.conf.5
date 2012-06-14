@@ -72,7 +72,7 @@ will automatically be populated with a config file appropriate
 for the running kernel.
 .PP
 Note 1: About default core collector:
-Default core_collector for raw dump is:
+Default core_collector for raw/ssh dump is:
 "makedumpfile -F -c --message-level 1 -d 31".
 Default core_collector for other targets is:
 "makedumpfile -c --message-level 1 -d 31".
@@ -141,10 +141,10 @@ Above will effectively be translated to:
 
 makedumpfile -c --message-level 1 -d 31 /proc/vmcore <dest-path>/vmcore
 .PP
-For dump targets like raw, in general, core collector should expect
+For dump targets like raw and ssh, in general, core collector should expect
 one argument (source file) and should output the processed core on standard
-output. This standard output will be saved to destination using appropriate
-commands.
+output (There is one exception of "scp", discussed later). This standard
+output will be saved to destination using appropriate commands.
 
 raw dumps examples:
 .TP
@@ -161,6 +161,34 @@ core_collector "makedumpfile -F -c --message-level 1 -d 31"
 Above will effectively be translated to.
 
 makedumpfile -F -c --message-level 1 -d 31 | dd of=<target-device>
+.PP
+ssh dumps examples
+.TP
+ex5.
+core_collector "cat"
+
+Above will effectively be translated to.
+
+cat /proc/vmcore | ssh <options> <remote-location> "dd of=path/vmcore"
+.TP
+ex6.
+core_collector "makedumpfile -F -c --message-level 1 -d 31"
+
+Above will effectively be translated to.
+
+makedumpfile -F -c --message-level 1 -d 31 | ssh <options> <remote-location> "dd of=path/vmcore"
+
+There is one exception to standard output rule for ssh dumps. And that is
+scp. As scp can handle ssh destinations for file transfers, one can
+specify "scp" as core collector for ssh targets (no output on stdout).
+.TP
+ex7.
+core_collector "scp"
+
+Above will effectively be translated to.
+
+scp /proc/vmcore <user@host>:path/vmcore
+
 .PP
 examples for other options please see
 .I /etc/kdump.conf
