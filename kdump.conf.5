@@ -89,11 +89,41 @@ ie. "makedumpfile -R vmcore < vmcore.flat"
 
 .RE
 
+.B kdump_post <binary | script>
+.RS
+This directive allows you to run a specified
+executable just after the memory dump process
+terminates. The exit status from the dump process
+is fed to the kdump_post executable, which can be
+used to trigger different actions for success or
+failure.
+.PP
+Note that scripts written for use with this
+directive must use the /bin/bash interpreter
+.RE
+
+.B kdump_pre <binary | script>
+.RS
+Works just like the kdump_post directive, but instead
+of running after the dump process, runs immediately
+before.  Exit status of this binary is interpreted
+as follows:
+.PP
+0 - continue with dump process as usual
+.PP
+non 0 - reboot the system
+.PP
+Note that scripts written for this directive must use
+the /bin/bash interpreter
+.RE
+
 .B extra_bins <binaries | shell scripts>
 .RS
 This directive allows you to specify additional
 binaries or shell scripts you'd like to include in
-your kdump initrd.
+your kdump initrd. Generally only useful in
+conjunction with a kdump_post binary or script that
+relies on other binaries or scripts.
 .RE
 
 .B extra_modules <module(s)>

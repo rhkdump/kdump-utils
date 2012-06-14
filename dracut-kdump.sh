@@ -15,6 +15,8 @@ DD_BLKSIZE=512
 FINAL_ACTION="reboot -f"
 DUMP_RETVAL=0
 conf_file="/etc/kdump.conf"
+KDUMP_PRE=""
+KDUMP_POST=""
 
 export PATH=$PATH:$KDUMP_SCRIPT_DIR
 
@@ -30,6 +32,20 @@ do_default_action()
 {
     wait_for_loginit
     $DEFAULT_ACTION
+}
+
+do_kdump_pre()
+{
+    if [ -n "$KDUMP_PRE" ]; then
+        "$KDUMP_PRE"
+    fi
+}
+
+do_kdump_post()
+{
+    if [ -n "$KDUMP_POST" ]; then
+        "$KDUMP_POST" "$1"
+    fi
 }
 
 add_dump_code()
@@ -164,6 +180,12 @@ read_kdump_conf()
                 SSH_KEY_LOCATION=$config_val
             fi
             ;;
+        kdump_pre)
+            KDUMP_PRE="$config_val"
+            ;;
+        kdump_post)
+            KDUMP_POST="$config_val"
+            ;;
         default)
             case $config_val in
                 shell)
@@ -218,8 +240,20 @@ if [ -z "$DUMP_INSTRUCTION" ]; then
     add_dump_code "dump_rootfs"
 fi
 
+do_kdump_pre
+if [ $? -ne 0 ]; then
+    echo "kdump_pre script exited with non-zero status!"
+    $FINAL_ACTION
+fi
+
 $DUMP_INSTRUCTION
 DUMP_RETVAL=$?
+
+do_kdump_post $DUMP_RETVAL
+if [ $? -ne 0 ]; then
+    echo "kdump_post script exited with non-zero status!"
+fi
+
 if [ $DUMP_RETVAL -ne 0 ]; then
     do_default_action
 fi

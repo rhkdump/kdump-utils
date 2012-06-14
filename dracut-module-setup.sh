@@ -156,6 +156,9 @@ kdump_install_conf() {
         net)
             kdump_install_net "$config_val"
             ;;
+        kdump_pre|kdump_post)
+            dracut_install $config_val
+            ;;
         esac
     done < /etc/kdump.conf
 

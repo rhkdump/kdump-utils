@@ -101,8 +101,11 @@ function check_config()
 		image_time=0
 	fi
 
-
-	EXTRA_BINS=`grep ^extra_bins $KDUMP_CONFIG_FILE | cut -d\  -f2-`
+	EXTRA_BINS=`grep ^kdump_post $KDUMP_CONFIG_FILE | cut -d\  -f2`
+	CHECK_FILES=`grep ^kdump_pre $KDUMP_CONFIG_FILE | cut -d\  -f2`
+	EXTRA_BINS="$EXTRA_BINS $CHECK_FILES"
+	CHECK_FILES=`grep ^extra_bins $KDUMP_CONFIG_FILE | cut -d\  -f2-`
+	EXTRA_BINS="$EXTRA_BINS $CHECK_FILES"
 	files="$KDUMP_CONFIG_FILE $kdump_kernel $EXTRA_BINS"
 
 	check_exist "$files" && check_executable "$EXTRA_BINS"
