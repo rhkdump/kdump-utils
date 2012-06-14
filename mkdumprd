@@ -96,16 +96,23 @@ is_ssh_dump_target()
     grep -q "^net.*@" $conf_file
 }
 
+is_raw_dump_target()
+{
+    grep -q "^raw" $conf_file
+}
+
 # $1: core_collector config value
 verify_core_collector() {
     if grep -q "^raw" $conf_file && [ "${1%% *}" != "makedumpfile" ]; then
         echo "Warning: specifying a non-makedumpfile core collector, you will have to recover the vmcore manually."
     fi
-    if is_ssh_dump_target && [ "${1%% *}" = "makedumpfile" ]; then
-        ! strstr "$1" "-F" && {
-            echo "The specified dump target needs makedumpfile \"-F\" option."
-            exit 1
-        }
+    if is_ssh_dump_target || is_raw_dump_target; then
+        if [ "${1%% *}" = "makedumpfile" ]; then
+            ! strstr "$1" "-F" && {
+                echo "The specified dump target needs makedumpfile \"-F\" option."
+                exit 1
+            }
+        fi
     fi
 }
 

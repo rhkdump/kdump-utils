@@ -93,7 +93,6 @@ dump_raw()
 
     monitor_dd_progress $_src_size_mb &
 
-    CORE_COLLECTOR=`echo $CORE_COLLECTOR | sed -e's/\(^makedumpfile\)\(.*$\)/\1 -F \2/'`
     $CORE_COLLECTOR /proc/vmcore | dd of=$1 bs=$DD_BLKSIZE >> /tmp/dd_progress_file 2>&1 || return 1
     return 0
 }
@@ -136,6 +135,11 @@ dump_ssh()
 is_ssh_dump_target()
 {
     grep -q "^net.*@" $conf_file
+}
+
+is_raw_dump_target()
+{
+    grep -q "^raw" $conf_file
 }
 
 read_kdump_conf()
@@ -205,7 +209,9 @@ read_kdump_conf
 
 if [ -z "$CORE_COLLECTOR" ];then
     CORE_COLLECTOR=$DEFAULT_CORE_COLLECTOR
-    is_ssh_dump_target && CORE_COLLECTOR="$CORE_COLLECTOR -F"
+    if is_ssh_dump_target || is_raw_dump_target; then
+        CORE_COLLECTOR="$CORE_COLLECTOR -F"
+    fi
 fi
 
 if [ -z "$DUMP_INSTRUCTION" ]; then
