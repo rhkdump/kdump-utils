@@ -13,6 +13,7 @@ KDUMP_SCRIPT_DIR="/kdumpscripts"
 DD_BLKSIZE=512
 FINAL_ACTION="reboot -f"
 DUMP_RETVAL=0
+conf_file="/etc/kdump.conf"
 
 export PATH=$PATH:$KDUMP_SCRIPT_DIR
 
@@ -124,63 +125,65 @@ dump_ssh()
 
 read_kdump_conf()
 {
-    local conf_file="/etc/kdump.conf"
-    if [ -f "$conf_file" ]; then
-        # first get the necessary variables
-        while read config_opt config_val;
-        do
-            case "$config_opt" in
-            path)
-                KDUMP_PATH="$config_val"
-                ;;
-            core_collector)
-                [ -n "$config_val" ] && CORE_COLLECTOR="$config_val"
-                ;;
-            sshkey)
-                if [ -f "$config_val" ]; then
-                    SSH_KEY_LOCATION=$config_val
-                fi
-                ;;
-            default)
-                case $config_val in
-                    shell)
-                        DEFAULT_ACTION="sh -i -l"
-                        ;;
-                    reboot)
-                        DEFAULT_ACTION="reboot -f"
-                        ;;
-                    halt)
-                        DEFAULT_ACTION="halt -f"
-                        ;;
-                    poweroff)
-                        DEFAULT_ACTION="poweroff -f"
-                        ;;
-                esac
-                ;;
-            esac
-        done < $conf_file
-
-        # rescan for add code for dump target
-        while read config_opt config_val;
-        do
-            case "$config_opt" in
-            ext[234]|xfs|btrfs|minix)
-                add_dump_code "dump_localfs $config_val"
-                ;;
-            raw)
-                add_dump_code "dump_raw $config_val"
-                ;;
-            net)
-                wait_for_net_ok
-                if [[ "$config_val" =~ "@" ]]; then
-                    add_dump_code "dump_ssh $SSH_KEY_LOCATION $config_val"
-                else
-                    add_dump_code "dump_nfs $config_val"
-                fi
-                ;;
-            esac
-        done < $conf_file
+    if [ ! -f "$conf_file" ]; then
+        echo "$conf_file not found"
+        return
     fi
+
+    # first get the necessary variables
+    while read config_opt config_val;
+    do
+        case "$config_opt" in
+        path)
+        KDUMP_PATH="$config_val"
+            ;;
+        core_collector)
+            [ -n "$config_val" ] && CORE_COLLECTOR="$config_val"
+            ;;
+        sshkey)
+            if [ -f "$config_val" ]; then
+                SSH_KEY_LOCATION=$config_val
+            fi
+            ;;
+        default)
+            case $config_val in
+                shell)
+                    DEFAULT_ACTION="sh -i -l"
+                    ;;
+                reboot)
+                    DEFAULT_ACTION="reboot -f"
+                    ;;
+                halt)
+                    DEFAULT_ACTION="halt -f"
+                    ;;
+                poweroff)
+                    DEFAULT_ACTION="poweroff -f"
+                    ;;
+            esac
+            ;;
+        esac
+    done < $conf_file
+
+    # rescan for add code for dump target
+    while read config_opt config_val;
+    do
+        case "$config_opt" in
+        ext[234]|xfs|btrfs|minix)
+            add_dump_code "dump_localfs $config_val"
+            ;;
+        raw)
+            add_dump_code "dump_raw $config_val"
+            ;;
+        net)
+            wait_for_net_ok
+            if [[ "$config_val" =~ "@" ]]; then
+                add_dump_code "dump_ssh $SSH_KEY_LOCATION $config_val"
+            else
+                add_dump_code "dump_nfs $config_val"
+            fi
+            ;;
+        esac
+    done < $conf_file
 }
 
 read_kdump_conf
