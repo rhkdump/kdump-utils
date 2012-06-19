@@ -50,6 +50,9 @@ check_size() {
         raw)
             avail=$(get_raw_size "$2")
             ;;
+        blacklist)
+            add_dracut_arg "--omit-drivers" "$config_val"
+            ;;
         *)
             return
     esac

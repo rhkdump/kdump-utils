@@ -42,6 +42,12 @@ supports DNS. NOTE: make sure user has necessary write permissions on
 server and that a fqdn is used as the server name
 .RE
 
+.B blacklist <list of kernel modules>
+.RS
+Specify a space-separated list of kernel modules not to add to the initramfs.
+The kernel modules have to be specified without the ".ko" suffix.
+.RE
+
 .B sshkey <path>
 .RS
 Specifies the path of the ssh key you want to use when do ssh dump,
