@@ -22,6 +22,7 @@ Source14: 98-kexec.rules
 Source15: kdump.conf.5
 Source16: kdump.service
 Source17: rhcrashkernel-param
+Source18: kdump.sysconfig.s390x
 
 #######################################
 # These are sources for mkdumpramfs
@@ -40,7 +41,7 @@ BuildRequires: dash
 BuildRequires: zlib-devel zlib zlib-static elfutils-devel-static glib2-devel bzip2-devel
 BuildRequires: pkgconfig intltool gettext 
 BuildRequires: systemd-units
-%ifarch %{ix86} x86_64 ppc64 ia64 ppc
+%ifarch %{ix86} x86_64 ppc64 ia64 ppc s390x
 Obsoletes: diskdumputils netdump
 %endif
 
@@ -66,7 +67,6 @@ Obsoletes: diskdumputils netdump
 #
 # Patches 401 through 500 are meant for s390 kexec-tools enablement
 #
-
 #
 # Patches 501 through 600 are meant for ppc kexec-tools enablement
 #
@@ -119,7 +119,7 @@ rm -f kexec-tools.spec.in
 cp %{SOURCE10} . 
 
 make
-%ifarch %{ix86} x86_64 ia64 ppc64
+%ifarch %{ix86} x86_64 ia64 ppc64 s390x
 make -C makedumpfile-1.4.2 LINKTYPE=dynamic
 %endif
 make -C kexec-tools-po
@@ -153,7 +153,7 @@ install -m 644 %{SOURCE16} $RPM_BUILD_ROOT%{_unitdir}/kdump.service
 mkdir -p $RPM_BUILD_ROOT/usr/sbin
 install -m 755 %{SOURCE17} $RPM_BUILD_ROOT/usr/sbin/rhcrashkernel-param
 
-%ifarch %{ix86} x86_64 ia64 ppc64
+%ifarch %{ix86} x86_64 ia64 ppc64 s390x
 install -m 755 makedumpfile-1.4.2/makedumpfile $RPM_BUILD_ROOT/sbin/makedumpfile
 install -m 644 makedumpfile-1.4.2/makedumpfile.8.gz $RPM_BUILD_ROOT/%{_mandir}/man8/makedumpfile.8.gz
 %endif
