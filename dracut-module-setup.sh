@@ -102,10 +102,25 @@ kdump_setup_vlan() {
     fi
 }
 
+# setup s390 znet cmdline
+# $1: netdev name
+kdump_setup_znet() {
+    local _options=""
+    . /etc/sysconfig/network-scripts/ifcfg-$1
+    for i in $OPTIONS; do
+        _options=${_options},$i
+    done
+    echo rd.znet=${NETTYPE},${SUBCHANNELS}${_options} > ${initdir}/etc/cmdline.d/30znet.conf
+}
+
 # Setup dracut to bringup a given network interface
 kdump_setup_netdev() {
     local _netdev=$1
     local _static _proto
+
+    if [ "$(uname -m)" = "s390x" ]; then
+        kdump_setup_znet $_netdev
+    fi
 
     _netmac=`ip addr show $_netdev 2>/dev/null|awk '/ether/{ print $2 }'`
     _static=$(kdump_static_ip $_netdev)

@@ -175,6 +175,10 @@ if [ -f "$keyfile" ]; then
     SSH_KEY_LOCATION=$(/usr/bin/readlink -m $keyfile)
 fi
 
+if [ "$(uname -m)" = "s390x" ]; then
+    add_dracut_module "znet"
+fi
+
 while read config_opt config_val;
 do
     case "$config_opt" in
