@@ -180,6 +180,7 @@ kdump_install_conf() {
     done < /etc/kdump.conf
 
     inst "/tmp/$$-kdump.conf" "/etc/kdump.conf"
+    rm -f /tmp/$$-kdump.conf
 }
 
 kdump_iscsi_get_rec_val() {
