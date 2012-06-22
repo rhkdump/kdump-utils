@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.3
-Release: 49%{?dist}
+Release: 50%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -295,6 +295,14 @@ done
 
 
 %changelog
+* Fri Jun 22 2012 Dave Young <ruyang@redhat.com> - 2.0.3-50
+- add blacklist option, Resolves: bz805774
+- Add kdump_post and kdump_pre support, Resolves: bz805773
+- Port check_config from rhel6, Resolves: bz805778
+- raw core_collector fix
+- ssh core_collector fix
+- drcut-kdump.sh: cleanup kdump.conf check
+
 * Tue Jun 12 2012 Dave Young <ruyang@redhat.com> - 2.0.3-49
 - cleanup DUMP_INSTRUCTION handling
 - final reboot behavior fix
