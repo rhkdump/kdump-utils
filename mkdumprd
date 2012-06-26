@@ -10,6 +10,8 @@ export IN_KDUMP=1
 
 conf_file="/etc/kdump.conf"
 SSH_KEY_LOCATION="/root/.ssh/kdump_id_rsa"
+SAVE_PATH=$(grep ^path $conf_file| cut -d' '  -f2)
+[ -z "$SAVE_PATH" ] && SAVE_PATH="/var/crash"
 extra_modules=""
 dracut_args=("--hostonly" "--add" "kdumpbase" "--add" "fstab-sys" "--add" "kernel-modules" "-c" "/dev/null" "-I" "/sbin/makedumpfile" "-o" "plymouth")
 
@@ -33,6 +35,21 @@ add_dracut_sshkey() {
     add_dracut_arg "--sshkey" "$1"
 }
 
+#Function: get_ssh_size
+#$1=dump target
+get_ssh_size() {
+    local _opt _out _size
+    _opt="-i $SSH_KEY_LOCATION -o BatchMode=yes -o StrictHostKeyChecking=yes"
+    _out=$(ssh -q $_opt $1 "df -P $SAVE_PATH")
+    if [ $? -ne 0 ]; then
+        echo "checking remote ssh server available size failed."
+        exit 1
+    fi
+    #ssh output removed the line break, so print $11 instead of $4
+    _size=$(echo -n $_out|tail -1 | awk '{print $11}')
+    echo -n $_size
+}
+
 #Function: get_raw_size
 #$1=dump target
 get_raw_size() {
@@ -49,6 +66,9 @@ check_size() {
     case "$1" in
         raw)
             avail=$(get_raw_size "$2")
+            ;;
+        ssh)
+            avail=$(get_ssh_size "$2")
             ;;
         *)
             return
@@ -84,11 +104,6 @@ get_rootdev() {
 to_mount() {
     local _dev=$(to_dev_name $1)
     echo "$(grep "$_dev" /proc/mounts | cut -d' ' -f1-4)"
-}
-
-# $1 remote target
-check_remote() {
-    return
 }
 
 is_ssh_dump_target()
@@ -160,9 +175,9 @@ do
         check_size raw $config_val
         ;;
     net)
-        check_remote "$config_val"
         if strstr "$config_val" "@";
         then
+            check_size ssh $config_val
             add_dracut_module "ssh-client"
 		add_dracut_sshkey "$SSH_KEY_LOCATION"
         else
