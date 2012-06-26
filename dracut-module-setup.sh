@@ -81,8 +81,19 @@ kdump_setup_vlan() {
     local _netdev=$1
     local _phydev="$(awk '/^Device:/{print $2}' /proc/net/vlan/"$_netdev")"
     local _netmac="$(kdump_get_mac_addr $_phydev)"
-    echo -n " ifname=$_phydev:$_netmac" > ${initdir}/etc/cmdline.d/43vlan.conf
-    echo " vlan=$_netdev:$_phydev" >> ${initdir}/etc/cmdline.d/43vlan.conf
+
+    echo " vlan=$_netdev:$_phydev" > ${initdir}/etc/cmdline.d/43vlan.conf
+
+    #Just support vlan over bond, it is not easy
+    #to support all other complex setup
+    if kdump_is_bridge "$_phydev"; then
+        derror "Vlan over bridge is not supported!"
+        exit 1
+    elif kdump_is_bond "$_phydev"; then
+        kdump_setup_bond "$_phydev"
+    else
+        echo " vlan=$_netdev:$_phydev ifname=$_phydev:$_netmac" > ${initdir}/etc/cmdline.d/43vlan.conf
+    fi
 }
 
 # Setup dracut to bringup a given network interface
