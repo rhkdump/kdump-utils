@@ -50,9 +50,6 @@ check_size() {
         raw)
             avail=$(get_raw_size "$2")
             ;;
-        blacklist)
-            add_dracut_arg "--omit-drivers" "$config_val"
-            ;;
         *)
             return
     esac
@@ -183,6 +180,9 @@ do
         ;;
     extra_bins)
         add_dracut_arg "-I" "$config_val"
+        ;;
+    blacklist)
+        add_dracut_arg "--omit-drivers" "$config_val"
         ;;
     *)
         if [ -n $(echo $config_opt | grep "^#.*$") ]
