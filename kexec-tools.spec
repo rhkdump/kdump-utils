@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.3
-Release: 50%{?dist}
+Release: 51%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -295,6 +295,16 @@ done
 
 
 %changelog
+* Thu Jul 5 2012 Dave Young <ruyang@redhat.com> - 2.0.3-51
+- add s390x netdev setup
+- Add s390x support
+- Cleanup temp file leaved at /tmp/
+- add check_size function for fs dump
+- add ssh check_size
+- blacklist patch apply fix
+- Respect bonding mode
+- Support dump over vlan tagged bonding
+
 * Fri Jun 22 2012 Dave Young <ruyang@redhat.com> - 2.0.3-50
 - add blacklist option, Resolves: bz805774
 - Add kdump_post and kdump_pre support, Resolves: bz805773
