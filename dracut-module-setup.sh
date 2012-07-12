@@ -201,6 +201,9 @@ kdump_install_conf() {
         kdump_pre|kdump_post|extra_bins)
             dracut_install $config_val
             ;;
+        core_collector)
+            dracut_install "${config_val%% *}"
+            ;;
         esac
     done < /etc/kdump.conf
 
