@@ -37,7 +37,6 @@ Requires(preun): systemd-units
 Requires(postun): systemd-units
 Requires(pre): coreutils sed zlib 
 Requires: busybox >= 1.2.0, dracut, dracut-network
-BuildRequires: dash 
 BuildRequires: zlib-devel zlib zlib-static elfutils-devel-static glib2-devel bzip2-devel
 BuildRequires: pkgconfig intltool gettext 
 BuildRequires: systemd-units
