@@ -381,8 +381,8 @@ name or IP address of the target system. Using a dedicated, restricted user
 account on the target system is recommended, as there will be keyless ssh
 access to this account.
 
-Once kdump.conf is appropriately configured, issue the command '/sbin/service
-kdump propagate' to automatically set up the ssh host keys and transmit
+Once kdump.conf is appropriately configured, issue the command
+'kdumpctl propagate' to automatically set up the ssh host keys and transmit
 the necessary bits to the target server. You'll have to type in 'yes'
 to accept the host key for your targer server if this is the first time
 you've connected to it, and then input the target system user's password

@@ -246,7 +246,7 @@ function check_ssh_target()
     ssh -q -i $SSH_KEY_LOCATION -o BatchMode=yes $DUMP_TARGET mkdir -p $SAVE_PATH
     _ret=$?
     if [ $_ret -ne 0 ]; then
-        echo "Could not create $DUMP_TARGET:$SAVE_PATH, you probably need to run \"service kdump propagate\""
+        echo "Could not create $DUMP_TARGET:$SAVE_PATH, you probably need to run \"kdumpctl propagate\""
         exit $_ret
     fi
 }
