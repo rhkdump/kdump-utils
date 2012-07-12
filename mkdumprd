@@ -166,8 +166,6 @@ add_mount() {
     return 0
 }
 
-add_dracut_mount "$(to_mount "$(get_rootdev)")"
-
 # firstly get right SSH_KEY_LOCATION
 keyfile=$(awk '/sshkey/ {print $2}' $conf_file)
 if [ -f "$keyfile" ]; then

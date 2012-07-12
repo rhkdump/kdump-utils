@@ -585,3 +585,13 @@ visible on the screen.  It does not work with all video cards however.
 Secondly, it may be worth trying to add vga15fb.ko to the extra_modules list in
 /etc/kdump.conf.  This will attempt to use the video card in framebuffer mode,
 which can blank the screen prior to the start of a dump capture.
+
+Notes on rootfs mount:
+Dracut is designed to mount rootfs by default. If rootfs mounting fails it
+will refuse to go on. So kdump leaves rootfs mounting to dracut currently.
+We make the assumtion that proper root= cmdline is being passed to dracut
+initramfs for the time being. If you need modify "KDUMP_COMMANDLINE=" in
+/etc/sysconfig/kdump, you will need to make sure that appropriate root=
+options are copied from /proc/cmdline. In general it is best to append
+command line options using "KDUMP_COMMANDLINE_APPEND=" instead of replacing
+the original command line completely.
