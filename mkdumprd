@@ -13,7 +13,7 @@ SSH_KEY_LOCATION="/root/.ssh/kdump_id_rsa"
 SAVE_PATH=$(grep ^path $conf_file| cut -d' '  -f2)
 [ -z "$SAVE_PATH" ] && SAVE_PATH="/var/crash"
 extra_modules=""
-dracut_args=("--hostonly" "--add" "kdumpbase" "--add" "kernel-modules" "-c" "/dev/null" "-o" "plymouth dash")
+dracut_args=("--hostonly" "-c" "/dev/null" "-o" "plymouth dash")
 
 add_dracut_arg() {
     while [ $# -gt 0 ];
