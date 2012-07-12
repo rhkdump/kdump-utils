@@ -242,12 +242,13 @@ function check_ssh_config()
 
 function check_ssh_target()
 {
+    local _ret
     ssh -q -i $SSH_KEY_LOCATION -o BatchMode=yes $DUMP_TARGET mkdir -p $SAVE_PATH
-    if [ $? -ne 0 ]; then
+    _ret=$?
+    if [ $_ret -ne 0 ]; then
         echo "Could not create $DUMP_TARGET:$SAVE_PATH, you probably need to run \"service kdump propagate\""
-        exit $?
+        exit $_ret
     fi
-    return 0
 }
 
 function propagate_ssh_key()
