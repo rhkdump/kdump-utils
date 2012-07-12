@@ -123,8 +123,8 @@ check_size() {
     esac
 
     if [ $avail -lt $memtotal ]; then
-        echo "Warning: There is not enough space to save a vmcore."
-        echo "         The size of $2 should be much greater than $memtotal kilo bytes."
+        echo "Warning: There might not be enough space to save a vmcore."
+        echo "         The size of $2 should be greater than $memtotal kilo bytes."
     fi
 }
 
