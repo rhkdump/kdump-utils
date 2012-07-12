@@ -219,9 +219,6 @@ do
         verify_core_collector "$config_val"
         add_dracut_arg "-I" "${config_val%% *}"
         ;;
-    extra_bins)
-        add_dracut_arg "-I" "$config_val"
-        ;;
     blacklist)
         add_dracut_arg "--omit-drivers" "$config_val"
         ;;

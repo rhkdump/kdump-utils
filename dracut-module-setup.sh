@@ -198,7 +198,7 @@ kdump_install_conf() {
         net)
             kdump_install_net "$config_val"
             ;;
-        kdump_pre|kdump_post)
+        kdump_pre|kdump_post|extra_bins)
             dracut_install $config_val
             ;;
         esac
