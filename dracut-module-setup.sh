@@ -43,6 +43,14 @@ kdump_is_vlan() {
      [ -f /proc/net/vlan/"$1" ]
 }
 
+# $1: netdev name
+kdump_setup_dns() {
+    _dnsfile=${initdir}/etc/cmdline.d/42dns.conf
+    . /etc/sysconfig/network-scripts/ifcfg-$1
+    [ -n "$DNS1" ] && echo "nameserver=$DNS1" > "$_dnsfile"
+    [ -n "$DNS2" ] && echo "nameserver=$DNS2" >> "$_dnsfile"
+}
+
 #$1: netdev name
 #checking /etc/sysconfig/network-scripts/ifcfg-$1,
 #if it use static ip echo it, or echo null
@@ -142,6 +150,8 @@ kdump_setup_netdev() {
         echo -n " ip=${_static}$_netdev:${_proto}" > ${initdir}/etc/cmdline.d/40ip.conf
         echo " ifname=$_netdev:$(kdump_get_mac_addr $_netdev)" >> ${initdir}/etc/cmdline.d/40ip.conf
     fi
+
+    kdump_setup_dns "$_netdev"
 }
 
 #Function:kdump_install_net
