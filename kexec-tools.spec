@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.3
-Release: 51%{?dist}
+Release: 52%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -294,6 +294,9 @@ done
 
 
 %changelog
+* Thu Jul 19 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.0.3-52
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_18_Mass_Rebuild
+
 * Thu Jul 5 2012 Dave Young <ruyang@redhat.com> - 2.0.3-51
 - add s390x netdev setup
 - Add s390x support
