@@ -85,11 +85,16 @@ dump_localfs()
 {
     local _dev=`to_dev_name $1`
     local _mp=`get_mp $_dev`
+
+    if [ -z "$_mp" ]; then
+        echo "kdump: error: Dump target $1 is not mounted."
+        return 1
+    fi
     if [ "$_mp" = "$NEWROOT/" ] || [ "$_mp" = "$NEWROOT" ]
     then
         mount -o remount,rw $_mp || return 1
     fi
-    mkdir -p $_mp/$KDUMP_PATH/$DATEDIR
+    mkdir -p $_mp/$KDUMP_PATH/$DATEDIR || return 1
     $CORE_COLLECTOR /proc/vmcore $_mp/$KDUMP_PATH/$DATEDIR/vmcore || return 1
     umount $_mp || return 1
     return 0
