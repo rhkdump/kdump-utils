@@ -126,17 +126,6 @@ dump_rootfs()
     sync
 }
 
-dump_nfs()
-{
-    mount -o remount,rw $NEWROOT/ || return 1
-    [ -d $NEWROOT/mnt ] || mkdir -p $NEWROOT/mnt
-    mount -o nolock -o tcp -t nfs $1 $NEWROOT/mnt/ || return 1
-    mkdir -p $NEWROOT/mnt/$KDUMP_PATH/$DATEDIR || return 1
-    $CORE_COLLECTOR /proc/vmcore $NEWROOT/mnt/$KDUMP_PATH/$DATEDIR/vmcore || return 1
-    umount $NEWROOT/mnt/ || return 1
-    return 0
-}
-
 dump_ssh()
 {
     local _opt="-i $1 -o BatchMode=yes -o StrictHostKeyChecking=yes"
@@ -225,7 +214,7 @@ read_kdump_conf()
             if [[ "$config_val" =~ "@" ]]; then
                 add_dump_code "dump_ssh $SSH_KEY_LOCATION $config_val"
             else
-                add_dump_code "dump_nfs $config_val"
+                add_dump_code "dump_fs $config_val"
             fi
             ;;
         esac
