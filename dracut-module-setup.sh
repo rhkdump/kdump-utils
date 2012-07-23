@@ -195,7 +195,7 @@ kdump_install_conf() {
         ext[234]|xfs|btrfs|minix|raw)
             sed -i -e "s#$config_val#/dev/$(kdump_to_udev_name $config_val)#" /tmp/$$-kdump.conf
             ;;
-        net)
+        ssh|nfs)
             kdump_install_net "$config_val"
             ;;
         kdump_pre|kdump_post|extra_bins)

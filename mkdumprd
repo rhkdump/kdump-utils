@@ -130,7 +130,7 @@ check_size() {
 
 is_ssh_dump_target()
 {
-    grep -q "^net.*@" $conf_file
+    grep -q "^ssh.*@" $conf_file
 }
 
 is_raw_dump_target()
@@ -183,7 +183,10 @@ do
     extra_modules)
         extra_modules="$extra_modules $config_val"
         ;;
-    ext[234]|xfs|btrfs|minix)
+    ext[234]|xfs|btrfs|minix|nfs)
+        if [ "$config_opt" = "nfs" ]; then
+            add_dracut_module "nfs"
+        fi
         add_mount "$config_val"
         if [ $? -ne 0 ]; then
             echo "Dump target $config_val is probably not mounted."
@@ -199,21 +202,20 @@ do
         }
         check_size raw $config_val
         ;;
-    net)
+    ssh)
         if strstr "$config_val" "@";
         then
             check_size ssh $config_val
             add_dracut_module "ssh-client"
 		add_dracut_sshkey "$SSH_KEY_LOCATION"
         else
-            add_dracut_module "nfs"
-            add_mount "$config_val"
-            if [ $? -ne 0 ]; then
-                echo "Dump target $config_val is probably not mounted."
-                exit 1
-            fi
-            check_size fs $config_val
+            echo "Bad ssh dump target $config_val"
+            exit 1
         fi
+        ;;
+    net)
+        echo "net option is not supported anymore, please use nfs|ssh instead."
+        exit 1
         ;;
     core_collector)
         verify_core_collector "$config_val"

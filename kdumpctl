@@ -224,7 +224,7 @@ function check_ssh_config()
 		path)
 			SAVE_PATH=$config_val
 			;;
-		net)
+		ssh)
 			DUMP_TARGET=$config_val
 			;;
 		*)
@@ -355,7 +355,7 @@ function save_raw()
 function start()
 {
 	local nr
-	nr=$(awk 'BEGIN{cnt=0} /^raw|^net|^ext[234]|^xfs|^btrfs|^minix/{cnt++} END{print cnt}' $KDUMP_CONFIG_FILE)
+	nr=$(awk 'BEGIN{cnt=0} /^raw|^ssh|^nfs|^ext[234]|^xfs|^btrfs|^minix/{cnt++} END{print cnt}' $KDUMP_CONFIG_FILE)
 	[ $nr -gt 1 ] && {
 		echo -n "Error: More than one dump targets specified"; echo
 		return 1

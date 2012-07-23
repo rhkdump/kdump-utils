@@ -144,7 +144,7 @@ dump_ssh()
 
 is_ssh_dump_target()
 {
-    grep -q "^net.*@" $conf_file
+    grep -q "^ssh.*@" $conf_file
 }
 
 is_raw_dump_target()
@@ -203,19 +203,15 @@ read_kdump_conf()
     while read config_opt config_val;
     do
         case "$config_opt" in
-        ext[234]|xfs|btrfs|minix)
+        ext[234]|xfs|btrfs|minix|nfs)
             add_dump_code "dump_fs $config_val"
             ;;
         raw)
             add_dump_code "dump_raw $config_val"
             ;;
-        net)
+        ssh)
             wait_for_net_ok
-            if [[ "$config_val" =~ "@" ]]; then
-                add_dump_code "dump_ssh $SSH_KEY_LOCATION $config_val"
-            else
-                add_dump_code "dump_fs $config_val"
-            fi
+            add_dump_code "dump_ssh $SSH_KEY_LOCATION $config_val"
             ;;
         esac
     done < $conf_file

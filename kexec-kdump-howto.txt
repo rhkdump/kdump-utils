@@ -375,7 +375,7 @@ Remote system via ssh/scp
 
 Dumping over ssh/scp requires setting up passwordless ssh keys for every
 machine you wish to have dump via this method. First up, configure kdump.conf
-for ssh/scp dumping, adding a config line of 'net user@server', where 'user'
+for ssh/scp dumping, adding a config line of 'ssh user@server', where 'user'
 can be any user on the target system you choose, and 'server' is the host
 name or IP address of the target system. Using a dedicated, restricted user
 account on the target system is recommended, as there will be keyless ssh

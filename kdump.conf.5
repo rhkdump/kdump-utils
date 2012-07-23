@@ -28,14 +28,14 @@ understand how this configuration file affects the behavior of kdump.
 Will dd /proc/vmcore into <partition>.
 .RE
 
-.B net <nfs mount>
+.B nfs <nfs mount>
 .RS
 Will mount fs and copy /proc/vmcore to <mnt>/var/crash/%HOST-%DATE/,
 supports DNS. Note that a fqdn should be used as the server name in the 
 mount point
 .RE
 
-.B net <user@server>
+.B ssh <user@server>
 .RS
 Will scp /proc/vmcore to <user@server>:/var/crash/%HOST-%DATE/,
 supports DNS. NOTE: make sure user has necessary write permissions on
