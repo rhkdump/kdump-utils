@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.3
-Release: 52%{?dist}
+Release: 53%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -294,6 +294,25 @@ done
 
 
 %changelog
+* Mon Jul 23 2012 Dave Young <ruyang@redhat.com> - 2.0.3-53
+- refactor net option
+- use fstab-sys to mount nfs
+- rename function dump_localfs
+- dump_localfs error path fix
+- update kexec-kdump-howto.txt about systemctl commands
+- ssh propagate alert message fix
+- remove useless dracut cmdline '-c /dev/null'
+- remove useless dracut cmdline for kernel-modules and kdumpbase
+- install core_collector in module-setup.sh
+- install extra_bins in module-setup.sh
+- remove busybox dependency
+- improve warning message of space checking
+- do not mount root twice
+- do not add fstab-sys module in dracut cmdline
+- omit dash module
+- network dns config fix
+- shell exit value fix 
+
 * Thu Jul 19 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.0.3-52
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_18_Mass_Rebuild
 
