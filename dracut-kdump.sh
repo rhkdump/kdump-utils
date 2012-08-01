@@ -183,7 +183,7 @@ read_kdump_conf()
         default)
             case $config_val in
                 shell)
-                    DEFAULT_ACTION="sh -i -l"
+                    DEFAULT_ACTION="_emergency_shell kdump"
                     ;;
                 reboot)
                     DEFAULT_ACTION="reboot -f"
