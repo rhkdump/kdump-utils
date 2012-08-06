@@ -115,7 +115,7 @@ dump_raw()
     monitor_dd_progress $_src_size_mb &
 
     $CORE_COLLECTOR /proc/vmcore | dd of=$1 bs=$DD_BLKSIZE >> /tmp/dd_progress_file 2>&1 || return 1
-    return 0
+    return ${PIPESTATUS[0]}
 }
 
 dump_rootfs()
