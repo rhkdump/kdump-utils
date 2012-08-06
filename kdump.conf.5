@@ -156,6 +156,12 @@ poweroff: The system will be powered down.
 Note: kdump uses bash as the default shell.
 .RE
 
+.B force_rebuild <0 | 1>
+.RS
+By default, kdump initrd only will be rebuilt when necessary.
+Specify 1 to force rebuilding kdump initrd every time when kdump service starts.
+.RE
+
 .SH EXAMPLES
 Here is some examples for core_collector option:
 .PP
