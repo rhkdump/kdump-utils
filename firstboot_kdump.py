@@ -81,6 +81,7 @@ class moduleClass(Module):
 		self.labelKdump.set_sensitive(status)
 		self.labelSys.set_sensitive(status)
 		self.kdumpEnabled = status
+		self.AdvWindow.set_sensitive(status)
 
 	def on_enableKdumpCheck_toggled(self, *args):
 		showHideStatus = self.enableKdumpCheck.get_active()
@@ -233,7 +234,24 @@ class moduleClass(Module):
 		self.labelSys.set_use_underline(True)
 		self.labelSys.set_mnemonic_widget(self.systemUsableMem)
 		self.labelSys.set_alignment(0.0, 0.5)
-		
+
+		# Add an advanced kdump config text widget
+		inputbuf = open("/etc/kdump.conf", "r")
+		self.AdvConfig = gtk.TextView()
+		AdvBuf = gtk.TextBuffer()
+		AdvBuf.set_text(inputbuf.read())
+		inputbuf.close()
+
+		self.AdvConfig.set_buffer(AdvBuf)
+		self.AdvWindow = gtk.ScrolledWindow()
+		self.AdvWindow.set_shadow_type(gtk.SHADOW_IN)
+		self.AdvWindow.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+		self.AdvWindow.set_size_request(500, 300)
+		self.AdvWindow.add(self.AdvConfig)
+
+		self.AdvConfLabel = gtk.Label(_("\nAdvanced kdump configuration"))
+		self.AdvConfLabel.set_alignment(0.0, 0.5)
+
 		self.vbox = gtk.VBox()
 		self.vbox.set_size_request(400, 200)
 
@@ -254,7 +272,7 @@ class moduleClass(Module):
 		label.set_size_request(500, -1)
 		internalVBox.pack_start(label, False, True)
 
-		table = gtk.Table(2, 4)
+		table = gtk.Table(2, 100)
 
 		table.attach(self.enableKdumpCheck, 0, 2, 0, 1, gtk.FILL, gtk.FILL, 5, 5)
 
@@ -266,6 +284,9 @@ class moduleClass(Module):
 
 		table.attach(self.labelSys, 0, 1, 3, 4, gtk.FILL)
 		table.attach(self.systemUsableMem, 1, 2, 3, 4, gtk.SHRINK, gtk.FILL, 5, 5)
+
+		table.attach(self.AdvConfLabel, 0, 1, 5, 6, gtk.FILL)
+		table.attach(self.AdvWindow, 0, 2, 6, 100, gtk.FILL, gtk.FILL, 5, 5)
 
 		# disable until user clicks check box, if not already enabled
 		if self.initialState is False:
@@ -298,6 +319,13 @@ class moduleClass(Module):
 				print "System Mem: %s MB	Kdump Mem: %s MB	Avail Mem: %s MB" % (totalSysMem, reservedMem, remainingMem)
 			else:
 				print "Kdump will be disabled"
+
+		# Before we do other checks we should save the users config
+		AdvBuf = self.AdvConfig.get_buffer()
+		start, end = AdvBuf.get_bounds()
+		outputbuf = open("/etc/kdump.conf", "rw+")
+		outputbuf.write(AdvBuf.get_text(start, end))
+		outputbuf.close()
 
 		# Regardless of what else happens we need to be sure to disalbe kdump if its disabled here, or
 		# else it will fail during startup
