@@ -150,8 +150,8 @@ class moduleClass(Module):
 		self.kdumpOffset = 0
 		self.origCrashKernel = ""
 		self.kdumpEnabled = False
-		chkConfigStatus=commands.getoutput('/sbin/chkconfig --list kdump')
-		if chkConfigStatus.find("on") > -1:
+		chkConfigStatus=commands.getoutput('/bin/systemctl is-enabled kdump.service')
+		if chkConfigStatus.find("enabled") > -1:
 			self.kdumpEnabled = True
 		self.kdumpMemInitial = 0
 		if cmdLine.find("crashkernel") > -1:
@@ -356,18 +356,18 @@ class moduleClass(Module):
 				if self.kdumpEnabled:
 					grubbyCmd = "/sbin/grubby --%s --update-kernel=/boot/vmlinuz-%s --args=crashkernel=%iM" \
 								% (self.bootloader, self.runningKernel, reservedMem)
-					chkconfigStatus = "on"
+					chkconfigStatus = "enable"
 				else:
 					grubbyCmd = "/sbin/grubby --%s --update-kernel=/boot/vmlinuz-%s --remove-args=crashkernel=%s" \
 								% (self.bootloader, self.runningKernel, self.origCrashKernel)
-					chkconfigStatus = "off" 
+					chkconfigStatus = "disable"
 
 				if self.doDebug:
 					print "Using %s bootloader with %iM offset" % (self.bootloader, self.offset)
 					print "Grubby command would be:\n	%s" % grubbyCmd
 				else:
 					os.system(grubbyCmd)
-					os.system("/sbin/chkconfig kdump %s" % chkconfigStatus)
+					os.system("/bin/systemctl %s kdump.service" % (chkconfigStatus))
 					if self.bootloader == 'yaboot':
 						os.system('/sbin/ybin')
 		else:
