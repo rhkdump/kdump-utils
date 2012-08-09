@@ -147,7 +147,6 @@ class moduleClass(Module):
 
 		# Fix up memory calculations if kdump is already on
 		cmdLine = open("/proc/cmdline").read()
-		self.kdumpMem = 0
 		self.kdumpOffset = 0
 		self.origCrashKernel = ""
 		self.kdumpEnabled = False
@@ -155,7 +154,11 @@ class moduleClass(Module):
 		if chkConfigStatus.find("enabled") > -1:
 			self.kdumpEnabled = True
 		self.kdumpMemInitial = 0
-		if cmdLine.find("crashkernel") > -1:
+
+		kexec_crash_size = open("/sys/kernel/kexec_crash_size").read()
+		self.kdumpMem = int(kexec_crash_size)/(1024*1024)
+
+		if self.kdumpMem != 0:
 			crashString = filter(lambda t: t.startswith("crashkernel="),
 					 cmdLine.split())[0].split("=")[1]
 			if self.doDebug:
@@ -163,7 +166,6 @@ class moduleClass(Module):
 			if crashString.find("@") != -1:
 				(self.kdumpMem, self.kdumpOffset) = [int(m[:-1]) for m in crashString.split("@")]
 			else:
-				self.kdumpMem = int(crashString[:-1])
 				self.kdumpOffset = 0
 			self.availMem += self.kdumpMem
 			self.origCrashKernel = "%dM" % (self.kdumpMem)
@@ -171,6 +173,7 @@ class moduleClass(Module):
 			self.kdumpEnabled = True
 		else:
 			self.kdumpEnabled = False
+
 		self.initialState = self.kdumpEnabled
 
 		# Do some sanity-checking and try to present only sane options.
