@@ -375,7 +375,7 @@ class moduleClass(Module):
 			rc = dlg.run()
 			dlg.destroy()
 
-			if rc == gtk.RESPONSE_NO:
+			if rc != gtk.RESPONSE_YES:
 				self.reboot = False
 				return RESULT_SUCCESS 
 			else:
