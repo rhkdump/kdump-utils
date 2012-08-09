@@ -59,12 +59,13 @@ class moduleClass(Module):
 	#			 bootloader : (config file, kdump offset)
 	bootloaders = { "grub"   : (["/boot/grub/grub.conf", "/boot/efi/EFI/redhat/grub.conf"], [16, 256]),
 					"grub2"   : (["/boot/grub2/grub.cfg"], [16, 256]),
+					"zipl" : (["/etc/zipl.conf"], [0]),
 					"yaboot" : (["/boot/etc/yaboot.conf"], [32]) }
 	bootloader = None
 	offset = 0
 
 	# list of architectures without kdump support
-	unsupportedArches = [ "ppc", "s390", "s390x", "i386", "i586" ]
+	unsupportedArches = [ "ppc", "s390", "i386", "i586" ]
 
 	# list of platforms that have a separate kernel-kdump
 	kernelKdumpArches = [ "ppc64" ]
@@ -408,6 +409,8 @@ class moduleClass(Module):
 					os.system("/bin/systemctl %s kdump.service" % (chkconfigStatus))
 					if self.bootloader == 'yaboot':
 						os.system('/sbin/ybin')
+					if self.bootloader == 'zipl':
+						os.system('/sbin/zipl')
 		else:
 			self.reboot = False
 
