@@ -67,10 +67,6 @@ class moduleClass(Module):
 	# list of architectures without kdump support
 	unsupportedArches = [ "ppc", "s390", "i386", "i586" ]
 
-	# list of platforms that have a separate kernel-kdump
-	kernelKdumpArches = [ "ppc64" ]
-	kernelKdumpInstalled = False
-
 	def needsReboot(self):
 		return self.reboot
 
@@ -129,15 +125,6 @@ class moduleClass(Module):
 		for line in lines:
 			if line.find("Fedora") != -1:
 				self.distro = 'fedora'
-				kernelKdumpArchesFC = [ "i686", "x86_64" ]
-				self.kernelKdumpArches.extend(kernelKdumpArchesFC)
-				break
-
-		# If we need kernel-kdump, check to see if its already installed
-		if self.arch in self.kernelKdumpArches:
-			self.kernelKdump = "/boot/vmlinux-%skdump" % self.runningKernel
-			if os.access(self.kernelKdump, os.R_OK):
-				self.kernelKdumpInstalled = True
 
 		# Ascertain how much memory is in the system
 		memInfo = open("/proc/meminfo").readlines()
@@ -356,22 +343,14 @@ class moduleClass(Module):
 			self.showHide(False)
 			return RESULT_FAILURE 
 
-		# If running on an arch w/a separate kernel-kdump (i.e., non-relocatable kernel), check to
-		# see that its installed, otherwise, alert the user they need to install it, and give them
-		# the chance to abort configuration.
-		if self.arch in self.kernelKdumpArches and self.kernelKdumpInstalled is False:
-			kernelKdumpNote = "\n\nNote that the %s architecture does not feature a relocatable kernel at this time, and thus requires a separate kernel-kdump package to be installed for kdump to function. This can be installed via 'yum install kernel-kdump' at your convenience.\n\n" % self.arch
-		else:
-			kernelKdumpNote = ""
-
 		# Don't alert if nothing has changed
 		if self.initialState != self.kdumpEnabled or reservedMem != self.kdumpMemInitial:
 			dlg = gtk.MessageDialog(None, 0, gtk.MESSAGE_INFO,
 									gtk.BUTTONS_YES_NO,
 									_("Changing Kdump settings requires rebooting the "
-									  "system to reallocate memory accordingly. %sWould you "
+									  "system to reallocate memory accordingly. Would you "
 									  "like to continue with this change and reboot the "
-									  "system after firstboot is complete?" % kernelKdumpNote))
+									  "system after firstboot is complete?"))
 			dlg.set_position(gtk.WIN_POS_CENTER)
 			dlg.show_all()
 			rc = dlg.run()
