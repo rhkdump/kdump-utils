@@ -59,8 +59,7 @@ class moduleClass(Module):
 	#			 bootloader : (config file, kdump offset)
 	bootloaders = { "grub"   : (["/boot/grub/grub.conf", "/boot/efi/EFI/redhat/grub.conf"], [16, 256]),
 					"grub2"   : (["/boot/grub2/grub.cfg"], [16, 256]),
-					"yaboot" : (["/boot/etc/yaboot.conf"], [32]),
-					"elilo"  : (["/boot/efi/EFI/redhat/elilo.conf"], [256]) }
+					"yaboot" : (["/boot/etc/yaboot.conf"], [32]) }
 	bootloader = None
 	offset = 0
 
