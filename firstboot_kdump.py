@@ -37,7 +37,7 @@ from firstboot.constants import *
 from firstboot.functions import *
 from firstboot.module import *
 import gettext
-_ = lambda x: gettext.ldgettext("firstboot", x)
+_ = lambda x: gettext.ldgettext("kexec-tools", x)
 N_ = lambda x: x
 
 class moduleClass(Module):
