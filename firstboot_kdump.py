@@ -299,6 +299,11 @@ class moduleClass(Module):
 			else:
 				print "Kdump will be disabled"
 
+		# Regardless of what else happens we need to be sure to disalbe kdump if its disabled here, or
+		# else it will fail during startup
+		if (self.enableKdumpCheck.get_active() == False):
+			os.system("/bin/systemctl disable kdump.service")
+
 		# If the user simply doesn't have enough memory for kdump to be viable/supportable, tell 'em
 		if self.enoughMem is False and self.kdumpEnabled:
 			self.showErrorMessage(_("Sorry, your system does not have enough memory for kdump to be viable!"))
@@ -365,6 +370,7 @@ class moduleClass(Module):
 				if self.doDebug:
 					print "Using %s bootloader with %iM offset" % (self.bootloader, self.offset)
 					print "Grubby command would be:\n	%s" % grubbyCmd
+					print "chkconfig status is %s" % chkconfigStatus
 				else:
 					os.system(grubbyCmd)
 					os.system("/bin/systemctl %s kdump.service" % (chkconfigStatus))
