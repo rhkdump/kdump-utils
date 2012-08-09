@@ -204,7 +204,7 @@ class moduleClass(Module):
 			self.kdumpMem = self.kdumpMem - (self.kdumpMem % step)
 
 		# kdump enable/disable checkbox
-		self.enableKdumpCheck = gtk.CheckButton("Enable kdump?")
+		self.enableKdumpCheck = gtk.CheckButton(_("_Enable kdump?"))
 		self.enableKdumpCheck.set_alignment(xalign=0, yalign=0)
 
 		# detected total amount of system memory
