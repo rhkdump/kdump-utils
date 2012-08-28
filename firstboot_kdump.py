@@ -205,9 +205,7 @@ class moduleClass(Module):
 
 		# detected total amount of system memory
 		self.totalMem = gtk.Label(_("%s" % self.availMem))
-		self.labelTotal = gtk.Label(_("_Total System Memory (MB):"))
-		self.labelTotal.set_use_underline(True)
-		self.labelTotal.set_mnemonic_widget(self.totalMem)
+		self.labelTotal = gtk.Label(_("Total System Memory (MB):"))
 		self.labelTotal.set_alignment(0.0, 0.5)
 		self.labelTotal.set_width_chars(32)
 
@@ -226,9 +224,7 @@ class moduleClass(Module):
 		self.reserveMem = eval(string.strip(self.kdumpMemspin.get_text()))
 		self.remainingMem = self.availMem - self.reserveMem
 		self.systemUsableMem = gtk.Label(_("%s" % self.remainingMem))
-		self.labelSys = gtk.Label(_("_Usable System Memory (MB):"))
-		self.labelSys.set_use_underline(True)
-		self.labelSys.set_mnemonic_widget(self.systemUsableMem)
+		self.labelSys = gtk.Label(_("Usable System Memory (MB):"))
 		self.labelSys.set_alignment(0.0, 0.5)
 
 		self.labelReserved=gtk.Label(_("Memory Currently Reserved (MB):"))
