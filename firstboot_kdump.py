@@ -379,12 +379,12 @@ class moduleClass(Module):
 
 				# Are we adding or removing the crashkernel param?
 				if self.kdumpEnabled:
-					grubbyCmd = "/sbin/grubby --%s --update-kernel=/boot/vmlinuz-%s --args=crashkernel=%iM" \
-								% (self.bootloader, self.runningKernel, self.reserveMem)
+					grubbyCmd = "/sbin/grubby --%s --update-kernel=ALL --args=crashkernel=%iM" \
+								% (self.bootloader, self.reserveMem)
 					chkconfigStatus = "enable"
 				else:
-					grubbyCmd = "/sbin/grubby --%s --update-kernel=/boot/vmlinuz-%s --remove-args=crashkernel=%s" \
-								% (self.bootloader, self.runningKernel, self.origCrashKernel)
+					grubbyCmd = "/sbin/grubby --%s --update-kernel=ALL --remove-args=crashkernel=%s" \
+								% (self.bootloader, self.origCrashKernel)
 					chkconfigStatus = "disable"
 
 				if self.doDebug:
