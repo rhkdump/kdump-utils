@@ -78,6 +78,8 @@ class moduleClass(Module):
 		self.labelTotal.set_sensitive(status)
 		self.labelKdump.set_sensitive(status)
 		self.labelSys.set_sensitive(status)
+		self.labelReserved.set_sensitive(status)
+		self.labelReservedMemsize.set_sensitive(status)
 		self.kdumpEnabled = status
 		self.AdvWindow.set_sensitive(status)
 
@@ -229,6 +231,10 @@ class moduleClass(Module):
 		self.labelSys.set_mnemonic_widget(self.systemUsableMem)
 		self.labelSys.set_alignment(0.0, 0.5)
 
+		self.labelReserved=gtk.Label(_("Memory Currently Reserved (MB):"))
+		self.labelReservedMemsize=gtk.Label(_("%s" % self.reservedMem))
+		self.labelReserved.set_alignment(0.0, 0.5)
+
 		# Add an advanced kdump config text widget
 		inputbuf = open("/etc/kdump.conf", "r")
 		self.AdvConfig = gtk.TextView()
@@ -276,11 +282,14 @@ class moduleClass(Module):
 		table.attach(self.labelKdump, 0, 1, 2, 3, gtk.FILL)
 		table.attach(self.kdumpMemspin, 1, 2, 2, 3, gtk.SHRINK, gtk.FILL, 5, 5)
 
-		table.attach(self.labelSys, 0, 1, 3, 4, gtk.FILL)
-		table.attach(self.systemUsableMem, 1, 2, 3, 4, gtk.SHRINK, gtk.FILL, 5, 5)
+		table.attach(self.labelReserved, 0, 1, 3, 4, gtk.FILL)
+		table.attach(self.labelReservedMemsize, 1, 2, 3, 4, gtk.SHRINK, gtk.FILL, 5, 5)
 
-		table.attach(self.AdvConfLabel, 0, 1, 5, 6, gtk.FILL)
-		table.attach(self.AdvWindow, 0, 2, 6, 100, gtk.FILL, gtk.FILL, 5, 5)
+		table.attach(self.labelSys, 0, 1, 4, 5, gtk.FILL)
+		table.attach(self.systemUsableMem, 1, 2, 4, 5, gtk.SHRINK, gtk.FILL, 5, 5)
+
+		table.attach(self.AdvConfLabel, 0, 1, 6, 7, gtk.FILL)
+		table.attach(self.AdvWindow, 0, 2, 7, 100, gtk.FILL, gtk.FILL, 5, 5)
 
 		# disable until user clicks check box, if not already enabled
 		if self.initialState is False:
