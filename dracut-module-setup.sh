@@ -321,7 +321,7 @@ kdump_check_iscsi_targets () {
 
     kdump_check_setup_iscsi() (
         local _dev
-        _dev=$(get_maj_min $1)
+        _dev=$1
 
         [[ -L /sys/dev/block/$_dev ]] || return
         cd "$(readlink -f /sys/dev/block/$_dev)"
@@ -332,7 +332,7 @@ kdump_check_iscsi_targets () {
     )
 
     [[ $hostonly ]] || [[ $mount_needs ]] && {
-        for_each_host_dev_fs kdump_check_setup_iscsi
+        for_each_host_dev_and_slaves_all kdump_check_setup_iscsi
     }
 }
 
