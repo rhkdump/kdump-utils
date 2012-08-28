@@ -212,7 +212,7 @@ class moduleClass(Module):
 		self.labelTotal.set_width_chars(32)
 
 		# how much ram to reserve for kdump
-		self.memAdjustment = gtk.Adjustment(self.kdumpMem, lowerBound, upperBound, step, step, 64)
+		self.memAdjustment = gtk.Adjustment(self.kdumpMem, lowerBound, upperBound, step, step, 0)
 		self.kdumpMemspin = gtk.SpinButton(self.memAdjustment, 0, 0)
 		self.kdumpMemspin.set_update_policy(gtk.UPDATE_IF_VALID)
 		self.kdumpMemspin.set_numeric(True)
