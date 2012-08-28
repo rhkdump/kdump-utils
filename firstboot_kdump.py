@@ -71,13 +71,28 @@ class moduleClass(Module):
 		return self.reboot
 
 	# toggle sensitivity of kdump config bits
-	def showHide(self, status):
-		self.totalMem.set_sensitive(status)
+	def showHideReserve(self, status):
+		self.labelKdump.set_sensitive(status)
 		self.kdumpMemspin.set_sensitive(status)
+		self.totalMem.set_sensitive(status)
 		self.systemUsableMem.set_sensitive(status)
 		self.labelTotal.set_sensitive(status)
-		self.labelKdump.set_sensitive(status)
 		self.labelSys.set_sensitive(status)
+
+	# toggle sensitivity of kdump config bits
+	def showHide(self, status):
+		show_kdumpmem = status
+		if self.distro == 'rhel':
+			show_autoreserve = self.buttonAuto.get_active()
+			if status == True:
+				if self.buttonAuto.get_active() == True:
+					show_kdumpmem = False
+			self.buttonAuto.set_active(show_autoreserve)
+			self.buttonManual.set_active(not show_autoreserve)
+			self.labelReserve.set_sensitive(status)
+			self.buttonAuto.set_sensitive(status)
+			self.buttonManual.set_sensitive(status)
+		self.showHideReserve(show_kdumpmem)
 		self.labelReserved.set_sensitive(status)
 		self.labelReservedMemsize.set_sensitive(status)
 		self.kdumpEnabled = status
@@ -87,8 +102,17 @@ class moduleClass(Module):
 		showHideStatus = self.enableKdumpCheck.get_active()
 		self.showHide(showHideStatus)
 
+	def on_auto_toggled(self, *args):
+		if self.distro == 'rhel':
+			self.showHideReserve(not self.buttonAuto.get_active())
+
+	def on_manual_toggled(self, *args):
+		if self.distro == 'rhel':
+			self.showHideReserve(self.buttonManual.get_active())
+
 	def updateAvail(self, widget, spin):
-		self.remainingMem = self.availMem - spin.get_value_as_int()
+		self.reserveMem = eval(string.strip(self.kdumpMemspin.get_text()))
+		self.remainingMem = self.availMem - self.reserveMem
 		self.systemUsableMem.set_text("%s" % self.remainingMem)
 
 	def getBootloader(self):
@@ -122,11 +146,12 @@ class moduleClass(Module):
 
 		# Fedora or RHEL?
 		releaseFile = '/etc/redhat-release'
-		self.distro = 'rhel'
 		lines = open(releaseFile).readlines()
 		for line in lines:
 			if line.find("Fedora") != -1:
 				self.distro = 'fedora'
+			else:
+				self.distro = 'rhel'
 
 		# Ascertain how much memory is in the system
 		memInfo = open("/proc/meminfo").readlines()
@@ -146,26 +171,32 @@ class moduleClass(Module):
 			self.kdumpEnabled = True
 		self.kdumpMemInitial = 0
 
+		crashString = ""
 		kexec_crash_size = open("/sys/kernel/kexec_crash_size").read()
 		self.reservedMem = int(kexec_crash_size)/(1024*1024)
-		self.kdumpMem = 0
 
 		if cmdLine.find("crashkernel") != -1:
 			crashString = filter(lambda t: t.startswith("crashkernel="),
 					 cmdLine.split())[0].split("=")[1]
+			self.origCrashKernel = "crashkernel=%s" % (crashString)
 			if self.doDebug:
 				print "crashString is %s" % crashString
 			if crashString.find("@") != -1:
-				(self.kdumpMem, self.kdumpOffset) = [int(m[:-1]) for m in crashString.split("@")]
+				(self.kdumpMemInitial, self.kdumpOffset) = [int(m[:-1]) for m in crashString.split("@")]
 			else:
-				self.kdumpMem=int(crashString[:-1])
+				#kdumpMemInitial = -1 means auto reservation
+				if self.distro == 'rhel' and self.origCrashKernel == 'crashkernel=auto':
+					self.kdumpMemInitial=-1
+				else:
+					self.kdumpMemInitial=int(crashString[:-1])
 				self.kdumpOffset = 0
+		if self.kdumpMemInitial != 0:
 			self.availMem += self.reservedMem
-			self.origCrashKernel = "%dM" % (self.kdumpMem)
-			self.kdumpMemInitial = self.kdumpMem
 			self.kdumpEnabled = True
 		else:
 			self.kdumpEnabled = False
+			if self.origCrashKernel.find("crashkernel=") != -1:
+				self.kdumpEnabled = True
 
 		self.initialState = self.kdumpEnabled
 
@@ -193,11 +224,11 @@ class moduleClass(Module):
 			self.enoughMem = False
 
 		# Set spinner to lowerBound unless already set on kernel command line
-		if self.kdumpMem == 0:
-			self.kdumpMem = lowerBound
+		if self.kdumpMemInitial == 0 or  self.kdumpMemInitial == -1:
+			self.kdumpMemInitial = lowerBound
 		else:
 			# round down to a multiple of step value
-			self.kdumpMem = self.kdumpMem - (self.kdumpMem % step)
+			self.kdumpMemInitial = self.kdumpMemInitial - (self.kdumpMemInitial % step)
 
 		# kdump enable/disable checkbox
 		self.enableKdumpCheck = gtk.CheckButton(_("_Enable kdump?"))
@@ -210,12 +241,12 @@ class moduleClass(Module):
 		self.labelTotal.set_width_chars(32)
 
 		# how much ram to reserve for kdump
-		self.memAdjustment = gtk.Adjustment(self.kdumpMem, lowerBound, upperBound, step, step, 0)
+		self.memAdjustment = gtk.Adjustment(self.kdumpMemInitial, lowerBound, upperBound, step, step, 0)
 		self.kdumpMemspin = gtk.SpinButton(self.memAdjustment, 0, 0)
 		self.kdumpMemspin.set_update_policy(gtk.UPDATE_IF_VALID)
 		self.kdumpMemspin.set_numeric(True)
 		self.memAdjustment.connect("value_changed", self.updateAvail, self.kdumpMemspin)
-		self.labelKdump = gtk.Label(_("_Kdump Memory (MB):"))
+		self.labelKdump = gtk.Label(_("Memory To Be _Reserved (MB):"))
 		self.labelKdump.set_use_underline(True)
 		self.labelKdump.set_mnemonic_widget(self.kdumpMemspin)
 		self.labelKdump.set_alignment(0.0, 0.5)
@@ -230,6 +261,25 @@ class moduleClass(Module):
 		self.labelReserved=gtk.Label(_("Memory Currently Reserved (MB):"))
 		self.labelReservedMemsize=gtk.Label(_("%s" % self.reservedMem))
 		self.labelReserved.set_alignment(0.0, 0.5)
+
+		# rhel crashkernel=auto handling
+		if self.distro == 'rhel':
+			self.labelReserve = gtk.Label(_("Kdump Memory Reservation:"))
+			self.buttonAuto = gtk.RadioButton(None, _("_Automatic"))
+			self.buttonManual = gtk.RadioButton(self.buttonAuto, _("_Manual"))
+			self.buttonAuto.connect("toggled", self.on_auto_toggled, None)
+			self.buttonManual.connect("toggled", self.on_manual_toggled, None)
+			self.buttonAuto.set_use_underline(True)
+			self.buttonManual.set_use_underline(True)
+			self.labelReserve.set_alignment(0.0, 0.5)
+			if self.origCrashKernel == 'crashkernel=auto':
+				self.buttonAuto.set_active(True)
+				self.buttonManual.set_active(False)
+			else:
+				self.buttonAuto.set_active(False)
+				self.buttonManual.set_active(True)
+			self.autoinitial = self.buttonAuto.get_active()
+
 
 		# Add an advanced kdump config text widget
 		inputbuf = open("/etc/kdump.conf", "r")
@@ -268,30 +318,46 @@ class moduleClass(Module):
 		label.set_size_request(500, -1)
 		internalVBox.pack_start(label, False, True)
 
-		table = gtk.Table(2, 100)
+		if self.distro == 'rhel':
+			table = gtk.Table(3, 100)
+			table.attach(self.enableKdumpCheck, 0, 3, 0, 1, gtk.FILL, gtk.FILL, 5, 5)
+			table.attach(self.labelReserve, 0, 1, 1, 2, gtk.FILL)
+			table.attach(self.buttonAuto, 1, 2, 1, 2, gtk.FILL, gtk.FILL, 5, 5)
+			table.attach(self.buttonManual, 2, 3, 1, 2, gtk.FILL, gtk.FILL, 5, 5)
+			table.attach(self.labelReserved, 0, 1, 2, 3, gtk.FILL)
+			table.attach(self.labelReservedMemsize, 2, 3, 2, 3, gtk.SHRINK, gtk.FILL, 5, 5)
+			table.attach(self.labelKdump, 0, 1, 3, 4, gtk.FILL)
+			table.attach(self.kdumpMemspin, 2, 3, 3, 4, gtk.SHRINK, gtk.FILL, 5, 5)
+			table.attach(self.labelTotal, 0, 1, 4, 5, gtk.FILL)
+			table.attach(self.totalMem, 2, 3, 4, 5, gtk.SHRINK, gtk.FILL, 5, 5)
+			table.attach(self.labelSys, 0, 1, 5, 6, gtk.FILL)
+			table.attach(self.systemUsableMem, 2, 3, 5, 6, gtk.SHRINK, gtk.FILL, 5, 5)
+			table.attach(self.AdvConfLabel, 0, 1, 6, 7, gtk.FILL)
+			table.attach(self.AdvWindow, 0, 3, 7, 100, gtk.FILL, gtk.FILL, 5, 5)
+		else:
+			table = gtk.Table(2, 100)
+			table.attach(self.enableKdumpCheck, 0, 2, 0, 1, gtk.FILL, gtk.FILL, 5, 5)
+			table.attach(self.labelTotal, 0, 1, 1, 2, gtk.FILL)
+			table.attach(self.totalMem, 1, 2, 1, 2, gtk.SHRINK, gtk.FILL, 5, 5)
 
-		table.attach(self.enableKdumpCheck, 0, 2, 0, 1, gtk.FILL, gtk.FILL, 5, 5)
+			table.attach(self.labelKdump, 0, 1, 2, 3, gtk.FILL)
+			table.attach(self.kdumpMemspin, 1, 2, 2, 3, gtk.SHRINK, gtk.FILL, 5, 5)
 
-		table.attach(self.labelTotal, 0, 1, 1, 2, gtk.FILL)
-		table.attach(self.totalMem, 1, 2, 1, 2, gtk.SHRINK, gtk.FILL, 5, 5)
+			table.attach(self.labelReserved, 0, 1, 3, 4, gtk.FILL)
+			table.attach(self.labelReservedMemsize, 1, 2, 3, 4, gtk.SHRINK, gtk.FILL, 5, 5)
 
-		table.attach(self.labelKdump, 0, 1, 2, 3, gtk.FILL)
-		table.attach(self.kdumpMemspin, 1, 2, 2, 3, gtk.SHRINK, gtk.FILL, 5, 5)
+			table.attach(self.labelSys, 0, 1, 4, 5, gtk.FILL)
+			table.attach(self.systemUsableMem, 1, 2, 4, 5, gtk.SHRINK, gtk.FILL, 5, 5)
 
-		table.attach(self.labelReserved, 0, 1, 3, 4, gtk.FILL)
-		table.attach(self.labelReservedMemsize, 1, 2, 3, 4, gtk.SHRINK, gtk.FILL, 5, 5)
-
-		table.attach(self.labelSys, 0, 1, 4, 5, gtk.FILL)
-		table.attach(self.systemUsableMem, 1, 2, 4, 5, gtk.SHRINK, gtk.FILL, 5, 5)
-
-		table.attach(self.AdvConfLabel, 0, 1, 6, 7, gtk.FILL)
-		table.attach(self.AdvWindow, 0, 2, 7, 100, gtk.FILL, gtk.FILL, 5, 5)
+			table.attach(self.AdvConfLabel, 0, 1, 6, 7, gtk.FILL)
+			table.attach(self.AdvWindow, 0, 2, 7, 100, gtk.FILL, gtk.FILL, 5, 5)
 
 		# disable until user clicks check box, if not already enabled
 		if self.initialState is False:
 			self.showHide(False)
 		else:
 			self.enableKdumpCheck.set_active(True)
+			self.showHide(True)
 
 		internalVBox.pack_start(table, True, 15)
 
@@ -302,6 +368,17 @@ class moduleClass(Module):
 
 	def grabFocus(self):
 		self.enableKdumpCheck.grab_focus()
+
+	def configChanged(self):
+		if self.initialState == self.kdumpEnabled and self.initialState == False:
+			return False
+		if self.initialState != self.kdumpEnabled \
+		or (self.distro == 'rhel' and self.autoinitial != self.buttonAuto.get_active()) \
+		or (self.distro == 'rhel' and self.buttonManual.get_active() == True and self.reserveMem != self.kdumpMemInitial) \
+		or (self.distro != 'rhel' and self.reserveMem != self.kdumpMemInitial):
+			return True
+		return False
+
 
 	def apply(self, *args):
 		if self.kdumpEnabled:
@@ -348,7 +425,7 @@ class moduleClass(Module):
 			return RESULT_FAILURE 
 
 		# Don't alert if nothing has changed
-		if self.initialState != self.kdumpEnabled or self.reserveMem != self.kdumpMemInitial:
+		if self.configChanged() == True:
 			dlg = gtk.MessageDialog(None, 0, gtk.MESSAGE_INFO,
 									gtk.BUTTONS_YES_NO,
 									_("Changing Kdump settings requires rebooting the "
@@ -375,11 +452,16 @@ class moduleClass(Module):
 
 				# Are we adding or removing the crashkernel param?
 				if self.kdumpEnabled:
-					grubbyCmd = "/sbin/grubby --%s --update-kernel=ALL --args=crashkernel=%iM" \
-								% (self.bootloader, self.reserveMem)
+					_reserves = "%iM" % (self.reserveMem)
+					if self.distro == 'rhel':
+						if self.buttonAuto.get_active() == True:
+							_reserves = 'auto'
+
+					grubbyCmd = "/sbin/grubby --%s --update-kernel=ALL --args=crashkernel=%s" \
+								% (self.bootloader, _reserves)
 					chkconfigStatus = "enable"
 				else:
-					grubbyCmd = "/sbin/grubby --%s --update-kernel=ALL --remove-args=crashkernel=%s" \
+					grubbyCmd = "/sbin/grubby --%s --update-kernel=ALL --remove-args=%s" \
 								% (self.bootloader, self.origCrashKernel)
 					chkconfigStatus = "disable"
 
