@@ -73,7 +73,7 @@ class moduleClass(Module):
 	# toggle sensitivity of kdump config bits
 	def showHide(self, status):
 		self.totalMem.set_sensitive(status)
-		self.kdumpMem.set_sensitive(status)
+		self.kdumpMemspin.set_sensitive(status)
 		self.systemUsableMem.set_sensitive(status)
 		self.labelTotal.set_sensitive(status)
 		self.labelKdump.set_sensitive(status)
@@ -86,8 +86,8 @@ class moduleClass(Module):
 		self.showHide(showHideStatus)
 
 	def updateAvail(self, widget, spin):
-		self.remMem = self.availMem - spin.get_value_as_int()
-		self.systemUsableMem.set_text("%s" % self.remMem)
+		self.remainingMem = self.availMem - spin.get_value_as_int()
+		self.systemUsableMem.set_text("%s" % self.remainingMem)
 
 	def getBootloader(self):
 		for (name, (conf, offset)) in self.bootloaders.items():
@@ -145,9 +145,10 @@ class moduleClass(Module):
 		self.kdumpMemInitial = 0
 
 		kexec_crash_size = open("/sys/kernel/kexec_crash_size").read()
-		self.kdumpMem = int(kexec_crash_size)/(1024*1024)
+		self.reservedMem = int(kexec_crash_size)/(1024*1024)
+		self.kdumpMem = 0
 
-		if self.kdumpMem != 0:
+		if cmdLine.find("crashkernel") != -1:
 			crashString = filter(lambda t: t.startswith("crashkernel="),
 					 cmdLine.split())[0].split("=")[1]
 			if self.doDebug:
@@ -155,8 +156,9 @@ class moduleClass(Module):
 			if crashString.find("@") != -1:
 				(self.kdumpMem, self.kdumpOffset) = [int(m[:-1]) for m in crashString.split("@")]
 			else:
+				self.kdumpMem=int(crashString[:-1])
 				self.kdumpOffset = 0
-			self.availMem += self.kdumpMem
+			self.availMem += self.reservedMem
 			self.origCrashKernel = "%dM" % (self.kdumpMem)
 			self.kdumpMemInitial = self.kdumpMem
 			self.kdumpEnabled = True
@@ -208,20 +210,20 @@ class moduleClass(Module):
 		self.labelTotal.set_width_chars(32)
 
 		# how much ram to reserve for kdump
-		self.memSpin = gtk.Adjustment(self.kdumpMem, lowerBound, upperBound, step, step, 64)
-		self.kdumpMem = gtk.SpinButton(self.memSpin, 0, 0)
-		self.kdumpMem.set_update_policy(gtk.UPDATE_IF_VALID)
-		self.kdumpMem.set_numeric(True)
-		self.memSpin.connect("value_changed", self.updateAvail, self.kdumpMem)
+		self.memAdjustment = gtk.Adjustment(self.kdumpMem, lowerBound, upperBound, step, step, 64)
+		self.kdumpMemspin = gtk.SpinButton(self.memAdjustment, 0, 0)
+		self.kdumpMemspin.set_update_policy(gtk.UPDATE_IF_VALID)
+		self.kdumpMemspin.set_numeric(True)
+		self.memAdjustment.connect("value_changed", self.updateAvail, self.kdumpMemspin)
 		self.labelKdump = gtk.Label(_("_Kdump Memory (MB):"))
 		self.labelKdump.set_use_underline(True)
-		self.labelKdump.set_mnemonic_widget(self.kdumpMem)
+		self.labelKdump.set_mnemonic_widget(self.kdumpMemspin)
 		self.labelKdump.set_alignment(0.0, 0.5)
 
 		# remaining usable system memory
-		self.resMem = eval(string.strip(self.kdumpMem.get_text()))
-		self.remMem = self.availMem - self.resMem
-		self.systemUsableMem = gtk.Label(_("%s" % self.remMem))
+		self.reserveMem = eval(string.strip(self.kdumpMemspin.get_text()))
+		self.remainingMem = self.availMem - self.reserveMem
+		self.systemUsableMem = gtk.Label(_("%s" % self.remainingMem))
 		self.labelSys = gtk.Label(_("_Usable System Memory (MB):"))
 		self.labelSys.set_use_underline(True)
 		self.labelSys.set_mnemonic_widget(self.systemUsableMem)
@@ -272,7 +274,7 @@ class moduleClass(Module):
 		table.attach(self.totalMem, 1, 2, 1, 2, gtk.SHRINK, gtk.FILL, 5, 5)
 
 		table.attach(self.labelKdump, 0, 1, 2, 3, gtk.FILL)
-		table.attach(self.kdumpMem, 1, 2, 2, 3, gtk.SHRINK, gtk.FILL, 5, 5)
+		table.attach(self.kdumpMemspin, 1, 2, 2, 3, gtk.SHRINK, gtk.FILL, 5, 5)
 
 		table.attach(self.labelSys, 0, 1, 3, 4, gtk.FILL)
 		table.attach(self.systemUsableMem, 1, 2, 3, 4, gtk.SHRINK, gtk.FILL, 5, 5)
@@ -298,17 +300,14 @@ class moduleClass(Module):
 
 	def apply(self, *args):
 		if self.kdumpEnabled:
-			totalSysMem = self.totalMem.get_text()
-			totalSysMem = eval(string.strip(totalSysMem))
-			reservedMem = self.kdumpMem.get_value_as_int()
-			remainingMem = totalSysMem - reservedMem
+			self.reserveMem = self.kdumpMemspin.get_value_as_int()
 		else:
-			reservedMem = self.kdumpMemInitial
-
+			self.reserveMem = self.kdumpMemInitial
+		self.remainingMem = self.availMem - self.reserveMem
 		if self.doDebug:
 			print "Running kernel %s on %s architecture" % (self.runningKernel, self.arch)
 			if self.enableKdumpCheck.get_active():
-				print "System Mem: %s MB	Kdump Mem: %s MB	Avail Mem: %s MB" % (totalSysMem, reservedMem, remainingMem)
+				print "System Mem: %s MB	Kdump Mem: %s MB	Avail Mem: %s MB" % (totalSysMem, self.reserveMem, self.remainingMem)
 			else:
 				print "Kdump will be disabled"
 
@@ -344,7 +343,7 @@ class moduleClass(Module):
 			return RESULT_FAILURE 
 
 		# Don't alert if nothing has changed
-		if self.initialState != self.kdumpEnabled or reservedMem != self.kdumpMemInitial:
+		if self.initialState != self.kdumpEnabled or self.reserveMem != self.kdumpMemInitial:
 			dlg = gtk.MessageDialog(None, 0, gtk.MESSAGE_INFO,
 									gtk.BUTTONS_YES_NO,
 									_("Changing Kdump settings requires rebooting the "
@@ -372,7 +371,7 @@ class moduleClass(Module):
 				# Are we adding or removing the crashkernel param?
 				if self.kdumpEnabled:
 					grubbyCmd = "/sbin/grubby --%s --update-kernel=/boot/vmlinuz-%s --args=crashkernel=%iM" \
-								% (self.bootloader, self.runningKernel, reservedMem)
+								% (self.bootloader, self.runningKernel, self.reserveMem)
 					chkconfigStatus = "enable"
 				else:
 					grubbyCmd = "/sbin/grubby --%s --update-kernel=/boot/vmlinuz-%s --remove-args=crashkernel=%s" \
