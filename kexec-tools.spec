@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.3
-Release: 53%{?dist}
+Release: 54%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -294,6 +294,31 @@ done
 
 
 %changelog
+* Wed Aug 29 2012 Dave Young <ruyang@redhat.com> - 2.0.3-54
+- pass raw device as dracut argument
+- iscsi setup fix
+- firstboot: add automatic and manual memory reservation for rhel
+- firstboot: remove unnecessary underline shortkey
+- firstboot: fix gtk warning about non-zero page size
+- firstboot: update all kernels config in grubbyCmd
+- firstboot: add actual reserved memory widget
+- firstboot code cleanup
+- rhcrashkernel-param: echo crashkernel=auto for rhel7
+- Remove the kernel-kdump handling
+- s390x firstboot fix
+- remove elilo support
+- grub2 fix in firstboot
+- Take closing the reboot dialog as no
+- Handle new crashkernel= syntax in firstboot
+- Fix a localized string in firstboot
+- Configure kdump in firstboot
+- fix firstboot to ensure kdump svc is disabled properly
+- firstboot text domain fix
+- Update to use systemctl instead of sysv chkconfig
+- port force_rebuild kdump.conf option
+- Change return value to indicate the result of dump_raw() correctly.
+- call dracut function for default shell
+
 * Mon Jul 23 2012 Dave Young <ruyang@redhat.com> - 2.0.3-53
 - refactor net option
 - use fstab-sys to mount nfs
