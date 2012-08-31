@@ -324,6 +324,11 @@ for any reason the init process is started on the root file system, only a
 simple copying of the vmcore from /proc/vmcore to /var/crash/$DATE/vmcore will
 be preformed.
 
+For both local filesystem and nfs dump the dump target must be mounted before
+building kdump initramfs. That means one needs to put an entry for the dump
+file system in /etc/fstab so that after reboot when kdump service starts,
+it can find the dump target and build initramfs instead of failing.
+
 Raw partition
 
 Raw partition dumping requires that a disk partition in the system, at least
@@ -336,14 +341,15 @@ to commit this change to your kdump initrd.
 Dedicated file system
 
 Similar to raw partition dumping, you can format a partition with the file
-system of your choice, leaving it unmounted during normal operation. Again,
-it should be at least as large as the amount of memory in the system. Assuming
-/dev/sda3 has been formatted ext4, specify 'ext4 /dev/sda3' in kdump.conf,
-and a vmcore file will be copied onto the file system after it has been
-mounted. Dumping to a dedicated partition has the advantage that you can dump
-multiple vmcores to the file system, space permitting, without overwriting
-previous ones, as would be the case in a raw partition setup. Restart the
-kdump service via '/sbin/systemctl restart kdump.service' to commit this change to
+system of your choice, Again, it should be at least as large as the amount
+of memory in the system. Assuming it should be at least as large as the
+amount of memory in the system. Assuming /dev/sda3 has been formatted ext4,
+specify 'ext4 /dev/sda3' in kdump.conf, and a vmcore file will be copied
+onto the file system after it has been mounted. Dumping to a dedicated
+partition has the advantage that you can dump multiple vmcores to the
+file system, space permitting, without overwriting previous ones, as would
+be the case in a raw partition setup. Restart the kdump service via
+'/sbin/systemctl restart kdump.service' to commit this change to
 your kdump initrd.  Note that for local file systems ext4 and ext2 are
 supported as dumpable targets.  Kdump will not prevent you from specifying
 other filesystems, and they will most likely work, but their operation
@@ -368,8 +374,8 @@ once the mount is properly configured, specify it in kdump.conf, via
 'nfs nfs-server.example.com:/dump'. The server portion can be specified either
 by host name or IP address. Following a system crash, the kdump initrd will
 mount the NFS mount and copy out the vmcore to your NFS server. Restart the
-kdump service via '/sbin/systemctl restart kdump.service' to commit this change to
-your kdump initrd.
+kdump service via '/sbin/systemctl restart kdump.service' to commit this change
+to your kdump initrd.
 
 Remote system via ssh/scp
 

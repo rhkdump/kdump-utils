@@ -17,6 +17,9 @@ For most configurations, you can simply review the examples provided
 in the stock /etc/kdump.conf.
 
 .B NOTE: 
+For filesystem dump the dump target must be mounted before building
+kdump initramfs.
+
 kdump.conf only affects the behavior of the initramfs.  Please read the
 kdump operational flow section of kexec-kdump-howto.txt in the docs to better
 understand how this configuration file affects the behavior of kdump.
