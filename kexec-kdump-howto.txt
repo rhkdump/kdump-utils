@@ -364,8 +364,8 @@ or anonuid options on the NFS server side are likely of interest to permit
 the kdump initrd operations write to the NFS mount as root.
 
 Assuming your're exporting /dump on the machine nfs-server.example.com,
-once the mount is properly configured, specify it in kdump.conf, via 'net
-nfs-server.example.com:/dump'. The server portion can be specified either
+once the mount is properly configured, specify it in kdump.conf, via
+'nfs nfs-server.example.com:/dump'. The server portion can be specified either
 by host name or IP address. Following a system crash, the kdump initrd will
 mount the NFS mount and copy out the vmcore to your NFS server. Restart the
 kdump service via '/sbin/systemctl restart kdump.service' to commit this change to
