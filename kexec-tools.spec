@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.3
-Release: 54%{?dist}
+Release: 55%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -294,6 +294,10 @@ done
 
 
 %changelog
+* Thu Sep 06 2012 Dave Young <ruyang@redhat.com> - 2.0.3-55
+- doc fix for mount dump target before mkdumprd
+- pull makedumpfile 1.5.0
+
 * Wed Aug 29 2012 Dave Young <ruyang@redhat.com> - 2.0.3-54
 - pass raw device as dracut argument
 - iscsi setup fix
