@@ -78,13 +78,22 @@ get_rootdev() {
 }
 
 to_mount() {
-    local _dev=$(to_dev_name $1)
-    echo "$(grep "$_dev" /proc/mounts | cut -d' ' -f1-4)"
+    local _dev _mntopts _pdev
+    _dev=$(to_dev_name $1)
+    _mntopts=$(findmnt -k -f -n -r -o TARGET,FSTYPE,OPTIONS $_dev)
+    [ -z "$_mntopts" ] && return
+    #for non-nfs _dev converting to use udev persistent name
+    if [ -b "$_dev" ]; then
+        _pdev="$(get_persistent_dev $_dev)"
+    else
+        _pdev=$_dev
+    fi
+
+    echo "$_pdev $_mntopts"
 }
 
 to_mount_point() {
-    local _dev=$(to_dev_name $1)
-    echo "$(grep "$_dev" /proc/mounts | cut -d' ' -f2)"
+    echo $(findmnt -k -f -n -r -o TARGET $1)
 }
 
 #Function: get_ssh_size

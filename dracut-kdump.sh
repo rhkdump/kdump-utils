@@ -53,23 +53,9 @@ add_dump_code()
     DUMP_INSTRUCTION=$1
 }
 
-get_mp()
-{
-    local _mp
-    local dev mp fs opts rest
-    while read dev mp fs opts rest; do
-        if [ "$dev" = "$1" ]; then
-            _mp="$mp"
-            break
-        fi
-    done < /proc/mounts
-    echo "$_mp"
-}
-
 dump_fs()
 {
-    local _dev=$1
-    local _mp=`get_mp $_dev`
+    local _mp=$(findmnt -k -f -n -r -o TARGET $1)
 
     if [ -z "$_mp" ]; then
         echo "kdump: error: Dump target $1 is not mounted."
