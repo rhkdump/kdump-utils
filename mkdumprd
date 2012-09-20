@@ -15,6 +15,27 @@ SAVE_PATH=$(grep ^path $conf_file| cut -d' '  -f2)
 extra_modules=""
 dracut_args=("--hostonly" "-o" "plymouth dash")
 
+get_persistent_dev() {
+    local i _tmp _dev
+
+    _dev=$(udevadm info --query=name --name="$1" 2>/dev/null)
+    [ -z "$_dev" ] && {
+        echo "Kernel dev name of $1 is not found."
+        exit 1
+    }
+
+    for i in /dev/disk/by-id/*; do
+        _tmp=$(udevadm info --query=name --name="$i" 2>/dev/null)
+        if [ "$_tmp" = "$_dev" ]; then
+            echo $i
+            return
+        fi
+    done
+
+    echo "Persistent device name of $1 is not found."
+    exit 1
+}
+
 add_dracut_arg() {
     while [ $# -gt 0 ];
     do
