@@ -230,7 +230,7 @@ do
             echo "Bad raw disk $config_val"
             exit 1
         }
-        add_dracut_arg "--device" "$config_val"
+        add_dracut_arg "--device" "$(get_persistent_dev $config_val)"
         check_size raw $config_val
         ;;
     ssh)
