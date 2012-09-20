@@ -66,24 +66,9 @@ get_mp()
     echo "$_mp"
 }
 
-to_dev_name()
-{
-    local dev="$1"
-
-    case "$dev" in
-    UUID=*)
-        dev=`blkid -U "${dev#UUID=}"`
-        ;;
-    LABEL=*)
-        dev=`blkid -L "${dev#LABEL=}"`
-        ;;
-    esac
-    echo $dev
-}
-
 dump_fs()
 {
-    local _dev=`to_dev_name $1`
+    local _dev=$1
     local _mp=`get_mp $_dev`
 
     if [ -z "$_mp" ]; then
