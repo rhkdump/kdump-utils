@@ -28,7 +28,7 @@ kdump_to_udev_name() {
         dev=`blkid -L "${dev#LABEL=}"`
         ;;
     esac
-    echo ${dev#/dev/}
+    echo $(get_persistent_dev "$dev")
 }
 
 kdump_is_bridge() {
@@ -193,7 +193,7 @@ kdump_install_conf() {
     do
         case "$config_opt" in
         ext[234]|xfs|btrfs|minix|raw)
-            sed -i -e "s#$config_val#/dev/$(kdump_to_udev_name $config_val)#" /tmp/$$-kdump.conf
+            sed -i -e "s#$config_val#$(kdump_to_udev_name $config_val)#" /tmp/$$-kdump.conf
             ;;
         ssh|nfs)
             kdump_install_net "$config_val"
