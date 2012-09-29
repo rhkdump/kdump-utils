@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.3
-Release: 55%{?dist}
+Release: 56%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -300,6 +300,16 @@ done
 
 
 %changelog
+* Sat Sep 29 2012 Dave Young <ruyang@redhat.com> - 2.0.3-56
+- Pull vmcore-dmesg patches from vivek
+- ppc/ppc64: compile purgatory with gcc option msoft-float
+- Update to support f18 grub2 efi config file
+- pass persistent name to dracut --device
+- pass persistent name to dracut --mount
+- use persistent name in kdump.conf of initramfs
+- mkdumprd: add function get_persistent_dev
+- remove useless uuid and label handling
+
 * Thu Sep 06 2012 Dave Young <ruyang@redhat.com> - 2.0.3-55
 - doc fix for mount dump target before mkdumprd
 - pull makedumpfile 1.5.0
