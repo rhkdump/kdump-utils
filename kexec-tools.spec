@@ -75,6 +75,8 @@ Patch301: kexec-tools-2.0.3-ppc-ppc64-compile-purgatory-code-with-gcc-option-mso
 # Patches 601 onward are generic patches
 #
 Patch601: kexec-tools-2.0.3-disable-kexec-test.patch
+Patch602: kexec-tools-2.0.3-vmcore-dmesg-Do-not-write-beyond-end-of-buffer.patch
+Patch603: kexec-tools-2.0.3-vmcore-dmesg-vmcore-dmesg-Make-it-work-with-new-stru.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -92,6 +94,8 @@ tar -z -x -v -f %{SOURCE9}
 
 %patch301 -p1
 %patch601 -p1
+%patch602 -p1
+%patch603 -p1
 
 tar -z -x -v -f %{SOURCE13}
 
