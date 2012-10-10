@@ -28,7 +28,8 @@ understand how this configuration file affects the behavior of kdump.
 
 .B raw <partition>
 .RS
-Will dd /proc/vmcore into <partition>.
+Will dd /proc/vmcore into <partition>.  Use persistent device names for
+partition devices, such as /dev/vg/<devname>.
 .RE
 
 .B nfs <nfs mount>
@@ -61,7 +62,8 @@ the default value is /root/.ssh/kdump_id_rsa.
 .RS
 Will mount -t <fs type> <partition> /mnt and copy /proc/vmcore to
 /mnt/var/crash/%DATE/.  NOTE: <partition> can be a device node, label
-or uuid.
+or uuid.  It's recommended to use persistent device names such as
+/dev/vg/<devname>. Otherwise it's suggested to use label or uuid.
 .RE
 
 .B path <path>
