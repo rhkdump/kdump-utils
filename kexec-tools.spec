@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.3
-Release: 56%{?dist}
+Release: 57%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -300,6 +300,9 @@ done
 
 
 %changelog
+* Thu Oct 11 2012 Dave Young <ruyang@redhat.com> - 2.0.3-57
+- improve persistent name handling
+
 * Sat Sep 29 2012 Dave Young <ruyang@redhat.com> - 2.0.3-56
 - Pull vmcore-dmesg patches from vivek
 - ppc/ppc64: compile purgatory with gcc option msoft-float
