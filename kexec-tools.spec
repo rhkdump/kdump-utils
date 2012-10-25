@@ -50,6 +50,8 @@ Obsoletes: diskdumputils netdump
 #
 # Patches 0 through 100 are meant for x86 kexec-tools enablement
 #
+Patch001: kexec-tools-2.0.3-Load-bzImages-smaller-than-32-KiB.patch
+Patch002: kexec-tools-2.0.3-kdump-pass-acpi_rsdp-to-2nd-kernel-for-efi-booting.patch
 
 #
 # Patches 101 through 200 are meant for x86_64 kexec-tools enablement
@@ -92,6 +94,8 @@ mkdir -p -m755 kcp
 tar -z -x -v -f %{SOURCE9}
 
 
+%patch001 -p1
+%patch002 -p1
 %patch301 -p1
 %patch601 -p1
 %patch602 -p1
