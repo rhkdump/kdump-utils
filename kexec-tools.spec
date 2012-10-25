@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.3
-Release: 57%{?dist}
+Release: 58%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -304,6 +304,9 @@ done
 
 
 %changelog
+* Thu Oct 25 2012 Dave Young <ruyang@redhat.com> - 2.0.3-58
+- pull in two upstream patches
+
 * Thu Oct 11 2012 Dave Young <ruyang@redhat.com> - 2.0.3-57
 - improve persistent name handling
 
