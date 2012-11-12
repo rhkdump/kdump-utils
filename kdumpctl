@@ -156,30 +156,14 @@ function need_64bit_headers()
 # as the currently running kernel.
 function load_kdump()
 {
-
-	if [ -z "$KDUMP_COMMANDLINE" ]
+	MEM_RESERVED=$(cat /sys/kernel/kexec_crash_size)
+	if [ $MEM_RESERVED -eq 0 ]
 	then
-		KDUMP_COMMANDLINE=`cat /proc/cmdline`
-	fi
-
-	ARCH=`uname -m`
-	if [ "$ARCH" == "ppc64" ]
-	then
-		MEM_RESERVED=`grep "crashkernel=[0-9]\+[MmKkGg]@[0-9]\+[MmGgKk]" /proc/cmdline`
-		if [ -z "$MEM_RESERVED" ] 
-		then
-			MEM_RESERVED=`grep "crashkernel=[0-9]\+[MmKkGg]" /proc/cmdline`
-		fi
-	else
-		MEM_RESERVED=`grep "Crash kernel" /proc/iomem | grep -v "00000000-00000000"`
-	fi
-
-	if [ -z "$MEM_RESERVED" ]
-	then
-		$LOGGER "No crashkernel parameter specified for running kernel"
+		$LOGGER "No memory reserved for crash kernel."
 		return 1
 	fi
 
+	ARCH=`uname -m`
 	if [ "$ARCH" == "i686" -o "$ARCH" == "i386" ]
 	then
 
@@ -201,6 +185,11 @@ function load_kdump()
 				KEXEC_ARGS="$KEXEC_ARGS --elf32-core-headers"
 			fi
 		fi
+	fi
+
+	if [ -z "$KDUMP_COMMANDLINE" ]
+	then
+		KDUMP_COMMANDLINE=`cat /proc/cmdline`
 	fi
 
 	KDUMP_COMMANDLINE=`echo $KDUMP_COMMANDLINE | sed -e 's/crashkernel=[^ ]*//'`
