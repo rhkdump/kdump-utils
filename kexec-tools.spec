@@ -189,7 +189,7 @@ mv $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/* $RPM_BUILD_ROOT/%{d
 %post
 if [ $1 -eq 1 ] ; then 
     # Initial installation 
-    /bin/systemctl daemon-reload >/dev/null 2>&1 || :
+    /bin/systemctl enable kdump.service >/dev/null 2>&1 || :
 fi
 touch /etc/kdump.conf
 # This portion of the script is temporary.  Its only here
