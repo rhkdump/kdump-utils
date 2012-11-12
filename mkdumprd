@@ -101,7 +101,7 @@ to_mount_point() {
 get_ssh_size() {
     local _opt _out _size
     _opt="-i $SSH_KEY_LOCATION -o BatchMode=yes -o StrictHostKeyChecking=yes"
-    _out=$(ssh -q $_opt $1 "df -P $SAVE_PATH")
+    _out=$(ssh -q -n $_opt $1 "df -P $SAVE_PATH")
     if [ $? -ne 0 ]; then
         echo "checking remote ssh server available size failed."
         exit 1
