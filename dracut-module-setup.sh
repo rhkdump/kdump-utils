@@ -17,6 +17,11 @@ depends() {
     return 0
 }
 
+is_ssh_dump_target()
+{
+    grep -q "^ssh[[:blank:]].*@" /etc/kdump.conf
+}
+
 kdump_to_udev_name() {
     local dev="$1"
 
@@ -339,6 +344,9 @@ kdump_check_iscsi_targets () {
 
 install() {
     kdump_install_conf
+    if is_ssh_dump_target; then
+        dracut_install /var/lib/random-seed || exit $?
+    fi
     inst "$moddir/monitor_dd_progress" "/kdumpscripts/monitor_dd_progress"
     chmod +x ${initdir}/kdumpscripts/monitor_dd_progress
     inst "/bin/dd" "/bin/dd"

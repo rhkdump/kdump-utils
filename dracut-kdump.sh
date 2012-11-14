@@ -102,6 +102,7 @@ dump_ssh()
     local _opt="-i $1 -o BatchMode=yes -o StrictHostKeyChecking=yes"
     local _dir="$KDUMP_PATH/$DATEDIR"
 
+    cat /var/lib/random-seed > /dev/urandom
     ssh -q $_opt $2 mkdir -p $_dir || return 1
 
     if [ "${CORE_COLLECTOR%% *}" = "scp" ]; then
