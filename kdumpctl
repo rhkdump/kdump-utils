@@ -364,7 +364,7 @@ function save_raw()
 function start()
 {
 	local nr
-	nr=$(awk 'BEGIN{cnt=0} /^raw |^ssh |^nfs |^ext[234] |^xfs |^btrfs |^minix /{cnt++} END{print cnt}' $KDUMP_CONFIG_FILE)
+	nr=$(awk 'BEGIN{cnt=0} /^raw|^ssh[[:blank:]]|^nfs|^ext[234]|^xfs|^btrfs|^minix/{cnt++} END{print cnt}' $KDUMP_CONFIG_FILE)
 	[ $nr -gt 1 ] && {
 		echo -n "Error: More than one dump targets specified"; echo
 		return 1

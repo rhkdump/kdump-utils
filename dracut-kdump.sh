@@ -115,7 +115,7 @@ dump_ssh()
 
 is_ssh_dump_target()
 {
-    grep -q "^ssh.*@" $conf_file
+    grep -q "^ssh[[:blank:]].*@" $conf_file
 }
 
 is_raw_dump_target()
