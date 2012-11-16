@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.3
-Release: 58%{?dist}
+Release: 59%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -304,6 +304,14 @@ done
 
 
 %changelog
+* Fri Nov 16 2012 Dave Young <ruyang@redhat.com> - 2.0.3-59
+- Enable kdump service after installation
+- get MEM_RESERVED from sysfs attribute
+- get_ssh_size: use -n to redirect stdin from /dev/null
+- add random feeding code for ssh dump
+- kdump option space checking improvement
+- kdumpctl: multi dump target checking fix
+
 * Thu Oct 25 2012 Dave Young <ruyang@redhat.com> - 2.0.3-58
 - pull in two upstream patches
 
