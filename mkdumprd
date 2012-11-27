@@ -78,10 +78,13 @@ get_rootdev() {
 }
 
 to_mount() {
-    local _dev _mntopts _pdev
+    local _dev _t _o _mntopts _pdev
     _dev=$(to_dev_name $1)
-    _mntopts=$(findmnt -k -f -n -r -o TARGET,FSTYPE,OPTIONS $_dev)
-    [ -z "$_mntopts" ] && return
+    _t=$(findmnt -k -f -n -r -o TARGET,FSTYPE $_dev)
+    _o=$(findmnt -k -f -n -r -o OPTIONS $_dev)
+    [ -z "$_t" -o -z "$_o" ] && return
+    _o=${_o/#ro/rw} #mount fs target as rw in 2nd kernel
+    _mntopts="$_t $_o"
     #for non-nfs _dev converting to use udev persistent name
     if [ -b "$_dev" ]; then
         _pdev="$(get_persistent_dev $_dev)"
@@ -94,6 +97,15 @@ to_mount() {
 
 to_mount_point() {
     echo $(findmnt -k -f -n -r -o TARGET $1)
+}
+
+is_readonly_mount() {
+    local _mnt
+    _mnt=$(findmnt -k -f -n -r -o OPTIONS $1)
+
+    #fs/proc_namespace.c: show_mountinfo():
+    #seq_puts(m, mnt->mnt_flags & MNT_READONLY ? " ro" : " rw");
+    [[ "$_mnt" =~ ^ro ]]
 }
 
 #Function: get_ssh_size
@@ -111,17 +123,43 @@ get_ssh_size() {
     echo -n $_size
 }
 
-#Function: get_fs_size
+#mkdir if save path does not exist on dump target filesystem
 #$1=dump target
-get_fs_size() {
+mkdir_save_path() {
     local _mnt=$(to_mount_point $1)
+    local _remount="no"
+    local _ret
+
     [ ! -d ${_mnt}/$SAVE_PATH ] && {
+        if is_readonly_mount $1; then
+            echo "Mounting $1 as read-write for creating dump directory.."
+            mount -o remount,rw $1
+            [ $? -ne 0 ] && {
+                echo "Mounting $1 as read-write failed."
+                exit 1;
+            }
+            _remount="yes"
+        fi
         mkdir -p ${_mnt}/$SAVE_PATH
-        [ $? -ne 0 ] && {
+        _ret=$?
+        [ "$_remount" = "yes" ] && {
+            echo "Remounting $1 as read-only."
+            mount -o remount,ro $1 || {
+                echo "Remounting $1 as read-only failed."
+                exit 1
+            }
+        }
+        [ $_ret -ne 0 ] && {
             echo "Creating ${_mnt}/$SAVE_PATH failed."
             exit 1
         }
     }
+}
+
+#Function: get_fs_size
+#$1=dump target
+get_fs_size() {
+    local _mnt=$(to_mount_point $1)
     echo -n $(df -P "${_mnt}/$SAVE_PATH"|tail -1|awk '{print $4}')
 }
 
@@ -222,6 +260,7 @@ do
             echo "Dump target $config_val is probably not mounted."
             exit 1
         fi
+        mkdir_save_path $config_val
         check_size fs $config_val
         ;;
     raw)

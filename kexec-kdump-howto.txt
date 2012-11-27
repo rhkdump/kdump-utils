@@ -328,6 +328,10 @@ For both local filesystem and nfs dump the dump target must be mounted before
 building kdump initramfs. That means one needs to put an entry for the dump
 file system in /etc/fstab so that after reboot when kdump service starts,
 it can find the dump target and build initramfs instead of failing.
+Usually the dump target should be used only for kdump. If you worry about
+someone uses the filesystem for something else other than dumping vmcore
+you can mount it as read-only. Mkdumprd will still remount it as read-write
+for creating dump directory and will move it back to read-only afterwards.
 
 Raw partition
 
