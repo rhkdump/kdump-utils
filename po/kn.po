@@ -1,71 +1,143 @@
-# SOME DESCRIPTIVE TITLE.
+# translation of kn.po to Kannada
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
+# Shankar Prasad <svenkate@redhat.com>, 2007, 2010.
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: kn\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-02-19 14:50-0500\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"POT-Creation-Date: 2012-11-30 16:43+0800\n"
+"PO-Revision-Date: 2010-08-09 14:38+0530\n"
+"Last-Translator: Shankar Prasad <svenkate@redhat.com>\n"
+"Language-Team: kn_IN <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Lokalize 1.0\n"
+"Plural-Forms:  nplurals=2; plural=(n != 1);\n"
 
-#: firstboot_kdump.py:47
+#: ../firstboot_kdump.py:53
 msgid "Kdump"
-msgstr ""
+msgstr "Kdump"
 
-#: firstboot_kdump.py:188 firstboot_kdump.py:209
+#. kdump enable/disable checkbox
+#: ../firstboot_kdump.py:236
+msgid "_Enable kdump?"
+msgstr "kdump ಅನ್ನು ಶಕ್ತಗೊಳಿಸಬೇಕೆ (_E)?"
+
+#. detected total amount of system memory
+#: ../firstboot_kdump.py:240 ../firstboot_kdump.py:259
+#: ../firstboot_kdump.py:264
 #, python-format
 msgid "%s"
+msgstr "%s"
+
+#: ../firstboot_kdump.py:241
+#, fuzzy
+msgid "Total System Memory (MB):"
+msgstr "ಗಣಕದ ಒಟ್ಟಾರೆ ಮೆಮೊರಿ (_T) (MB):"
+
+#: ../firstboot_kdump.py:251
+msgid "Memory To Be _Reserved (MB):"
 msgstr ""
 
-#: firstboot_kdump.py:189
-msgid "_Total System Memory (MB):"
+#: ../firstboot_kdump.py:260
+#, fuzzy
+msgid "Usable System Memory (MB):"
+msgstr "ಗಣಕದ ಬಳಸಬಹುದಾದಂತಹ ಮೆಮೊರಿ (_U) (MB):"
+
+#: ../firstboot_kdump.py:263
+msgid "Memory Currently Reserved (MB):"
 msgstr ""
 
-#: firstboot_kdump.py:201
-msgid "_Kdump Memory (MB):"
+#: ../firstboot_kdump.py:269
+#, fuzzy
+msgid "Kdump Memory Reservation:"
+msgstr "_Kdump ಮೆಮೊರಿ (MB):"
+
+#: ../firstboot_kdump.py:270
+msgid "_Automatic"
 msgstr ""
 
-#: firstboot_kdump.py:210
-msgid "_Usable System Memory (MB):"
+#: ../firstboot_kdump.py:271
+msgid "_Manual"
 msgstr ""
 
-#: firstboot_kdump.py:224
+#: ../firstboot_kdump.py:300
+msgid ""
+"\n"
+"Advanced kdump configuration"
+msgstr ""
+
+#: ../firstboot_kdump.py:312
 msgid ""
 "Kdump is a kernel crash dumping mechanism. In the event of a system crash, "
 "kdump will capture information from your system that can be invaluable in "
 "determining the cause of the crash. Note that kdump does require reserving a "
 "portion of system memory that will be unavailable for other uses."
 msgstr ""
+"Kdump ಎನ್ನುವುದು ಕರ್ನಲ್ಲಿನ ಕುಸಿತವನ್ನು ಬಿಸುಡುವ ಒಂದು ಯಾಂತ್ರಿಕ ವ್ಯವಸ್ಥೆ. ಗಣಕವು "
+"ಕುಸಿತಕ್ಕೊಳಗಾದ ಸಂದರ್ಭದಲ್ಲಿ, kdump ಕುಸಿತದ ಕಾರಣವನ್ನು ನಿರ್ಧರಿಸುವ ಅಮೂಲ್ಯ ಮಾಹಿತಿಯನ್ನು "
+"ನಿಮ್ಮ ಗಣಕದಿಂದ ಹಿಡಿದಿಟ್ಟುಕೊಳ್ಳುತ್ತದೆ. ಇಲ್ಲಿ ನೆನಪಿನಲ್ಲಿಡಬೇಕಾದ ಅಂಶವೆಂದರೆ, kdump ಗಾಗಿ "
+"ಗಣಕದ ಮೆಮೊರಿಯಲ್ಲಿನ ಒಂದಂಶವನ್ನು ಕಾದಿರಿಸುವುದು ಅಗತ್ಯವಾಗುತ್ತದೆ ಹಾಗು ಈ ಮೆಮೊರಿಯು "
+"ಬೇರಾವುದೇ ಬಳಕೆಗೆ ಬರುವುದಿಲ್ಲ."
 
-#: firstboot_kdump.py:284
+#: ../firstboot_kdump.py:412
 msgid "Sorry, your system does not have enough memory for kdump to be viable!"
 msgstr ""
+"ಕ್ಷಮಿಸಿ, kdump ಅನ್ನು ಕಾರ್ಯಸಾಧ್ಯ ಮಾಡಲು ನಿಮ್ಮ ಗಣಕದಲ್ಲಿ ಸಾಕಷ್ಟು ಮೆಮೊರಿಯು ಲಭ್ಯವಿಲ್ಲ!"
 
-#: firstboot_kdump.py:290
+#: ../firstboot_kdump.py:418
 msgid "Sorry, Xen kernels do not support kdump at this time!"
-msgstr ""
+msgstr "ಕ್ಷಮಿಸಿ, Xen ಕರ್ನಲ್ಲುಗಳು ಈ ಸಮಯದಲ್ಲಿ kdump ಅನ್ನು ಬೆಂಬಲಿಸುತ್ತಿಲ್ಲ."
 
-#: firstboot_kdump.py:296
+#: ../firstboot_kdump.py:424
 #, python-format
 msgid "Sorry, the %s architecture does not support kdump at this time!"
-msgstr ""
+msgstr "ಕ್ಷಮಿಸಿ, %s ಆರ್ಕಿಟೆಕ್ಚರ್ ಈ ಸಮಯದಲ್ಲಿ kdump ಅನ್ನು ಬೆಂಬಲಿಸುತ್ತಿಲ್ಲ!"
 
-#: firstboot_kdump.py:313
-#, python-format
+#: ../firstboot_kdump.py:433
+#, fuzzy
 msgid ""
 "Changing Kdump settings requires rebooting the system to reallocate memory "
-"accordingly. %sWould you like to continue with this change and reboot the "
+"accordingly. Would you like to continue with this change and reboot the "
 "system after firstboot is complete?"
 msgstr ""
+"ಮೆಮೊರಿಯನ್ನು ಅನುಗುಣವಾಗಿ ಪುನರ್ ಹಂಚಿಕೆ ಮಾಡಲು ಅನುವಾಗುವಂತೆ Kdump ಸಿದ್ಧತೆಗಳನ್ನು "
+"ಬದಲಾಯಿಸಲು ಗಣಕವನ್ನು ಪುನಃ ಬೂಟಿಸುವುದು ಅಗತ್ಯವಾಗುತ್ತದೆ. %s ನೀವು ಈ ಬದಲಾವಣೆಯೊಂದಿಗೆ "
+"ಮುಂದುವರೆಯಲು ಹಾಗು ಪ್ರಥಮ ಬೂಟ್ ಸಂಪೂರ್ಣಗೊಂಡ ನಂತರ ಗಣಕವನ್ನು ಮರಳಿ ಬೂಟ್‌ ಮಾಡಲು ಬಯಸುತ್ತೀರೆ?"
 
-#: firstboot_kdump.py:330
+#: ../firstboot_kdump.py:450
 msgid "Error! No bootloader config file found, aborting configuration!"
 msgstr ""
+"ದೋಷ! ಯಾವುದೇ ಬೂಟ್-ಲೋಡರ್ config ಕಡತವು ಕಂಡುಬಂದಿಲ್ಲ, ಸಂರಚನೆಯನ್ನು ಸ್ಥಗಿತಗೊಳಿಸಲಾಗುತ್ತಿದೆ!"
+
+#~ msgid "Insufficient memory to configure kdump!"
+#~ msgstr "kdump ಅನ್ನು ಸಂರಚಿಸಲು ಸಾಕಷ್ಟು ಮೆಮೊರಿ ಇಲ್ಲ!"
+
+#~ msgid ""
+#~ "WARNING: xen kdump support requires a non-xen kernel to perform actual "
+#~ "crash dump capture. Please be sure you have a non-xen kernel installed, "
+#~ "and configured for use via /etc/sysconfig/kdump's KDUMP_KERNELVER "
+#~ "parameter."
+#~ msgstr ""
+#~ "ಎಚ್ಚರಿಕೆ: ನಿಜವಾದ ಕುಸಿತ ಬಿಸುಡನ್ನು ಸೆರೆ ಹಿಡಿಯಲು xen kdump ಬೆಂಬಲಕ್ಕೆ ಒಂದು xen "
+#~ "ಅಲ್ಲದ ಕರ್ನಲ್ಲಿನ ಅಗತ್ಯವಿರುತ್ತದೆ. ದಯವಿಟ್ಟು ನಿಮ್ಮಲ್ಲಿ ಒಂದು xen ಅಲ್ಲದ ಕರ್ನಲ್ "
+#~ "ಅನುಸ್ಥಾಪಿತವಾಗಿದೆ, ಹಾಗು /etc/sysconfig/kdump ನ KDUMP_KERNELVER ನಿಯತಾಂಕದ "
+#~ "ಮೂಲಕ ಬಳಸಲು ಸಂರಚಿತವಾಗಿದೆ ಎಂಬುದನ್ನು ಖಚಿತ ಪಡಿಸಿಕೊಳ್ಳಿ."
+
+#~ msgid ""
+#~ "\n"
+#~ "\n"
+#~ "Note that the %s architecture does not feature a relocatable kernel at "
+#~ "this time, and thus requires a separate kernel-kdump package to be "
+#~ "installed for kdump to function. This can be installed via 'yum install "
+#~ "kernel-kdump' at your convenience."
+#~ msgstr ""
+#~ "\n"
+#~ "\n"
+#~ "ಈ ಸಮಯದಲ್ಲ್ಲಿ %s ಆರ್ಕಿಟೆಕ್ಚರ್ ಒಂದು ಪುನರ್ ಪತ್ತೆ ಹಚ್ಚಬಲ್ಲ ಕರ್ನಲ್ಲನ್ನು ಹೊಂದಿರುವುದಿಲ್ಲ "
+#~ "ಎಂಬುದನ್ನು ಗಮನಿಸಿ, ಹಾಗು ಆದಕಾರಣ kdump ಕಾರ್ಯಕ್ಕಾಗಿ ಪ್ರತ್ಯೇಕ ಕರ್ನಲ್ kdump ಪ್ಯಾಕೇಜ್ "
+#~ "ಒಂದನ್ನು ಅನುಸ್ಥಾಪಿಸುವುದು ಅಗತ್ಯವಾಗುತ್ತದೆ. ಇದನ್ನು ನಿಮ್ಮ ಅನುಕೂಲಕ್ಕೆ ಅನುಗುಣವಾಗಿ  'yum "
+#~ "install kernel-kdump' ಅನ್ನು ಬಳಸಿ ಅನುಸ್ಥಾಪಿಸಬಹುದು."
