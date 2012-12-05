@@ -207,7 +207,7 @@ class moduleClass(Module):
 		# Defaults
 		lowerBound = 128
 		minUsable = 256
-		step = 64
+		step = 1
 		self.enoughMem = True
 		if self.arch == 'ia64':
 			# ia64 usually needs at *least* 256M, page-aligned... :(
