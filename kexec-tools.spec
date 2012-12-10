@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.3
-Release: 59%{?dist}
+Release: 60%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -304,6 +304,13 @@ done
 
 
 %changelog
+* Mon Dec 10 2012 Dave Young <ruyang@redhat.com> - 2.0.3-60
+- makedumpfile 1.5.1
+- Update po tar.gz
+- Add a notes for zanata process
+- Add two xmls file for po zanata translation
+- Cleanup and recreate po files
+
 * Fri Nov 16 2012 Dave Young <ruyang@redhat.com> - 2.0.3-59
 - Enable kdump service after installation
 - get MEM_RESERVED from sysfs attribute
