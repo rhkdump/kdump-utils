@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.3
-Release: 60%{?dist}
+Release: 61%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -304,6 +304,10 @@ done
 
 
 %changelog
+* Wed Dec 12 2012 Dave Young <ruyang@redhat.com> - 2.0.3-61
+- firstboot:fix reserve mem ui spinbox step size
+- handle readonly mounted filesystem
+
 * Mon Dec 10 2012 Dave Young <ruyang@redhat.com> - 2.0.3-60
 - makedumpfile 1.5.1
 - Update po tar.gz
