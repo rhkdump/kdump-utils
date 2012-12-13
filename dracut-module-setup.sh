@@ -188,6 +188,8 @@ kdump_install_net() {
     fi
 
     kdump_setup_netdev "${_netdev}"
+    #save netdev used for kdump as cmdline
+    echo "kdumpnic=${_netdev}" > ${initdir}/etc/cmdline.d/kdumpnic.conf
 }
 
 #install kdump.conf and what user specifies in kdump.conf

@@ -7,7 +7,8 @@ KDUMP_PATH="/var/crash"
 CORE_COLLECTOR=""
 DEFAULT_CORE_COLLECTOR="makedumpfile -c --message-level 1 -d 31"
 DEFAULT_ACTION="dump_rootfs"
-DATEDIR=`date +%d.%m.%y-%T`
+DATEDIR=`date +%Y.%m.%d-%T`
+HOST_IP='127.0.0.1'
 DUMP_INSTRUCTION=""
 SSH_KEY_LOCATION="/root/.ssh/kdump_id_rsa"
 KDUMP_SCRIPT_DIR="/kdumpscripts"
@@ -119,9 +120,29 @@ is_ssh_dump_target()
     grep -q "^ssh[[:blank:]].*@" $conf_file
 }
 
+is_nfs_dump_target()
+{
+    grep -q "^nfs.*:" $conf_file
+}
+
 is_raw_dump_target()
 {
     grep -q "^raw" $conf_file
+}
+
+get_host_ip()
+{
+    if is_nfs_dump_target || is_ssh_dump_target
+    then
+        kdumpnic=$(getarg kdumpnic=)
+        [ -z "$kdumpnic" ] && echo "failed to get kdumpnic!" && return 1
+        HOST_IP=`ip addr show dev $kdumpnic|grep 'inet '`
+        [ $? -ne 0 ] && echo "Wrong kdumpnic: $kdumpnic" && return 1
+        HOST_IP="${HOST_IP##*inet }"
+        HOST_IP="${HOST_IP%%/*}"
+        [ -z "$HOST_IP" ] && echo "Wrong kdumpnic: $kdumpnic" && return 1
+    fi
+    return 0
 }
 
 read_kdump_conf()
@@ -198,9 +219,18 @@ if [ -z "$CORE_COLLECTOR" ];then
     fi
 fi
 
+get_host_ip
+if [ $? -ne 0 ]; then
+    echo "get_host_ip exited with non-zero status!"
+    do_default_action
+fi
+
 if [ -z "$DUMP_INSTRUCTION" ]; then
     add_dump_code "dump_rootfs"
 fi
+
+#refresh DATEDIR with crash host ip addr
+DATEDIR="$HOST_IP-$DATEDIR"
 
 do_kdump_pre
 if [ $? -ne 0 ]; then
