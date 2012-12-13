@@ -165,11 +165,7 @@ kdump_install_net() {
     local _server _netdev
     local config_val="$1"
 
-    if strstr "$config_val" "@"; then
-        _server=`echo $config_val | sed 's/.*@//' | cut -d':' -f1`
-        else
-            _server=$(echo $config_val | sed -e 's#\(.*\):.*#\1#')
-        fi
+    _server=`echo $config_val | sed 's/.*@//' | cut -d':' -f1`
 
     _need_dns=`echo $_server|grep "[a-zA-Z]"`
     [ -n "$_need_dns" ] && _server=`getent hosts $_server|cut -d' ' -f1`
