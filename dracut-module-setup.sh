@@ -44,6 +44,10 @@ kdump_is_bond() {
      [ -d /sys/class/net/"$1"/bonding ]
 }
 
+kdump_is_team() {
+     [ -f /usr/bin/teamnl ] && teamnl $1 ports &> /dev/null
+}
+
 kdump_is_vlan() {
      [ -f /proc/net/vlan/"$1" ]
 }
@@ -72,6 +76,18 @@ kdump_get_mac_addr() {
     echo `ip addr show $1 2>/dev/null|awk '/ether/{ print $2 }'`
 }
 
+#Bonding or team master modifies the mac address
+#of its slaves, we should use perm address
+kdump_get_perm_addr() {
+    local addr=$(ethtool -P $1 | sed -e 's/Permanent address: //')
+    if [ -z "$addr" ] || [ "$addr" = "00:00:00:00:00:00" ]
+    then
+        derror "Can't get the permanent address of $1"
+    else
+        echo "$addr"
+    fi
+}
+
 kdump_setup_bridge() {
     local _netdev=$1
     for _dev in `ls /sys/class/net/$_netdev/brif/`; do
@@ -96,6 +112,27 @@ kdump_setup_bond() {
     echo " bondoptions=\"$bondoptions\"" >> ${initdir}/etc/cmdline.d/42bond.conf
 }
 
+kdump_setup_team() {
+    local _netdev=$1
+    local slaves=""
+    for _dev in `teamnl $_netdev ports | awk -F':' '{print $2}'`; do
+        echo -n " ifname=$_dev:$(kdump_get_perm_addr $_dev)" >> ${initdir}/etc/cmdline.d/44team.conf
+        slaves+="$_dev,"
+    done
+    echo " team=$_netdev:$(echo $slaves | sed -e 's/,$//')" >> ${initdir}/etc/cmdline.d/44team.conf
+    #Buggy version teamdctl outputs to stderr!
+    #Try to use the latest version of teamd.
+    teamdctl "$_netdev" config dump > /tmp/$$-$_netdev.conf
+    if [ $? -ne 0 ]
+    then
+        derror "teamdctl failed."
+        exit 1
+    fi
+    inst_dir /etc/teamd
+    inst_simple /tmp/$$-$_netdev.conf "/etc/teamd/$_netdev.conf"
+    rm -f /tmp/$$-$_netdev.conf
+}
+
 kdump_setup_vlan() {
     local _netdev=$1
     local _phydev="$(awk '/^Device:/{print $2}' /proc/net/vlan/"$_netdev")"
@@ -107,6 +144,9 @@ kdump_setup_vlan() {
     #to support all other complex setup
     if kdump_is_bridge "$_phydev"; then
         derror "Vlan over bridge is not supported!"
+        exit 1
+    elif kdump_is_team "$_phydev"; then
+        derror "Vlan over team is not supported!"
         exit 1
     elif kdump_is_bond "$_phydev"; then
         kdump_setup_bond "$_phydev"
@@ -149,6 +189,8 @@ kdump_setup_netdev() {
         kdump_setup_bridge "$_netdev"
     elif kdump_is_bond "$_netdev"; then
         kdump_setup_bond "$_netdev"
+    elif kdump_is_team "$_netdev"; then
+        kdump_setup_team "$_netdev"
     elif kdump_is_vlan "$_netdev"; then
         kdump_setup_vlan "$_netdev"
     else
