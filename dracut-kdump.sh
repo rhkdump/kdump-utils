@@ -2,6 +2,7 @@
 
 . /lib/dracut-lib.sh
 
+set -o pipefail
 set -x
 KDUMP_PATH="/var/crash"
 CORE_COLLECTOR=""
