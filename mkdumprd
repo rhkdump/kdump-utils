@@ -235,7 +235,7 @@ add_mount() {
 }
 
 # firstly get right SSH_KEY_LOCATION
-keyfile=$(awk '/sshkey/ {print $2}' $conf_file)
+keyfile=$(awk '/^sshkey/ {print $2}' $conf_file)
 if [ -f "$keyfile" ]; then
     # canonicalize the path
     SSH_KEY_LOCATION=$(/usr/bin/readlink -m $keyfile)
