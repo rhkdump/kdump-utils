@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.3
-Release: 61%{?dist}
+Release: 62%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -304,6 +304,11 @@ done
 
 
 %changelog
+* Fri Dec 21 2012 Dave Young <ruyang@redhat.com> - 2.0.3-62
+- Pull translated po files from zanata
+- Optimize redundent code fetching server of network dump
+- change the dump dir format to be more readable
+
 * Wed Dec 12 2012 Dave Young <ruyang@redhat.com> - 2.0.3-61
 - firstboot:fix reserve mem ui spinbox step size
 - handle readonly mounted filesystem
