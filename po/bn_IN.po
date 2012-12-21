@@ -1,22 +1,22 @@
 # translation of bn_IN.po to Bengali INDIA
 # This file is distributed under the same license as the PACKAGE package.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER.
-#
+# 
 # Runa Bhattacharjee <runab@redhat.com>, 2007, 2010.
 msgid ""
 msgstr ""
-"Project-Id-Version: bn_IN\n"
+"Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-11-30 16:43+0800\n"
-"PO-Revision-Date: 2010-08-09 14:47+0530\n"
-"Last-Translator: Runa Bhattacharjee <runab@redhat.com>\n"
-"Language-Team: Bengali INDIA <anubad@lists.ankur.org.in>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: KBabel 1.11.4\n"
+"PO-Revision-Date: 2010-08-09 05:17-0400\n"
+"Last-Translator: Runa Bhattacharjee <runab@redhat.com>\n"
+"Language-Team: Bengali INDIA <anubad@lists.ankur.org.in>\n"
+"X-Generator: Zanata 2.0.2\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"\n"
+"Language: bn-IN\n"
 
 #: ../firstboot_kdump.py:53
 msgid "Kdump"
@@ -66,8 +66,7 @@ msgid "_Manual"
 msgstr ""
 
 #: ../firstboot_kdump.py:300
-msgid ""
-"\n"
+msgid "\n"
 "Advanced kdump configuration"
 msgstr ""
 
@@ -78,14 +77,17 @@ msgid ""
 "determining the cause of the crash. Note that kdump does require reserving a "
 "portion of system memory that will be unavailable for other uses."
 msgstr ""
-"Kdump মূলত কার্নেল বিপর্যের সময়কার ডাম্পিং ব্যবস্থা। সিস্টেম বিপর্যস্ত হলে kdump "
-"আপনার সিস্টেমের তথ্য সংগ্রহ করবে। বিপর্যয়ের কারণ নির্ণয়ের সময় এই তথ্য অত্যন্ত সহায়ক "
-"প্রমাণিত হতে পারে। উল্লেখ্য, kdump-র ক্ষেত্রে সিস্টেম মেমরির একাংশ বরাদ্দ করা "
-"আবশ্যক। এই অংশটি অন্যান্য ব্যবহারকারীদের নাগালের বাইরে থাকবে।"
+"Kdump মূলত কার্নেল বিপর্যের সময়কার ডাম্পিং ব্যবস্থা। সিস্টেম বিপর্যস্ত হলে "
+"kdump আপনার সিস্টেমের তথ্য সংগ্রহ করবে। বিপর্যয়ের কারণ নির্ণয়ের সময় এই তথ্য "
+"অত্যন্ত সহায়ক প্রমাণিত হতে পারে। উল্লেখ্য, kdump-র ক্ষেত্রে সিস্টেম মেমরির "
+"একাংশ বরাদ্দ করা আবশ্যক। এই অংশটি অন্যান্য ব্যবহারকারীদের নাগালের বাইরে "
+"থাকবে।"
 
 #: ../firstboot_kdump.py:412
 msgid "Sorry, your system does not have enough memory for kdump to be viable!"
-msgstr "দুঃখিত, kdump-র সুষ্টু ব্যবহারের জন্য আপনার সিস্টেমে পর্যাপ্ত মেমরি উপস্থিত নেই!"
+msgstr ""
+"দুঃখিত, kdump-র সুষ্টু ব্যবহারের জন্য আপনার সিস্টেমে পর্যাপ্ত মেমরি উপস্থিত "
+"নেই!"
 
 #: ../firstboot_kdump.py:418
 msgid "Sorry, Xen kernels do not support kdump at this time!"
@@ -103,14 +105,12 @@ msgid ""
 "accordingly. Would you like to continue with this change and reboot the "
 "system after firstboot is complete?"
 msgstr ""
-"Kdump-র বৈশিষ্ট্য পরিবর্তনের ফলে মেমরি পুনরায় বরাদ্দ করার জন্য সিস্টেম রি-বুট করা "
-"আবশ্যক। %sচিহ্নিত পরিবর্তনগুলি গ্রহণ করে firstboot-র কর্ম সমাপ্তির পরে আপনি সিস্টেম "
-"পুনরায় বুট করতে ইচ্ছুক কি?"
+"Kdump-র বৈশিষ্ট্য পরিবর্তনের ফলে মেমরি পুনরায় বরাদ্দ করার জন্য সিস্টেম রি-"
+"বুট করা আবশ্যক। %sচিহ্নিত পরিবর্তনগুলি গ্রহণ করে firstboot-র কর্ম সমাপ্তির "
+"পরে আপনি সিস্টেম পুনরায় বুট করতে ইচ্ছুক কি?"
 
 #: ../firstboot_kdump.py:450
 msgid "Error! No bootloader config file found, aborting configuration!"
 msgstr ""
-"ত্রুটি! bootloader কনফিগ ফাইল পাওয়া যায়নি, কনফিগারেশন প্রক্রিয়া পরিত্যাগ করা হবে!"
-
-#~ msgid "Insufficient memory to configure kdump!"
-#~ msgstr "kdump কনফিগার করার জন্য পর্যাপ্ত মেমরি উপস্থিত নেই!"
+"ত্রুটি! bootloader কনফিগ ফাইল পাওয়া যায়নি, কনফিগারেশন প্রক্রিয়া পরিত্যাগ করা "
+"হবে!"

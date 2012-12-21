@@ -1,21 +1,22 @@
 # translation of si.po to Sinhala
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
-#
+# 
 # Danishka Navin <snavin@redhat.com>, 2007.
 msgid ""
 msgstr ""
-"Project-Id-Version: si\n"
+"Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-11-30 16:43+0800\n"
-"PO-Revision-Date: 2007-07-03 15:22+0530\n"
-"Last-Translator: Danishka Navin <snavin@redhat.com>\n"
-"Language-Team: Sinhala <en@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: KBabel 1.11.4\n"
+"PO-Revision-Date: 2007-07-03 05:52-0400\n"
+"Last-Translator: Danishka Navin <snavin@redhat.com>\n"
+"Language-Team: Sinhala <en@li.org>\n"
+"X-Generator: Zanata 2.0.2\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: si\n"
 
 #: ../firstboot_kdump.py:53
 msgid "Kdump"
@@ -65,8 +66,7 @@ msgid "_Manual"
 msgstr ""
 
 #: ../firstboot_kdump.py:300
-msgid ""
-"\n"
+msgid "\n"
 "Advanced kdump configuration"
 msgstr ""
 
@@ -77,14 +77,15 @@ msgid ""
 "determining the cause of the crash. Note that kdump does require reserving a "
 "portion of system memory that will be unavailable for other uses."
 msgstr ""
-"කේඩම්ප් යනු න්‍යෂ්ඨි අනතුරු සිදුවු විට තොරතුරු ගන්නා ක්‍රමවේදයකි. පද්ධතිය අනතුරට පත්වු විට කේඩම්ප් මඟින් "
-"ඔබගේ පද්ධතියේ තොරතුරු ලබාගන්නා අතර ඒවා අනතුරට ඒතුව සොයාගැනිම සඳහා මහෝපකාරි වනු ඇත. "
-"කේඩම්ප් සඳහා වෙනම පද්ධති මතක කොටසක් වෙන්කර තැබීම අවශ්‍යවනු ඇත එය අනෙකුත් පරිශීලකයන් හට "
-"භාවිතා කළ නොහැක."
+"කේඩම්ප් යනු න්‍යෂ්ඨි අනතුරු සිදුවු විට තොරතුරු ගන්නා ක්‍රමවේදයකි. පද්ධතිය "
+"අනතුරට පත්වු විට කේඩම්ප් මඟින් ඔබගේ පද්ධතියේ තොරතුරු ලබාගන්නා අතර ඒවා අනතුරට "
+"ඒතුව සොයාගැනිම සඳහා මහෝපකාරි වනු ඇත. කේඩම්ප් සඳහා වෙනම පද්ධති මතක කොටසක් "
+"වෙන්කර තැබීම අවශ්‍යවනු ඇත එය අනෙකුත් පරිශීලකයන් හට භාවිතා කළ නොහැක."
 
 #: ../firstboot_kdump.py:412
 msgid "Sorry, your system does not have enough memory for kdump to be viable!"
-msgstr "සමාවන්න, කේඩම්ප් ජීව්‍ය වීම සඳහා ඔබගේ පද්ධතිය තුළ ප්‍රමාණවත් මතකයක් නැත!"
+msgstr ""
+"සමාවන්න, කේඩම්ප් ජීව්‍ය වීම සඳහා ඔබගේ පද්ධතිය තුළ ප්‍රමාණවත් මතකයක් නැත!"
 
 #: ../firstboot_kdump.py:418
 #, fuzzy
@@ -103,37 +104,12 @@ msgid ""
 "accordingly. Would you like to continue with this change and reboot the "
 "system after firstboot is complete?"
 msgstr ""
-"කේඩම්ප් සැකසුම් වෙනස් කිරිමෙ ක්‍රියාවලියේදි මතකය නිසියාකාරව යෙදවීම සඳහා පද්ධතිය නැවත ඇරඹුම "
-"අවශ්‍යවේ. %s \n"
+"කේඩම්ප් සැකසුම් වෙනස් කිරිමෙ ක්‍රියාවලියේදි මතකය නිසියාකාරව යෙදවීම සඳහා "
+"පද්ධතිය නැවත ඇරඹුම අවශ්‍යවේ. %s \n"
 "\n"
-"මෙම වෙනස්කම් සහිතව ඉදිරි කටයුතු කරමින් සහ පළමු ඇරඹුම සම්පූර්ණ වු පසු පද්ධතිය නැවත ඇරඹීමට ඔබ "
-"කැමතිද? "
+"මෙම වෙනස්කම් සහිතව ඉදිරි කටයුතු කරමින් සහ පළමු ඇරඹුම සම්පූර්ණ වු පසු පද්ධතිය "
+"නැවත ඇරඹීමට ඔබ කැමතිද? "
 
 #: ../firstboot_kdump.py:450
 msgid "Error! No bootloader config file found, aborting configuration!"
 msgstr "දෝෂය!ආරමිභකය සුසර කිරීමේ ගොනුව හමු නොවීය, මානකරණය විනාශ වෙමින්!"
-
-#~ msgid ""
-#~ "WARNING: xen kdump support requires a non-xen kernel to perform actual "
-#~ "crash dump capture. Please be sure you have a non-xen kernel installed, "
-#~ "and configured for use via /etc/sysconfig/kdump's KDUMP_KERNELVER "
-#~ "parameter."
-#~ msgstr ""
-#~ "අවවාදයයි: සත්‍ය අනරුතු තොරතුරු නිරුපණ ක්‍රියාකාරිත්වය සඳහා xen කේඩම්ප් සහාය සඳහා xen නොවන "
-#~ "න්‍යෂ්ඨියක් අවශ්‍යවේ . කරුණාකර ඔබ සතුව xen නොවන න්‍යෂ්ඨියක් ස්ථාපිත බවට සහ භාවිතය සඳහා /"
-#~ "etc/sysconfig/kdump's KDUMP_KERNELVER විචල්‍ය හරහා මානකරණය කර ඇති බව තහවුතු කර "
-#~ "ගන්න. "
-
-#~ msgid ""
-#~ "\n"
-#~ "\n"
-#~ "Note that the %s architecture does not feature a relocatable kernel at "
-#~ "this time, and thus requires a separate kernel-kdump package to be "
-#~ "installed for kdump to function. This can be installed via 'yum install "
-#~ "kernel-kdump' at your convenience."
-#~ msgstr ""
-#~ "\n"
-#~ "\n"
-#~ "%s ශෛලියට මෙම අවස්තාවේ න්‍යෂ්ඨිය නැවත ස්තානගත කිරීමට පසුකම් නැති බව මතක තබා ගන්න සහ "
-#~ "කේඩම්ප් නිසියාකාරව ක්‍රියාත්මක වීමට kernel-kdump පැකේජය ස්ථාපනය අවශ්‍යවේ. මෙය ඔබගේ "
-#~ "අභිමතය පරිදි 'yum install kernel-kdump' හරහා ස්ථාපනය කළ හැක."

@@ -1,24 +1,24 @@
 # translation of gu.po to Gujarati
 # This file is distributed under the same license as the PACKAGE package.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER.
-#
+# 
 # Ankit Patel <ankit@redhat.com>, 2007.
 # Sweta Kothari <swkothar@redhat.com>, 2010.
+# Ankit Patel <ankit@redhat.com>, 2012. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: gu\n"
+"Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-11-30 16:43+0800\n"
-"PO-Revision-Date: 2010-08-09 14:35+0530\n"
-"Last-Translator: Sweta Kothari <swkothar@redhat.com>\n"
-"Language-Team: Gujarati\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: KBabel 1.11.4\n"
+"PO-Revision-Date: 2012-12-14 02:55-0500\n"
+"Last-Translator: Ankit Patel <ankit@redhat.com>\n"
+"Language-Team: Gujarati\n"
+"X-Generator: Zanata 2.0.2\n"
 "Plural-Forms: nplurals=2; plural=(n!=1);\n"
-"\n"
-"\n"
+"Language: gu\n"
 
 #: ../firstboot_kdump.py:53
 msgid "Kdump"
@@ -68,10 +68,9 @@ msgid "_Manual"
 msgstr ""
 
 #: ../firstboot_kdump.py:300
-msgid ""
-"\n"
+msgid "\n"
 "Advanced kdump configuration"
-msgstr ""
+msgstr "અદ્યતન kdump રૂપરેખાંકન"
 
 #: ../firstboot_kdump.py:312
 msgid ""
@@ -80,13 +79,15 @@ msgid ""
 "determining the cause of the crash. Note that kdump does require reserving a "
 "portion of system memory that will be unavailable for other uses."
 msgstr ""
-"Kdump એ કર્નલ ક્રેશ ડમ્પીંગ પદ્ધતિ છે. સિસ્ટમ ભંગાણની ઘટનામાં, kdump તમારી સિસ્ટમમાંથી "
-"જાણકારી પ્રાપ્ત કરશે કે જે ભંગાણનું કારણ નક્કી કરવા માટે અમૂલ્ય હોઈ શકે. નોંધ લો કે kdump "
-"સિસ્ટમ મેમરીના ભાગને આરક્ષિત રાખવા માટે જરૂરી છે કે જે અન્ય વપરાશો માટે ઉપલબ્ધ રહેશે નહિં."
+"Kdump એ કર્નલ ક્રેશ ડમ્પીંગ પદ્ધતિ છે. સિસ્ટમ ભંગાણની ઘટનામાં, kdump તમારી "
+"સિસ્ટમમાંથી જાણકારી પ્રાપ્ત કરશે કે જે ભંગાણનું કારણ નક્કી કરવા માટે અમૂલ્ય "
+"હોઈ શકે. નોંધ લો કે kdump સિસ્ટમ મેમરીના ભાગને આરક્ષિત રાખવા માટે જરૂરી છે "
+"કે જે અન્ય વપરાશો માટે ઉપલબ્ધ રહેશે નહિં."
 
 #: ../firstboot_kdump.py:412
 msgid "Sorry, your system does not have enough memory for kdump to be viable!"
-msgstr "માફ કરજો, તમારી સિસ્ટમ પાસે kdump ને વ્યાજબી બનાવવા માટે પૂરતી મેમરી નથી!"
+msgstr ""
+"માફ કરજો, તમારી સિસ્ટમ પાસે kdump ને વ્યાજબી બનાવવા માટે પૂરતી મેમરી નથી!"
 
 #: ../firstboot_kdump.py:418
 msgid "Sorry, Xen kernels do not support kdump at this time!"
@@ -98,19 +99,16 @@ msgid "Sorry, the %s architecture does not support kdump at this time!"
 msgstr "માફ કરજો, %s આર્કીટેક્ચર આ સમયે kdump ને આધાર આપતું નથી!"
 
 #: ../firstboot_kdump.py:433
-#, fuzzy
 msgid ""
 "Changing Kdump settings requires rebooting the system to reallocate memory "
 "accordingly. Would you like to continue with this change and reboot the "
 "system after firstboot is complete?"
 msgstr ""
-"Kdump સુયોજનો બદલવા માટે સિસ્ટમને મેમરી અનુક્રમે પુનઃફાળવવા માટે સિસ્ટમ રીબુટ કરવાની જરૂર "
-"છે. %sશું તમે આ ફેરફાર સાથે ચાલુ રાખવા ઈચ્છો છો અને firstboot સમાપ્ત થાય પછી સિસ્ટમ "
-"રીબુટ કરવા માંગો છો?"
+"Kdump સુયોજનો બદલવા માટે સિસ્ટમને મેમરી અનુક્રમે પુનઃફાળવવા માટે સિસ્ટમ "
+"રીબુટ કરવાની જરૂર છે. શું તમે આ ફેરફાર સાથે ચાલુ રાખવા ઈચ્છો છો અને "
+"firstboot સમાપ્ત થાય પછી સિસ્ટમ રીબુટ કરવા માંગો છો?"
 
 #: ../firstboot_kdump.py:450
 msgid "Error! No bootloader config file found, aborting configuration!"
-msgstr "ભૂલ! કોઈ બુટલોડર રૂપરેખા ફાઈલ મળી નહિં, અડધેથી રૂપરેખાંકન બંધ કરી રહ્યા છીએ!"
-
-#~ msgid "Insufficient memory to configure kdump!"
-#~ msgstr "kdump ને રૂપરેખાંકિત કરવા અપૂરતી મેમરી!"
+msgstr ""
+"ભૂલ! કોઈ બુટલોડર રૂપરેખા ફાઈલ મળી નહિં, અડધેથી રૂપરેખાંકન બંધ કરી રહ્યા છીએ!"

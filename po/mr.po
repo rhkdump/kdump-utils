@@ -1,33 +1,33 @@
 # translation of mr.po to Marathi
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
-#
+# 
 # sandeep shedmake <sandeep.shedmake@gmail.com>, 2007.
 # Sandeep Shedmake <sshedmak@redhat.com>, 2010.
+# sandeeps <sandeeps@fedoraproject.org>, 2012. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: mr\n"
+"Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-11-30 16:43+0800\n"
-"PO-Revision-Date: 2010-08-09 14:46+0530\n"
-"Last-Translator: Sandeep Shedmake <sshedmak@redhat.com>\n"
-"Language-Team: Marathi <fedora-trans-mr@redhat.com>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: KBabel 1.11.4\n"
+"PO-Revision-Date: 2012-12-10 02:52-0500\n"
+"Last-Translator: sandeeps <sandeeps@fedoraproject.org>\n"
+"Language-Team: Marathi <fedora-trans-mr@redhat.com>\n"
+"X-Generator: Zanata 2.0.2\n"
 "Plural-Forms: nplurals=2; plural=(n!=1);\n"
-"\n"
-"\n"
+"Language: mr\n"
 
 #: ../firstboot_kdump.py:53
 msgid "Kdump"
-msgstr "Kdump"
+msgstr "केडम्प"
 
 #. kdump enable/disable checkbox
 #: ../firstboot_kdump.py:236
 msgid "_Enable kdump?"
-msgstr "kdump सुरू करा (_E)?"
+msgstr "केडम्प सुरू करा (_E)?"
 
 #. detected total amount of system memory
 #: ../firstboot_kdump.py:240 ../firstboot_kdump.py:259
@@ -37,41 +37,38 @@ msgid "%s"
 msgstr "%s"
 
 #: ../firstboot_kdump.py:241
-#, fuzzy
 msgid "Total System Memory (MB):"
-msgstr "एकूण प्रणालीची स्मृत्ती (MB) (_T):"
+msgstr "एकूण प्रणालीची मेमरी (MB):"
 
 #: ../firstboot_kdump.py:251
 msgid "Memory To Be _Reserved (MB):"
-msgstr ""
+msgstr "आरक्षित करणेजोगी मेमरी (MB) (_R):"
 
 #: ../firstboot_kdump.py:260
-#, fuzzy
 msgid "Usable System Memory (MB):"
-msgstr "वापरतायेण्याजोगी प्रणाली स्मृत्ती (MB) (_U):"
+msgstr "वापरतायेण्याजोगी प्रणाली मेमरी (MB):"
 
 #: ../firstboot_kdump.py:263
 msgid "Memory Currently Reserved (MB):"
-msgstr ""
+msgstr "सध्या आरक्षित मेमरी(MB):"
 
 #: ../firstboot_kdump.py:269
-#, fuzzy
 msgid "Kdump Memory Reservation:"
-msgstr "Kdump Memory (MB) (_K):"
+msgstr "केडम्प मेमरी आरक्षण (MB) (_K):"
 
 #: ../firstboot_kdump.py:270
 msgid "_Automatic"
-msgstr ""
+msgstr "स्वयंचलित (_A)"
 
 #: ../firstboot_kdump.py:271
 msgid "_Manual"
-msgstr ""
+msgstr "व्यक्तिचलित (_M)"
 
 #: ../firstboot_kdump.py:300
-msgid ""
-"\n"
+msgid "\n"
 "Advanced kdump configuration"
-msgstr ""
+msgstr "\n"
+"प्रगत केडम्प संरचना"
 
 #: ../firstboot_kdump.py:312
 msgid ""
@@ -80,13 +77,16 @@ msgid ""
 "determining the cause of the crash. Note that kdump does require reserving a "
 "portion of system memory that will be unavailable for other uses."
 msgstr ""
-"Kdump कर्नल आणीबाणी निर्मुलन पद्धती आहे. प्रणाली आणीबाणी घटनाक्रमास, kdump आपल्या "
-"प्रणालीतील अतीमहत्वाची माहिती ज्यामुऴे आणीबाणी चे कारण शोधण्यास मदत मिळते. लक्षात घ्या "
-"kdump ला प्रणाली स्मृत्तीचे आरक्षण हवे असते जे इतर वापरकर्त्यांना अनुपलब्ध राहतील."
+"केडम्प कर्नल आणीबाणी निर्मुलन पद्धती आहे. प्रणाली आणीबाणी घटनाक्रमास, kdump "
+"आपल्या प्रणालीतील अतीमहत्वाची माहिती ज्यामुऴे आणीबाणी चे कारण शोधण्यास मदत "
+"मिळते. लक्षात घ्या kdump ला प्रणाली स्मृत्तीचे आरक्षण हवे असते जे इतर "
+"वापरकर्त्यांना अनुपलब्ध राहतील."
 
 #: ../firstboot_kdump.py:412
 msgid "Sorry, your system does not have enough memory for kdump to be viable!"
-msgstr "माफ करा, आपल्या प्रणालीस kdump यशस्वीरीत्या चालण्याजोगी अतिरीक्त स्मृत्ती नाही!"
+msgstr ""
+"माफ करा, आपल्या प्रणालीस केडम्प यशस्वीरीत्या चालण्याजोगी अतिरीक्त स्मृत्ती "
+"नाही!"
 
 #: ../firstboot_kdump.py:418
 msgid "Sorry, Xen kernels do not support kdump at this time!"
@@ -98,19 +98,15 @@ msgid "Sorry, the %s architecture does not support kdump at this time!"
 msgstr "माफ करा, %s आर्किटेक्चर kdump करीता समर्थन पुरवत नाही!"
 
 #: ../firstboot_kdump.py:433
-#, fuzzy
 msgid ""
 "Changing Kdump settings requires rebooting the system to reallocate memory "
 "accordingly. Would you like to continue with this change and reboot the "
 "system after firstboot is complete?"
 msgstr ""
-"Kdump सेटिंग्स् बदलविण्याकरीता प्रणालीस स्मृत्ती परस्पररीत्या वाटप करण्याकरीता प्रणाली "
-"पुन्हा सुरू करा. %s तुम्हाला हे बदल लागू करायचे व फर्स्टबूट पूर्ण झाल्यावर प्रणालीला पुनः सुरू "
-"करायचे?"
+"केडम्प सेटिंग्ज बदलण्याकरीता प्रणालीस मेमरीचे परस्पररीत्या वाटप करण्याकरीता "
+"प्रणाली पुन्हा सुरू करा. तुम्हाला हे बदल लागू करायचे व फर्स्टबूट पूर्ण "
+"झाल्यावर प्रणालीला पुन्हा सुरू करायचे?"
 
 #: ../firstboot_kdump.py:450
 msgid "Error! No bootloader config file found, aborting configuration!"
 msgstr "त्रूटी! बूटलोडर config फाइल सापडली नाही, संरचना रद्द करीत आहे!"
-
-#~ msgid "Insufficient memory to configure kdump!"
-#~ msgstr "kdump संरचीत करण्यासाठी अतिरीक्त स्मृती आढळली!"

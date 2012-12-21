@@ -3,23 +3,24 @@
 # translation of ja.po to
 # This file is distributed under the same license as the PACKAGE package.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER.
-#
+# 
 # kiyoto james hashida <khashida@brisbane.redhat.com>, 2007.
 # Kiyoto Hashida <khashida@redhat.com>, 2007, 2010.
+# noriko <noriko@fedoraproject.org>, 2012. #zanata
 msgid ""
 msgstr ""
-"Project-Id-Version: ja\n"
+"Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-11-30 16:43+0800\n"
-"PO-Revision-Date: 2010-08-10 10:55+0900\n"
-"Last-Translator: Kiyoto Hashida <khashida@redhat.com>\n"
-"Language-Team: Japanese <jp@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: KBabel 1.11.4\n"
+"PO-Revision-Date: 2012-12-18 09:59-0500\n"
+"Last-Translator: noriko <noriko@fedoraproject.org>\n"
+"Language-Team: Japanese <jp@li.org>\n"
+"X-Generator: Zanata 2.0.2\n"
 "Plural-Forms: Plural-Forms: nplurals=2; plural=(n!=1);\n"
-"\n"
+"Language: ja\n"
 
 #: ../firstboot_kdump.py:53
 msgid "Kdump"
@@ -28,7 +29,7 @@ msgstr "Kdump"
 #. kdump enable/disable checkbox
 #: ../firstboot_kdump.py:236
 msgid "_Enable kdump?"
-msgstr "kdump を有効にしますか (_E）?"
+msgstr "kdump を有効にしますか (_E)?"
 
 #. detected total amount of system memory
 #: ../firstboot_kdump.py:240 ../firstboot_kdump.py:259
@@ -38,41 +39,38 @@ msgid "%s"
 msgstr "%s"
 
 #: ../firstboot_kdump.py:241
-#, fuzzy
 msgid "Total System Memory (MB):"
-msgstr "合計システムメモリー(MB) (_T):"
+msgstr "合計システムメモリー (MB):"
 
 #: ../firstboot_kdump.py:251
 msgid "Memory To Be _Reserved (MB):"
-msgstr ""
+msgstr "予約されるメモリー (MB):"
 
 #: ../firstboot_kdump.py:260
-#, fuzzy
 msgid "Usable System Memory (MB):"
-msgstr "使用可能システムメモリー(MB) (_U):"
+msgstr "使用可能なシステムメモリー (MB):"
 
 #: ../firstboot_kdump.py:263
 msgid "Memory Currently Reserved (MB):"
-msgstr ""
+msgstr "現在予約されているメモリー (MB):"
 
 #: ../firstboot_kdump.py:269
-#, fuzzy
 msgid "Kdump Memory Reservation:"
-msgstr "Kdump メモリー(MB) (_K):"
+msgstr "Kdump メモリー予約:"
 
 #: ../firstboot_kdump.py:270
 msgid "_Automatic"
-msgstr ""
+msgstr "自動 (_A)"
 
 #: ../firstboot_kdump.py:271
 msgid "_Manual"
-msgstr ""
+msgstr "手動 (_M)"
 
 #: ../firstboot_kdump.py:300
-msgid ""
-"\n"
+msgid "\n"
 "Advanced kdump configuration"
-msgstr ""
+msgstr "\n"
+"高度な kdump の設定"
 
 #: ../firstboot_kdump.py:312
 msgid ""
@@ -81,15 +79,13 @@ msgid ""
 "determining the cause of the crash. Note that kdump does require reserving a "
 "portion of system memory that will be unavailable for other uses."
 msgstr ""
-"Kdump はカーネルクラッシュダンプのメカニズムです。システムがクラッシュした"
-"時、Kdump はシステムからそのクラッシュの原因を判定するための重要な情報をキャ"
-"プチャします。kdump はシステムメモリー内の他では使用できない部分を予約してお"
-"く必要があることに注意して下さい。"
+"Kdump はカーネルクラッシュダンプのメカニズムです。システムがクラッシュした場合、 Kdump "
+"はシステムからそのクラッシュの原因を判定するために重要となる可能性のある情報をキャプチャします。kdump には kdump "
+"以外では使用できない部分をシステムメモリー内に予約しておく必要があるため注意して下さい。"
 
 #: ../firstboot_kdump.py:412
 msgid "Sorry, your system does not have enough memory for kdump to be viable!"
-msgstr ""
-"すみません。システムには kdump を運営できるだけの充分なメモリーがありません!"
+msgstr "すみません。システムには kdump を運営できるだけの充分なメモリーがありません!"
 
 #: ../firstboot_kdump.py:418
 msgid "Sorry, Xen kernels do not support kdump at this time!"
@@ -101,19 +97,14 @@ msgid "Sorry, the %s architecture does not support kdump at this time!"
 msgstr "すみません。%s アーキテクチャは、今回は kdump サポートしていません!"
 
 #: ../firstboot_kdump.py:433
-#, fuzzy
 msgid ""
 "Changing Kdump settings requires rebooting the system to reallocate memory "
 "accordingly. Would you like to continue with this change and reboot the "
 "system after firstboot is complete?"
 msgstr ""
-"Kdump 設定を変更するには、システムを再起動して、必要に応じたメモリーの 再割り"
-"当てをする必要があります。%s 初期起動 (firstboot) が完了した後に、この変更を "
-"継続してシステムを再起動しますか?"
+"Kdump 設定を変更するとメモリーを再割り当てするためのシステムの再起動が必要になります。この変更を加え続行し、 初期起動 (firstboot) "
+"が完了した後にシステムの再起動を行いますか?"
 
 #: ../firstboot_kdump.py:450
 msgid "Error! No bootloader config file found, aborting configuration!"
 msgstr "エラー! ブートローダ設定ファイルが見つかりません。設定を中止します!"
-
-#~ msgid "Insufficient memory to configure kdump!"
-#~ msgstr "kdump を設定するにはメモリーが足りません。"
