@@ -72,6 +72,7 @@ Patch301: kexec-tools-2.0.3-ppc-ppc64-compile-purgatory-code-with-gcc-option-mso
 #
 # Patches 501 through 600 are meant for ppc kexec-tools enablement
 #
+Patch501: kexec-tools-2.0.3-ppc-exec-stack-fix.patch
 
 #
 # Patches 601 onward are generic patches
@@ -97,6 +98,7 @@ tar -z -x -v -f %{SOURCE9}
 %patch001 -p1
 %patch002 -p1
 %patch301 -p1
+%patch501 -p1
 %patch601 -p1
 %patch602 -p1
 %patch603 -p1
