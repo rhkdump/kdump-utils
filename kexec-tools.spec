@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.3
-Release: 62%{?dist}
+Release: 63%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -304,6 +304,12 @@ done
 
 
 %changelog
+* Fri Dec 21 2012 Dave Young <ruyang@redhat.com> - 2.0.3-63
+- revert explictly handling of PIPESTATUS
+- enable pipefail bash option
+- wrong ssh key fix
+- build fix: Update 3 po files: po/gu.po po/or.po po/zh_CN.po
+
 * Fri Dec 21 2012 Dave Young <ruyang@redhat.com> - 2.0.3-62
 - Pull translated po files from zanata
 - Optimize redundent code fetching server of network dump
