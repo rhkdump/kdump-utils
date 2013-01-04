@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.3
-Release: 63%{?dist}
+Release: 64%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -306,6 +306,9 @@ done
 
 
 %changelog
+* Fri Jan 4 2013 Dave Young <ruyang@redhat.com> - 2.0.3-64
+- fix issue of exec on stack for ppc32
+
 * Fri Dec 21 2012 Dave Young <ruyang@redhat.com> - 2.0.3-63
 - revert explictly handling of PIPESTATUS
 - enable pipefail bash option
