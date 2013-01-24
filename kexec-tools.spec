@@ -275,9 +275,9 @@ else
 	IMGDIR=/boot
 fi
 
-for i in `ls $IMGDIR/initrd*kdump.img 2>/dev/null`
+for i in `ls $IMGDIR/initramfs*kdump.img 2>/dev/null`
 do
-	KDVER=`echo $i | sed -e's/^.*initrd-//' -e's/kdump.*$//'`
+	KDVER=`echo $i | sed -e's/^.*initramfs-//' -e's/kdump.*$//'`
 	if [ ! -e $IMGDIR/vmlinuz-$KDVER ]
 	then
 		# We have found an initrd with no corresponding kernel
