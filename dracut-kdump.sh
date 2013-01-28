@@ -22,14 +22,6 @@ KDUMP_POST=""
 
 export PATH=$PATH:$KDUMP_SCRIPT_DIR
 
-# we use manual setup nics in udev rules,
-# so we need to test network is really ok
-wait_for_net_ok() {
-    local ip=$(getarg ip)
-    local iface=`echo $ip|cut -d':' -f1`
-    return $(wait_for_route_ok $iface)
-}
-
 do_default_action()
 {
     wait_for_loginit
@@ -204,7 +196,6 @@ read_kdump_conf()
             add_dump_code "dump_raw $config_val"
             ;;
         ssh)
-            wait_for_net_ok
             add_dump_code "dump_ssh $SSH_KEY_LOCATION $config_val"
             ;;
         esac
