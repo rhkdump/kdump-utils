@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.3
-Release: 64%{?dist}
+Release: 65%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -306,6 +306,13 @@ done
 
 
 %changelog
+* Mon Jan 28 2013 Dave Young <ruyang@redhat.com> - 2.0.3-65
+- Add support for team devices
+- Update translation file po/it.po
+- remove wait for net ok function
+- add bootdev cmdline param
+- kdumpnic cmdline file name cleanup
+
 * Fri Jan 4 2013 Dave Young <ruyang@redhat.com> - 2.0.3-64
 - fix issue of exec on stack for ppc32
 
