@@ -125,15 +125,17 @@ is_raw_dump_target()
 
 get_host_ip()
 {
+    local _host
     if is_nfs_dump_target || is_ssh_dump_target
     then
         kdumpnic=$(getarg kdumpnic=)
         [ -z "$kdumpnic" ] && echo "failed to get kdumpnic!" && return 1
-        HOST_IP=`ip addr show dev $kdumpnic|grep 'inet '`
+        _host=`ip addr show dev $kdumpnic|grep 'inet '`
         [ $? -ne 0 ] && echo "Wrong kdumpnic: $kdumpnic" && return 1
-        HOST_IP="${HOST_IP##*inet }"
-        HOST_IP="${HOST_IP%%/*}"
-        [ -z "$HOST_IP" ] && echo "Wrong kdumpnic: $kdumpnic" && return 1
+        _host="${_host##*inet }"
+        _host="${_host%%/*}"
+        [ -z "$_host" ] && echo "Wrong kdumpnic: $kdumpnic" && return 1
+        HOST_IP=$_host
     fi
     return 0
 }
