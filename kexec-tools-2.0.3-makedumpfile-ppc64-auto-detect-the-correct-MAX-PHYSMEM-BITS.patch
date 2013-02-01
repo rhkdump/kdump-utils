@@ -1,0 +1,77 @@
+makedumpfile: ppc64: Auto-detect the correct MAX_PHYSMEM_BITS used in vmcore being analyzed.
+
+The latest upstream kernel commit 048ee0993ec8360abb0b51bdf8f8721e9ed62ec4 adds
+64TB support to ppc64 kernel and bumps the MAX_PHYSMEM_BITS from 44 to 46. This
+change causes sparsemem extreme check to fail in makedumpfile.
+
+This patch auto-detects the correct value to use for MAX_PHYSMEM_BITS by
+examining the mem_section array size from the vmcore being analyzed.
+
+This patch has been tested on upstream kernel 3.8.0-rc4 and older kernel
+2.6.32.
+
+Reported-by: Dave Anderson <anderson@redhat.com>
+Reported-by: Dave Young <dyoung@redhat.com>
+Signed-off-by: Mahesh Salgaonkar <mahesh@linux.vnet.ibm.com>
+---
+ arch/ppc64.c   |   27 ++++++++++++++++++++++++++-
+ makedumpfile.h |    3 ++-
+ 2 files changed, 28 insertions(+), 2 deletions(-)
+
+diff --git a/makedumpfile-1.5.1/arch/ppc64.c b/makedumpfile-1.5.1/arch/ppc64.c
+index 1cb69e1..afbaf55 100644
+--- a/makedumpfile-1.5.1/arch/ppc64.c
++++ b/makedumpfile-1.5.1/arch/ppc64.c
+@@ -25,12 +25,37 @@
+ #include "../makedumpfile.h"
+ 
+ int
++set_ppc64_max_physmem_bits(void)
++{
++	long array_len = ARRAY_LENGTH(mem_section);
++	/*
++	 * The older ppc64 kernels uses _MAX_PHYSMEM_BITS as 42 and the
++	 * newer kernels 3.7 onwards uses 46 bits.
++	 */
++
++	info->max_physmem_bits  = _MAX_PHYSMEM_BITS_ORIG ;
++	if ((array_len == (NR_MEM_SECTIONS() / _SECTIONS_PER_ROOT_EXTREME()))
++		|| (array_len == (NR_MEM_SECTIONS() / _SECTIONS_PER_ROOT())))
++		return TRUE;
++
++	info->max_physmem_bits  = _MAX_PHYSMEM_BITS_3_7;
++	if ((array_len == (NR_MEM_SECTIONS() / _SECTIONS_PER_ROOT_EXTREME()))
++		|| (array_len == (NR_MEM_SECTIONS() / _SECTIONS_PER_ROOT())))
++		return TRUE;
++
++	return FALSE;
++}
++
++int
+ get_machdep_info_ppc64(void)
+ {
+ 	unsigned long vmlist, vmalloc_start;
+ 
+ 	info->section_size_bits = _SECTION_SIZE_BITS;
+-	info->max_physmem_bits  = _MAX_PHYSMEM_BITS;
++	if (!set_ppc64_max_physmem_bits()) {
++		ERRMSG("Can't detect max_physmem_bits.\n");
++		return FALSE;
++	}
+ 	info->page_offset = __PAGE_OFFSET;
+ 
+ 	if (SYMBOL(_stext) == NOT_FOUND_SYMBOL) {
+diff --git a/makedumpfile-1.5.1/makedumpfile.h b/makedumpfile-1.5.1/makedumpfile.h
+index d2bdc0c..d758a3c 100644
+--- a/makedumpfile-1.5.1/makedumpfile.h
++++ b/makedumpfile-1.5.1/makedumpfile.h
+@@ -566,7 +566,8 @@ do { \
+ #define VMALLOCBASE     	(0xD000000000000000)
+ #define KVBASE			(SYMBOL(_stext))
+ #define _SECTION_SIZE_BITS	(24)
+-#define _MAX_PHYSMEM_BITS	(44)
++#define _MAX_PHYSMEM_BITS_ORIG  (44)
++#define _MAX_PHYSMEM_BITS_3_7   (46)
+ #endif
+ 
+ #ifdef __powerpc32__
