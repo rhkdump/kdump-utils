@@ -59,8 +59,8 @@ dump_fs()
     then
         mount -o remount,rw $_mp || return 1
     fi
-    mkdir -p $_mp/$KDUMP_PATH/$DATEDIR || return 1
-    $CORE_COLLECTOR /proc/vmcore $_mp/$KDUMP_PATH/$DATEDIR/vmcore || return 1
+    mkdir -p $_mp/$KDUMP_PATH/$HOST_IP-$DATEDIR || return 1
+    $CORE_COLLECTOR /proc/vmcore $_mp/$KDUMP_PATH/$HOST_IP-$DATEDIR/vmcore || return 1
     umount $_mp || return 1
     return 0
 }
@@ -86,15 +86,15 @@ dump_raw()
 dump_rootfs()
 {
     mount -o remount,rw $NEWROOT/ || return 1
-    mkdir -p $NEWROOT/$KDUMP_PATH/$DATEDIR
-    $CORE_COLLECTOR /proc/vmcore $NEWROOT/$KDUMP_PATH/$DATEDIR/vmcore || return 1
+    mkdir -p $NEWROOT/$KDUMP_PATH/$HOST_IP-$DATEDIR
+    $CORE_COLLECTOR /proc/vmcore $NEWROOT/$KDUMP_PATH/$HOST_IP-$DATEDIR/vmcore || return 1
     sync
 }
 
 dump_ssh()
 {
     local _opt="-i $1 -o BatchMode=yes -o StrictHostKeyChecking=yes"
-    local _dir="$KDUMP_PATH/$DATEDIR"
+    local _dir="$KDUMP_PATH/$HOST_IP-$DATEDIR"
 
     cat /var/lib/random-seed > /dev/urandom
     ssh -q $_opt $2 mkdir -p $_dir || return 1
@@ -215,14 +215,12 @@ get_host_ip
 if [ $? -ne 0 ]; then
     echo "get_host_ip exited with non-zero status!"
     do_default_action
+    $FINAL_ACTION
 fi
 
 if [ -z "$DUMP_INSTRUCTION" ]; then
     add_dump_code "dump_rootfs"
 fi
-
-#refresh DATEDIR with crash host ip addr
-DATEDIR="$HOST_IP-$DATEDIR"
 
 do_kdump_pre
 if [ $? -ne 0 ]; then
