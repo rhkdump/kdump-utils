@@ -349,24 +349,24 @@ function start()
 	local nr
 	nr=$(awk 'BEGIN{cnt=0} /^raw|^ssh[[:blank:]]|^nfs|^ext[234]|^xfs|^btrfs|^minix/{cnt++} END{print cnt}' $KDUMP_CONFIG_FILE)
 	[ $nr -gt 1 ] && {
-		echo -n "Error: More than one dump targets specified"; echo
+		echo "More than one dump targets specified: [WARNING]"
 		return 1
 	}
 
 	save_raw
 	if [ $? -ne 0 ]; then
-		echo -n "Starting kdump:"; echo
+		echo "Starting kdump: [FAILED]"
 		return 1
 	fi
 
 	status 
 	rc=$?
 	if [ $rc == 2 ]; then
-		echo -n "Kdump is not supported on this kernel"; echo
+		echo "Kdump is not supported on this kernel: [WARNING]"
 		return 1;
 	else
 		if [ $rc == 0 ]; then
-			echo -n "Kdump already running";  echo
+			echo "Kdump already running: [WARNING]"
 			return 0
 		fi
 	fi
@@ -375,34 +375,34 @@ function start()
 
 	check_config
 	if [ $? != 0 ]; then
-		echo -n "Starting kdump:"; echo
+		echo "Starting kdump: [FAILED]"
 		return 1
 	fi
 	load_kdump
 	if [ $? != 0 ]; then
-		echo -n "Starting kdump:"; echo
+		echo "Starting kdump: [FAILED]"
 		return 1
 	fi
 
-	echo -n "Starting kdump:";  echo
+	echo "Starting kdump: [OK]"
 }
 
 function stop()
 {
 	$KEXEC -p -u 2>/dev/null
 	if [ $? == 0 ]; then
-		echo -n "Stopping kdump:";  echo
-		echo -n "kexec: unloaded kdump kernel"
+		echo "kexec: unloaded kdump kernel"
+		echo "Stopping kdump: [OK]"
 		return 0
 	else
-		echo -n "Stopping kdump:"; echo
-		echo -n "kexec: failed to unloaded kdump kernel"
+		echo "kexec: failed to unloaded kdump kernel"
+		echo "Stopping kdump: [FAILED]"
 		return 1
 	fi
 }
 
 if [ ! -f "$KDUMP_CONFIG_FILE" ]; then
-	echo -n "No kdump config file found!"; echo
+	echo "Error: No kdump config file found!"  >&2
 	exit 1
 fi
 
