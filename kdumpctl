@@ -10,8 +10,6 @@ SAVE_PATH=/var/crash
 SSH_KEY_LOCATION="/root/.ssh/kdump_id_rsa"
 DUMP_TARGET=""
 
-LOGGER="/usr/bin/logger -p info -t kdump"
-
 standard_kexec_args="-p"
 
 if [ -f /etc/sysconfig/kdump ]; then
@@ -26,9 +24,9 @@ function save_core()
 	cp --sparse=always /proc/vmcore $coredir/vmcore-incomplete
 	if [ $? == 0 ]; then
 		mv $coredir/vmcore-incomplete $coredir/vmcore
-		$LOGGER "saved a vmcore to $coredir"
+		echo "saved a vmcore to $coredir"
 	else
-		$LOGGER "failed to save a vmcore to $coredir"
+		echo "failed to save a vmcore to $coredir" >&2
 	fi
 
 	# pass the dmesg to Abrt tool if exists, in order
@@ -38,7 +36,7 @@ function save_core()
 		makedumpfile --dump-dmesg $coredir/vmcore $coredir/dmesg >/dev/null 2>&1
 		dumpoops -d $coredir/dmesg >/dev/null 2>&1
 		if [ $? == 0 ]; then
-			$LOGGER "kernel oops has been collected by abrt tool"
+			echo "kernel oops has been collected by abrt tool"
 		fi
 	fi
 }
@@ -47,8 +45,7 @@ function rebuild_initrd()
 {
 	$MKDUMPRD $kdump_initrd $kdump_kver
 	if [ $? != 0 ]; then
-		echo "Failed to run mkdumprd"
-		$LOGGER "mkdumprd: failed to make kdump initrd"
+		echo "mkdumprd: failed to make kdump initrd" >&2
 		return 1
 	fi
 }
@@ -159,7 +156,7 @@ function load_kdump()
 	MEM_RESERVED=$(cat /sys/kernel/kexec_crash_size)
 	if [ $MEM_RESERVED -eq 0 ]
 	then
-		$LOGGER "No memory reserved for crash kernel."
+		echo "No memory reserved for crash kernel." >&2
 		return 1
 	fi
 
@@ -199,10 +196,10 @@ function load_kdump()
 		--command-line="$KDUMP_COMMANDLINE" \
 		--initrd=$kdump_initrd $kdump_kernel 2>/dev/null
 	if [ $? == 0 ]; then
-		$LOGGER "kexec: loaded kdump kernel"
+		echo "kexec: loaded kdump kernel"
 		return 0
 	else
-		$LOGGER "kexec: failed to load kdump kernel"
+		echo "kexec: failed to load kdump kernel" >&2
 		return 1
 	fi
 }
@@ -253,8 +250,7 @@ function propagate_ssh_key()
 {
 	check_ssh_config
 	if [ $? -ne 0 ]; then
-		echo "No ssh config specified in $KDUMP_CONFIG_FILE.  Can't propagate"
-		$LOGGER "$errmsg, no ssh config specified in $KDUMP_CONFIG_FILE"
+		echo "No ssh config specified in $KDUMP_CONFIG_FILE.  Can't propagate" >&2
 		exit 1
 	fi
 
@@ -291,11 +287,9 @@ function propagate_ssh_key()
 	RET=$?
 	if [ $RET == 0 ]; then
 		echo $KEYFILE has been added to ~$SSH_USER/.ssh/authorized_keys on $SSH_SERVER
-		$LOGGER "propagated ssh key (ssh server: $SSH_SERVER)"
 		return 0
 	else
-		echo $KEYFILE failed in transfer to $SSH_SERVER
-		$LOGGER "$errmsg, unable to transfer $KEYFILE to $SSH_SERVER"
+		echo $errmsg, $KEYFILE failed in transfer to $SSH_SERVER  >&2
 		exit 1
 	fi
 		
@@ -362,7 +356,6 @@ function start()
 	save_raw
 	if [ $? -ne 0 ]; then
 		echo -n "Starting kdump:"; echo
-		$LOGGER "failed to start up"
 		return 1
 	fi
 
@@ -383,32 +376,27 @@ function start()
 	check_config
 	if [ $? != 0 ]; then
 		echo -n "Starting kdump:"; echo
-		$LOGGER "failed to start up, config file incorrect"
 		return 1
 	fi
 	load_kdump
 	if [ $? != 0 ]; then
 		echo -n "Starting kdump:"; echo
-		$LOGGER "failed to start up"
 		return 1
 	fi
 
 	echo -n "Starting kdump:";  echo
-	$LOGGER "started up"
 }
 
 function stop()
 {
 	$KEXEC -p -u 2>/dev/null
 	if [ $? == 0 ]; then
-		$LOGGER "kexec: unloaded kdump kernel"
 		echo -n "Stopping kdump:";  echo
-		$LOGGER "stopped"
+		echo -n "kexec: unloaded kdump kernel"
 		return 0
 	else
-		$LOGGER "kexec: failed to unload kdump kernel"
 		echo -n "Stopping kdump:"; echo
-		$LOGGER "failed to stop"
+		echo -n "kexec: failed to unloaded kdump kernel"
 		return 1
 	fi
 }
