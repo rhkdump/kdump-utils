@@ -237,13 +237,14 @@ function check_ssh_config()
 
 function check_ssh_target()
 {
-    local _ret
-    ssh -q -i $SSH_KEY_LOCATION -o BatchMode=yes $DUMP_TARGET mkdir -p $SAVE_PATH
-    _ret=$?
-    if [ $_ret -ne 0 ]; then
-        echo "Could not create $DUMP_TARGET:$SAVE_PATH, you probably need to run \"kdumpctl propagate\""
-        exit $_ret
-    fi
+	local _ret
+	ssh -q -i $SSH_KEY_LOCATION -o BatchMode=yes $DUMP_TARGET mkdir -p $SAVE_PATH
+	_ret=$?
+	if [ $_ret -ne 0 ]; then
+		echo "Could not create $DUMP_TARGET:$SAVE_PATH, you probably need to run \"kdumpctl propagate\""  >&2
+		return 1
+	fi
+	return 0
 }
 
 function propagate_ssh_key()
@@ -371,7 +372,13 @@ function start()
 		fi
 	fi
 
-        check_ssh_config && check_ssh_target
+	if check_ssh_config; then
+		if ! check_ssh_target; then
+			echo "Starting kdump: [FAILED]"
+			return 1
+		fi
+	fi
+
 
 	check_config
 	if [ $? != 0 ]; then
