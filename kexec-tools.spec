@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.3
-Release: 66%{?dist}
+Release: 67%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -306,6 +306,13 @@ done
 
 
 %changelog
+* Tue Feb 19 2013 Baoquan He <bhe@redhat.com> - 2.0.3-67
+- Remove comma which is redundant
+- Modify codes related to dump dir to make it clearer
+- Rectify the get_host_ip implementation
+- Revert: Merge an upstream patch for fix a ppc64 makedumpfile bug with with CONFIG_SPARSEMEM_EXTREME
+- pull makedumpfile 1.5.3
+
 * Tue Feb 5 2013 Dave Young <ruyang@redhat.com> - 2.0.3-66
 - Spec: remove kdump image when a corresponding kernel is removed
 - Merge an upstream patch for fix a ppc64 makedumpfile bug
