@@ -85,6 +85,9 @@ dump_raw()
 
 dump_to_rootfs()
 {
+    #For dumping to rootfs, "-F" need be removed. Surely only available for makedumpfile case.
+    [[ $CORE_COLLECTOR = *makedumpfile* ]] && CORE_COLLECTOR=`echo $CORE_COLLECTOR | sed -e s/-F//g`
+
     mount -o remount,rw $NEWROOT/ || return 1
     mkdir -p $NEWROOT/$KDUMP_PATH/$HOST_IP-$DATEDIR
     $CORE_COLLECTOR /proc/vmcore $NEWROOT/$KDUMP_PATH/$HOST_IP-$DATEDIR/vmcore || return 1
