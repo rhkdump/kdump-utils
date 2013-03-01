@@ -449,19 +449,27 @@ need to manually specify additional kernel modules to load into your kdump
 initrd.
 
 Default action
+==============
+Default action specifies what to do when dump to configured dump target
+fails. By default, default action is "reboot" and that is system reboots
+if attempt to save dump to dump target fails.
 
-By default, if a configured dump method fails, the kdump initrd falls back
-to trying to dump to the local file system (i.e., into the file system(s)
-you would have mounted under normal system operation). The system always
-reboots following an attempted dump to your local file system, regardless
-of success or failure.
+There are other default actions available though.
 
-However, for any of the advanced methods, if the dump fails, you can configure
-the kdump initrd to skip trying to dump to the local file system, instead
-immediately rebooting ('default reboot'), halting the system ('default halt') 
-or dropping you to a shell within the initrd ('default shell'), from which you 
-could try to capture the vmcore manually. Again, if the 'default' parameter is 
-unset, a local file system dump will be attempted, then the system will reboot.
+- dump_to_rootfs
+	This option tries to mount root and save dump on root filesystem
+	in a path specified by "path". This option will generally make
+	sense when dump target is not root filesystem. For example, if
+	dump is being saved over network using "ssh" then one can specify
+	default to "dump_to_rootfs" to try saving dump to root filesystem
+	if dump over network fails.
+
+- shell
+	Drop into a shell session inside initramfs.
+- halt
+	Halt system after failure
+- poweroff
+	Poweroff system after failure.
 
 Compression and filtering
 

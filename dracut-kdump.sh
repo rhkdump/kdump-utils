@@ -7,7 +7,7 @@ set -x
 KDUMP_PATH="/var/crash"
 CORE_COLLECTOR=""
 DEFAULT_CORE_COLLECTOR="makedumpfile -c --message-level 1 -d 31"
-DEFAULT_ACTION="dump_rootfs"
+DEFAULT_ACTION="reboot -f"
 DATEDIR=`date +%Y.%m.%d-%T`
 HOST_IP='127.0.0.1'
 DUMP_INSTRUCTION=""
@@ -83,7 +83,7 @@ dump_raw()
     return 0
 }
 
-dump_rootfs()
+dump_to_rootfs()
 {
     mount -o remount,rw $NEWROOT/ || return 1
     mkdir -p $NEWROOT/$KDUMP_PATH/$HOST_IP-$DATEDIR
@@ -182,6 +182,9 @@ read_kdump_conf()
                 poweroff)
                     DEFAULT_ACTION="poweroff -f"
                     ;;
+                dump_to_rootfs)
+                    DEFAULT_ACTION="dump_to_rootfs"
+                    ;;
             esac
             ;;
         esac
@@ -221,7 +224,7 @@ if [ $? -ne 0 ]; then
 fi
 
 if [ -z "$DUMP_INSTRUCTION" ]; then
-    add_dump_code "dump_rootfs"
+    add_dump_code "dump_to_rootfs"
 fi
 
 do_kdump_pre
