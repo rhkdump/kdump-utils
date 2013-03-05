@@ -65,12 +65,13 @@ target_is_root() {
     [ "$_t" = "/" ]
 }
 
+# caller should ensure $1 is valid and mounted in 1st kernel
 to_mount() {
     local _dev=$1 _s _t _o _mntopts _pdev
+
     _s=$(findmnt -k -f -n -r -o SOURCE $_dev)
     _t=$(findmnt -k -f -n -r -o TARGET,FSTYPE $_dev)
     _o=$(findmnt -k -f -n -r -o OPTIONS $_dev)
-    [ -z "$_t" -o -z "$_o" ] && return
     _o=${_o/#ro/rw} #mount fs target as rw in 2nd kernel
     _mntopts="$_t $_o"
     #for non-nfs _dev converting to use udev persistent name
@@ -113,6 +114,7 @@ get_ssh_size() {
 
 #mkdir if save path does not exist on dump target filesystem
 #$1=dump target
+#caller should ensure $1 is mounted
 mkdir_save_path() {
     local _mnt=$(to_mount_point $1)
     local _remount="no"
@@ -210,16 +212,10 @@ verify_core_collector() {
 }
 
 add_mount() {
-    local _mnt=$(to_mount "$1")
-
-    if target_is_root "$1"; then
-        :
-    elif [ -n "$_mnt" ]; then
+    if ! target_is_root "$1"; then
+        local _mnt=$(to_mount "$1")
         add_dracut_mount "$_mnt"
-    else
-	return 1
     fi
-    return 0
 }
 
 # firstly get right SSH_KEY_LOCATION
@@ -240,14 +236,15 @@ do
         extra_modules="$extra_modules $config_val"
         ;;
     ext[234]|xfs|btrfs|minix|nfs)
+        if ! findmnt $config_val >/dev/null; then
+            echo "Dump target $config_val is probably not mounted."
+            exit 1
+        fi
+
         if [ "$config_opt" = "nfs" ]; then
             add_dracut_module "nfs"
         fi
         add_mount "$config_val"
-        if [ $? -ne 0 ]; then
-            echo "Dump target $config_val is probably not mounted."
-            exit 1
-        fi
         mkdir_save_path $config_val
         check_size fs $config_val
         ;;
