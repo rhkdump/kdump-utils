@@ -23,7 +23,7 @@ is_ssh_dump_target()
 }
 
 kdump_to_udev_name() {
-    local dev="$1"
+    local dev="${1//\"/}"
 
     case "$dev" in
     UUID=*)
