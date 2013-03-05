@@ -72,7 +72,7 @@ function check_executable()
 	done
 }
 
-function check_config()
+function check_rebuild()
 {
 	local extra_modules modified_files=""
 	local _force_rebuild force_rebuild="0"
@@ -379,8 +379,7 @@ function start()
 		fi
 	fi
 
-
-	check_config
+	check_rebuild
 	if [ $? != 0 ]; then
 		echo "Starting kdump: [FAILED]"
 		return 1
