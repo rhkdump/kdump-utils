@@ -268,10 +268,6 @@ do
             exit 1
         fi
         ;;
-    net)
-        echo "net option is not supported anymore, please use nfs|ssh instead."
-        exit 1
-        ;;
     core_collector)
         verify_core_collector "$config_val"
         ;;

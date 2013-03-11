@@ -72,6 +72,39 @@ function check_executable()
 	done
 }
 
+function check_config()
+{
+	local nr
+
+	nr=$(awk 'BEGIN{cnt=0} /^raw|^ssh[[:blank:]]|^nfs|^ext[234]|^xfs|^btrfs|^minix/{cnt++} END{print cnt}' $KDUMP_CONFIG_FILE)
+	[ $nr -gt 1 ] && {
+		echo "More than one dump targets specified."
+		return 1
+	}
+
+	while read config_opt config_val; do
+		case "$config_opt" in
+		\#* | "")
+			;;
+		raw|ext2|ext3|ext4|minix|btrfs|xfs|nfs|ssh|sshkey|blacklist|path|core_collector|kdump_post|kdump_pre|extra_bins|extra_modules|default|force_rebuild)
+			[ -z "$config_val" ] && {
+				echo "Invalid kdump config value for option $config_opt."
+				return 1;
+			}
+			;;
+		net|options|link_delay|disk_timeout|debug_mem_level)
+			echo "Deprecated kdump config option: $config_opt. Refer to kdump.conf manpage for alternatives."
+			return 1
+			;;
+		*)
+			echo "Invalid kdump config option $config_opt"
+			return 1;
+			;;
+		esac
+	done < $KDUMP_CONFIG_FILE
+	return 0
+}
+
 function check_rebuild()
 {
 	local extra_modules modified_files=""
@@ -347,12 +380,11 @@ function save_raw()
 
 function start()
 {
-	local nr
-	nr=$(awk 'BEGIN{cnt=0} /^raw|^ssh[[:blank:]]|^nfs|^ext[234]|^xfs|^btrfs|^minix/{cnt++} END{print cnt}' $KDUMP_CONFIG_FILE)
-	[ $nr -gt 1 ] && {
-		echo "More than one dump targets specified: [WARNING]"
+	check_config
+	if [ $? -ne 0 ]; then
+		echo "Starting kdump: [FAILED]"
 		return 1
-	}
+	fi
 
 	save_raw
 	if [ $? -ne 0 ]; then

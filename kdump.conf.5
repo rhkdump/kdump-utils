@@ -167,6 +167,53 @@ By default, kdump initrd only will be rebuilt when necessary.
 Specify 1 to force rebuilding kdump initrd every time when kdump service starts.
 .RE
 
+.SH DEPRECATED OPTIONS
+
+.B net <nfs mount>|<user@server>
+.RS
+net option is replaced by nfs and ssh options. Use nfs or ssh options
+directly.
+.RE
+
+.B options <module> <option list>
+.RS
+Use KDUMP_COMMANDLINE_APPEND in /etc/sysconfig/kdump to add proper
+module option as kernel command line params. Such as append loop.max_loop=1
+to limit maximum loop devices to 1.
+.RE
+
+.B link_delay <seconds>
+.RS
+link_delay was used to wait a network device to initialize before using it.
+Now dracut network module take care of this issue automaticlly.
+.RE
+
+.B disk_timeout <seconds>
+.RS
+Similar to link_delay, dracut ensures disks being ready before kdump uses them.
+.RE
+
+.B debug_mem_level <0-3>
+.RS
+This was used to turns on debug/verbose output of kdump scripts regarding
+free/used memory at various points of execution.  This feature has been
+moved to dracut now.
+Use KDUMP_COMMANDLINE_APPEND in /etc/sysconfig/kdump and
+append dracut cmdline param rd.memdebug=[0-3] to enable the debug output.
+
+Higher level means more debugging output.
+.PP
+0 - no output
+.PP
+1 - partial /proc/meminfo
+.PP
+2 - /proc/meminfo
+.PP
+3 - /proc/meminfo + /proc/slabinfo
+.RE
+
+.RE
+
 .SH EXAMPLES
 Here is some examples for core_collector option:
 .PP
