@@ -23,6 +23,7 @@ Source15: kdump.conf.5
 Source16: kdump.service
 Source17: rhcrashkernel-param
 Source18: kdump.sysconfig.s390x
+Source19: eppic_030413.tar.gz
 
 #######################################
 # These are sources for mkdumpramfs
@@ -37,7 +38,7 @@ Requires(preun): systemd-units
 Requires(postun): systemd-units
 Requires(pre): coreutils sed zlib 
 Requires: dracut, dracut-network
-BuildRequires: zlib-devel zlib zlib-static elfutils-devel-static glib2-devel bzip2-devel
+BuildRequires: zlib-devel zlib zlib-static elfutils-devel-static glib2-devel bzip2-devel ncurses-devel bison flex
 BuildRequires: pkgconfig intltool gettext 
 BuildRequires: systemd-units
 %ifarch %{ix86} x86_64 ppc64 ia64 ppc s390x
@@ -80,6 +81,7 @@ Patch501: kexec-tools-2.0.3-ppc-exec-stack-fix.patch
 Patch601: kexec-tools-2.0.3-disable-kexec-test.patch
 Patch602: kexec-tools-2.0.3-vmcore-dmesg-Do-not-write-beyond-end-of-buffer.patch
 Patch603: kexec-tools-2.0.3-vmcore-dmesg-vmcore-dmesg-Make-it-work-with-new-stru.patch
+Patch604: kexec-tools-2.0.3-build-makedumpfile-eppic-shared-object.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -88,11 +90,22 @@ normal or a panic reboot. This package contains the /sbin/kexec
 binary and ancillary utilities that together form the userspace
 component of the kernel's kexec feature.
 
+%package eppic
+Requires: %{name} = %{version}
+Summary: Additional eppic_makedumpfile.so shared object
+Group: Applications/System
+
+%description eppic
+The eppic_makedumpfile.so shared object is loaded by the
+"makedumpfile --eppic" option, and is used to erase sensitive
+or confidential kernel data from a dumpfile.
+
 %prep
 %setup -q 
 
 mkdir -p -m755 kcp
 tar -z -x -v -f %{SOURCE9}
+tar -z -x -v -f %{SOURCE19}
 
 
 %patch001 -p1
@@ -102,6 +115,7 @@ tar -z -x -v -f %{SOURCE9}
 %patch601 -p1
 %patch602 -p1
 %patch603 -p1
+%patch604 -p1
 
 tar -z -x -v -f %{SOURCE13}
 
@@ -131,6 +145,7 @@ cp %{SOURCE10} .
 
 make
 %ifarch %{ix86} x86_64 ia64 ppc64 s390x
+make -C eppic/libeppic
 make -C makedumpfile-1.5.3 LINKTYPE=dynamic
 %endif
 make -C kexec-tools-po
@@ -146,6 +161,7 @@ mkdir -p -m755 $RPM_BUILD_ROOT%{_datadir}/kdump
 mkdir -p -m755 $RPM_BUILD_ROOT%{_sysconfdir}/udev/rules.d
 mkdir -p $RPM_BUILD_ROOT%{_unitdir}
 mkdir -p -m755 $RPM_BUILD_ROOT%{_bindir}
+mkdir -p -m755 $RPM_BUILD_ROOT%{_libdir}
 install -m 755 %{SOURCE1} $RPM_BUILD_ROOT%{_bindir}/kdumpctl
 
 SYSCONFIG=$RPM_SOURCE_DIR/kdump.sysconfig.%{_target_cpu}
@@ -167,6 +183,7 @@ install -m 755 %{SOURCE17} $RPM_BUILD_ROOT/usr/sbin/rhcrashkernel-param
 %ifarch %{ix86} x86_64 ia64 ppc64 s390x
 install -m 755 makedumpfile-1.5.3/makedumpfile $RPM_BUILD_ROOT/sbin/makedumpfile
 install -m 644 makedumpfile-1.5.3/makedumpfile.8.gz $RPM_BUILD_ROOT/%{_mandir}/man8/makedumpfile.8.gz
+install -m 755 makedumpfile-1.5.3/eppic_makedumpfile.so $RPM_BUILD_ROOT/%{_libdir}/eppic_makedumpfile.so
 %endif
 make -C kexec-tools-po install DESTDIR=$RPM_BUILD_ROOT
 %find_lang %{name}
@@ -304,6 +321,9 @@ done
 %doc TODO
 %doc kexec-kdump-howto.txt
 
+%files eppic
+%{_libdir}/*
+%{_libdir}/eppic_makedumpfile.so
 
 %changelog
 * Thu Mar 14 2013 Baoquan He <bhe@redhat.com> - 2.0.3-68

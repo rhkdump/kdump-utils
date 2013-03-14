@@ -1,0 +1,20 @@
+--- kexec-tools-2.0.3/makedumpfile-1.5.3/Makefile.orig
++++ kexec-tools-2.0.3/makedumpfile-1.5.3/Makefile
+@@ -60,7 +60,7 @@ LIBS := -lsnappy $(LIBS)
+ CFLAGS += -DUSESNAPPY
+ endif
+ 
+-all: makedumpfile
++all: makedumpfile eppic_makedumpfile.so
+ 
+ $(OBJ_PART): $(SRC_PART)
+ 	$(CC) $(CFLAGS) -c -o ./$@ ./$(@:.o=.c) 
+@@ -80,7 +80,7 @@ makedumpfile: $(SRC) $(OBJ_PART) $(OBJ_A
+ 	gzip -c ./makedumpfile.conf.5 > ./makedumpfile.conf.5.gz
+ 
+ eppic_makedumpfile.so: extension_eppic.c
+-	$(CC) $(CFLAGS) -shared -rdynamic -o $@ extension_eppic.c -fPIC -leppic -ltinfo
++	$(CC) $(CFLAGS) -shared -rdynamic -o $@ extension_eppic.c -I../eppic/libeppic -fPIC ../eppic/libeppic/libeppic.a -ltinfo
+ 
+ clean:
+ 	rm -f $(OBJ) $(OBJ_PART) $(OBJ_ARCH) makedumpfile makedumpfile.8.gz makedumpfile.conf.5.gz
