@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.3
-Release: 68%{?dist}
+Release: 69%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -326,6 +326,9 @@ done
 %{_libdir}/eppic_makedumpfile.so
 
 %changelog
+* Thu Mar 14 2013 Baoquan He <bhe@redhat.com> - 2.0.3-69
+- Support for eppic language as a subpackage
+ 
 * Thu Mar 14 2013 Baoquan He <bhe@redhat.com> - 2.0.3-68
 - tune sysconfig to save memory usage
 - Remove useless codes related to LOGGER in kdumpctl
