@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.3
-Release: 67%{?dist}
+Release: 68%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -306,6 +306,19 @@ done
 
 
 %changelog
+* Thu Mar 14 2013 Baoquan He <bhe@redhat.com> - 2.0.3-68
+- tune sysconfig to save memory usage
+- Remove useless codes related to LOGGER in kdumpctl
+- kdumpctl:print out the service status
+- Return to start() function when check_ssh_target failed
+- use findmnt instead of blkid in mkdumprd
+- check dump target mounting earlier
+- kdumpctl: rename function name check_config
+- add function to check kdump config file
+- dracut-module-setup.sh: remove UUID/LABEL quotes before using it
+- Change dump_to_rootfs to be a default option and reboot to be default action
+- Remove "-F" in CORE_COLLECTOR when dump_to_rootfs
+
 * Tue Feb 19 2013 Baoquan He <bhe@redhat.com> - 2.0.3-67
 - Remove comma which is redundant
 - Modify codes related to dump dir to make it clearer
