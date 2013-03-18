@@ -322,7 +322,6 @@ done
 %doc kexec-kdump-howto.txt
 
 %files eppic
-%{_libdir}/*
 %{_libdir}/eppic_makedumpfile.so
 
 %changelog
