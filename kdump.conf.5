@@ -46,12 +46,6 @@ supports DNS. NOTE: make sure user has necessary write permissions on
 server and that a fqdn is used as the server name
 .RE
 
-.B blacklist <list of kernel modules>
-.RS
-Specify a space-separated list of kernel modules not to add to the initramfs.
-The kernel modules have to be specified without the ".ko" suffix.
-.RE
-
 .B sshkey <path>
 .RS
 Specifies the path of the ssh key you want to use when do ssh dump,
@@ -214,6 +208,20 @@ Higher level means more debugging output.
 3 - /proc/meminfo + /proc/slabinfo
 .RE
 
+.B blacklist <list of kernel modules>
+.RS
+blacklist option was recently being used to prevent loading modules in
+initramfs. General terminology for blacklist has been that module is
+present in initramfs but it is not actually loaded in kernel. Hence
+retaining blacklist option creates more confusing behavior. It has been
+deprecated.
+.PP
+Instead use rd.driver.blacklist option on second kernel to blacklist
+a certain module. One can edit /etc/sysconfig/kdump.conf and edit
+KDUMP_COMMANDLINE_APPEND to pass kernel command line options. Refer
+to dracut.cmdline man page for more details on module blacklist option.
+.RE
+
 .RE
 
 .SH EXAMPLES
@@ -291,4 +299,4 @@ examples for other options please see
 
 .SH SEE ALSO
 
-kexec(8) mkdumprd(8)
+kexec(8) mkdumprd(8) dracut.cmdline(7)

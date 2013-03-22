@@ -271,9 +271,6 @@ do
     core_collector)
         verify_core_collector "$config_val"
         ;;
-    blacklist)
-        add_dracut_arg "--omit-drivers" "$config_val"
-        ;;
     *)
         if [ -n $(echo $config_opt | grep "^#.*$") ]
         then
