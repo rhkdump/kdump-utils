@@ -15,13 +15,21 @@ SAVE_PATH=$(grep ^path $conf_file| cut -d' '  -f2)
 extra_modules=""
 dracut_args=("--hostonly" "-o" "plymouth dash")
 
+perror_exit() {
+    echo $@ >&2
+    exit 1
+}
+
+perror() {
+    echo $@ >&2
+}
+
 get_persistent_dev() {
     local i _tmp _dev
 
     _dev=$(udevadm info --query=name --name="$1" 2>/dev/null)
     [ -z "$_dev" ] && {
-        echo "Kernel dev name of $1 is not found."
-        exit 1
+        perror_exit "Kernel dev name of $1 is not found."
     }
 
     for i in /dev/mapper/* /dev/disk/by-uuid/* /dev/disk/by-id/*; do
@@ -32,8 +40,7 @@ get_persistent_dev() {
         fi
     done
 
-    echo "Persistent device name of $1 is not found."
-    exit 1
+    perror_exit "Persistent device name of $1 is not found."
 }
 
 add_dracut_arg() {
@@ -103,10 +110,9 @@ get_ssh_size() {
     local _opt _out _size
     _opt="-i $SSH_KEY_LOCATION -o BatchMode=yes -o StrictHostKeyChecking=yes"
     _out=$(ssh -q -n $_opt $1 "df -P $SAVE_PATH")
-    if [ $? -ne 0 ]; then
-        echo "checking remote ssh server available size failed."
-        exit 1
-    fi
+    [ $? -ne 0 ] && {
+        perror_exit "checking remote ssh server available size failed."
+    }
     #ssh output removed the line break, so print $11 instead of $4
     _size=$(echo -n $_out|tail -1 | awk '{print $11}')
     echo -n $_size
@@ -123,10 +129,8 @@ mkdir_save_path() {
     [ ! -d ${_mnt}/$SAVE_PATH ] && {
         if is_readonly_mount $1; then
             echo "Mounting $1 as read-write for creating dump directory.."
-            mount -o remount,rw $1
-            [ $? -ne 0 ] && {
-                echo "Mounting $1 as read-write failed."
-                exit 1;
+            mount -o remount,rw $1 || {
+                perror_exit "Mounting $1 as read-write failed."
             }
             _remount="yes"
         fi
@@ -135,13 +139,11 @@ mkdir_save_path() {
         [ "$_remount" = "yes" ] && {
             echo "Remounting $1 as read-only."
             mount -o remount,ro $1 || {
-                echo "Remounting $1 as read-only failed."
-                exit 1
+                perror_exit "Remounting $1 as read-only failed."
             }
         }
         [ $_ret -ne 0 ] && {
-            echo "Creating ${_mnt}/$SAVE_PATH failed."
-            exit 1
+            perror_exit "Creating ${_mnt}/$SAVE_PATH failed."
         }
     }
 }
@@ -204,8 +206,7 @@ verify_core_collector() {
     if is_ssh_dump_target || is_raw_dump_target; then
         if [ "${1%% *}" = "makedumpfile" ]; then
             ! strstr "$1" "-F" && {
-                echo "The specified dump target needs makedumpfile \"-F\" option."
-                exit 1
+                perror_exit "The specified dump target needs makedumpfile \"-F\" option."
             }
         fi
     fi
@@ -237,8 +238,7 @@ do
         ;;
     ext[234]|xfs|btrfs|minix|nfs)
         if ! findmnt $config_val >/dev/null; then
-            echo "Dump target $config_val is probably not mounted."
-            exit 1
+            perror_exit "Dump target $config_val is probably not mounted."
         fi
 
         if [ "$config_opt" = "nfs" ]; then
@@ -251,8 +251,7 @@ do
     raw)
         #checking raw disk writable
         dd if=$config_val count=1 of=/dev/null > /dev/null 2>&1 || {
-            echo "Bad raw disk $config_val"
-            exit 1
+            perror_exit "Bad raw disk $config_val"
         }
         add_dracut_arg "--device" "$(get_persistent_dev $config_val)"
         check_size raw $config_val
@@ -264,8 +263,7 @@ do
             add_dracut_module "ssh-client"
 		add_dracut_sshkey "$SSH_KEY_LOCATION"
         else
-            echo "Bad ssh dump target $config_val"
-            exit 1
+            perror_exit "Bad ssh dump target $config_val"
         fi
         ;;
     core_collector)
@@ -289,4 +287,3 @@ dracut "${dracut_args[@]}" -M "$@"
 _rc=$?
 sync
 exit $_rc
-
