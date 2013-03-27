@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.3
-Release: 70%{?dist}
+Release: 71%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -329,6 +329,9 @@ done
 %endif
 
 %changelog
+* Wed Mar 27 2013 Baoquan He <bhe@redhat.com> - 2.0.3-71
+- Remove eppic support on ppc and s390 arch
+
 * Mon Mar 18 2013 Baoquan He <bhe@redhat.com> - 2.0.3-70
 - Change rules related to eppic in kexec-tools.spec
 
