@@ -90,6 +90,7 @@ normal or a panic reboot. This package contains the /sbin/kexec
 binary and ancillary utilities that together form the userspace
 component of the kernel's kexec feature.
 
+%ifarch %{ix86} x86_64 ia64 ppc64 s390x
 %package eppic
 Requires: %{name} = %{version}
 Summary: Additional eppic_makedumpfile.so shared object
@@ -99,6 +100,7 @@ Group: Applications/System
 The eppic_makedumpfile.so shared object is loaded by the
 "makedumpfile --eppic" option, and is used to erase sensitive
 or confidential kernel data from a dumpfile.
+%endif
 
 %prep
 %setup -q 
@@ -321,8 +323,10 @@ done
 %doc TODO
 %doc kexec-kdump-howto.txt
 
+%ifarch %{ix86} x86_64 ia64 ppc64 s390x
 %files eppic
 %{_libdir}/eppic_makedumpfile.so
+%endif
 
 %changelog
 * Mon Mar 18 2013 Baoquan He <bhe@redhat.com> - 2.0.3-70
