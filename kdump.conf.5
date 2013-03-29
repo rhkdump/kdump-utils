@@ -163,6 +163,14 @@ By default, kdump initrd only will be rebuilt when necessary.
 Specify 1 to force rebuilding kdump initrd every time when kdump service starts.
 .RE
 
+.B override_resettable <0 | 1>
+.RS
+Usually a unresettable block device can't be dump target. Specifying 1 means
+though block target is unresettable, user understand this situation and want
+to try dumping. By default, it's set to 0, means not to try a destined failure.
+.RE
+
+
 .SH DEPRECATED OPTIONS
 
 .B net <nfs mount>|<user@server>
