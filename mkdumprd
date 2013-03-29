@@ -411,6 +411,45 @@ if ! check_resettable; then
     exit 1
 fi
 
+# $1: maj:min
+is_crypt()
+{
+    local majmin=$1 dev line ID_FS_TYPE=""
+
+    line=$(udevadm info --query=property --path=/sys/dev/block/$majmin \
+            | grep "^ID_FS_TYPE")
+    eval "$line"
+    [[ "$ID_FS_TYPE" = "crypto_LUKS" ]] && {
+        dev=$(udevadm info --query=all --path=/sys/dev/block/$majmin | awk -F= '/DEVNAME/{print $2}')
+        perror "Device $dev is encrypted, can not be used in kdump."
+        return 0
+    }
+    return 1
+}
+
+check_crypt()
+{
+    local _ret _target
+
+    for_each_block_target is_crypt
+    _ret=$?
+
+    [ $_ret -eq 0 ] && return
+
+    if [ $_ret -eq 1 ]; then
+        _target=$(get_block_dump_target)
+        perror "Can not save vmcore to target device $_target."
+    elif [ $_ret -eq 2 ]; then
+        perror "Default action is dump_to_rootfs but can not save vmcore to root device."
+    fi
+
+    return 1
+}
+
+if ! check_crypt; then
+    exit 1
+fi
+
 # firstly get right SSH_KEY_LOCATION
 keyfile=$(awk '/^sshkey/ {print $2}' $conf_file)
 if [ -f "$keyfile" ]; then
