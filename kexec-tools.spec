@@ -1,5 +1,5 @@
 Name: kexec-tools
-Version: 2.0.3
+Version: 2.0.4
 Release: 71%{?dist}
 License: GPLv2
 Group: Applications/System
