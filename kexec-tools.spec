@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.4
-Release: 71%{?dist}
+Release: 72%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -329,6 +329,13 @@ done
 %endif
 
 %changelog
+* Tue Apr 2 2013 Baoquan He <bhe@redhat.com> - 2.0.3-72
+- Pull kexec-tools-2.0.4
+- Check if block device as dump target is resettable
+- mkdumprd: add function perror_exit
+- Deprecate blacklist option
+
+
 * Wed Mar 27 2013 Baoquan He <bhe@redhat.com> - 2.0.3-71
 - Remove eppic support on ppc and s390 arch
 
