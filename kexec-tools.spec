@@ -51,8 +51,6 @@ Obsoletes: diskdumputils netdump
 #
 # Patches 0 through 100 are meant for x86 kexec-tools enablement
 #
-Patch001: kexec-tools-2.0.3-Load-bzImages-smaller-than-32-KiB.patch
-Patch002: kexec-tools-2.0.3-kdump-pass-acpi_rsdp-to-2nd-kernel-for-efi-booting.patch
 
 #
 # Patches 101 through 200 are meant for x86_64 kexec-tools enablement
@@ -65,7 +63,6 @@ Patch002: kexec-tools-2.0.3-kdump-pass-acpi_rsdp-to-2nd-kernel-for-efi-booting.p
 #
 # Patches 301 through 400 are meant for ppc64 kexec-tools enablement
 #
-Patch301: kexec-tools-2.0.3-ppc-ppc64-compile-purgatory-code-with-gcc-option-msoft-float.patch
 
 #
 # Patches 401 through 500 are meant for s390 kexec-tools enablement
@@ -73,14 +70,11 @@ Patch301: kexec-tools-2.0.3-ppc-ppc64-compile-purgatory-code-with-gcc-option-mso
 #
 # Patches 501 through 600 are meant for ppc kexec-tools enablement
 #
-Patch501: kexec-tools-2.0.3-ppc-exec-stack-fix.patch
 
 #
 # Patches 601 onward are generic patches
 #
 Patch601: kexec-tools-2.0.3-disable-kexec-test.patch
-Patch602: kexec-tools-2.0.3-vmcore-dmesg-Do-not-write-beyond-end-of-buffer.patch
-Patch603: kexec-tools-2.0.3-vmcore-dmesg-vmcore-dmesg-Make-it-work-with-new-stru.patch
 Patch604: kexec-tools-2.0.3-build-makedumpfile-eppic-shared-object.patch
 
 %description
@@ -110,13 +104,7 @@ tar -z -x -v -f %{SOURCE9}
 tar -z -x -v -f %{SOURCE19}
 
 
-%patch001 -p1
-%patch002 -p1
-%patch301 -p1
-%patch501 -p1
 %patch601 -p1
-%patch602 -p1
-%patch603 -p1
 %patch604 -p1
 
 tar -z -x -v -f %{SOURCE13}
