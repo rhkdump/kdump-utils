@@ -91,7 +91,15 @@ kdump_get_perm_addr() {
 kdump_setup_bridge() {
     local _netdev=$1
     for _dev in `ls /sys/class/net/$_netdev/brif/`; do
-        echo -n " ifname=$_dev:$(kdump_get_mac_addr $_dev)" >> ${initdir}/etc/cmdline.d/41bridge.conf
+        if kdump_is_bond "$_dev"; then
+            kdump_setup_bond "$_dev"
+        elif kdump_is_team "$_dev"; then
+            kdump_setup_team "$_dev"
+        elif kdump_is_vlan "$_dev"; then
+            kdump_setup_vlan "$_dev"
+        else
+            echo -n " ifname=$_dev:$(kdump_get_mac_addr $_dev)" >> ${initdir}/etc/cmdline.d/41bridge.conf
+        fi
     done
     echo " bridge=$_netdev:$(cd /sys/class/net/$_netdev/brif/; echo * | sed -e 's/ /,/g')" >> ${initdir}/etc/cmdline.d/41bridge.conf
 }
