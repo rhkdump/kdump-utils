@@ -96,20 +96,16 @@ kdump_setup_bridge() {
     echo " bridge=$_netdev:$(cd /sys/class/net/$_netdev/brif/; echo * | sed -e 's/ /,/g')" >> ${initdir}/etc/cmdline.d/41bridge.conf
 }
 
-kdump_get_bond_mode() {
-    local _dev=$1
-    awk '{print $2}' /sys/class/net/$_dev/bonding/mode
-}
-
 kdump_setup_bond() {
     local _netdev=$1
     for _dev in `cat /sys/class/net/$_netdev/bonding/slaves`; do
         echo -n " ifname=$_dev:$(kdump_get_mac_addr $_dev)" >> ${initdir}/etc/cmdline.d/42bond.conf
     done
     echo -n " bond=$_netdev:$(sed -e 's/ /,/g' /sys/class/net/$_netdev/bonding/slaves)" >> ${initdir}/etc/cmdline.d/42bond.conf
-    #TODO: get other options as well
-    bondoptions="mode=$(kdump_get_bond_mode $_netdev)"
-    echo " bondoptions=\"$bondoptions\"" >> ${initdir}/etc/cmdline.d/42bond.conf
+    # Get bond options specified in ifcfg
+    . /etc/sysconfig/network-scripts/ifcfg-$_netdev
+    bondoptions="$(echo :$BONDING_OPTS | sed 's/\s\+/,/')"
+    echo "$bondoptions" >> ${initdir}/etc/cmdline.d/42bond.conf
 }
 
 kdump_setup_team() {
