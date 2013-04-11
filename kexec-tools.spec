@@ -37,7 +37,7 @@ Requires(post): systemd-units
 Requires(preun): systemd-units
 Requires(postun): systemd-units
 Requires(pre): coreutils sed zlib 
-Requires: dracut, dracut-network
+Requires: dracut, dracut-network, ethtool
 BuildRequires: zlib-devel zlib zlib-static elfutils-devel-static glib2-devel bzip2-devel ncurses-devel bison flex
 BuildRequires: pkgconfig intltool gettext 
 BuildRequires: systemd-units
