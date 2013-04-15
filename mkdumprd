@@ -45,9 +45,29 @@ get_persistent_dev() {
 }
 
 add_dracut_arg() {
+    local arg qarg is_quoted=0
     while [ $# -gt 0 ];
     do
-        dracut_args+=("$1")
+        arg="${1//\'/\"}"
+        #Handle quoted substring properly for passing it to dracut_args array.
+        if [ $is_quoted -eq 0 ]; then
+            if [[ "$arg" == "\"" ]] || [[ $arg != ${arg#\"} ]]; then
+                is_quoted=1
+                arg=${arg#\"}
+            fi
+        fi
+        if [ $is_quoted -eq 1 ]; then
+            qarg="$qarg $arg"
+            if [[ "$arg" == "\"" ]] || [[ $arg != ${arg%\"} ]]; then
+                is_quoted=0
+                arg=${qarg%\"}
+                qarg=""
+            else
+                shift
+                continue
+            fi
+        fi
+        dracut_args+=("$arg")
         shift
     done
 }
@@ -499,6 +519,9 @@ do
         ;;
     core_collector)
         verify_core_collector "$config_val"
+        ;;
+    dracut_args)
+        add_dracut_arg $config_val
         ;;
     *)
         if [ -n $(echo $config_opt | grep "^#.*$") ]

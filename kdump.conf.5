@@ -171,6 +171,12 @@ to try dumping. By default, it's set to 0, means not to try a destined failure.
 .RE
 
 
+.B dracut_args <arg(s)>
+.RS
+Kdump uses dracut to generate initramfs for second kernel. This option
+allows a user to pass arguments to dracut directly.
+.RE
+
 .SH DEPRECATED OPTIONS
 
 .B net <nfs mount>|<user@server>

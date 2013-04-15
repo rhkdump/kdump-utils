@@ -86,7 +86,7 @@ function check_config()
 		case "$config_opt" in
 		\#* | "")
 			;;
-		raw|ext2|ext3|ext4|minix|btrfs|xfs|nfs|ssh|sshkey|path|core_collector|kdump_post|kdump_pre|extra_bins|extra_modules|default|force_rebuild)
+		raw|ext2|ext3|ext4|minix|btrfs|xfs|nfs|ssh|sshkey|path|core_collector|kdump_post|kdump_pre|extra_bins|extra_modules|default|force_rebuild|dracut_args)
 			[ -z "$config_val" ] && {
 				echo "Invalid kdump config value for option $config_opt."
 				return 1;
