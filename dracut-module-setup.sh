@@ -399,6 +399,7 @@ install() {
     inst "/bin/sync" "/bin/sync"
     inst "/bin/cut" "/bin/cut"
     inst "/sbin/makedumpfile" "/sbin/makedumpfile"
+    inst "/sbin/vmcore-dmesg" "/sbin/vmcore-dmesg"
     inst_hook pre-pivot 9999 "$moddir/kdump.sh"
 
     # Check for all the devices and if any device is iscsi, bring up iscsi

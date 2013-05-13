@@ -7,6 +7,7 @@ set -x
 KDUMP_PATH="/var/crash"
 CORE_COLLECTOR=""
 DEFAULT_CORE_COLLECTOR="makedumpfile -c --message-level 1 -d 31"
+DMESG_COLLECTOR="/sbin/vmcore-dmesg"
 DEFAULT_ACTION="reboot -f"
 DATEDIR=`date +%Y.%m.%d-%T`
 HOST_IP='127.0.0.1'
@@ -60,6 +61,9 @@ dump_fs()
         mount -o remount,rw $_mp || return 1
     fi
     mkdir -p $_mp/$KDUMP_PATH/$HOST_IP-$DATEDIR || return 1
+
+    save_vmcore_dmesg_fs ${DMESG_COLLECTOR} "$_mp/$KDUMP_PATH/$HOST_IP-$DATEDIR/"
+
     $CORE_COLLECTOR /proc/vmcore $_mp/$KDUMP_PATH/$HOST_IP-$DATEDIR/vmcore || return 1
     umount $_mp || return 1
     return 0
@@ -90,6 +94,9 @@ dump_to_rootfs()
 
     mount -o remount,rw $NEWROOT/ || return 1
     mkdir -p $NEWROOT/$KDUMP_PATH/$HOST_IP-$DATEDIR
+
+    save_vmcore_dmesg_fs ${DMESG_COLLECTOR} "$NEWROOT/$KDUMP_PATH/$HOST_IP-$DATEDIR/"
+
     $CORE_COLLECTOR /proc/vmcore $NEWROOT/$KDUMP_PATH/$HOST_IP-$DATEDIR/vmcore || return 1
     sync
 }
@@ -102,6 +109,8 @@ dump_ssh()
     cat /var/lib/random-seed > /dev/urandom
     ssh -q $_opt $2 mkdir -p $_dir || return 1
 
+    save_vmcore_dmesg_ssh ${DMESG_COLLECTOR} ${_dir} "${_opt}" $2
+
     if [ "${CORE_COLLECTOR%% *}" = "scp" ]; then
         scp -q $_opt /proc/vmcore "$2:$_dir/vmcore-incomplete" || return 1
         ssh $_opt $2 "mv $_dir/vmcore-incomplete $_dir/vmcore" || return 1
@@ -110,6 +119,40 @@ dump_ssh()
         ssh $_opt $2 "mv $_dir/vmcore-incomplete $_dir/vmcore.flat" || return 1
     fi
 }
+
+save_vmcore_dmesg_fs() {
+    local _dmesg_collector=$1
+    local _path=$2
+
+    echo "Saving vmcore-dmesg.txt"
+    $_dmesg_collector /proc/vmcore > ${_path}/vmcore-dmesg-incomplete.txt
+    _exitcode=$?
+    if [ $_exitcode -eq 0 ]; then
+        mv ${_path}/vmcore-dmesg-incomplete.txt ${_path}/vmcore-dmesg.txt
+        echo "Saved vmcore-dmesg.txt"
+    else
+        echo "Saving vmcore-dmesg.txt failed"
+    fi
+}
+
+save_vmcore_dmesg_ssh() {
+    local _dmesg_collector=$1
+    local _path=$2
+    local _opts="$3"
+    local _location=$4
+
+    echo "Saving vmcore-dmesg.txt"
+    $_dmesg_collector /proc/vmcore | ssh $_opts $_location "dd of=$_path/vmcore-dmesg-incomplete.txt"
+    _exitcode=$?
+
+    if [ $_exitcode -eq 0 ]; then
+        ssh -q $_opts $_location mv $_path/vmcore-dmesg-incomplete.txt $_path/vmcore-dmesg.txt
+        echo "Saved vmcore-dmesg.txt"
+    else
+        echo "Saving vmcore-dmesg.txt failed"
+    fi
+}
+
 
 is_ssh_dump_target()
 {

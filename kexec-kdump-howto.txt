@@ -179,6 +179,14 @@ perform postmortem analysis:
 
 and so on...
 
+Saving vmcore-dmesg.txt
+----------------------
+Kernel log bufferes are one of the most important information available
+in vmcore. Now before saving vmcore, kernel log bufferes are extracted
+from /proc/vmcore and saved into a file vmcore-dmesg.txt. After
+vmcore-dmesg.txt, vmcore is saved. Destination disk and directory for
+vmcore-dmesg.txt is same as vmcore. Note that kernel log buffers will
+not be available if dump target is raw device.
 
 Dump Triggering methods:
 
