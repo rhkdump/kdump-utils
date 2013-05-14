@@ -198,7 +198,6 @@ kdump_setup_netdev() {
     elif kdump_is_vlan "$_netdev"; then
         kdump_setup_vlan "$_netdev"
     else
-        echo -n " ip=${_static}$_netdev:${_proto}" > ${initdir}/etc/cmdline.d/40ip.conf
         echo " ifname=$_netdev:$(kdump_get_mac_addr $_netdev)" >> ${initdir}/etc/cmdline.d/40ip.conf
     fi
 
