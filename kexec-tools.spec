@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.4
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -317,6 +317,15 @@ done
 %endif
 
 %changelog
+* Tue May 14 2013 Baoquan He <bhe@redhat.com> - 2.0.4-2
+- kdump: Save vmcore-dmesg.txt before saving vmcore
+- Remove "ip=" overwrite to 40ip.conf
+- Add support for bridge over bond/team/vlan.
+- Fix bonding options syntax and get all specified options from ifcfg file.
+- add dracut_args option to kdump.conf
+- kexec-tools.spec: Add ethtool to dependency.
+- error out if dump target is encrypted
+
 * Wed Apr  3 2013 Baoquan He <bhe@redhat.com> - 2.0.4-1
 - Delete several patches which have been merged into kexec-tools-2.0.4
 - Revert: Release 2.0.3-72
