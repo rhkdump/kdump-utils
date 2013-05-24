@@ -1,5 +1,6 @@
 #!/bin/sh
 
+exec >&2
 . /lib/dracut-lib.sh
 
 set -o pipefail
