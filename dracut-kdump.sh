@@ -112,7 +112,7 @@ dump_ssh()
 
     save_vmcore_dmesg_ssh ${DMESG_COLLECTOR} ${_dir} "${_opt}" $2
 
-    if [ "${CORE_COLLECTOR%% *}" = "scp" ]; then
+    if [ "${CORE_COLLECTOR%%[[:blank:]]*}" = "scp" ]; then
         scp -q $_opt /proc/vmcore "$2:$_dir/vmcore-incomplete" || return 1
         ssh $_opt $2 "mv $_dir/vmcore-incomplete $_dir/vmcore" || return 1
     else

@@ -251,7 +251,7 @@ kdump_install_conf() {
             dracut_install $config_val
             ;;
         core_collector)
-            dracut_install "${config_val%% *}"
+            dracut_install "${config_val%%[[:blank:]]*}"
             ;;
         esac
     done < /etc/kdump.conf
