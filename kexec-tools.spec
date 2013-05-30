@@ -164,7 +164,11 @@ install -m 644 %{SOURCE8} $RPM_BUILD_ROOT%{_sysconfdir}/kdump.conf
 install -m 644 kexec/kexec.8 $RPM_BUILD_ROOT%{_mandir}/man8/kexec.8
 install -m 755 %{SOURCE11} $RPM_BUILD_ROOT%{_datadir}/kdump/firstboot_kdump.py
 install -m 644 %{SOURCE12} $RPM_BUILD_ROOT%{_mandir}/man8/mkdumprd.8
+%ifnarch s390x
+# For s390x the ELF header is created in the kdump kernel and therefore kexec
+# udev rules are not required
 install -m 644 %{SOURCE14} $RPM_BUILD_ROOT%{_sysconfdir}/udev/rules.d/98-kexec.rules
+%endif
 install -m 644 %{SOURCE15} $RPM_BUILD_ROOT%{_mandir}/man5/kdump.conf.5
 install -m 644 %{SOURCE16} $RPM_BUILD_ROOT%{_unitdir}/kdump.service
 mkdir -p $RPM_BUILD_ROOT/usr/sbin
@@ -300,7 +304,9 @@ done
 %{_datadir}/kdump
 %config(noreplace,missingok) %{_sysconfdir}/sysconfig/kdump
 %config(noreplace,missingok) %{_sysconfdir}/kdump.conf
+%ifnarch s390x
 %config %{_sysconfdir}/udev/rules.d/*
+%endif
 %{dracutlibdir}/modules.d/*
 %dir %{_localstatedir}/crash
 %{_mandir}/man8/*
