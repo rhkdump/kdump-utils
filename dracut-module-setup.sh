@@ -13,7 +13,12 @@ check() {
 }
 
 depends() {
-    echo "base shutdown"
+    local _dep="base shutdown"
+
+    if sestatus 2>/dev/null | grep -q "SELinux status.*enabled"; then
+        _dep="$_dep selinux"
+    fi
+    echo $_dep
     return 0
 }
 
