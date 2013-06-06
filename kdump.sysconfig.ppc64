@@ -16,7 +16,7 @@ KDUMP_COMMANDLINE=""
 
 # This variable lets us append arguments to the current kdump commandline
 # As taken from either KDUMP_COMMANDLINE above, or from /proc/cmdline
-KDUMP_COMMANDLINE_APPEND="irqpoll maxcpus=1 noirqdistrib reset_devices cgroup_disable=memory numa=off udev.children-max=2 ehea.use_mcs=0 action_on_fail=continue"
+KDUMP_COMMANDLINE_APPEND="irqpoll maxcpus=1 noirqdistrib reset_devices cgroup_disable=memory numa=off udev.children-max=2 ehea.use_mcs=0 action_on_fail=continue panic=10"
 
 # Any additional kexec arguments required.  In most situations, this should
 # be left empty
