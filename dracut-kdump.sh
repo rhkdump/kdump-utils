@@ -100,6 +100,8 @@ dump_to_rootfs()
 
     $CORE_COLLECTOR /proc/vmcore $NEWROOT/$KDUMP_PATH/$HOST_IP-$DATEDIR/vmcore || return 1
     sync
+    umount $NEWROOT || return 1
+    return 0
 }
 
 dump_ssh()
