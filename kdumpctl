@@ -378,6 +378,73 @@ function save_raw()
 	return 0
 }
 
+get_save_path() {
+	local _save_path=$(grep "^path" /etc/kdump.conf|awk '{print $2}')
+	if [ -z "$_save_path" ]; then
+		_save_path="/var/crash"
+	fi
+
+	echo $_save_path
+}
+
+is_dump_target_configured() {
+    local _target
+
+    _target=$(egrep "^ext[234]|^xfs|^btrfs|^minix|^raw|^ssh|^nfs" /etc/kdump.conf)
+
+     [ -n "$_target" ]
+}
+
+local_fs_dump_target()
+{
+	local _target
+
+	_target=$(egrep "^ext[234]|^xfs|^btrfs|^minix" /etc/kdump.conf)
+	if [ $? -eq 0 ]; then
+		echo $_target|awk '{print $2}'
+	fi
+}
+
+path_to_be_relabeled() {
+	local _path _target _mnt="/" _rmnt
+
+	if is_dump_target_configured; then
+		_target=$(local_fs_dump_target)
+		if [[ -n "$_target" ]]; then
+			_mnt=$(findmnt -k -f -n -r -o TARGET $_target)
+			if [ -z "$_mnt" ]; then
+				return
+			fi
+		else
+			return
+		fi
+	fi
+
+	_path=$(get_save_path)
+	# if $_path is masked by other mount, we will not relabel it.
+	_rmnt=$(df $_mnt/$_path 2>/dev/null | tail -1 | awk '{ print $NF }')
+	if [ "$_rmnt" == "$_mnt" ]; then
+		echo $_mnt/$_path
+	fi
+}
+
+selinux_relabel()
+{
+	local _path _i _attr
+
+	_path=$(path_to_be_relabeled)
+	if [ -z "$_path" ] || ! [ -d "$_path" ] ; then
+		return
+	fi
+
+	for _i in $(find $_path); do
+		_attr=$(getfattr -m "security.selinux" $_i 2>/dev/null)
+		if [ -z "$_attr" ]; then
+			restorecon $_i;
+		fi
+	done
+}
+
 function start()
 {
 	check_config
@@ -386,6 +453,9 @@ function start()
 		return 1
 	fi
 
+	if sestatus 2>/dev/null | grep -q "SELinux status.*enabled"; then
+		selinux_relabel
+	fi
 	save_raw
 	if [ $? -ne 0 ]; then
 		echo "Starting kdump: [FAILED]"
