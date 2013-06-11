@@ -4,7 +4,6 @@ exec >&2
 . /lib/dracut-lib.sh
 
 set -o pipefail
-set -x
 KDUMP_PATH="/var/crash"
 CORE_COLLECTOR=""
 DEFAULT_CORE_COLLECTOR="makedumpfile -c --message-level 1 -d 31"
