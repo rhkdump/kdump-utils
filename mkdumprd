@@ -139,10 +139,35 @@ get_ssh_size() {
     echo -n $_size
 }
 
+#mkdir if save path does not exist on ssh dump target
+#$1=ssh dump target
+#caller should ensure write permission on $DUMP_TARGET:$SAVE_PATH
+mkdir_save_path_ssh()
+{
+    local _opt _dir
+    _opt="-i $SSH_KEY_LOCATION -o BatchMode=yes -o StrictHostKeyChecking=yes"
+    ssh -q $_opt $1 mkdir -p $SAVE_PATH 2>&1 > /dev/null
+    _ret=$?
+    if [ $_ret -ne 0 ]; then
+        perror_exit "mkdir failed on $DUMP_TARGET:$SAVE_PATH"
+    fi
+
+    #check whether user has write permission on $SAVE_PATH/$DUMP_TARGET
+    _dir=$(ssh -qn $_opt $1 mktemp -dqp $SAVE_PATH 2>/dev/null)
+    _ret=$?
+    if [ $_ret -ne 0 ]; then
+        perror_exit "Could not create temporary directory on $DUMP_TARGET:$SAVE_PATH. Make sure user has write permission on destination"
+    fi
+    ssh -q $_opt $1 rmdir $_dir
+
+    return 0
+}
+
+
 #mkdir if save path does not exist on dump target filesystem
 #$1=dump target
 #caller should ensure $1 is mounted
-mkdir_save_path() {
+mkdir_save_path_fs() {
     local _mnt=$(to_mount_point $1)
     local _remount="no"
     local _ret
@@ -496,7 +521,7 @@ do
             add_dracut_module "nfs"
         fi
         add_mount "$config_val"
-        mkdir_save_path $config_val
+        mkdir_save_path_fs $config_val
         check_size fs $config_val
         ;;
     raw)
@@ -511,6 +536,7 @@ do
         if strstr "$config_val" "@";
         then
             check_size ssh $config_val
+            mkdir_save_path_ssh $config_val
             add_dracut_module "ssh-client"
 		add_dracut_sshkey "$SSH_KEY_LOCATION"
         else
