@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.4
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -323,6 +323,18 @@ done
 %endif
 
 %changelog
+* Thu Jun 13 2013 Baoquan He <bhe@redhat.com> - 2.0.4-3
+- mkdumprd: remove -M option for dracut
+- kdumpctl: add selinux relabel when service startup
+- depends on dracut selinux module
+- dracut-kdump.sh: umount rootfs after dump_to_rootfs
+- kdump.sysconfig: append "panic=10" to kdump cmdline
+- kexec-kdump-howto: grubby is suggested modifing kernel cmdline
+- kexec-tools.spec: removes kexec udev rules for s390
+- kdump.sysconfig: Add option action_on_fail and set its default as continue
+- Add tab key as delimiter for core_collector in kdump.conf
+- redirect stdout to stderr
+
 * Tue May 14 2013 Baoquan He <bhe@redhat.com> - 2.0.4-2
 - kdump: Save vmcore-dmesg.txt before saving vmcore
 - Remove "ip=" overwrite to 40ip.conf
