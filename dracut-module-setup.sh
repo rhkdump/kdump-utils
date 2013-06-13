@@ -100,6 +100,7 @@ kdump_get_perm_addr() {
 
 kdump_setup_bridge() {
     local _netdev=$1
+    local _brif=""
     for _dev in `ls /sys/class/net/$_netdev/brif/`; do
         if kdump_is_bond "$_dev"; then
             kdump_setup_bond "$_dev"
@@ -110,8 +111,9 @@ kdump_setup_bridge() {
         else
             echo -n " ifname=$_dev:$(kdump_get_mac_addr $_dev)" >> ${initdir}/etc/cmdline.d/41bridge.conf
         fi
+        _brif+="$_dev,"
     done
-    echo " bridge=$_netdev:$(cd /sys/class/net/$_netdev/brif/; echo * | sed -e 's/ /,/g')" >> ${initdir}/etc/cmdline.d/41bridge.conf
+    echo " bridge=$_netdev:$(echo $_brif | sed -e 's/,$//')" >> ${initdir}/etc/cmdline.d/41bridge.conf
 }
 
 kdump_setup_bond() {
