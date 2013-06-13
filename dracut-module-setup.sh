@@ -189,7 +189,7 @@ kdump_setup_netdev() {
         kdump_setup_znet $_netdev
     fi
 
-    _netmac=`ip addr show $_netdev 2>/dev/null|awk '/ether/{ print $2 }'`
+    _netmac=$(kdump_get_mac_addr $_netdev)
     _static=$(kdump_static_ip $_netdev)
     if [ -n "$_static" ]; then
         _proto=none
