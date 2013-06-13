@@ -83,7 +83,7 @@ kdump_static_ip() {
 }
 
 kdump_get_mac_addr() {
-    echo `ip addr show $1 2>/dev/null|awk '/ether/{ print $2 }'`
+    cat /sys/class/net/$1/address
 }
 
 #Bonding or team master modifies the mac address
