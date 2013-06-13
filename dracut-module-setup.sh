@@ -117,7 +117,7 @@ kdump_setup_bridge() {
 kdump_setup_bond() {
     local _netdev=$1
     for _dev in `cat /sys/class/net/$_netdev/bonding/slaves`; do
-        echo -n " ifname=$_dev:$(kdump_get_mac_addr $_dev)" >> ${initdir}/etc/cmdline.d/42bond.conf
+        echo -n " ifname=$_dev:$(kdump_get_perm_addr $_dev)" >> ${initdir}/etc/cmdline.d/42bond.conf
     done
     echo -n " bond=$_netdev:$(sed -e 's/ /,/g' /sys/class/net/$_netdev/bonding/slaves)" >> ${initdir}/etc/cmdline.d/42bond.conf
     # Get bond options specified in ifcfg
