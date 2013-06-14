@@ -577,3 +577,32 @@ initramfs for the time being. If you need modify "KDUMP_COMMANDLINE=" in
 options are copied from /proc/cmdline. In general it is best to append
 command line options using "KDUMP_COMMANDLINE_APPEND=" instead of replacing
 the original command line completely.
+
+Debugging Tips
+--------------
+- One can drop into a shell before/after saving vmcore with the help of
+  using kdump_pre/kdump_post hooks. Use following in one of the pre/post
+  scripts to drop into a shell.
+
+  #!/bin/bash
+  _ctty=/dev/ttyS0
+  setsid /bin/sh -i -l 0<>$_ctty 1<>$_ctty 2<>$_ctty
+
+  One might have to change the terminal depending on what they are using.
+
+- Serial console logging for virtual machines
+
+  I generally use "virsh console <domain-name>" to get to serial console.
+  I noticed after dump saving system reboots and when grub menu shows up
+  some of the previously logged messages are no more there. That means
+  any important debugging info at the end will be lost.
+
+  One can log serial console as follows to make sure messages are not lost.
+
+  virsh ttyconsole <domain-name>
+  ln -s <name-of-tty> /dev/modem
+  minicom -C /tmp/console-logs
+
+  Now minicom should be logging serial console in file console-logs.
+
+
