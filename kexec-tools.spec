@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.4
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -323,6 +323,15 @@ done
 %endif
 
 %changelog
+* Tue Jun 18 2013 Baoquan He <bhe@redhat.com> - 2.0.4-4
+- dracut-module-setup.sh: improve the approach to get a bridged interface list
+- dracut-module-setup.sh: cleanup - use kdump_get_mac_addr() function
+- dracut-module-setup.sh: use kernel exported mac address in kdump_get_mac_addr()
+- dracut-module-setup.sh: use perm addr of slaves to setup bonding network
+- kdump: Do not output debug messages by default
+- dracut-module-setup.sh: kdump module depends on drm module
+- mkdumprd: return error if no write permission on save path of server for ssh
+
 * Thu Jun 13 2013 Baoquan He <bhe@redhat.com> - 2.0.4-3
 - mkdumprd: remove -M option for dracut
 - kdumpctl: add selinux relabel when service startup
