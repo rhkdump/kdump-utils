@@ -80,9 +80,11 @@ dump_fs()
 
 dump_raw()
 {
-    [ -b "$1" ] || return 1
+    local _raw=$1
 
-    echo "kdump: saving to raw disk $1"
+    [ -b "$_raw" ] || return 1
+
+    echo "kdump: saving to raw disk $_raw"
 
     if $(echo -n $CORE_COLLECTOR|grep -q makedumpfile); then
         _src_size_mb="Unknown"
@@ -94,7 +96,7 @@ dump_raw()
     monitor_dd_progress $_src_size_mb &
 
     echo "kdump: saving vmcore"
-    $CORE_COLLECTOR /proc/vmcore | dd of=$1 bs=$DD_BLKSIZE >> /tmp/dd_progress_file 2>&1 || return 1
+    $CORE_COLLECTOR /proc/vmcore | dd of=$_raw bs=$DD_BLKSIZE >> /tmp/dd_progress_file 2>&1 || return 1
 
     echo "kdump: saving vmcore complete"
     return 0
@@ -127,22 +129,23 @@ dump_ssh()
 {
     local _opt="-i $1 -o BatchMode=yes -o StrictHostKeyChecking=yes"
     local _dir="$KDUMP_PATH/$HOST_IP-$DATEDIR"
+    local _host=$2
 
-    echo "kdump: saving to $2:$_dir"
+    echo "kdump: saving to $_host:$_dir"
 
     cat /var/lib/random-seed > /dev/urandom
-    ssh -q $_opt $2 mkdir -p $_dir || return 1
+    ssh -q $_opt $_host mkdir -p $_dir || return 1
 
-    save_vmcore_dmesg_ssh ${DMESG_COLLECTOR} ${_dir} "${_opt}" $2
+    save_vmcore_dmesg_ssh ${DMESG_COLLECTOR} ${_dir} "${_opt}" $_host
 
     echo "kdump: saving vmcore"
 
     if [ "${CORE_COLLECTOR%%[[:blank:]]*}" = "scp" ]; then
-        scp -q $_opt /proc/vmcore "$2:$_dir/vmcore-incomplete" || return 1
-        ssh $_opt $2 "mv $_dir/vmcore-incomplete $_dir/vmcore" || return 1
+        scp -q $_opt /proc/vmcore "$_host:$_dir/vmcore-incomplete" || return 1
+        ssh $_opt $_host "mv $_dir/vmcore-incomplete $_dir/vmcore" || return 1
     else
-        $CORE_COLLECTOR /proc/vmcore | ssh $_opt $2 "dd bs=512 of=$_dir/vmcore-incomplete" || return 1
-        ssh $_opt $2 "mv $_dir/vmcore-incomplete $_dir/vmcore.flat" || return 1
+        $CORE_COLLECTOR /proc/vmcore | ssh $_opt $_host "dd bs=512 of=$_dir/vmcore-incomplete" || return 1
+        ssh $_opt $_host "mv $_dir/vmcore-incomplete $_dir/vmcore.flat" || return 1
     fi
 
     echo "kdump: saving vmcore complete"
