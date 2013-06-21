@@ -50,12 +50,17 @@ add_dump_code()
 
 dump_fs()
 {
+    echo "kdump: dump target is $1"
+
     local _mp=$(findmnt -k -f -n -r -o TARGET $1)
 
     if [ -z "$_mp" ]; then
         echo "kdump: error: Dump target $1 is not mounted."
         return 1
     fi
+
+    echo "kdump: saving to $_mp/$KDUMP_PATH/$HOST_IP-$DATEDIR/"
+
     if [ "$_mp" = "$NEWROOT/" ] || [ "$_mp" = "$NEWROOT" ]
     then
         mount -o remount,rw $_mp || return 1
@@ -64,7 +69,10 @@ dump_fs()
 
     save_vmcore_dmesg_fs ${DMESG_COLLECTOR} "$_mp/$KDUMP_PATH/$HOST_IP-$DATEDIR/"
 
+    echo "kdump: saving vmcore"
     $CORE_COLLECTOR /proc/vmcore $_mp/$KDUMP_PATH/$HOST_IP-$DATEDIR/vmcore || return 1
+
+    echo "kdump: saving vmcore complete"
     umount $_mp || return 1
     return 0
 }
@@ -73,7 +81,8 @@ dump_raw()
 {
     [ -b "$1" ] || return 1
 
-    echo "Saving to raw disk $1"
+    echo "kdump: saving to raw disk $1"
+
     if $(echo -n $CORE_COLLECTOR|grep -q makedumpfile); then
         _src_size_mb="Unknown"
     else
@@ -83,12 +92,18 @@ dump_raw()
 
     monitor_dd_progress $_src_size_mb &
 
+    echo "kdump: saving vmcore"
     $CORE_COLLECTOR /proc/vmcore | dd of=$1 bs=$DD_BLKSIZE >> /tmp/dd_progress_file 2>&1 || return 1
+
+    echo "kdump: saving vmcore complete"
     return 0
 }
 
 dump_to_rootfs()
 {
+    echo "kdump: dump target is root fs"
+    echo "kdump: saving to $NEWROOT/$KDUMP_PATH/$HOST_IP-$DATEDIR/"
+
     #For dumping to rootfs, "-F" need be removed. Surely only available for makedumpfile case.
     [[ $CORE_COLLECTOR = *makedumpfile* ]] && CORE_COLLECTOR=`echo $CORE_COLLECTOR | sed -e s/-F//g`
 
@@ -97,7 +112,10 @@ dump_to_rootfs()
 
     save_vmcore_dmesg_fs ${DMESG_COLLECTOR} "$NEWROOT/$KDUMP_PATH/$HOST_IP-$DATEDIR/"
 
+    echo "kdump: saving vmcore"
     $CORE_COLLECTOR /proc/vmcore $NEWROOT/$KDUMP_PATH/$HOST_IP-$DATEDIR/vmcore || return 1
+
+    echo "kdump: saving vmcore complete"
     sync
     umount $NEWROOT || return 1
     return 0
@@ -108,10 +126,14 @@ dump_ssh()
     local _opt="-i $1 -o BatchMode=yes -o StrictHostKeyChecking=yes"
     local _dir="$KDUMP_PATH/$HOST_IP-$DATEDIR"
 
+    echo "kdump: saving to $2:$_dir"
+
     cat /var/lib/random-seed > /dev/urandom
     ssh -q $_opt $2 mkdir -p $_dir || return 1
 
     save_vmcore_dmesg_ssh ${DMESG_COLLECTOR} ${_dir} "${_opt}" $2
+
+    echo "kdump: saving vmcore"
 
     if [ "${CORE_COLLECTOR%%[[:blank:]]*}" = "scp" ]; then
         scp -q $_opt /proc/vmcore "$2:$_dir/vmcore-incomplete" || return 1
@@ -120,20 +142,23 @@ dump_ssh()
         $CORE_COLLECTOR /proc/vmcore | ssh $_opt $2 "dd bs=512 of=$_dir/vmcore-incomplete" || return 1
         ssh $_opt $2 "mv $_dir/vmcore-incomplete $_dir/vmcore.flat" || return 1
     fi
+
+    echo "kdump: saving vmcore complete"
+    return 0
 }
 
 save_vmcore_dmesg_fs() {
     local _dmesg_collector=$1
     local _path=$2
 
-    echo "Saving vmcore-dmesg.txt"
+    echo "kdump: saving vmcore-dmesg.txt"
     $_dmesg_collector /proc/vmcore > ${_path}/vmcore-dmesg-incomplete.txt
     _exitcode=$?
     if [ $_exitcode -eq 0 ]; then
         mv ${_path}/vmcore-dmesg-incomplete.txt ${_path}/vmcore-dmesg.txt
-        echo "Saved vmcore-dmesg.txt"
+        echo "kdump: saving vmcore-dmesg.txt complete"
     else
-        echo "Saving vmcore-dmesg.txt failed"
+        echo "kdump: saving vmcore-dmesg.txt failed"
     fi
 }
 
@@ -143,15 +168,15 @@ save_vmcore_dmesg_ssh() {
     local _opts="$3"
     local _location=$4
 
-    echo "Saving vmcore-dmesg.txt"
+    echo "kdump: saving vmcore-dmesg.txt"
     $_dmesg_collector /proc/vmcore | ssh $_opts $_location "dd of=$_path/vmcore-dmesg-incomplete.txt"
     _exitcode=$?
 
     if [ $_exitcode -eq 0 ]; then
         ssh -q $_opts $_location mv $_path/vmcore-dmesg-incomplete.txt $_path/vmcore-dmesg.txt
-        echo "Saved vmcore-dmesg.txt"
+        echo "kdump: saving vmcore-dmesg.txt complete"
     else
-        echo "Saving vmcore-dmesg.txt failed"
+        echo "kdump: saving vmcore-dmesg.txt failed"
     fi
 }
 
@@ -177,12 +202,12 @@ get_host_ip()
     if is_nfs_dump_target || is_ssh_dump_target
     then
         kdumpnic=$(getarg kdumpnic=)
-        [ -z "$kdumpnic" ] && echo "failed to get kdumpnic!" && return 1
+        [ -z "$kdumpnic" ] && echo "kdump: failed to get kdumpnic!" && return 1
         _host=`ip addr show dev $kdumpnic|grep 'inet '`
-        [ $? -ne 0 ] && echo "Wrong kdumpnic: $kdumpnic" && return 1
+        [ $? -ne 0 ] && echo "kdump: wrong kdumpnic: $kdumpnic" && return 1
         _host="${_host##*inet }"
         _host="${_host%%/*}"
-        [ -z "$_host" ] && echo "Wrong kdumpnic: $kdumpnic" && return 1
+        [ -z "$_host" ] && echo "kdump: wrong kdumpnic: $kdumpnic" && return 1
         HOST_IP=$_host
     fi
     return 0
@@ -191,7 +216,7 @@ get_host_ip()
 read_kdump_conf()
 {
     if [ ! -f "$conf_file" ]; then
-        echo "$conf_file not found"
+        echo "kdump: $conf_file not found"
         return
     fi
 
@@ -266,7 +291,7 @@ fi
 
 get_host_ip
 if [ $? -ne 0 ]; then
-    echo "get_host_ip exited with non-zero status!"
+    echo "kdump: get_host_ip exited with non-zero status!"
     do_default_action
     $FINAL_ACTION
 fi
@@ -277,7 +302,7 @@ fi
 
 do_kdump_pre
 if [ $? -ne 0 ]; then
-    echo "kdump_pre script exited with non-zero status!"
+    echo "kdump: kdump_pre script exited with non-zero status!"
     $FINAL_ACTION
 fi
 
@@ -286,7 +311,7 @@ DUMP_RETVAL=$?
 
 do_kdump_post $DUMP_RETVAL
 if [ $? -ne 0 ]; then
-    echo "kdump_post script exited with non-zero status!"
+    echo "kdump: kdump_post script exited with non-zero status!"
 fi
 
 if [ $DUMP_RETVAL -ne 0 ]; then
