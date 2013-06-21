@@ -20,13 +20,29 @@ DUMP_RETVAL=0
 conf_file="/etc/kdump.conf"
 KDUMP_PRE=""
 KDUMP_POST=""
+MOUNTS=""
 
 export PATH=$PATH:$KDUMP_SCRIPT_DIR
+
+do_umount()
+{
+    if [ -n "$MOUNTS" ]; then
+        for mount in $MOUNTS; do
+            ismounted $mount && umount -R $mount
+        done
+    fi
+}
+
+do_final_action()
+{
+    do_umount
+    eval $FINAL_ACTION
+}
 
 do_default_action()
 {
     wait_for_loginit
-    $DEFAULT_ACTION
+    eval $DEFAULT_ACTION
 }
 
 do_kdump_pre()
@@ -58,6 +74,7 @@ dump_fs()
         echo "kdump: error: Dump target $1 is not mounted."
         return 1
     fi
+    MOUNTS="$MOUNTS $_mp"
 
     echo "kdump: saving to $_mp/$KDUMP_PATH/$HOST_IP-$DATEDIR/"
 
@@ -74,7 +91,6 @@ dump_fs()
     mv $_mp/$KDUMP_PATH/$HOST_IP-$DATEDIR/vmcore-incomplete $_mp/$KDUMP_PATH/$HOST_IP-$DATEDIR/vmcore
 
     echo "kdump: saving vmcore complete"
-    umount -R $_mp || return 1
     return 0
 }
 
@@ -107,6 +123,8 @@ dump_to_rootfs()
     echo "kdump: dump target is root fs"
     echo "kdump: saving to $NEWROOT/$KDUMP_PATH/$HOST_IP-$DATEDIR/"
 
+    MOUNTS="$MOUNTS $NEWROOT"
+
     #For dumping to rootfs, "-F" need be removed. Surely only available for makedumpfile case.
     [[ $CORE_COLLECTOR = *makedumpfile* ]] && CORE_COLLECTOR=`echo $CORE_COLLECTOR | sed -e s/-F//g`
 
@@ -121,7 +139,6 @@ dump_to_rootfs()
 
     echo "kdump: saving vmcore complete"
     sync
-    umount -R $NEWROOT || return 1
     return 0
 }
 
@@ -252,13 +269,13 @@ read_kdump_conf()
                     DEFAULT_ACTION="_emergency_shell kdump"
                     ;;
                 reboot)
-                    DEFAULT_ACTION="reboot -f"
+                    DEFAULT_ACTION="do_umount; reboot -f"
                     ;;
                 halt)
-                    DEFAULT_ACTION="halt -f"
+                    DEFAULT_ACTION="do_umount; halt -f"
                     ;;
                 poweroff)
-                    DEFAULT_ACTION="poweroff -f"
+                    DEFAULT_ACTION="do_umount; poweroff -f"
                     ;;
                 dump_to_rootfs)
                     DEFAULT_ACTION="dump_to_rootfs"
@@ -298,7 +315,7 @@ get_host_ip
 if [ $? -ne 0 ]; then
     echo "kdump: get_host_ip exited with non-zero status!"
     do_default_action
-    $FINAL_ACTION
+    do_final_action
 fi
 
 if [ -z "$DUMP_INSTRUCTION" ]; then
@@ -308,7 +325,7 @@ fi
 do_kdump_pre
 if [ $? -ne 0 ]; then
     echo "kdump: kdump_pre script exited with non-zero status!"
-    $FINAL_ACTION
+    do_final_action
 fi
 
 $DUMP_INSTRUCTION
@@ -323,4 +340,4 @@ if [ $DUMP_RETVAL -ne 0 ]; then
     do_default_action
 fi
 
-$FINAL_ACTION
+do_final_action
