@@ -74,7 +74,7 @@ dump_fs()
     mv $_mp/$KDUMP_PATH/$HOST_IP-$DATEDIR/vmcore-incomplete $_mp/$KDUMP_PATH/$HOST_IP-$DATEDIR/vmcore
 
     echo "kdump: saving vmcore complete"
-    umount $_mp || return 1
+    umount -R $_mp || return 1
     return 0
 }
 
@@ -121,7 +121,7 @@ dump_to_rootfs()
 
     echo "kdump: saving vmcore complete"
     sync
-    umount $NEWROOT || return 1
+    umount -R $NEWROOT || return 1
     return 0
 }
 
