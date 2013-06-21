@@ -70,7 +70,8 @@ dump_fs()
     save_vmcore_dmesg_fs ${DMESG_COLLECTOR} "$_mp/$KDUMP_PATH/$HOST_IP-$DATEDIR/"
 
     echo "kdump: saving vmcore"
-    $CORE_COLLECTOR /proc/vmcore $_mp/$KDUMP_PATH/$HOST_IP-$DATEDIR/vmcore || return 1
+    $CORE_COLLECTOR /proc/vmcore $_mp/$KDUMP_PATH/$HOST_IP-$DATEDIR/vmcore-incomplete || return 1
+    mv $_mp/$KDUMP_PATH/$HOST_IP-$DATEDIR/vmcore-incomplete $_mp/$KDUMP_PATH/$HOST_IP-$DATEDIR/vmcore
 
     echo "kdump: saving vmcore complete"
     umount $_mp || return 1
@@ -113,7 +114,8 @@ dump_to_rootfs()
     save_vmcore_dmesg_fs ${DMESG_COLLECTOR} "$NEWROOT/$KDUMP_PATH/$HOST_IP-$DATEDIR/"
 
     echo "kdump: saving vmcore"
-    $CORE_COLLECTOR /proc/vmcore $NEWROOT/$KDUMP_PATH/$HOST_IP-$DATEDIR/vmcore || return 1
+    $CORE_COLLECTOR /proc/vmcore $NEWROOT/$KDUMP_PATH/$HOST_IP-$DATEDIR/vmcore-incomplete || return 1
+    mv $NEWROOT/$KDUMP_PATH/$HOST_IP-$DATEDIR/vmcore-incomplete $NEWROOT/$KDUMP_PATH/$HOST_IP-$DATEDIR/vmcore
 
     echo "kdump: saving vmcore complete"
     sync
