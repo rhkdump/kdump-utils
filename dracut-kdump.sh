@@ -102,14 +102,11 @@ dump_raw()
 
     echo "kdump: saving to raw disk $_raw"
 
-    if $(echo -n $CORE_COLLECTOR|grep -q makedumpfile); then
-        _src_size_mb="Unknown"
-    else
+    if ! $(echo -n $CORE_COLLECTOR|grep -q makedumpfile); then
         _src_size=`ls -l /proc/vmcore | cut -d' ' -f5`
         _src_size_mb=$(($_src_size / 1048576))
+        monitor_dd_progress $_src_size_mb &
     fi
-
-    monitor_dd_progress $_src_size_mb &
 
     echo "kdump: saving vmcore"
     $CORE_COLLECTOR /proc/vmcore | dd of=$_raw bs=$DD_BLKSIZE >> /tmp/dd_progress_file 2>&1 || return 1
