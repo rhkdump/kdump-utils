@@ -200,10 +200,9 @@ mkdir -p $RPM_BUILD_ROOT/%{dracutlibdir}/modules.d/
 mv $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/* $RPM_BUILD_ROOT/%{dracutlibdir}/modules.d/
 
 %post
-if [ $1 -eq 1 ] ; then 
-    # Initial installation 
-    /bin/systemctl enable kdump.service >/dev/null 2>&1 || :
-fi
+# Initial installation
+%systemd_post kdump.service
+
 touch /etc/kdump.conf
 # This portion of the script is temporary.  Its only here
 # to fix up broken boxes that require special settings 
@@ -229,18 +228,11 @@ fi
 
 
 %postun
-/bin/systemctl daemon-reload >/dev/null 2>&1 || :
-if [ $1 -ge 1 ] ; then
-    # Package upgrade, not uninstall
-    /bin/systemctl try-restart kdump.service >/dev/null 2>&1 || :
-fi
+%systemd_postun_with_restart kdump.service
 
 %preun
-if [ $1 -eq 0 ] ; then
-    # Package removal, not upgrade
-    /bin/systemctl --no-reload disable kdump.service > /dev/null 2>&1 || :
-    /bin/systemctl stop kdump.service > /dev/null 2>&1 || :
-fi
+# Package removal, not upgrade
+%systemd_preun kdump.service
 
 %triggerun -- kexec-tools < 2.0.2-3
 # Save the current service runlevel info
