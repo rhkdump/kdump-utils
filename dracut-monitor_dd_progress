@@ -19,8 +19,10 @@ do
 
     kill -s USR1 $DD_PID
     CURRENT_SIZE=`tail -n 1 /tmp/dd_progress_file | sed "s/[^0-9].*//g"`
-    CURRENT_MB=$(($CURRENT_SIZE / 1048576))
-    echo -n -e "Copied $CURRENT_MB MB / $SRC_FILE_MB MB\r"
+    [ -n "$CURRENT_SIZE" ] && {
+        CURRENT_MB=$(($CURRENT_SIZE / 1048576))
+        echo -e "Copied $CURRENT_MB MB / $SRC_FILE_MB MB\r"
+    }
 done
 
 rm -f /tmp/dd_progress_file
