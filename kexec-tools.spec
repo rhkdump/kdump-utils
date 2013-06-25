@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.4
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -315,6 +315,17 @@ done
 %endif
 
 %changelog
+* Tue Jun 25 2013 Baoquan He <bhe@redhat.com> - 2.0.4-5
+- monitor-dd-progress fix
+- rawdump: only show dd progress bar when core_collector is not makedumpfile
+- kexec-tools.spec: replaces scriptlets with new systemd macros
+- dracut-kdump.sh: umount fs right before kdump exit
+- dracut-kdump.sh: recursively umount fs and its submounts
+- dracut-kdump.sh: cleanup - using local variable names instead of $1/$2 in functions
+- dracut-kdump.sh: name the invalid vmcore to vmcore-incomplete
+- dracut-kdump.sh: Output top level information about the kdump progress.
+- kexec-kdump-howto: Add a section for debugging tips
+
 * Tue Jun 18 2013 Baoquan He <bhe@redhat.com> - 2.0.4-4
 - dracut-module-setup.sh: improve the approach to get a bridged interface list
 - dracut-module-setup.sh: cleanup - use kdump_get_mac_addr() function
