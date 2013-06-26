@@ -89,6 +89,7 @@ dump_fs()
     echo "kdump: saving vmcore"
     $CORE_COLLECTOR /proc/vmcore $_mp/$KDUMP_PATH/$HOST_IP-$DATEDIR/vmcore-incomplete || return 1
     mv $_mp/$KDUMP_PATH/$HOST_IP-$DATEDIR/vmcore-incomplete $_mp/$KDUMP_PATH/$HOST_IP-$DATEDIR/vmcore
+    sync
 
     echo "kdump: saving vmcore complete"
     return 0
@@ -110,6 +111,7 @@ dump_raw()
 
     echo "kdump: saving vmcore"
     $CORE_COLLECTOR /proc/vmcore | dd of=$_raw bs=$DD_BLKSIZE >> /tmp/dd_progress_file 2>&1 || return 1
+    sync
 
     echo "kdump: saving vmcore complete"
     return 0
@@ -133,9 +135,9 @@ dump_to_rootfs()
     echo "kdump: saving vmcore"
     $CORE_COLLECTOR /proc/vmcore $NEWROOT/$KDUMP_PATH/$HOST_IP-$DATEDIR/vmcore-incomplete || return 1
     mv $NEWROOT/$KDUMP_PATH/$HOST_IP-$DATEDIR/vmcore-incomplete $NEWROOT/$KDUMP_PATH/$HOST_IP-$DATEDIR/vmcore
+    sync
 
     echo "kdump: saving vmcore complete"
-    sync
     return 0
 }
 
