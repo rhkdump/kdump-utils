@@ -41,7 +41,8 @@ get_persistent_dev() {
         fi
     done
 
-    perror_exit "Persistent device name of $1 is not found."
+    perror "WARNING: Persistent device name of $1 not found. Using $1 as dump target name"
+    echo $1
 }
 
 add_dracut_arg() {
