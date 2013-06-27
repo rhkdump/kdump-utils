@@ -64,24 +64,26 @@ add_dump_code()
     DUMP_INSTRUCTION=$1
 }
 
+# dump_fs <mount point| device>
 dump_fs()
 {
-    echo "kdump: dump target is $1"
-
+    local _dev=$(findmnt -k -f -n -r -o SOURCE $1)
     local _mp=$(findmnt -k -f -n -r -o TARGET $1)
 
+    echo "kdump: dump target is $_dev"
+
     if [ -z "$_mp" ]; then
-        echo "kdump: error: Dump target $1 is not mounted."
+        echo "kdump: error: Dump target $_dev is not mounted."
         return 1
     fi
     MOUNTS="$MOUNTS $_mp"
 
+    # Remove -F in makedumpfile case. We don't want a flat format dump here.
+    [[ $CORE_COLLECTOR = *makedumpfile* ]] && CORE_COLLECTOR=`echo $CORE_COLLECTOR | sed -e "s/-F//g"`
+
     echo "kdump: saving to $_mp/$KDUMP_PATH/$HOST_IP-$DATEDIR/"
 
-    if [ "$_mp" = "$NEWROOT/" ] || [ "$_mp" = "$NEWROOT" ]
-    then
-        mount -o remount,rw $_mp || return 1
-    fi
+    mount -o remount,rw $_mp || return 1
     mkdir -p $_mp/$KDUMP_PATH/$HOST_IP-$DATEDIR || return 1
 
     save_vmcore_dmesg_fs ${DMESG_COLLECTOR} "$_mp/$KDUMP_PATH/$HOST_IP-$DATEDIR/"
@@ -111,30 +113,6 @@ dump_raw()
 
     echo "kdump: saving vmcore"
     $CORE_COLLECTOR /proc/vmcore | dd of=$_raw bs=$DD_BLKSIZE >> /tmp/dd_progress_file 2>&1 || return 1
-    sync
-
-    echo "kdump: saving vmcore complete"
-    return 0
-}
-
-dump_to_rootfs()
-{
-    echo "kdump: dump target is root fs"
-    echo "kdump: saving to $NEWROOT/$KDUMP_PATH/$HOST_IP-$DATEDIR/"
-
-    MOUNTS="$MOUNTS $NEWROOT"
-
-    #For dumping to rootfs, "-F" need be removed. Surely only available for makedumpfile case.
-    [[ $CORE_COLLECTOR = *makedumpfile* ]] && CORE_COLLECTOR=`echo $CORE_COLLECTOR | sed -e s/-F//g`
-
-    mount -o remount,rw $NEWROOT/ || return 1
-    mkdir -p $NEWROOT/$KDUMP_PATH/$HOST_IP-$DATEDIR
-
-    save_vmcore_dmesg_fs ${DMESG_COLLECTOR} "$NEWROOT/$KDUMP_PATH/$HOST_IP-$DATEDIR/"
-
-    echo "kdump: saving vmcore"
-    $CORE_COLLECTOR /proc/vmcore $NEWROOT/$KDUMP_PATH/$HOST_IP-$DATEDIR/vmcore-incomplete || return 1
-    mv $NEWROOT/$KDUMP_PATH/$HOST_IP-$DATEDIR/vmcore-incomplete $NEWROOT/$KDUMP_PATH/$HOST_IP-$DATEDIR/vmcore
     sync
 
     echo "kdump: saving vmcore complete"
@@ -277,7 +255,7 @@ read_kdump_conf()
                     DEFAULT_ACTION="do_umount; poweroff -f"
                     ;;
                 dump_to_rootfs)
-                    DEFAULT_ACTION="dump_to_rootfs"
+                    DEFAULT_ACTION="dump_fs $NEWROOT"
                     ;;
             esac
             ;;
@@ -318,7 +296,7 @@ if [ $? -ne 0 ]; then
 fi
 
 if [ -z "$DUMP_INSTRUCTION" ]; then
-    add_dump_code "dump_to_rootfs"
+    add_dump_code "dump_fs $NEWROOT"
 fi
 
 do_kdump_pre
