@@ -951,100 +951,100 @@ done
 * Fri Aug 10 2007 Neil Horman <nhorman@redhat.com> - 1.101-78
 - Update init script to handle xen kernel cmdlnes (bz 250803)
 
-* Wed Aug 01 2007 Neil Horman <nhorman@redhat.com> - 1.101-77%{dist}
+* Wed Aug 01 2007 Neil Horman <nhorman@redhat.com> - 1.101-77
 - Update mkdumprd to suppres notifications /rev makedumpfile (bz 250341)
 
-* Thu Jul 19 2007 Neil Horman <nhorman@redhat.com> - 1.101-76%{dist}
+* Thu Jul 19 2007 Neil Horman <nhorman@redhat.com> - 1.101-76
 - Fix mkdumprd to suppress informative messages (bz 248797)
 
-* Wed Jul 18 2007 Neil Horman <nhorman@redhat.com> - 1.101-75%{dist}
+* Wed Jul 18 2007 Neil Horman <nhorman@redhat.com> - 1.101-75
 - Updated fr.po translations (bz 248287)
 
-* Mon Jul 17 2007 Neil Horman <nhorman@redhat.com> - 1.101-74%{dist}
+* Mon Jul 17 2007 Neil Horman <nhorman@redhat.com> - 1.101-74
 - Fix up add_buff to retry locate_hole on segment overlap (bz 247989)
 
-* Mon Jul 09 2007 Neil Horman <nhorman@redhat.com> - 1.101-73%{dist}
+* Mon Jul 09 2007 Neil Horman <nhorman@redhat.com> - 1.101-73
 - Fix up language files for kexec (bz 246508)
 
-* Thu Jul 05 2007 Neil Horman <nhorman@redhat.com> - 1.101-72%{dist}
+* Thu Jul 05 2007 Neil Horman <nhorman@redhat.com> - 1.101-72
 - Fixing up initscript for LSB (bz 246967)
 
-* Tue Jun 19 2007 Neil Horman <nhorman@redhat.com> - 1.101-71%{dist}
+* Tue Jun 19 2007 Neil Horman <nhorman@redhat.com> - 1.101-71
 - Fixed conflict in mkdumprd in use of /mnt (bz 222911)
 
-* Mon Jun 18 2007 Neil Horman <nhorman@redhat.com> - 1.101-70%{dist}
+* Mon Jun 18 2007 Neil Horman <nhorman@redhat.com> - 1.101-70
 - Fixed kdump.init to properly read cmdline (bz 244649)
 
-* Wed Apr 11 2007 Neil Horman <nhorman@redhat.com> - 1.101-69%{dist}
+* Wed Apr 11 2007 Neil Horman <nhorman@redhat.com> - 1.101-69
 - Fixed up kdump.init to enforce mode 600 on authorized_keys2 (bz 235986)
 
-* Tue Apr 10 2007 Neil Horman <nhorman@redhat.com> - 1.101-68%{dist}
+* Tue Apr 10 2007 Neil Horman <nhorman@redhat.com> - 1.101-68
 - Fix alignment of bootargs and device-tree structures on ppc64
 
-* Tue Apr 10 2007 Neil Horman <nhorman@redhat.com> - 1.101-67%{dist}
+* Tue Apr 10 2007 Neil Horman <nhorman@redhat.com> - 1.101-67
 - Allow ppc to boot ppc64 kernels (bz 235608)
 
-* Tue Apr 10 2007 Neil Horman <nhorman@redhat.com> - 1.101-66%{dist}
+* Tue Apr 10 2007 Neil Horman <nhorman@redhat.com> - 1.101-66
 - Reduce rmo_top to 0x7c000000 for PS3 (bz 235030)
 
-* Mon Mar 26 2007 Neil Horman <nhorman@redhat.com> - 1.101-65%{dist}
+* Mon Mar 26 2007 Neil Horman <nhorman@redhat.com> - 1.101-65
 - Fix spec to own kexec_tools directory (bz 219035)
 
-* Wed Mar 21 2007 Neil Horman <nhorman@redhat.com> - 1.101-64%{dist}
+* Wed Mar 21 2007 Neil Horman <nhorman@redhat.com> - 1.101-64
 - Add fix for ppc memory region computation (bz 233312)
 
-* Thu Mar 15 2007 Neil Horman <nhorman@redhat.com> - 1.101-63%{dist}
+* Thu Mar 15 2007 Neil Horman <nhorman@redhat.com> - 1.101-63
 - Adding extra check to avoid oom kills on nfs mount failure (bz 215056)
 
-* Tue Mar 06 2007 Neil Horman <nhorman@redhat.com> - 1.101-62%{dist}
+* Tue Mar 06 2007 Neil Horman <nhorman@redhat.com> - 1.101-62
 - Updating makedumpfile to version 1.1.1 (bz 2223743)
 
-* Mon Feb 22 2007 Neil Horman <nhorman@redhat.com> - 1.101-61%{dist}
+* Mon Feb 22 2007 Neil Horman <nhorman@redhat.com> - 1.101-61
 - Adding multilanguage infrastructure to firstboot_kdump (bz 223175)
 
-* Mon Feb 12 2007 Neil Horman <nhorman@redhat.com> - 1.101-60%{dist}
+* Mon Feb 12 2007 Neil Horman <nhorman@redhat.com> - 1.101-60
 - Fixing up file permissions on kdump.conf (bz 228137)
 
-* Fri Feb 09 2007 Neil Horman <nhorman@redhat.com> - 1.101-59%{dist}
+* Fri Feb 09 2007 Neil Horman <nhorman@redhat.com> - 1.101-59
 - Adding mkdumprd man page to build
 
-* Wed Jan 25 2007 Neil Horman <nhorman@redhat.com> - 1.101-58%{dist}
+* Wed Jan 25 2007 Neil Horman <nhorman@redhat.com> - 1.101-58
 - Updating kdump.init and mkdumprd with most recent RHEL5 fixes
 - Fixing BuildReq to require elfutils-devel-static
 
-* Thu Jan 04 2007 Neil Horman <nhorman@redhat.com> - 1.101-56%{dist}
+* Thu Jan 04 2007 Neil Horman <nhorman@redhat.com> - 1.101-56
 - Fix option parsing problem for bzImage files (bz 221272)
 
-* Fri Dec 15 2006 Neil Horman <nhorman@redhat.com> - 1.101-55%{dist}
+* Fri Dec 15 2006 Neil Horman <nhorman@redhat.com> - 1.101-55
 - Wholesale update of RHEL5 revisions 55-147
 
-* Tue Aug 29 2006 Neil Horman <nhorman@redhat.com> - 1.101-54%{dist}
+* Tue Aug 29 2006 Neil Horman <nhorman@redhat.com> - 1.101-54
 - integrate default elf format patch
 
-* Tue Aug 29 2006 Neil Horman <nhorman@redhat.com> - 1.101-53%{dist}
+* Tue Aug 29 2006 Neil Horman <nhorman@redhat.com> - 1.101-53
 - Taking Viveks x86_64 crashdump patch (rcv. via email)
 
-* Tue Aug 29 2006 Neil Horman <nhorman@redhat.com> - 1.101-52%{dist}
+* Tue Aug 29 2006 Neil Horman <nhorman@redhat.com> - 1.101-52
 - Taking ia64 tools patch for bz 181358
 
-* Mon Aug 28 2006 Neil Horman <nhorman@redhat.com> - 1.101-51%{dist}
+* Mon Aug 28 2006 Neil Horman <nhorman@redhat.com> - 1.101-51
 - more doc updates
 - added patch to fix build break from kernel headers change
 
-* Thu Aug 24 2006 Neil Horman <nhorman@redhat.com> - 1.101-50%{dist}
+* Thu Aug 24 2006 Neil Horman <nhorman@redhat.com> - 1.101-50
 - repo patch to enable support for relocatable kernels.
 
-* Thu Aug 24 2006 Neil Horman <nhorman@redhat.com> - 1.101-49%{dist}
+* Thu Aug 24 2006 Neil Horman <nhorman@redhat.com> - 1.101-49
 - rewriting kcp to properly do ssh and scp
 - updating mkdumprd to use new kcp syntax
 
-* Wed Aug 23 2006 Neil Horman <nhorman@redhat.com> - 1.101-48%{dist}
+* Wed Aug 23 2006 Neil Horman <nhorman@redhat.com> - 1.101-48
 - Bumping revision number 
 
-* Tue Aug 22 2006 Jarod Wilson <jwilson@redhat.com> - 1.101-47%{dist}
+* Tue Aug 22 2006 Jarod Wilson <jwilson@redhat.com> - 1.101-47
 - ppc64 no-more-platform fix
 
-* Mon Aug 21 2006 Jarod Wilson <jwilson@redhat.com> - 1.101-46%{dist}
+* Mon Aug 21 2006 Jarod Wilson <jwilson@redhat.com> - 1.101-46
 - ppc64 fixups:
   - actually build ppc64 binaries (bug 203407)
   - correct usage output
@@ -1052,57 +1052,57 @@ done
 - install kexec man page
 - use regulation Fedora BuildRoot
 
-* Fri Aug 18 2006 Neil Horman <nhorman@redhat.com> - 1.101-45%{dist}
+* Fri Aug 18 2006 Neil Horman <nhorman@redhat.com> - 1.101-45
 - fixed typo in mkdumprd for bz 202983
 - fixed typo in mkdumprd for bz 203053
 - clarified docs in kdump.conf with examples per bz 203015
 
-* Tue Aug 15 2006 Neil Horman <nhorman@redhat.com> - 1.101-44%{dist}
+* Tue Aug 15 2006 Neil Horman <nhorman@redhat.com> - 1.101-44
 - updated init script to implement status function/scrub err messages
  
-* Wed Aug 09 2006 Jarod Wilson <jwilson@redhat.com> - 1.101-43%{dist}
+* Wed Aug 09 2006 Jarod Wilson <jwilson@redhat.com> - 1.101-43
 - Misc spec cleanups and macro-ifications
 
-* Wed Aug 09 2006 Jarod Wilson <jwilson@redhat.com> - 1.101-42%{dist}
+* Wed Aug 09 2006 Jarod Wilson <jwilson@redhat.com> - 1.101-42
 - Add %dir /var/crash, so default kdump setup works
 
-* Thu Aug 03 2006 Neil Horman <nhorman@redhat.com> - 1.101-41%{dist}.1
+* Thu Aug 03 2006 Neil Horman <nhorman@redhat.com> - 1.101-41
 - fix another silly makefile error for makedumpfile 
 
-* Thu Aug 03 2006 Neil Horman <nhorman@redhat.com> - 1.101-40%{dist}.1
+* Thu Aug 03 2006 Neil Horman <nhorman@redhat.com> - 1.101-40
 - exclude makedumpfile from build on non-x86[_64] arches 
 
-* Thu Aug 03 2006 Neil Horman <nhorman@redhat.com> - 1.101-39%{dist}.1
+* Thu Aug 03 2006 Neil Horman <nhorman@redhat.com> - 1.101-39
 - exclude makedumpfile from build on non-x86[_64] arches 
 
-* Thu Aug 03 2006 Neil Horman <nhorman@redhat.com> - 1.101-38%{dist}.1
+* Thu Aug 03 2006 Neil Horman <nhorman@redhat.com> - 1.101-38
 - updating makedumpfile makefile to use pkg-config on glib-2.0
 
-* Thu Aug 03 2006 Neil Horman <nhorman@redhat.com> - 1.101-37%{dist}.1
+* Thu Aug 03 2006 Neil Horman <nhorman@redhat.com> - 1.101-37
 - updating makedumpfile makefile to use pkg-config
 
-* Thu Aug 03 2006 Neil Horman <nhorman@redhat.com> - 1.101-36%{dist}.1
+* Thu Aug 03 2006 Neil Horman <nhorman@redhat.com> - 1.101-36
 - Removing unneeded deps after Makefile fixup for makedumpfile
 
-* Thu Aug 03 2006 Neil Horman <nhorman@redhat.com> - 1.101-35%{dist}.1
+* Thu Aug 03 2006 Neil Horman <nhorman@redhat.com> - 1.101-35
 - fixing up FC6/RHEL5 BuildRequires line to build in brew
 
-* Wed Aug 02 2006 Neil Horman <nhorman@redhat.com> - 1.101-34%{dist}.1
+* Wed Aug 02 2006 Neil Horman <nhorman@redhat.com> - 1.101-34
 - enabling makedumpfile in build
 
-* Wed Aug 02 2006 Neil Horman <nhorman@redhat.com> - 1.101-33%{dist}.1
+* Wed Aug 02 2006 Neil Horman <nhorman@redhat.com> - 1.101-33
 - added makedumpfile source to package
 
-* Mon Jul 31 2006 Neil Horman <nhorman@redhat.com> - 1.101-32%{dist}.1
+* Mon Jul 31 2006 Neil Horman <nhorman@redhat.com> - 1.101-32
 - added et-dyn patch to allow loading of relocatable kernels
 
-* Thu Jul 27 2006 Neil Horman <nhorman@redhat.com> - 1.101-30%{dist}.1
+* Thu Jul 27 2006 Neil Horman <nhorman@redhat.com> - 1.101-30
 - fixing up missing patch to kdump.init
 
-* Wed Jul 19 2006 Neil Horman <nhorman@redhat.com> - 1.101-30%{dist}.1
+* Wed Jul 19 2006 Neil Horman <nhorman@redhat.com> - 1.101-30
 - add kexec frontend (bz 197695)
 
-* Wed Jul 12 2006 Jesse Keating <jkeating@redhat.com> - 1.101-29%{dist}.1
+* Wed Jul 12 2006 Jesse Keating <jkeating@redhat.com> - 1.101-29
 - rebuild
 
 * Wed Jul 07 2006 Neil Horman <nhorman@redhat.com> 1.101-27.fc6
