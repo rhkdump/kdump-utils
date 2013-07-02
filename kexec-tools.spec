@@ -658,7 +658,7 @@ done
 * Mon Aug 1 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-16
 - Move dracut module detection code to module-setup.sh.
 
-* Wed Jul 28 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-15
+* Thu Jul 28 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-15
 - Use shutdown module of dracut to handle reboot/shutdown/halt.
 
 * Wed Jul 27 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-14
@@ -704,7 +704,7 @@ done
 * Fri Jun 24 2011 Neil Horman <nhorman@redhat.com> - 2.0.2-1
 - Updated to upstream version 2.0.2
 
-* Mon Jun 02 2011 Neil Horman <nhorman@redhat.com> - 2.0.0-47
+* Thu Jun 02 2011 Neil Horman <nhorman@redhat.com> - 2.0.0-47
 - Fixed misuse of readlink command after directory change (bz 710744)
 
 * Tue Apr 26 2011 Neil Horman <nhorman@redhat.com> - 2.0.0-46
@@ -838,7 +838,7 @@ done
 * Mon Jul 06 2009 Neil Horman <nhorman@redhat.com> 2.0.0-17
 - Fixed mkdumprd2 tarball creation
 
-* Wed Jun 23 2009 Neil Horman <nhorman@redhat.com> 2.0.0-16
+* Tue Jun 23 2009 Neil Horman <nhorman@redhat.com> 2.0.0-16
 - Fix up kdump so it works with latest firstboot
 
 * Mon Jun 15 2009 Neil Horman <nhorman@redhat.com> 2.0.0-15
@@ -895,7 +895,7 @@ done
 * Mon Jul 28 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-14
 - Add video reset section to docs (bz 456572)
 
-* Mon Jul 11 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-13
+* Fri Jul 11 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-13
 - Fix mkdumprd to support dynamic busybox (bz 443878)
 
 * Wed Jun 11 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-12
@@ -924,7 +924,7 @@ done
 * Tue Feb 19 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-5
 - Modifying mkdumprd to include dynamic executibles (bz 433350)
 
-* Wed Feb 12 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-4
+* Tue Feb 12 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-4
 - bumping rev number for rebuild
 
 * Wed Jan 02 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-3
@@ -935,7 +935,7 @@ done
 * Mon Oct 01 2007 Neil Horman <nhorman@redhat.com> - 1.102pre-2
 - Fix triggerpostun script (bz 308151)
 
-* Mon Aug 30 2007 Neil Horman <nhorman@redhat.com> - 1.102pre-1
+* Thu Aug 30 2007 Neil Horman <nhorman@redhat.com> - 1.102pre-1
 - Bumping kexec version to latest horms tree (bz 257201)
 - Adding trigger to remove initrds when a kernel is removed
 
@@ -960,7 +960,7 @@ done
 * Wed Jul 18 2007 Neil Horman <nhorman@redhat.com> - 1.101-75
 - Updated fr.po translations (bz 248287)
 
-* Mon Jul 17 2007 Neil Horman <nhorman@redhat.com> - 1.101-74
+* Tue Jul 17 2007 Neil Horman <nhorman@redhat.com> - 1.101-74
 - Fix up add_buff to retry locate_hole on segment overlap (bz 247989)
 
 * Mon Jul 09 2007 Neil Horman <nhorman@redhat.com> - 1.101-73
@@ -999,7 +999,7 @@ done
 * Tue Mar 06 2007 Neil Horman <nhorman@redhat.com> - 1.101-62
 - Updating makedumpfile to version 1.1.1 (bz 2223743)
 
-* Mon Feb 22 2007 Neil Horman <nhorman@redhat.com> - 1.101-61
+* Thu Feb 22 2007 Neil Horman <nhorman@redhat.com> - 1.101-61
 - Adding multilanguage infrastructure to firstboot_kdump (bz 223175)
 
 * Mon Feb 12 2007 Neil Horman <nhorman@redhat.com> - 1.101-60
@@ -1008,7 +1008,7 @@ done
 * Fri Feb 09 2007 Neil Horman <nhorman@redhat.com> - 1.101-59
 - Adding mkdumprd man page to build
 
-* Wed Jan 25 2007 Neil Horman <nhorman@redhat.com> - 1.101-58
+* Thu Jan 25 2007 Neil Horman <nhorman@redhat.com> - 1.101-58
 - Updating kdump.init and mkdumprd with most recent RHEL5 fixes
 - Fixing BuildReq to require elfutils-devel-static
 
@@ -1105,7 +1105,7 @@ done
 * Wed Jul 12 2006 Jesse Keating <jkeating@redhat.com> - 1.101-29
 - rebuild
 
-* Wed Jul 07 2006 Neil Horman <nhorman@redhat.com> 1.101-27.fc6
+* Fri Jul 07 2006 Neil Horman <nhorman@redhat.com> 1.101-27.fc6
 - Buildrequire zlib-devel
 
 * Thu Jun 22 2006 Neil Horman <nhorman@redhat.com> -1.101-19
