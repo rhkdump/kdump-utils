@@ -38,7 +38,7 @@ Requires(preun): systemd-units
 Requires(postun): systemd-units
 Requires(pre): coreutils sed zlib 
 Requires: dracut, dracut-network, ethtool
-BuildRequires: zlib-devel zlib zlib-static elfutils-devel-static glib2-devel bzip2-devel ncurses-devel bison flex
+BuildRequires: zlib-devel zlib zlib-static elfutils-devel-static glib2-devel bzip2-devel ncurses-devel bison flex lzo-devel
 BuildRequires: pkgconfig intltool gettext 
 BuildRequires: systemd-units
 %ifarch %{ix86} x86_64 ppc64 ia64 ppc s390x
@@ -136,7 +136,7 @@ cp %{SOURCE10} .
 make
 %ifarch %{ix86} x86_64 ia64 ppc64 s390x
 make -C eppic/libeppic
-make -C makedumpfile-1.5.4 LINKTYPE=dynamic
+make -C makedumpfile-1.5.4 LINKTYPE=dynamic USELZO=on
 %endif
 make -C kexec-tools-po
 
