@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.4
-Release: 5%{?dist}
+Release: 6%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -315,6 +315,17 @@ done
 %endif
 
 %changelog
+* Fri Jul 12 2013 Baoquan He <bhe@redhat.com> - 2.0.4-6
+- add snappy build
+- add lzo build
+- pull makedumpfile-1.5.4
+- mkdumprd: check return value of subshell
+- mkdumprd: get_persistent_dev() return original dev if no persistent dev exists.
+- dracut-kdump.sh: Merge dump_to_rootfs() to dump_fs()
+- dracut-kdump.sh: explicitly sync after each dump
+- Correct wrong weekday of changelog
+- kexec-tools.spec: Remove incorrect description in changelog
+
 * Tue Jun 25 2013 Baoquan He <bhe@redhat.com> - 2.0.4-5
 - monitor-dd-progress fix
 - rawdump: only show dd progress bar when core_collector is not makedumpfile
