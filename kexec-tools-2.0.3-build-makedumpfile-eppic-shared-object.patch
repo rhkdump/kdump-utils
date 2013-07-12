@@ -1,5 +1,5 @@
---- kexec-tools-2.0.3/makedumpfile-1.5.3/Makefile.orig
-+++ kexec-tools-2.0.3/makedumpfile-1.5.3/Makefile
+--- kexec-tools-2.0.3/makedumpfile-1.5.4/Makefile.orig
++++ kexec-tools-2.0.3/makedumpfile-1.5.4/Makefile
 @@ -60,7 +60,7 @@ LIBS := -lsnappy $(LIBS)
  CFLAGS += -DUSESNAPPY
  endif
