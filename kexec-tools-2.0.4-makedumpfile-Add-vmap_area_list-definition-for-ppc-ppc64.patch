@@ -1,0 +1,44 @@
+From 150b58eb299066c65ef7713a93effc35c00be03a Mon Sep 17 00:00:00 2001
+Message-Id: <150b58eb299066c65ef7713a93effc35c00be03a.1374133991.git.bhe@redhat.com>
+From: Baoquan He <bhe@redhat.com>
+Date: Mon, 15 Jul 2013 20:37:14 +0800
+Subject: [PATCH] [PATCH] Add vmap_area_list definition for ppc/ppc64.
+
+vmap_area_list is added to get vmalloc_start for ppc/ppc64, but its
+definition is missing, now add them.
+
+Signed-off-by: Baoquan He <bhe@redhat.com>
+---
+ makedumpfile-1.5.4/arch/ppc.c   |    2 +-
+ makedumpfile-1.5.4/arch/ppc64.c |    2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/makedumpfile-1.5.4/arch/ppc.c b/makedumpfile-1.5.4/arch/ppc.c
+index a9b4812..a3e1a12 100644
+--- a/makedumpfile-1.5.4/arch/ppc.c
++++ b/makedumpfile-1.5.4/arch/ppc.c
+@@ -28,7 +28,7 @@
+ int
+ get_machdep_info_ppc(void)
+ {
+-	unsigned long vmlist, vmalloc_start;
++	unsigned long vmlist, vmap_area_list, vmalloc_start;
+ 
+ 	info->section_size_bits = _SECTION_SIZE_BITS;
+ 	info->max_physmem_bits  = _MAX_PHYSMEM_BITS;
+diff --git a/makedumpfile-1.5.4/arch/ppc64.c b/makedumpfile-1.5.4/arch/ppc64.c
+index c229ede..85144f6 100644
+--- a/makedumpfile-1.5.4/arch/ppc64.c
++++ b/makedumpfile-1.5.4/arch/ppc64.c
+@@ -49,7 +49,7 @@ set_ppc64_max_physmem_bits(void)
+ int
+ get_machdep_info_ppc64(void)
+ {
+-	unsigned long vmlist, vmalloc_start;
++	unsigned long vmlist, vmap_area_list, vmalloc_start;
+ 
+ 	info->section_size_bits = _SECTION_SIZE_BITS;
+ 	if (!set_ppc64_max_physmem_bits()) {
+-- 
+1.7.1
+

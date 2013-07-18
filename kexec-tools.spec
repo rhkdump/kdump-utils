@@ -63,6 +63,7 @@ Obsoletes: diskdumputils netdump
 #
 # Patches 301 through 400 are meant for ppc64 kexec-tools enablement
 #
+Patch301: kexec-tools-2.0.4-makedumpfile-Add-vmap_area_list-definition-for-ppc-ppc64.patch
 
 #
 # Patches 401 through 500 are meant for s390 kexec-tools enablement
@@ -104,6 +105,7 @@ tar -z -x -v -f %{SOURCE9}
 tar -z -x -v -f %{SOURCE19}
 
 
+%patch301 -p1
 %patch601 -p1
 %patch604 -p1
 
