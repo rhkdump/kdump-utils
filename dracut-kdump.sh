@@ -28,6 +28,20 @@ MOUNTS=""
 
 export PATH=$PATH:$KDUMP_SCRIPT_DIR
 
+do_dump()
+{
+    local _ret
+
+    eval $DUMP_INSTRUCTION
+    _ret=$?
+
+    if [ $_ret -ne 0 ]; then
+        echo "kdump: saving vmcore failed"
+    fi
+
+    return $_ret
+}
+
 do_umount()
 {
     if [ -n "$MOUNTS" ]; then
@@ -309,7 +323,7 @@ if [ $? -ne 0 ]; then
     do_final_action
 fi
 
-$DUMP_INSTRUCTION
+do_dump
 DUMP_RETVAL=$?
 
 do_kdump_post $DUMP_RETVAL
