@@ -405,6 +405,7 @@ install() {
     if is_ssh_dump_target; then
         dracut_install /var/lib/random-seed || exit $?
     fi
+    dracut_install -o /etc/adjtime /etc/localtime
     inst "$moddir/monitor_dd_progress" "/kdumpscripts/monitor_dd_progress"
     chmod +x ${initdir}/kdumpscripts/monitor_dd_progress
     inst "/bin/dd" "/bin/dd"
