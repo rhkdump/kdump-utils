@@ -400,6 +400,8 @@ kdump_check_iscsi_targets () {
 
 install() {
     kdump_install_conf
+    >"$initdir/lib/dracut/no-emergency-shell"
+
     if is_ssh_dump_target; then
         dracut_install /var/lib/random-seed || exit $?
     fi

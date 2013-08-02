@@ -3,6 +3,10 @@
 exec &> /dev/console
 . /lib/dracut-lib.sh
 
+if [ -f "$initdir/lib/dracut/no-emergency-shell" ]; then
+    rm -f -- $initdir/lib/dracut/no-emergency-shell
+fi
+
 set -o pipefail
 KDUMP_PATH="/var/crash"
 CORE_COLLECTOR=""
