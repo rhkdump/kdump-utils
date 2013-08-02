@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.4
-Release: 6%{?dist}
+Release: 7%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -317,6 +317,15 @@ done
 %endif
 
 %changelog
+* Fri Aug 2  2013 Baoquan He <bhe@redhat.com> - 2.0.4-7
+- dracut-kdump.sh: add do_dump() and error out if dump vmcore fails
+- dracut-module-setup.sh: setup correct system time and time zone in 2nd kernel.
+- kernel cmdline: Remove hugepage allocations
+- Use /lib/dracut/no-emergency-shell to control action on fail
+- Revert: kdump.sysconfig: Add option action_on_fail and set its default as continue
+- dracut-kdump.sh: Redirect kdump script stdout/stderr to /dev/console
+- makedumpfile: Add vmap_area_list definition for ppc/ppc64.
+
 * Fri Jul 12 2013 Baoquan He <bhe@redhat.com> - 2.0.4-6
 - add snappy build
 - add lzo build
