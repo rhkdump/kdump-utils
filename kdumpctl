@@ -16,6 +16,23 @@ if [ -f /etc/sysconfig/kdump ]; then
 	. /etc/sysconfig/kdump
 fi
 
+# remove_cmdline_param <kernel cmdline> <param1> [<param2>] ... [<paramN>]
+# Remove a list of kernel parameters from a given kernel cmdline and print the result.
+# For each "arg" in the removing params list, "arg" and "arg=xxx" will be removed if exists.
+function remove_cmdline_param()
+{
+	local cmdline=$1
+	shift
+
+	for arg in $@; do
+		cmdline=`echo $cmdline | \
+			 sed -e "s/\b$arg=[^ ]*\b//g" \
+			     -e "s/\b$arg\b//g" \
+			     -e "s/\s\+/ /g"`
+	done
+	echo $cmdline
+}
+
 function save_core()
 {
 	coredir="/var/crash/`date +"%Y-%m-%d-%H:%M"`"
@@ -221,8 +238,8 @@ function load_kdump()
 	then
 		KDUMP_COMMANDLINE=`cat /proc/cmdline`
 	fi
+	KDUMP_COMMANDLINE=`remove_cmdline_param "$KDUMP_COMMANDLINE" crashkernel hugepages hugepagesz`
 
-	KDUMP_COMMANDLINE=`echo $KDUMP_COMMANDLINE | sed -e 's/crashkernel=[^ ]*//'`
 	KDUMP_COMMANDLINE="${KDUMP_COMMANDLINE} ${KDUMP_COMMANDLINE_APPEND}"
 
 	$KEXEC $KEXEC_ARGS $standard_kexec_args \
