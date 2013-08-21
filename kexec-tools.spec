@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.4
-Release: 7%{?dist}
+Release: 8%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -317,6 +317,9 @@ done
 %endif
 
 %changelog
+* Wed Aug 21 2013 Baoquan He <bhe@redhat.com> - 2.0.4-8
+- remove 98selinux dependency
+
 * Fri Aug 2  2013 Baoquan He <bhe@redhat.com> - 2.0.4-7
 - dracut-kdump.sh: add do_dump() and error out if dump vmcore fails
 - dracut-module-setup.sh: setup correct system time and time zone in 2nd kernel.
