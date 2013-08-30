@@ -16,6 +16,12 @@ if [ -f /etc/sysconfig/kdump ]; then
 	. /etc/sysconfig/kdump
 fi
 
+single_instance_lock()
+{
+	exec 9>/var/lock/kdump
+	flock 9
+}
+
 # remove_cmdline_param <kernel cmdline> <param1> [<param2>] ... [<paramN>]
 # Remove a list of kernel parameters from a given kernel cmdline and print the result.
 # For each "arg" in the removing params list, "arg" and "arg=xxx" will be removed if exists.
@@ -530,6 +536,9 @@ if [ ! -f "$KDUMP_CONFIG_FILE" ]; then
 	echo "Error: No kdump config file found!"  >&2
 	exit 1
 fi
+
+# Other kdumpctl instances will block in queue, until this one exits
+single_instance_lock
 
 case "$1" in
   start)
