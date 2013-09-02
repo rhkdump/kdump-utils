@@ -103,6 +103,7 @@ to_mount() {
     _t=$(findmnt -k -f -n -r -o TARGET,FSTYPE $_dev)
     _o=$(findmnt -k -f -n -r -o OPTIONS $_dev)
     _o=${_o/#ro/rw} #mount fs target as rw in 2nd kernel
+    _o="${_o},nofail" #with nofail set, systemd won't block for mount failure
     _mntopts="$_t $_o"
     #for non-nfs _dev converting to use udev persistent name
     if [ -b "$_s" ]; then
