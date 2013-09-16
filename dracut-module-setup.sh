@@ -96,7 +96,7 @@ kdump_get_perm_addr() {
 
 kdump_setup_bridge() {
     local _netdev=$1
-    local _brif=""
+    local _brif _dev
     for _dev in `ls /sys/class/net/$_netdev/brif/`; do
         if kdump_is_bond "$_dev"; then
             kdump_setup_bond "$_dev"
@@ -114,6 +114,7 @@ kdump_setup_bridge() {
 
 kdump_setup_bond() {
     local _netdev=$1
+    local _dev
     for _dev in `cat /sys/class/net/$_netdev/bonding/slaves`; do
         echo -n " ifname=$_dev:$(kdump_get_perm_addr $_dev)" >> ${initdir}/etc/cmdline.d/42bond.conf
     done
@@ -126,7 +127,7 @@ kdump_setup_bond() {
 
 kdump_setup_team() {
     local _netdev=$1
-    local slaves=""
+    local slaves _dev
     for _dev in `teamnl $_netdev ports | awk -F':' '{print $2}'`; do
         echo -n " ifname=$_dev:$(kdump_get_perm_addr $_dev)" >> ${initdir}/etc/cmdline.d/44team.conf
         slaves+="$_dev,"
