@@ -6,6 +6,7 @@
 # Written by Cong Wang <amwang@redhat.com>
 #
 
+. /lib/kdump/kdump-lib.sh
 export IN_KDUMP=1
 
 conf_file="/etc/kdump.conf"
@@ -241,21 +242,6 @@ check_size() {
         echo "Warning: There might not be enough space to save a vmcore."
         echo "         The size of $2 should be greater than $memtotal kilo bytes."
     fi
-}
-
-is_nfs_dump_target()
-{
-    grep -q "^nfs" $conf_file
-}
-
-is_ssh_dump_target()
-{
-    grep -q "^ssh.*@" $conf_file
-}
-
-is_raw_dump_target()
-{
-    grep -q "^raw" $conf_file
 }
 
 # $1: core_collector config value

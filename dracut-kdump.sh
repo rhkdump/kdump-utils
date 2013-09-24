@@ -2,6 +2,7 @@
 
 exec &> /dev/console
 . /lib/dracut-lib.sh
+. /lib/kdump-lib.sh
 
 if [ -f "$initdir/lib/dracut/no-emergency-shell" ]; then
     rm -f -- $initdir/lib/dracut/no-emergency-shell
@@ -197,21 +198,6 @@ save_vmcore_dmesg_ssh() {
     fi
 }
 
-
-is_ssh_dump_target()
-{
-    grep -q "^ssh[[:blank:]].*@" $conf_file
-}
-
-is_nfs_dump_target()
-{
-    grep -q "^nfs.*:" $conf_file
-}
-
-is_raw_dump_target()
-{
-    grep -q "^raw" $conf_file
-}
 
 get_host_ip()
 {

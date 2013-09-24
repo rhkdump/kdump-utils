@@ -24,6 +24,7 @@ Source16: kdump.service
 Source17: rhcrashkernel-param
 Source18: kdump.sysconfig.s390x
 Source19: eppic_030413.tar.gz
+Source20: kdump-lib.sh
 
 #######################################
 # These are sources for mkdumpramfs
@@ -156,6 +157,7 @@ mkdir -p -m755 $RPM_BUILD_ROOT%{_sysconfdir}/udev/rules.d
 mkdir -p $RPM_BUILD_ROOT%{_unitdir}
 mkdir -p -m755 $RPM_BUILD_ROOT%{_bindir}
 mkdir -p -m755 $RPM_BUILD_ROOT%{_libdir}
+mkdir -p -m755 $RPM_BUILD_ROOT%{_prefix}/lib/kdump
 install -m 755 %{SOURCE1} $RPM_BUILD_ROOT%{_bindir}/kdumpctl
 
 SYSCONFIG=$RPM_SOURCE_DIR/kdump.sysconfig.%{_target_cpu}
@@ -168,6 +170,7 @@ install -m 644 %{SOURCE8} $RPM_BUILD_ROOT%{_sysconfdir}/kdump.conf
 install -m 644 kexec/kexec.8 $RPM_BUILD_ROOT%{_mandir}/man8/kexec.8
 install -m 755 %{SOURCE11} $RPM_BUILD_ROOT%{_datadir}/kdump/firstboot_kdump.py
 install -m 644 %{SOURCE12} $RPM_BUILD_ROOT%{_mandir}/man8/mkdumprd.8
+install -m 755 %{SOURCE20} $RPM_BUILD_ROOT%{_prefix}/lib/kdump/kdump-lib.sh
 %ifnarch s390x
 # For s390x the ELF header is created in the kdump kernel and therefore kexec
 # udev rules are not required
@@ -298,6 +301,7 @@ done
 /usr/sbin/*
 %{_bindir}/*
 %{_datadir}/kdump
+%{_prefix}/lib/kdump
 %config(noreplace,missingok) %{_sysconfdir}/sysconfig/kdump
 %config(noreplace,missingok) %{_sysconfdir}/kdump.conf
 %ifnarch s390x

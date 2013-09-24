@@ -1,6 +1,7 @@
 #!/bin/bash
 
 . $dracutfunctions
+. /lib/kdump/kdump-lib.sh
 
 check() {
     [[ $debug ]] && set -x
@@ -21,11 +22,6 @@ depends() {
 
     echo $_dep
     return 0
-}
-
-is_ssh_dump_target()
-{
-    grep -q "^ssh[[:blank:]].*@" /etc/kdump.conf
 }
 
 kdump_to_udev_name() {
@@ -413,6 +409,7 @@ install() {
     inst "/sbin/makedumpfile" "/sbin/makedumpfile"
     inst "/sbin/vmcore-dmesg" "/sbin/vmcore-dmesg"
     inst_hook pre-pivot 9999 "$moddir/kdump.sh"
+    inst "/lib/kdump/kdump-lib.sh" "/lib/kdump-lib.sh"
 
     # Check for all the devices and if any device is iscsi, bring up iscsi
     # target. Ideally all this should be pushed into dracut iscsi module
