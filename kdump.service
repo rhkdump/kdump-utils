@@ -1,6 +1,6 @@
 [Unit]
 Description=Crash recovery kernel arming
-After=network.target
+After=network.target network-online.target remote-fs.target
 
 [Service]
 Type=oneshot
