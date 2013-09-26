@@ -1,0 +1,47 @@
+From 1202589997ad008b18276f504c5c2b8529b41dfe Mon Sep 17 00:00:00 2001
+Message-Id: <1202589997ad008b18276f504c5c2b8529b41dfe.1380186577.git.bhe@redhat.com>
+From: Atsushi Kumagai <kumagai-atsushi@mxc.nes.nec.co.jp>
+Date: Fri, 20 Sep 2013 09:34:57 +0900
+Subject: [PATCH] [PATCH] Support newer kernels.
+
+ A new makedumpfile supports newer kernels:
+
+       - 3.10    (x86 FLATMEM)
+       - 3.10    (x86 SPARSEMEM)
+       - 3.10    (x86_64 SPARSEMEM)
+
+Signed-off-by: Atsushi Kumagai <kumagai-atsushi@mxc.nes.nec.co.jp>
+Signed-off-by: Baoquan He <bhe@redhat.com>
+---
+ README         | 1 +
+ makedumpfile.h | 2 +-
+ 2 files changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/makedumpfile-1.5.4/README b/makedumpfile-1.5.4/README
+index b587485..4e838d8 100644
+--- a/makedumpfile-1.5.4/README
++++ b/makedumpfile-1.5.4/README
+@@ -97,6 +97,7 @@
+   3.7    | OK | ** |    |    |    | ** |    | -- | OK | OK |    |    |
+   3.8    | OK | ** |    |    |    | ** |    | -- | OK | OK |    |    |
+   3.9    | OK | ** |    |    |    | ** |    | -- | OK | OK |    |    |
++  3.10   | OK | ** |    |    |    | ** |    | -- | OK | OK |    |    |
+ 
+   OK    : Support.
+   --    : Not support.
+diff --git a/makedumpfile-1.5.4/makedumpfile.h b/makedumpfile-1.5.4/makedumpfile.h
+index a04154e..c504bfb 100644
+--- a/makedumpfile-1.5.4/makedumpfile.h
++++ b/makedumpfile-1.5.4/makedumpfile.h
+@@ -426,7 +426,7 @@ do { \
+ #define KVER_MIN_SHIFT 16
+ #define KERNEL_VERSION(x,y,z) (((x) << KVER_MAJ_SHIFT) | ((y) << KVER_MIN_SHIFT) | (z))
+ #define OLDEST_VERSION		KERNEL_VERSION(2, 6, 15)/* linux-2.6.15 */
+-#define LATEST_VERSION		KERNEL_VERSION(3, 9, 6)/* linux-3.9.6 */
++#define LATEST_VERSION		KERNEL_VERSION(3, 10, 7)/* linux-3.10.7 */
+ 
+ /*
+  * vmcoreinfo in /proc/vmcore
+-- 
+1.8.3.1
+

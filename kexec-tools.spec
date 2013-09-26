@@ -77,6 +77,7 @@ Patch301: kexec-tools-2.0.4-makedumpfile-Add-vmap_area_list-definition-for-ppc-p
 #
 Patch601: kexec-tools-2.0.3-disable-kexec-test.patch
 Patch604: kexec-tools-2.0.3-build-makedumpfile-eppic-shared-object.patch
+Patch605: kexec-tools-2.0.4-makedumpfile-PATCH-Support-newer-kernels.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -108,6 +109,7 @@ tar -z -x -v -f %{SOURCE19}
 %patch301 -p1
 %patch601 -p1
 %patch604 -p1
+%patch605 -p1
 
 tar -z -x -v -f %{SOURCE13}
 
