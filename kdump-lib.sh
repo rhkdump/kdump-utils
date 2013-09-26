@@ -17,3 +17,8 @@ is_raw_dump_target()
 {
     grep -q "^raw" /etc/kdump.conf
 }
+
+strip_comments()
+{
+    echo $1 | sed -e 's/\(.*\)#.*/\1/'
+}
