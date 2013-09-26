@@ -506,6 +506,8 @@ fi
 
 while read config_opt config_val;
 do
+    # remove inline comments after the end of a directive.
+    config_val=$(strip_comments $config_val)
     case "$config_opt" in
     extra_modules)
         extra_modules="$extra_modules $config_val"

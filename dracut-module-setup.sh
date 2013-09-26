@@ -245,6 +245,8 @@ kdump_install_conf() {
 
     while read config_opt config_val;
     do
+        # remove inline comments after the end of a directive.
+        config_val=$(strip_comments $config_val)
         case "$config_opt" in
         ext[234]|xfs|btrfs|minix|raw)
             sed -i -e "s#$config_val#$(kdump_to_udev_name $config_val)#" /tmp/$$-kdump.conf

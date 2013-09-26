@@ -10,6 +10,8 @@ SAVE_PATH=/var/crash
 SSH_KEY_LOCATION="/root/.ssh/kdump_id_rsa"
 DUMP_TARGET=""
 
+. /lib/kdump/kdump-lib.sh
+
 standard_kexec_args="-p"
 
 if [ -f /etc/sysconfig/kdump ]; then
@@ -106,6 +108,8 @@ function check_config()
 	}
 
 	while read config_opt config_val; do
+               # remove inline comments after the end of a directive.                                                                      
+               config_val=$(strip_comments $config_val)
 		case "$config_opt" in
 		\#* | "")
 			;;
@@ -263,6 +267,8 @@ function load_kdump()
 function check_ssh_config()
 {
 	while read config_opt config_val; do
+               # remove inline comments after the end of a directive.
+               config_val=$(strip_comments $config_val)
 		case "$config_opt" in
 		sshkey)
 			if [ -f "$config_val" ]; then

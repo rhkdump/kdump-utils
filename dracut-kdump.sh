@@ -226,6 +226,8 @@ read_kdump_conf()
     # first get the necessary variables
     while read config_opt config_val;
     do
+        # remove inline comments after the end of a directive.
+        config_val=$(strip_comments $config_val)
         case "$config_opt" in
         path)
         KDUMP_PATH="$config_val"
@@ -269,6 +271,8 @@ read_kdump_conf()
     # rescan for add code for dump target
     while read config_opt config_val;
     do
+        # remove inline comments after the end of a directive.
+        config_val=$(strip_comments $config_val)
         case "$config_opt" in
         ext[234]|xfs|btrfs|minix|nfs)
             add_dump_code "dump_fs $config_val"
