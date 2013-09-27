@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.4
-Release: 8%{?dist}
+Release: 9%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -323,6 +323,14 @@ done
 %endif
 
 %changelog
+* Fri Sep 27 2013 Baoquan He <bhe@redhat.com> - 2.0.4-9
+- Strip inline comments from the kdump config file before use
+- kdump-lib.sh: add common function strip_comments
+- Introduce kdump-lib.sh for kdump shared functions
+- kdump.service: Start kdump after network is online and remote fs is mounted
+- dracut-module-setup: _dev to be a local variable
+- kdumpctl: Run multiple kdumpctl instances one by one in serial order
+
 * Wed Aug 21 2013 Baoquan He <bhe@redhat.com> - 2.0.4-8
 - remove 98selinux dependency
 
