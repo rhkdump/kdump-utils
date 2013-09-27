@@ -52,6 +52,9 @@ Obsoletes: diskdumputils netdump
 #
 # Patches 0 through 100 are meant for x86 kexec-tools enablement
 #
+Patch001: kexec-tools-2.0.4-Revert-kexec-lengthen-the-kernel-command-line-image.patch
+Patch002: kexec-tools-2.0.4-kexec-i386-Add-cmdline_add_memmap_internal-to-reduce.patch
+Patch003: kexec-tools-2.0.4-Revert-kexec-include-reserved-e820-sections-in-crash.patch
 
 #
 # Patches 101 through 200 are meant for x86_64 kexec-tools enablement
@@ -111,6 +114,10 @@ tar -z -x -v -f %{SOURCE19}
 %patch601 -p1
 %patch604 -p1
 %patch605 -p1
+%patch001 -p1
+%patch002 -p1
+%patch003 -p1
+
 
 tar -z -x -v -f %{SOURCE13}
 

@@ -1,0 +1,35 @@
+From 827491661670e3d7f8edf08cce2ed0f423d710eb Mon Sep 17 00:00:00 2001
+Message-Id: <827491661670e3d7f8edf08cce2ed0f423d710eb.1380270065.git.bhe@redhat.com>
+From: Zhang Yanfei <zhangyanfei@cn.fujitsu.com>
+Date: Wed, 27 Mar 2013 20:42:28 +0800
+Subject: [PATCH] Revert: "kexec: lengthen the kernel command line image"
+
+This reverts commit 49320340f705694e387d794f7f19d407ad9baefa. The change
+of COMMAND_LINE_SIZE cannot solve Cliff's problem since the kernel side
+has the restriction, so it is useless. Let's recover the original value
+defined by kernel side.
+
+Cc: Cliff Wickman <cpw@sgi.com>
+Signed-off-by: Zhang Yanfei <zhangyanfei@cn.fujitsu.com>
+Signed-off-by: Simon Horman <horms@verge.net.au>
+Signed-off-by: Baoquan He <bhe@redhat.com>
+---
+ include/x86/x86-linux.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/include/x86/x86-linux.h b/include/x86/x86-linux.h
+index 6681f9e..0949dc2 100644
+--- a/include/x86/x86-linux.h
++++ b/include/x86/x86-linux.h
+@@ -197,7 +197,7 @@ struct x86_linux_param_header {
+ 	uint8_t _pad8[48];			/* 0xcd0 */
+ 	struct 	edd_info eddbuf[EDDMAXNR];	/* 0xd00 */
+ 						/* 0xeec */
+-#define COMMAND_LINE_SIZE (64*1024)
++#define COMMAND_LINE_SIZE 2048
+ };
+ 
+ struct x86_linux_faked_param_header {
+-- 
+1.8.3.1
+
