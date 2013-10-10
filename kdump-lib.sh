@@ -20,5 +20,5 @@ is_raw_dump_target()
 
 strip_comments()
 {
-    echo $1 | sed -e 's/\(.*\)#.*/\1/'
+    echo $@ | sed -e 's/\(.*\)#.*/\1/'
 }
