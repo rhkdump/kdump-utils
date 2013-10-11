@@ -59,6 +59,7 @@ Patch003: kexec-tools-2.0.4-Revert-kexec-include-reserved-e820-sections-in-crash
 #
 # Patches 101 through 200 are meant for x86_64 kexec-tools enablement
 #
+Patch101: kexec-tools-2.0.4-kdump-x86-Process-multiple-Crash-kernel-in-proc-iome.patch
 
 #
 # Patches 201 through 300 are meant for ia64 kexec-tools enablement
@@ -113,6 +114,7 @@ tar -z -x -v -f %{SOURCE9}
 tar -z -x -v -f %{SOURCE19}
 
 
+%patch101 -p1
 %patch301 -p1
 %patch601 -p1
 %patch604 -p1
