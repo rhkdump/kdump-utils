@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.4
-Release: 10%{?dist}
+Release: 11%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -330,7 +330,12 @@ done
 %endif
 
 %changelog
+* Sat Oct 12 2013 Baoquan He <bhe@redhat.com> -2.0.4-11
+- kdump-lib.sh: strip_comments is not implemented correcty
+
 * Fri Sep 27 2013 Baoquan He <bhe@redhat.com> - 2.0.4-10
+- Back port 2 revert commits
+- kdump.sysconfig: default to "nofail" mount
 
 * Fri Sep 27 2013 Baoquan He <bhe@redhat.com> - 2.0.4-9
 - Strip inline comments from the kdump config file before use
