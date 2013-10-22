@@ -1,0 +1,33 @@
+From a785fa7dd7a7bd7dcbb017d0bea8848243b0924f Mon Sep 17 00:00:00 2001
+Message-Id: <a785fa7dd7a7bd7dcbb017d0bea8848243b0924f.1382423400.git.bhe@redhat.com>
+From: Atsushi Kumagai <kumagai-atsushi@mxc.nes.nec.co.jp>
+Date: Thu, 12 Sep 2013 08:31:28 +0900
+Subject: [PATCH 1/2] [PATCH] Update pfn_cyclic when the cyclic buffer size is
+ corrected.
+
+When the clearing bit operation for excluding free pages can overrun
+the cyclic buffer, the buffer size is changed with
+check_cyclic_buffer_overrun().
+Then pfn_cyclic should be recalculated.
+
+Reviewed-by: HATAYAMA Daisuke <d.hatayama@jp.fujitsu.com>
+Signed-off-by: Atsushi Kumagai <kumagai-atsushi@mxc.nes.nec.co.jp>
+---
+ makedumpfile.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/makedumpfile-1.5.4/makedumpfile.c b/makedumpfile-1.5.4/makedumpfile.c
+index 09c0d4a..164b3f1 100644
+--- a/makedumpfile-1.5.4/makedumpfile.c
++++ b/makedumpfile-1.5.4/makedumpfile.c
+@@ -4091,6 +4091,7 @@ check_cyclic_buffer_overrun(void)
+ 
+ 		bufsize = info->bufsize_cyclic;
+ 		info->bufsize_cyclic = round(bufsize, max_block_size);
++		info->pfn_cyclic = info->bufsize_cyclic * BITPERBYTE;
+ 
+ 		MSG("cyclic buffer size has been changed: %lu => %lu\n",
+ 		    bufsize, info->bufsize_cyclic);
+-- 
+1.8.3.1
+

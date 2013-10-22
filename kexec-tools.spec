@@ -83,6 +83,8 @@ Patch601: kexec-tools-2.0.3-disable-kexec-test.patch
 Patch604: kexec-tools-2.0.3-build-makedumpfile-eppic-shared-object.patch
 Patch605: kexec-tools-2.0.4-makedumpfile-PATCH-Support-newer-kernels.patch
 Patch606: kexec-tools-2.0.4-makedumpfile-Fix-max_mapnr-issue-on-system-has-over-44-b.patch
+Patch607: kexec-tools-2.0.4-makedumpfile-Update-pfn_cyclic-when-the-cyclic-buffer-size-.patch
+Patch608: kexec-tools-2.0.4-makedumpfile-Use-divideup-to-calculate-maximum-required-bit.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -116,6 +118,8 @@ tar -z -x -v -f %{SOURCE19}
 %patch604 -p1
 %patch605 -p1
 %patch606 -p1
+%patch607 -p1
+%patch608 -p1
 %patch001 -p1
 %patch002 -p1
 %patch003 -p1

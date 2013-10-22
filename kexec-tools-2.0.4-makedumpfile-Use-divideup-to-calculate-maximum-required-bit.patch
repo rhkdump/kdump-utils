@@ -1,0 +1,44 @@
+From f8c8218856effc43ea01cd9394761cfb8aeaa8df Mon Sep 17 00:00:00 2001
+Message-Id: <f8c8218856effc43ea01cd9394761cfb8aeaa8df.1382423400.git.bhe@redhat.com>
+In-Reply-To: <a785fa7dd7a7bd7dcbb017d0bea8848243b0924f.1382423400.git.bhe@redhat.com>
+References: <a785fa7dd7a7bd7dcbb017d0bea8848243b0924f.1382423400.git.bhe@redhat.com>
+From: HATAYAMA Daisuke <d.hatayama@jp.fujitsu.com>
+Date: Thu, 12 Sep 2013 13:19:00 +0900
+Subject: [PATCH 2/2] [PATCH] Use divideup() to calculate maximum required
+ bitmap size.
+
+Currently, check_cyclic_buffer_overrun() wrongly calculates maximum
+bitmap size required to represent maximum block size managed by buddy
+allocator with roundup(). Then, max_block_size is BITPERBYTE-time
+larger than its correct size. As a result, although the bug never
+affect free-page filtering since roundup(max_order_nr_pages,
+BITPERBYTE) is a multiple of divideup(max_order_nr_pages, BITPERBYTE),
+the following sanity check, (max_block_size > info->bufsize_cyclic),
+and recalculation of info->bufsize_cyclic becomes BITPERBYTE-time
+conservative and inefficient.
+
+Signed-off-by: HATAYAMA Daisuke <d.hatayama@jp.fujitsu.com>
+---
+ makedumpfile.c | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/makedumpfile-1.5.4/makedumpfile.c b/makedumpfile-1.5.4/makedumpfile.c
+index 164b3f1..1718f88 100644
+--- a/makedumpfile-1.5.4/makedumpfile.c
++++ b/makedumpfile-1.5.4/makedumpfile.c
+@@ -4078,10 +4078,9 @@ check_cyclic_buffer_overrun(void)
+ {
+ 	int max_order = ARRAY_LENGTH(zone.free_area);
+ 	int max_order_nr_pages = 1 << (max_order - 1);
+-	unsigned long max_block_size = roundup(max_order_nr_pages, BITPERBYTE);
++	unsigned long max_block_size = divideup(max_order_nr_pages, BITPERBYTE);
+ 
+-	if (info->bufsize_cyclic %
+-	    roundup(max_order_nr_pages, BITPERBYTE)) {
++	if (info->bufsize_cyclic % max_block_size) {
+ 		unsigned long bufsize;
+ 
+ 		if (max_block_size > info->bufsize_cyclic) {
+-- 
+1.8.3.1
+
