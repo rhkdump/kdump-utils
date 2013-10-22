@@ -1,0 +1,105 @@
+From 92563d7a7a5175ef78c4a94ee269b1b455331b4c Mon Sep 17 00:00:00 2001
+From: HATAYAMA Daisuke <d.hatayama@jp.fujitsu.com>
+Date: Tue, 17 Sep 2013 15:29:33 +0900
+Subject: [PATCH] [PATCH 1/2] cache: Allocate buffers at initialization to
+ detect malloc() failure.
+
+malloc() is used in cache_alloc() but there's no check for it. If I
+added check in cache_alloc() directly, cache_alloc() needs to return
+one more error status and code gets somewhat complicated. Instead, I
+move malloc() in initial() to detect allocation failure at
+initialization. By this change, 8 buffers are allocated at the same
+time, no longer incrementally. However, 8 buffers are almost always
+used throughout execution. There's essential differnece from the
+incremental one.
+
+Signed-off-by: HATAYAMA Daisuke <d.hatayama@jp.fujitsu.com>
+---
+ cache.c        | 29 ++++++++++++++++++++++-------
+ cache.h        |  1 +
+ makedumpfile.c |  3 +++
+ 3 files changed, 26 insertions(+), 7 deletions(-)
+
+diff --git a/makedumpfile-1.5.4/cache.c b/makedumpfile-1.5.4/cache.c
+index 3bea089..dad8d80 100644
+--- a/makedumpfile-1.5.4/cache.c
++++ b/makedumpfile-1.5.4/cache.c
+@@ -18,6 +18,7 @@
+ 
+ #include "makedumpfile.h"
+ #include "cache.h"
++#include "print_info.h"
+ 
+ struct cache_entry {
+ 	unsigned long long paddr;
+@@ -36,6 +37,25 @@ static int avail = CACHE_SIZE;
+ 
+ static struct cache used, pending;
+ 
++int
++cache_init(void)
++{
++	void *bufptr;
++	int i;
++
++	for (i = 0; i < CACHE_SIZE; ++i) {
++		bufptr = malloc(info->page_size);
++		if (bufptr == NULL) {
++			ERRMSG("Can't allocate memory for cache. %s\n",
++			       strerror(errno));
++			return FALSE;
++		}
++		pool[i].bufptr = bufptr;
++	}
++
++	return TRUE;
++}
++
+ static void
+ add_entry(struct cache *cache, struct cache_entry *entry)
+ {
+@@ -83,13 +103,8 @@ cache_alloc(unsigned long long paddr)
+ {
+ 	struct cache_entry *entry = NULL;
+ 
+-	if (avail) {
+-		void *bufptr = malloc(info->page_size);
+-		if (bufptr) {
+-			entry = &pool[--avail];
+-			entry->bufptr = bufptr;
+-		}
+-	}
++	if (avail)
++		entry = &pool[--avail];
+ 
+ 	if (!entry) {
+ 		if (used.tail) {
+diff --git a/makedumpfile-1.5.4/cache.h b/makedumpfile-1.5.4/cache.h
+index f37d883..4730e12 100644
+--- a/makedumpfile-1.5.4/cache.h
++++ b/makedumpfile-1.5.4/cache.h
+@@ -19,6 +19,7 @@
+ #ifndef _CACHE_H
+ #define _CACHE_H
+ 
++int cache_init(void);
+ void *cache_search(unsigned long long paddr);
+ void *cache_alloc(unsigned long long paddr);
+ void cache_add(unsigned long long paddr);
+diff --git a/makedumpfile-1.5.4/makedumpfile.c b/makedumpfile-1.5.4/makedumpfile.c
+index 1718f88..e01ff50 100644
+--- a/makedumpfile-1.5.4/makedumpfile.c
++++ b/makedumpfile-1.5.4/makedumpfile.c
+@@ -3017,6 +3017,9 @@ out:
+ 		DEBUG_MSG("Buffer size for the cyclic mode: %ld\n", info->bufsize_cyclic);
+ 	}
+ 
++	if (!cache_init())
++		return FALSE;
++
+ 	if (debug_info) {
+ 		if (info->flag_sadump)
+ 			(void) sadump_virt_phys_base();
+-- 
+1.8.3.1
+

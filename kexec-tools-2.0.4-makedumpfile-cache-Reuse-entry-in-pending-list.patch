@@ -1,0 +1,120 @@
+From e23dc0a1aa5fa7a4429f72ff1c2fe87a87291065 Mon Sep 17 00:00:00 2001
+From: HATAYAMA Daisuke <d.hatayama@jp.fujitsu.com>
+Date: Tue, 17 Sep 2013 15:29:38 +0900
+Subject: [PATCH] [PATCH 2/2] cache: Reuse entry in pending list.
+
+Currently, sadump_virt_phys_base() fails to calculate phys_base as
+below:
+
+$ /pub/repos/makedumpfile/makedumpfile -f -p -d 31 -x /pub3/vmcores/comparevmcore_data/vmlinux-2.6.18-363.el5 /pub3/vmcores/comparevmcore_data/vmcore-2.6.18-363.el5-sadump /pub3/vmcores/comparevmcore_data/vmcore-pd31
+Switched running mode from cyclic to non-cyclic,
+because the cyclic mode doesn't support sadump format.
+readmem: type_addr: 1, addr:296020, size:13
+readmem: type_addr: 1, addr:ffffffffff296020, size:13
+readmem: type_addr: 1, addr:ffffffffff396020, size:13
+readmem: type_addr: 1, addr:ffffffffff496020, size:13
+readmem: type_addr: 1, addr:ffffffffff596020, size:13
+readmem: type_addr: 1, addr:ffffffffff696020, size:13
+readmem: type_addr: 1, addr:ffffffffff796020, size:13
+readmem: type_addr: 1, addr:ffffffffff896020, size:13
+readmem: type_addr: 1, addr:ffffffffff996020, size:13
+readmem: type_addr: 1, addr:ffffffffffa96020, size:13
+readmem: type_addr: 1, addr:ffffffffffb96020, size:13
+readmem: type_addr: 1, addr:ffffffffffc96020, size:13
+readmem: type_addr: 1, addr:ffffffffffd96020, size:13
+readmem: type_addr: 1, addr:ffffffffffe96020, size:13
+readmem: type_addr: 1, addr:fffffffffff96020, size:13
+readmem: type_addr: 1, addr:96020, size:13
+readmem: type_addr: 1, addr:196020, size:13
+readmem: type_addr: 1, addr:296020, size:13
+readmem: type_addr: 1, addr:396020, size:13
+readmem: type_addr: 1, addr:496020, size:13
+readmem: type_addr: 1, addr:596020, size:13
+readmem: type_addr: 1, addr:696020, size:13
+readmem: type_addr: 1, addr:796020, size:13
+readmem: type_addr: 1, addr:896020, size:13
+readmem: type_addr: 1, addr:996020, size:13
+readmem: type_addr: 1, addr:a96020, size:13
+readmem: type_addr: 1, addr:b96020, size:13
+readmem: type_addr: 1, addr:c96020, size:13
+readmem: type_addr: 1, addr:d96020, size:13
+readmem: type_addr: 1, addr:e96020, size:13
+readmem: type_addr: 1, addr:f96020, size:13
+readmem: type_addr: 1, addr:1096020, size:13
+readmem: type_addr: 1, addr:1196020, size:13
+readmem: type_addr: 1, addr:1296020, size:13
+readmem: type_addr: 0, addr:ffffffff8045e260, size:32
+cpu_online_mask_init: Can't read cpu_online_mask memory.
+
+makedumpfile Failed.
+
+By git bisect, I found this bug is caused by the following commit:
+
+commit 0aff0e5174d0708bf1bfb039ab863e1fea8a1029
+Author: Petr Tesarik <ptesarik@suse.cz>
+Date:   Wed Oct 31 16:12:47 2012 +0900
+
+    [PATCH] keep dumpfile pages in a cache.
+
+Then, I found this bug happens in the following senario.
+
+If one of the readpage_xxx() methods fails reading 8 pages in a row, 8
+entries in pool are fully contained in pending list. Then,
+cache_alloc() returns NULL and this continues forever in the
+execution. In other words, there's assumption in cache_alloc() that if
+pool is fully used, they are fully in used list, not in pending list
+at all. However, the buggy path here breaks the assumption. This patch
+changes cache_alloc() so that it first tries to reuse enty in pending
+list if exists.
+
+In fact, I found this bug in ad-hoc phys_base calculation performed in
+sadump_virt_phys_base(). However, I fixed cache side since this bug
+can occur in general on every vmcore format. Crash dump can contain
+broken data in any part of vmcore and so requested physical address to
+read can be broken likewise.
+
+Signed-off-by: HATAYAMA Daisuke <d.hatayama@jp.fujitsu.com>
+---
+ cache.c | 25 +++++++++++++------------
+ 1 file changed, 13 insertions(+), 12 deletions(-)
+
+diff --git a/makedumpfile-1.5.4/cache.c b/makedumpfile-1.5.4/cache.c
+index dad8d80..0dd957c 100644
+--- a/makedumpfile-1.5.4/cache.c
++++ b/makedumpfile-1.5.4/cache.c
+@@ -103,19 +103,20 @@ cache_alloc(unsigned long long paddr)
+ {
+ 	struct cache_entry *entry = NULL;
+ 
+-	if (avail)
++	if (avail) {
+ 		entry = &pool[--avail];
+-
+-	if (!entry) {
+-		if (used.tail) {
+-			entry = used.tail;
+-			remove_entry(&used, entry);
+-		} else
+-			return NULL;
+-	}
+-
+-	entry->paddr = paddr;
+-	add_entry(&pending, entry);
++		entry->paddr = paddr;
++		add_entry(&pending, entry);
++	} else if (pending.tail) {
++		entry = pending.tail;
++		entry->paddr = paddr;
++	} else if (used.tail) {
++		entry = used.tail;
++		remove_entry(&used, entry);
++		entry->paddr = paddr;
++		add_entry(&pending, entry);
++	} else
++		return NULL;
+ 
+ 	return entry->bufptr;
+ }
+-- 
+1.8.3.1
+
