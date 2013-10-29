@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.4
-Release: 11%{?dist}
+Release: 12%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -342,6 +342,12 @@ done
 %endif
 
 %changelog
+* Tue Oct 29 2013 WANG Chao <chaowang@redhat.com> - 2.0.4-12
+- fix sadump format phys_base calculating error
+- kdump, x86: Process multiple Crash kernel in /proc/iomem
+- makedumpfile: wrong cyclic buffer size recalculation causes bitmap data corruption
+- Fix max_mapnr issue on system has over 44-bit addressing.
+
 * Sat Oct 12 2013 Baoquan He <bhe@redhat.com> -2.0.4-11
 - kdump-lib.sh: strip_comments is not implemented correcty
 
