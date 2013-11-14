@@ -1,0 +1,36 @@
+makedumpfile: disable mmap read
+
+There's a kernel bug for mapping mem ranges which end with
+an address not aligned to page boundry. It's still not resolved
+in upstream, so let's disable mmap read for now as a workaround.
+
+Once upstream got a right fix we can revert this patch.
+
+Signed-off-by: Dave Young <dyoung@redhat.com>
+---
+ makedumpfile.c |    7 +++++++
+ 1 file changed, 7 insertions(+)
+
+--- kexec-tools/makedumpfile-1.5.4/makedumpfile.c.orig
++++ kexec-tools/makedumpfile-1.5.4/makedumpfile.c
+@@ -3144,6 +3144,12 @@ out:
+ 	if (info->dump_level & DL_EXCLUDE_FREE)
+ 		setup_page_is_buddy();
+ 
++	/* There's a kernel bug for mapping mem ranges which end with
++	 * an address not aligned to page boundry. It's still not resolved
++	 * in upstream, so let's disable mmap read for now.
++	 */
++	info->flag_usemmap = FALSE;
++#if 0
+ 	if (!initialize_mmap()) {
+ 		/* this kernel does not support mmap of vmcore */
+ 		DEBUG_MSG("Kernel can't mmap vmcore, using reads.\n");
+@@ -3152,6 +3158,7 @@ out:
+ 		DEBUG_MSG("read %s with mmap()\n", info->name_memory);
+ 		info->flag_usemmap = TRUE;
+ 	}
++#endif
+ 
+ 	return TRUE;
+ }
