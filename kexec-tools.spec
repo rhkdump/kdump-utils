@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.4
-Release: 12%{?dist}
+Release: 13%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -344,6 +344,9 @@ done
 %endif
 
 %changelog
+* Fri Nov 15 2013 WANG Chao <chaowang@redhat.com> - 2.0.4-13
+- makedumpfile: disable mmap()
+
 * Tue Oct 29 2013 WANG Chao <chaowang@redhat.com> - 2.0.4-12
 - fix sadump format phys_base calculating error
 - kdump, x86: Process multiple Crash kernel in /proc/iomem
