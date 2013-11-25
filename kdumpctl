@@ -543,52 +543,59 @@ if [ ! -f "$KDUMP_CONFIG_FILE" ]; then
 	exit 1
 fi
 
+main ()
+{
+	case "$1" in
+	  start)
+		if [ -s /proc/vmcore ]; then
+			save_core
+			reboot
+		else
+			start
+		fi
+		;;
+	  stop)
+		stop
+		;;
+	  status)
+		EXIT_CODE=0
+		status
+		case "$?" in
+		  0)
+			echo "Kdump is operational"
+			EXIT_CODE=0
+			;;
+		  1)
+			echo "Kdump is not operational"
+			EXIT_CODE=3
+			;;
+		  2)
+			echo "Kdump is unsupported on this kernel"
+			EXIT_CODE=3
+			;;
+		esac
+		exit $EXIT_CODE
+		;;
+	  restart)
+		stop
+		start
+		;;
+	  condrestart)
+		;;
+	  propagate)
+		propagate_ssh_key
+		;;
+	  *)
+		echo $"Usage: $0 {start|stop|status|restart|propagate}"
+		exit 1
+	esac
+}
+
 # Other kdumpctl instances will block in queue, until this one exits
 single_instance_lock
 
-case "$1" in
-  start)
-	if [ -s /proc/vmcore ]; then
-		save_core
-		reboot
-	else
-		start
-	fi
-	;;
-  stop)
-	stop
-	;;
-  status)
-	EXIT_CODE=0
-	status
-	case "$?" in
-	0)
-		echo "Kdump is operational"
-		EXIT_CODE=0
-		;;
-	1)
-		echo "Kdump is not operational"
-		EXIT_CODE=3
-		;;
-	2)
-		echo "Kdump is unsupported on this kernel"
-		EXIT_CODE=3
-		;;
-	esac
-	exit $EXIT_CODE
-	;;
-  restart)
-	stop
-	start
-	;;
-  condrestart)
-	;;
-  propagate)
-	propagate_ssh_key
-	;;
-  *)
-	echo $"Usage: $0 {start|stop|status|restart|propagate}"
-	exit 1
-esac
+# To avoid fd 9 leaking, we invoke a subshell, close fd 9 and call main.
+# So that fd isn't leaking when main is invoking a subshell.
+(exec 9<&-; main $1)
 
 exit $?
