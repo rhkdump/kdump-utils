@@ -69,6 +69,7 @@ Patch101: kexec-tools-2.0.4-kdump-x86-Process-multiple-Crash-kernel-in-proc-iome
 # Patches 301 through 400 are meant for ppc64 kexec-tools enablement
 #
 Patch301: kexec-tools-2.0.4-makedumpfile-Add-vmap_area_list-definition-for-ppc-ppc64.patch
+Patch302: kexec-tools-2.0.4-makedumpfile-Support-to-filter-dump-for-kernels-that-use.patch
 
 #
 # Patches 401 through 500 are meant for s390 kexec-tools enablement
@@ -133,6 +134,7 @@ tar -z -x -v -f %{SOURCE19}
 %patch002 -p1
 %patch003 -p1
 %patch612 -p1
+%patch302 -p1
 
 
 tar -z -x -v -f %{SOURCE13}
