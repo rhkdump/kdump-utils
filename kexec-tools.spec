@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.4
-Release: 13%{?dist}
+Release: 14%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -348,6 +348,12 @@ done
 %endif
 
 %changelog
+* Fri Dec 03 2013 WANG Chao <chaowang@redhat.com> - 2.0.4-13
+- Add rd.memdebug in kdump module
+- kdumpctl: Avoid leaking fd to subshell
+- makedumpfile: Understand >= v3.11-rc4 dmesg
+- makedumpfile, ppc: Support to filter dump for kernels that use CONFIG_SPARSEMEM_VMEMMAP.
+
 * Fri Nov 15 2013 WANG Chao <chaowang@redhat.com> - 2.0.4-13
 - makedumpfile: disable mmap()
 
