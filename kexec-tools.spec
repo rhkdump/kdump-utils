@@ -210,6 +210,8 @@ install -m 755 %{SOURCE17} $RPM_BUILD_ROOT/usr/sbin/rhcrashkernel-param
 %ifarch %{ix86} x86_64 ia64 ppc64 s390x
 install -m 755 makedumpfile-1.5.4/makedumpfile $RPM_BUILD_ROOT/sbin/makedumpfile
 install -m 644 makedumpfile-1.5.4/makedumpfile.8.gz $RPM_BUILD_ROOT/%{_mandir}/man8/makedumpfile.8.gz
+install -m 644 makedumpfile-1.5.4/makedumpfile.conf.5.gz $RPM_BUILD_ROOT/%{_mandir}/man5/makedumpfile.conf.5.gz
+install -m 644 makedumpfile-1.5.4/makedumpfile.conf $RPM_BUILD_ROOT/%{_sysconfdir}/makedumpfile.conf.sample
 install -m 755 makedumpfile-1.5.4/eppic_makedumpfile.so $RPM_BUILD_ROOT/%{_libdir}/eppic_makedumpfile.so
 %endif
 make -C kexec-tools-po install DESTDIR=$RPM_BUILD_ROOT
@@ -328,6 +330,9 @@ done
 %{_bindir}/*
 %{_datadir}/kdump
 %{_prefix}/lib/kdump
+%ifarch %{ix86} x86_64 ia64 ppc64 s390x
+%{_sysconfdir}/makedumpfile.conf.sample
+%endif
 %config(noreplace,missingok) %{_sysconfdir}/sysconfig/kdump
 %config(noreplace,missingok) %{_sysconfdir}/kdump.conf
 %ifnarch s390x
