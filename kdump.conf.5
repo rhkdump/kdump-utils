@@ -78,9 +78,9 @@ for the running kernel.
 .PP
 Note 1: About default core collector:
 Default core_collector for raw/ssh dump is:
-"makedumpfile -F -c --message-level 1 -d 31".
+"makedumpfile -F -l --message-level 1 -d 31".
 Default core_collector for other targets is:
-"makedumpfile -c --message-level 1 -d 31".
+"makedumpfile -l --message-level 1 -d 31".
 Even if core_collector option is commented out in kdump.conf, makedumpfile
 is default core collector and kdump uses it internally.
 If one does not want makedumpfile as default core_collector, then they
@@ -253,11 +253,11 @@ Above will effectively be translated to:
 cp --sparse=always /proc/vmcore <dest-path>/vmcore
 .TP
 ex2.
-core_collector "makedumpfile -c --message-level 1 -d 31"
+core_collector "makedumpfile -l --message-level 1 -d 31"
 
 Above will effectively be translated to:
 
-makedumpfile -c --message-level 1 -d 31 /proc/vmcore <dest-path>/vmcore
+makedumpfile -l --message-level 1 -d 31 /proc/vmcore <dest-path>/vmcore
 .PP
 For dump targets like raw and ssh, in general, core collector should expect
 one argument (source file) and should output the processed core on standard
@@ -274,11 +274,11 @@ Above will effectively be translated to.
 cat /proc/vmcore | dd of=<target-device>
 .TP
 ex4.
-core_collector "makedumpfile -F -c --message-level 1 -d 31"
+core_collector "makedumpfile -F -l --message-level 1 -d 31"
 
 Above will effectively be translated to.
 
-makedumpfile -F -c --message-level 1 -d 31 | dd of=<target-device>
+makedumpfile -F -l --message-level 1 -d 31 | dd of=<target-device>
 .PP
 ssh dumps examples
 .TP
@@ -290,11 +290,11 @@ Above will effectively be translated to.
 cat /proc/vmcore | ssh <options> <remote-location> "dd of=path/vmcore"
 .TP
 ex6.
-core_collector "makedumpfile -F -c --message-level 1 -d 31"
+core_collector "makedumpfile -F -l --message-level 1 -d 31"
 
 Above will effectively be translated to.
 
-makedumpfile -F -c --message-level 1 -d 31 | ssh <options> <remote-location> "dd of=path/vmcore"
+makedumpfile -F -l --message-level 1 -d 31 | ssh <options> <remote-location> "dd of=path/vmcore"
 
 There is one exception to standard output rule for ssh dumps. And that is
 scp. As scp can handle ssh destinations for file transfers, one can

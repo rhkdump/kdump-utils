@@ -438,7 +438,7 @@ is a dump filtering and compression utility provided with kexec-tools. On
 some architectures, it can drastically reduce the size of your vmcore files,
 which becomes very useful on systems with large amounts of memory.
 
-A typical setup is 'core_collector makedumpfile -F -c --message-level 1 -d 31',
+A typical setup is 'core_collector makedumpfile -F -l --message-level 1 -d 31',
 but check the output of '/sbin/makedumpfile --help' for a list of all available
 options (-i and -g don't need to be specified, they're automatically taken care
 of). Note that use of makedumpfile requires that the kernel-debuginfo package
@@ -458,11 +458,11 @@ cp --sparse=always /proc/vmcore <dest-path>/vmcore
 
 ex2.
 ---
-core_collector "makedumpfile -c --message-level 1 -d 31"
+core_collector "makedumpfile -l --message-level 1 -d 31"
 
 Above will effectively be translated to:
 
-makedumpfile -c --message-level 1 -d 31 /proc/vmcore <dest-path>/vmcore
+makedumpfile -l --message-level 1 -d 31 /proc/vmcore <dest-path>/vmcore
 
 
 For dump targets like raw and ssh, in general, core collector should expect
@@ -482,11 +482,11 @@ cat /proc/vmcore | dd of=<target-device>
 
 ex4.
 ---
-core_collector "makedumpfile -F -c --message-level 1 -d 31"
+core_collector "makedumpfile -F -l --message-level 1 -d 31"
 
 Above will effectively be translated to.
 
-makedumpfile -F -c --message-level 1 -d 31 | dd of=<target-device>
+makedumpfile -F -l --message-level 1 -d 31 | dd of=<target-device>
 
 ssh dumps core_collector examples:
 ---------
@@ -500,11 +500,11 @@ cat /proc/vmcore | ssh <options> <remote-location> "dd of=path/vmcore"
 
 ex6.
 ---
-core_collector "makedumpfile -F -c --message-level 1 -d 31"
+core_collector "makedumpfile -F -l --message-level 1 -d 31"
 
 Above will effectively be translated to.
 
-makedumpfile -F -c --message-level 1 -d 31 | ssh <options> <remote-location> "dd of=path/vmcore"
+makedumpfile -F -l --message-level 1 -d 31 | ssh <options> <remote-location> "dd of=path/vmcore"
 
 There is one exception to standard output rule for ssh dumps. And that is
 scp. As scp can handle ssh destinations for file transfers, one can
@@ -521,9 +521,9 @@ scp /proc/vmcore <user@host>:path/vmcore
 About default core collector
 ----------------------------
 Default core_collector for ssh/raw dump is:
-"makedumpfile -F -c --message-level 1 -d 31".
+"makedumpfile -F -l --message-level 1 -d 31".
 Default core_collector for other targets is:
-"makedumpfile -c --message-level 1 -d 31".
+"makedumpfile -l --message-level 1 -d 31".
 
 Even if core_collector option is commented out in kdump.conf, makedumpfile
 is default core collector and kdump uses it internally.

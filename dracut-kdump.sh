@@ -11,7 +11,7 @@ fi
 set -o pipefail
 KDUMP_PATH="/var/crash"
 CORE_COLLECTOR=""
-DEFAULT_CORE_COLLECTOR="makedumpfile -c --message-level 1 -d 31"
+DEFAULT_CORE_COLLECTOR="makedumpfile -l --message-level 1 -d 31"
 DMESG_COLLECTOR="/sbin/vmcore-dmesg"
 DEFAULT_ACTION="reboot -f"
 DATEDIR=`date +%Y.%m.%d-%T`
