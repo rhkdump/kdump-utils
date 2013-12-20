@@ -182,7 +182,7 @@ kdump_setup_znet() {
 # Setup dracut to bringup a given network interface
 kdump_setup_netdev() {
     local _netdev=$1
-    local _static _proto
+    local _static _proto _ip_conf _ip_opts _ifname_opts
 
     if [ "$(uname -m)" = "s390x" ]; then
         kdump_setup_znet $_netdev
@@ -196,7 +196,14 @@ kdump_setup_netdev() {
         _proto=dhcp
     fi
 
-    echo " ip=${_static}$_netdev:${_proto}" > ${initdir}/etc/cmdline.d/40ip.conf
+    _ip_conf="${initdir}/etc/cmdline.d/40ip.conf"
+    _ip_opts=" ip=${_static}$_netdev:${_proto}"
+
+    # dracut doesn't allow duplicated configuration for same NIC, even they're exactly the same.
+    # so we have to avoid adding duplicates
+    if [ ! -f $_ip_conf ] || ! grep -q $_ip_opts $_ip_conf; then
+        echo "$_ip_opts" >> $_ip_conf
+    fi
 
     if kdump_is_bridge "$_netdev"; then
         kdump_setup_bridge "$_netdev"
@@ -207,7 +214,8 @@ kdump_setup_netdev() {
     elif kdump_is_vlan "$_netdev"; then
         kdump_setup_vlan "$_netdev"
     else
-        echo " ifname=$_netdev:$(kdump_get_mac_addr $_netdev)" >> ${initdir}/etc/cmdline.d/40ip.conf
+        _ifname_opts=" ifname=$_netdev:$(kdump_get_mac_addr $_netdev)"
+        echo "$_ifname_opts" >> $_ip_conf
     fi
 
     kdump_setup_dns "$_netdev"
