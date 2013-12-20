@@ -20,6 +20,10 @@ depends() {
         _dep="$_dep drm"
     fi
 
+    if is_fence_kdump; then
+        _dep="$_dep network"
+    fi
+
     echo $_dep
     return 0
 }
@@ -234,9 +238,19 @@ kdump_install_net() {
     fi
 
     kdump_setup_netdev "${_netdev}"
+
     #save netdev used for kdump as cmdline
-    echo "kdumpnic=${_netdev}" > ${initdir}/etc/cmdline.d/60kdumpnic.conf
-    echo "bootdev=${_netdev}" > ${initdir}/etc/cmdline.d/70bootdev.conf
+    # Whoever calling kdump_install_net() is setting up the default gateway,
+    # ie. bootdev/kdumpnic. So don't override the setting if calling
+    # kdump_install_net() for another time. For example, after setting eth0 as
+    # the default gate way for network dump, eth1 in the fence kdump path will
+    # call kdump_install_net again and we don't want eth1 to be the default
+    # gateway.
+    if [ ! -f ${initdir}${initdir}/etc/cmdline.d/60kdumpnic.conf ] &&
+       [ ! -f ${initdir}/etc/cmdline.d/70bootdev.conf ]; then
+        echo "kdumpnic=${_netdev}" > ${initdir}/etc/cmdline.d/60kdumpnic.conf
+        echo "bootdev=${_netdev}" > ${initdir}/etc/cmdline.d/70bootdev.conf
+    fi
 }
 
 #install kdump.conf and what user specifies in kdump.conf
@@ -263,6 +277,7 @@ kdump_install_conf() {
         esac
     done < /etc/kdump.conf
 
+    kdump_check_fence_kdump
     inst "/tmp/$$-kdump.conf" "/etc/kdump.conf"
     rm -f /tmp/$$-kdump.conf
 }
@@ -392,6 +407,37 @@ kdump_check_iscsi_targets () {
     }
 }
 
+
+# setup fence_kdump in cluster
+# setup proper network and install needed files
+# also preserve '[node list]' for 2nd kernel /etc/fence_kdump_nodes
+kdump_check_fence_kdump () {
+    local nodes
+    is_fence_kdump || return 1
+
+    # get cluster nodes from cluster cib, get interface and ip address
+    nodelist=`pcs cluster cib | xmllint --xpath "/cib/status/node_state/@uname" -`
+
+    # nodelist is formed as 'uname="node1" uname="node2" ... uname="nodeX"'
+    # we need to convert each to node1, node2 ... nodeX in each iteration
+    for node in ${nodelist}; do
+        # convert $node from 'uname="nodeX"' to 'nodeX'
+        eval $node
+        nodename=$uname
+        # Skip its own node name
+        if [ "$nodename" = `hostname` ]; then
+            continue
+        fi
+        nodes="$nodes $nodename"
+
+        kdump_install_net $nodename
+    done
+    echo
+
+    echo "$nodes" > ${initdir}/$FENCE_KDUMP_NODES
+    dracut_install $FENCE_KDUMP_SEND
+    dracut_install -o $FENCE_KDUMP_CONFIG
+}
 
 install() {
     kdump_install_conf
