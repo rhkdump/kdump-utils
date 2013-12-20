@@ -1,116 +1,118 @@
-# translation of es.po to Spanish
+# SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# translation of es.po to Spanish
 # 
 # Gladys Guerrero <gguerrer@redhat.com>, 2010.
+# gguerrer <gguerrer@redhat.com>, 2013. #zanata
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-11-30 16:43+0800\n"
+"POT-Creation-Date: 2013-11-29 12:35+0530\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2010-08-10 03:34-0400\n"
-"Last-Translator: Gladys Guerrero <gguerrer@redhat.com>\n"
+"PO-Revision-Date: 2013-12-01 07:35-0500\n"
+"Last-Translator: gguerrer <gguerrer@redhat.com>\n"
 "Language-Team: Spanish <en@li.org>\n"
-"X-Poedit-Language: Spanish\n"
-"X-Generator: Zanata 2.0.2\n"
 "Language: es\n"
+"X-Poedit-Language: Spanish\n"
+"X-Generator: Zanata 3.1.2\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
 
-#: ../firstboot_kdump.py:53
+#: ../../firstboot_kdump.py:53
 msgid "Kdump"
 msgstr "Kdump"
 
 #. kdump enable/disable checkbox
-#: ../firstboot_kdump.py:236
+#: ../../firstboot_kdump.py:236
 msgid "_Enable kdump?"
 msgstr "_Habilitar kdump?"
 
 #. detected total amount of system memory
-#: ../firstboot_kdump.py:240 ../firstboot_kdump.py:259
-#: ../firstboot_kdump.py:264
+#: ../../firstboot_kdump.py:240 ../../firstboot_kdump.py:259
+#: ../../firstboot_kdump.py:264
 #, python-format
 msgid "%s"
 msgstr "%s"
 
-#: ../firstboot_kdump.py:241
-#, fuzzy
+#: ../../firstboot_kdump.py:241
 msgid "Total System Memory (MB):"
 msgstr "Memoria _Total del Sistema (MB):"
 
-#: ../firstboot_kdump.py:251
+#: ../../firstboot_kdump.py:251
 msgid "Memory To Be _Reserved (MB):"
-msgstr ""
+msgstr "Memoria que va a ser _Reservada (MB):"
 
-#: ../firstboot_kdump.py:260
-#, fuzzy
+#: ../../firstboot_kdump.py:260
 msgid "Usable System Memory (MB):"
-msgstr "Memoria del Sistema _Usable (MB):"
+msgstr "Memoria del sistema utilizable (MB):"
 
-#: ../firstboot_kdump.py:263
+#: ../../firstboot_kdump.py:263
 msgid "Memory Currently Reserved (MB):"
-msgstr ""
+msgstr "Memoria reservada actualmente (MB):"
 
-#: ../firstboot_kdump.py:269
-#, fuzzy
+#: ../../firstboot_kdump.py:269
 msgid "Kdump Memory Reservation:"
-msgstr "Memoria de _Kdump (MB):"
+msgstr "Reserva de memoria de Kdump (MB):"
 
-#: ../firstboot_kdump.py:270
+#: ../../firstboot_kdump.py:270
 msgid "_Automatic"
-msgstr ""
+msgstr "_Automática"
 
-#: ../firstboot_kdump.py:271
+#: ../../firstboot_kdump.py:271
 msgid "_Manual"
-msgstr ""
+msgstr "_Manual"
 
-#: ../firstboot_kdump.py:300
+#: ../../firstboot_kdump.py:300
 msgid "\n"
 "Advanced kdump configuration"
-msgstr ""
+msgstr "\n"
+"Configuración avanzada de Kdump "
 
-#: ../firstboot_kdump.py:312
+#: ../../firstboot_kdump.py:312
 msgid ""
 "Kdump is a kernel crash dumping mechanism. In the event of a system crash, "
 "kdump will capture information from your system that can be invaluable in "
 "determining the cause of the crash. Note that kdump does require reserving a "
 "portion of system memory that will be unavailable for other uses."
 msgstr ""
-"Kdump es mecanismo de volcado de fallos del kernel. En el evento de una "
+"Kdump es un mecanismo de volcado de fallos del kernel. En el evento de una "
 "falla del sistema, kdump capturará la información de su sistema que puede "
-"ser invaluable para la determinación de la causa del fallo. Nótese que kdump "
-"no requiere reservar una porción de memoria del sistema que no estará "
+"ser invaluable para la determinación de la causa del fallo. Observe que "
+"kdump no requiere reservar una porción de memoria del sistema que no estará "
 "disponible para otros usos."
 
-#: ../firstboot_kdump.py:412
+#: ../../firstboot_kdump.py:412
 msgid "Sorry, your system does not have enough memory for kdump to be viable!"
-msgstr "Lo siento, su sistema no tiene memoria suficiente para usar kdump."
+msgstr ""
+"Lamentablemente su sistema no tiene memoria suficiente para usar kdump."
 
-#: ../firstboot_kdump.py:418
+#: ../../firstboot_kdump.py:418
 msgid "Sorry, Xen kernels do not support kdump at this time!"
 msgstr ""
 "¡Lo siento, los kernel Xen no ofrecen soporte a kdump en este momento!"
 
-#: ../firstboot_kdump.py:424
+#: ../../firstboot_kdump.py:424
 #, python-format
 msgid "Sorry, the %s architecture does not support kdump at this time!"
 msgstr ""
-"¡Lo Siento, la arquitectura %s no tiene soporte para kdump en este momento!"
+"Lamentablemente la arquitectura %s no tiene soporte para kdump en este "
+"momento."
 
-#: ../firstboot_kdump.py:433
-#, fuzzy
+#: ../../firstboot_kdump.py:433
 msgid ""
 "Changing Kdump settings requires rebooting the system to reallocate memory "
 "accordingly. Would you like to continue with this change and reboot the "
 "system after firstboot is complete?"
 msgstr ""
 "El cambio de la configuración de Kdump requiere reiniciar el sistema para "
-"reasignar memoria apropiadamente. %s ¿Desea continuar con este cambio y "
+"reasignar memoria de forma apropiada. ¿Desea continuar con este cambio y "
 "reiniciar el sistema cuando se complete el primer arranque ?"
 
-#: ../firstboot_kdump.py:450
+#: ../../firstboot_kdump.py:450
 msgid "Error! No bootloader config file found, aborting configuration!"
 msgstr ""
 "¡Error! No se encontró el archivo de configuración del cargador de arranque, "

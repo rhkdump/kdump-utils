@@ -4,77 +4,74 @@
 # 
 # Ankit Patel <ankit@redhat.com>, 2007.
 # Sweta Kothari <swkothar@redhat.com>, 2010.
-# Ankit Patel <ankit@redhat.com>, 2012. #zanata
-# yangrr <ruyang@redhat.com>, 2012. #zanata
+# Ankit Patel <ankit@redhat.com>, 2013. #zanata
+# swkothar <swkothar@redhat.com>, 2013. #zanata
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-11-30 16:43+0800\n"
+"POT-Creation-Date: 2013-11-29 12:35+0530\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2012-12-20 10:05-0500\n"
-"Last-Translator: yangrr <ruyang@redhat.com>\n"
+"PO-Revision-Date: 2013-11-29 04:47-0500\n"
+"Last-Translator: swkothar <swkothar@redhat.com>\n"
 "Language-Team: Gujarati\n"
-"X-Generator: Zanata 2.0.2\n"
-"Plural-Forms: nplurals=2; plural=(n!=1);\n"
 "Language: gu\n"
+"X-Generator: Zanata 3.1.2\n"
+"Plural-Forms: nplurals=2; plural=(n!=1);\n"
 
-#: ../firstboot_kdump.py:53
+#: ../../firstboot_kdump.py:53
 msgid "Kdump"
 msgstr "Kdump"
 
 #. kdump enable/disable checkbox
-#: ../firstboot_kdump.py:236
+#: ../../firstboot_kdump.py:236
 msgid "_Enable kdump?"
 msgstr "શું kdump સક્રિય કરવું છે (_E)?"
 
 #. detected total amount of system memory
-#: ../firstboot_kdump.py:240 ../firstboot_kdump.py:259
-#: ../firstboot_kdump.py:264
+#: ../../firstboot_kdump.py:240 ../../firstboot_kdump.py:259
+#: ../../firstboot_kdump.py:264
 #, python-format
 msgid "%s"
 msgstr "%s"
 
-#: ../firstboot_kdump.py:241
-#, fuzzy
+#: ../../firstboot_kdump.py:241
 msgid "Total System Memory (MB):"
-msgstr "કુલ સિસ્ટમ મેમરી (MB) (_T):"
+msgstr "કુલ સિસ્ટમ મેમરી (MB):"
 
-#: ../firstboot_kdump.py:251
+#: ../../firstboot_kdump.py:251
 msgid "Memory To Be _Reserved (MB):"
-msgstr ""
+msgstr "સુરક્ષિત માપ રાખવા માટે મેમરી (MB):"
 
-#: ../firstboot_kdump.py:260
-#, fuzzy
+#: ../../firstboot_kdump.py:260
 msgid "Usable System Memory (MB):"
-msgstr "ઉપયોગી સિસ્ટમ મેમરી (MB) (_U):"
+msgstr "ઉપયોગી સિસ્ટમ મેમરી (MB):"
 
-#: ../firstboot_kdump.py:263
+#: ../../firstboot_kdump.py:263
 msgid "Memory Currently Reserved (MB):"
-msgstr ""
+msgstr "મેમરીનું હાલમાં સુરક્ષિત માપ (MB):"
 
-#: ../firstboot_kdump.py:269
-#, fuzzy
+#: ../../firstboot_kdump.py:269
 msgid "Kdump Memory Reservation:"
-msgstr "_Kdump મેમરી (MB):"
+msgstr "Kdump મેમરી આરક્ષણ:"
 
-#: ../firstboot_kdump.py:270
+#: ../../firstboot_kdump.py:270
 msgid "_Automatic"
-msgstr ""
+msgstr "આપોઆપ (_A)"
 
-#: ../firstboot_kdump.py:271
+#: ../../firstboot_kdump.py:271
 msgid "_Manual"
-msgstr ""
+msgstr "જાતે જ (_M)"
 
-#: ../firstboot_kdump.py:300
+#: ../../firstboot_kdump.py:300
 msgid "\n"
 "Advanced kdump configuration"
 msgstr "\n"
 "અદ્યતન kdump રૂપરેખાંકન"
 
-#: ../firstboot_kdump.py:312
+#: ../../firstboot_kdump.py:312
 msgid ""
 "Kdump is a kernel crash dumping mechanism. In the event of a system crash, "
 "kdump will capture information from your system that can be invaluable in "
@@ -86,21 +83,21 @@ msgstr ""
 "હોઈ શકે. નોંધ લો કે kdump સિસ્ટમ મેમરીના ભાગને આરક્ષિત રાખવા માટે જરૂરી છે "
 "કે જે અન્ય વપરાશો માટે ઉપલબ્ધ રહેશે નહિં."
 
-#: ../firstboot_kdump.py:412
+#: ../../firstboot_kdump.py:412
 msgid "Sorry, your system does not have enough memory for kdump to be viable!"
 msgstr ""
 "માફ કરજો, તમારી સિસ્ટમ પાસે kdump ને વ્યાજબી બનાવવા માટે પૂરતી મેમરી નથી!"
 
-#: ../firstboot_kdump.py:418
+#: ../../firstboot_kdump.py:418
 msgid "Sorry, Xen kernels do not support kdump at this time!"
 msgstr "માફ કરજો, Xen કર્નલો kdump ને આ વખતે આધાર આપતી નથી!"
 
-#: ../firstboot_kdump.py:424
+#: ../../firstboot_kdump.py:424
 #, python-format
 msgid "Sorry, the %s architecture does not support kdump at this time!"
 msgstr "માફ કરજો, %s આર્કીટેક્ચર આ સમયે kdump ને આધાર આપતું નથી!"
 
-#: ../firstboot_kdump.py:433
+#: ../../firstboot_kdump.py:433
 msgid ""
 "Changing Kdump settings requires rebooting the system to reallocate memory "
 "accordingly. Would you like to continue with this change and reboot the "
@@ -110,7 +107,7 @@ msgstr ""
 "રીબુટ કરવાની જરૂર છે. શું તમે આ ફેરફાર સાથે ચાલુ રાખવા ઈચ્છો છો અને "
 "firstboot સમાપ્ત થાય પછી સિસ્ટમ રીબુટ કરવા માંગો છો?"
 
-#: ../firstboot_kdump.py:450
+#: ../../firstboot_kdump.py:450
 msgid "Error! No bootloader config file found, aborting configuration!"
 msgstr ""
 "ભૂલ! કોઈ બુટલોડર રૂપરેખા ફાઈલ મળી નહિં, અડધેથી રૂપરેખાંકન બંધ કરી રહ્યા છીએ!"
