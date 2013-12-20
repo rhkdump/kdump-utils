@@ -287,6 +287,21 @@ read_kdump_conf()
     done < $conf_file
 }
 
+fence_kdump_notify()
+{
+    local nodes
+
+    if [ -f $FENCE_KDUMP_NODES ]; then
+        if [ -f $FENCE_KDUMP_CONFIG ]; then
+            . $FENCE_KDUMP_CONFIG
+        fi
+
+        read nodes < $FENCE_KDUMP_NODES
+        $FENCE_KDUMP_SEND $FENCE_KDUMP_OPTS $nodes &
+    fi
+}
+
+fence_kdump_notify
 read_kdump_conf
 
 if [ -z "$CORE_COLLECTOR" ];then
