@@ -3,7 +3,7 @@ Version: 2.0.4
 Release: 15%{?dist}
 License: GPLv2
 Group: Applications/System
-Summary: The kexec/kdump userspace component.
+Summary: The kexec/kdump userspace component
 Source0: http://kernel.org/pub/linux/utils/kernel/kexec/%{name}-%{version}.tar.bz2
 Source1: kdumpctl
 Source2: kdump.sysconfig
