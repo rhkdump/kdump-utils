@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.4
-Release: 14%{?dist}
+Release: 15%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -138,6 +138,7 @@ tar -z -x -v -f %{SOURCE19}
 
 
 tar -z -x -v -f %{SOURCE13}
+mv kexec-tools-po/ta-IN.po kexec-tools-po/ta_IN.po
 
 %ifarch ppc
 %define archdef ARCH=ppc
@@ -348,7 +349,11 @@ done
 %endif
 
 %changelog
-* Fri Dec 03 2013 WANG Chao <chaowang@redhat.com> - 2.0.4-13
+* Sat Dec 21 2013 Ville Skyttä <ville.skytta@iki.fi> - 2.0.4-15
+- Fix Tamil (India) locale subdir name.
+- Fix bogus date in %%changelog.
+
+* Tue Dec 03 2013 WANG Chao <chaowang@redhat.com> - 2.0.4-14
 - Add rd.memdebug in kdump module
 - kdumpctl: Avoid leaking fd to subshell
 - makedumpfile: Understand >= v3.11-rc4 dmesg
