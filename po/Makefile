@@ -52,4 +52,10 @@ merge: $(POTFILE) $(POFILES)
 		$(MSGMERGE) $$base $(NLSPACKAGE).pot; \
 	done
 
+tgz:
+	@rm -rf ../kexec-tools-po
+	@mkdir ../kexec-tools-po
+	@cp $(POFILES) Makefile ../kexec-tools-po
+	@tar -czvf ../kexec-tools-po-$(shell date +%Y%m%d).tgz ../kexec-tools-po
+
 .PHONY: missing depend
