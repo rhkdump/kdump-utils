@@ -134,6 +134,7 @@ is_readonly_mount() {
 
 #Function: get_ssh_size
 #$1=dump target
+#called from while loop and shouldn't read from stdin, so we're using "ssh -n"
 get_ssh_size() {
     local _opt _out _size
     _opt="-i $SSH_KEY_LOCATION -o BatchMode=yes -o StrictHostKeyChecking=yes"
@@ -149,11 +150,12 @@ get_ssh_size() {
 #mkdir if save path does not exist on ssh dump target
 #$1=ssh dump target
 #caller should ensure write permission on $DUMP_TARGET:$SAVE_PATH
+#called from while loop and shouldn't read from stdin, so we're using "ssh -n"
 mkdir_save_path_ssh()
 {
     local _opt _dir
     _opt="-i $SSH_KEY_LOCATION -o BatchMode=yes -o StrictHostKeyChecking=yes"
-    ssh -q $_opt $1 mkdir -p $SAVE_PATH 2>&1 > /dev/null
+    ssh -qn $_opt $1 mkdir -p $SAVE_PATH 2>&1 > /dev/null
     _ret=$?
     if [ $_ret -ne 0 ]; then
         perror_exit "mkdir failed on $DUMP_TARGET:$SAVE_PATH"
@@ -165,7 +167,7 @@ mkdir_save_path_ssh()
     if [ $_ret -ne 0 ]; then
         perror_exit "Could not create temporary directory on $DUMP_TARGET:$SAVE_PATH. Make sure user has write permission on destination"
     fi
-    ssh -q $_opt $1 rmdir $_dir
+    ssh -qn $_opt $1 rmdir $_dir
 
     return 0
 }
