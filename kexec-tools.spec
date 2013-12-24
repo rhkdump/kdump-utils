@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.4
-Release: 15%{?dist}
+Release: 18%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -17,7 +17,7 @@ Source9: http://downloads.sourceforge.net/project/makedumpfile/makedumpfile/1.5.
 Source10: kexec-kdump-howto.txt
 Source11: firstboot_kdump.py
 Source12: mkdumprd.8
-Source13: kexec-tools-po.tar.gz
+Source13: kexec-tools-po-20131224.tgz
 Source14: 98-kexec.rules
 Source15: kdump.conf.5
 Source16: kdump.service
@@ -138,7 +138,6 @@ tar -z -x -v -f %{SOURCE19}
 
 
 tar -z -x -v -f %{SOURCE13}
-mv kexec-tools-po/ta-IN.po kexec-tools-po/ta_IN.po
 
 %ifarch ppc
 %define archdef ARCH=ppc
@@ -354,6 +353,11 @@ done
 %endif
 
 %changelog
+* Tue Dec 24 2013 WANG Chao <chaowang@redhat.com> - 2.0.4-18
+- update translation files
+- makedumpfile: default to lzo compression
+- makedumpfile: add makedumpfile.conf.sample and its manpage
+
 * Sat Dec 21 2013 Ville Skyttä <ville.skytta@iki.fi> - 2.0.4-15
 - Fix Tamil (India) locale subdir name.
 - Fix bogus date in %%changelog.
