@@ -91,6 +91,7 @@ Patch609: kexec-tools-2.0.4-makedumpfile-cache-Allocate-buffers-at-initializatio
 Patch610: kexec-tools-2.0.4-makedumpfile-cache-Reuse-entry-in-pending-list.patch
 Patch612: kexec-tools-2.0.4-makedumpfile-Understand-v3.11-rc4-dmesg.patch
 Patch613: kexec-tools-2.0.4-makedumpfile-Assign-non-printable-value-as-short-option.patch
+Patch614: kexec-tools-2.0.4-makedumpfile-Add-help-and-man-message-for-help.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -135,6 +136,7 @@ tar -z -x -v -f %{SOURCE19}
 %patch612 -p1
 %patch302 -p1
 %patch613 -p1
+%patch614 -p1
 
 tar -z -x -v -f %{SOURCE13}
 

@@ -1,0 +1,43 @@
+From eb708cedde4ed48dde5a918a23b2c3b8235df6c5 Mon Sep 17 00:00:00 2001
+From: Baoquan He <bhe@redhat.com>
+Date: Tue, 2 Jul 2013 11:11:07 +0900
+Subject: [PATCH 2/2] [PATCH 2/2] Add help and man message for '--help'.
+
+Conventionally '-h' and '--help' are all provided. Currently makedumpfile
+lacks help and man message for '--help'. Here add it.
+
+Signed-off-by: Baoquan He <bhe@redhat.com>
+---
+ makedumpfile.8 | 2 +-
+ print_info.c   | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/makedumpfile-1.5.4/makedumpfile.8 b/makedumpfile-1.5.4/makedumpfile.8
+index adeb811..f50a011 100644
+--- a/makedumpfile-1.5.4/makedumpfile.8
++++ b/makedumpfile-1.5.4/makedumpfile.8
+@@ -539,7 +539,7 @@ order from left to right.  \fIVMCORE\fRs are assembled into a single
+ Print debugging message.
+ 
+ .TP
+-\fB\-h\fR
++\fB\-h (\-\-help)\fR
+ Show help message and LZO/snappy support status (enabled/disabled).
+ 
+ .TP
+diff --git a/makedumpfile-1.5.4/print_info.c b/makedumpfile-1.5.4/print_info.c
+index 06939e0..3527970 100644
+--- a/makedumpfile-1.5.4/print_info.c
++++ b/makedumpfile-1.5.4/print_info.c
+@@ -255,7 +255,7 @@ print_usage(void)
+ 	MSG("  [-f]:\n");
+ 	MSG("      Overwrite DUMPFILE even if it already exists.\n");
+ 	MSG("\n");
+-	MSG("  [-h]:\n");
++	MSG("  [-h, --help]:\n");
+ 	MSG("      Show help message and LZO/snappy support status (enabled/disabled).\n");
+ 	MSG("\n");
+ 	MSG("  [-v]:\n");
+-- 
+1.8.4.2
+
