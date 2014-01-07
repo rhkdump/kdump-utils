@@ -89,7 +89,6 @@ Patch607: kexec-tools-2.0.4-makedumpfile-Update-pfn_cyclic-when-the-cyclic-buffe
 Patch608: kexec-tools-2.0.4-makedumpfile-Use-divideup-to-calculate-maximum-required-bit.patch
 Patch609: kexec-tools-2.0.4-makedumpfile-cache-Allocate-buffers-at-initialization-t.patch
 Patch610: kexec-tools-2.0.4-makedumpfile-cache-Reuse-entry-in-pending-list.patch
-Patch611: kexec-tools-2.0.4-makedumpfile-disable-mmap.patch
 Patch612: kexec-tools-2.0.4-makedumpfile-Understand-v3.11-rc4-dmesg.patch
 
 %description
@@ -129,7 +128,6 @@ tar -z -x -v -f %{SOURCE19}
 %patch608 -p1
 %patch609 -p1
 %patch610 -p1
-%patch611 -p1
 %patch001 -p1
 %patch002 -p1
 %patch003 -p1
