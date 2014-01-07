@@ -90,6 +90,7 @@ Patch608: kexec-tools-2.0.4-makedumpfile-Use-divideup-to-calculate-maximum-requi
 Patch609: kexec-tools-2.0.4-makedumpfile-cache-Allocate-buffers-at-initialization-t.patch
 Patch610: kexec-tools-2.0.4-makedumpfile-cache-Reuse-entry-in-pending-list.patch
 Patch612: kexec-tools-2.0.4-makedumpfile-Understand-v3.11-rc4-dmesg.patch
+Patch613: kexec-tools-2.0.4-makedumpfile-Assign-non-printable-value-as-short-option.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -133,7 +134,7 @@ tar -z -x -v -f %{SOURCE19}
 %patch003 -p1
 %patch612 -p1
 %patch302 -p1
-
+%patch613 -p1
 
 tar -z -x -v -f %{SOURCE13}
 
