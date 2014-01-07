@@ -1,0 +1,38 @@
+From 7c770ed052d8452f5d7ce027b23d1b77cf6fbce7 Mon Sep 17 00:00:00 2001
+From: Atsushi Kumagai <kumagai-atsushi@mxc.nes.nec.co.jp>
+Date: Thu, 12 Dec 2013 16:40:31 +0900
+Subject: [PATCH 2/2] [PATCH] Fall back to read() when mmap() fails.
+
+This is a fall back path for mmap().
+This patch disables mmap() when facing the issues related to mmap(),
+and read() will be used to read vmcore instead.
+
+Signed-off-by: Atsushi Kumagai <kumagai-atsushi@mxc.nes.nec.co.jp>
+---
+ makedumpfile.c | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/makedumpfile-1.5.4/makedumpfile.c b/makedumpfile-1.5.4/makedumpfile.c
+index b3af28b..20f107e 100644
+--- a/makedumpfile-1.5.4/makedumpfile.c
++++ b/makedumpfile-1.5.4/makedumpfile.c
+@@ -324,7 +324,15 @@ read_from_vmcore(off_t offset, void *bufptr, unsigned long size)
+ 		if (!read_with_mmap(offset, bufptr, size)) {
+ 			ERRMSG("Can't read the dump memory(%s) with mmap().\n",
+ 			       info->name_memory);
+-			return FALSE;
++
++			ERRMSG("This kernel might have some problems about mmap().\n");
++			ERRMSG("read() will be used instead of mmap() from now.\n");
++
++			/*
++			 * Fall back to read().
++			 */
++			info->flag_usemmap = MMAP_DISABLE;
++			read_from_vmcore(offset, bufptr, size);
+ 		}
+ 	} else {
+ 		if (lseek(info->fd_memory, offset, SEEK_SET) == failed) {
+-- 
+1.8.4.2
+
