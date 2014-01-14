@@ -1,0 +1,31 @@
+From 158d7638f1669a8d34def55ab81f10993e68e76a Mon Sep 17 00:00:00 2001
+From: WANG Chao <chaowang@redhat.com>
+Date: Tue, 7 Jan 2014 01:37:34 +0800
+Subject: [PATCH] vmcore-dmesg: struct_val_u64() not casting u64 to u32
+
+It seems gcc doesn't check return type from inline function.
+struct_val_u64() should return u64 otherwise upper 32bit is lost.
+
+Signed-off-by: WANG Chao <chaowang@redhat.com>
+Acked-by: Vivek Goyal <vgoyal@redhat.com>
+Signed-off-by: Simon Horman <horms@verge.net.au>
+---
+ vmcore-dmesg/vmcore-dmesg.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/vmcore-dmesg/vmcore-dmesg.c b/vmcore-dmesg/vmcore-dmesg.c
+index 0f477c0..df14c89 100644
+--- a/vmcore-dmesg/vmcore-dmesg.c
++++ b/vmcore-dmesg/vmcore-dmesg.c
+@@ -529,7 +529,7 @@ static inline uint32_t struct_val_u32(char *ptr, unsigned int offset)
+ 	return(file32_to_cpu(*(uint32_t *)(ptr + offset)));
+ }
+ 
+-static inline uint32_t struct_val_u64(char *ptr, unsigned int offset)
++static inline uint64_t struct_val_u64(char *ptr, unsigned int offset)
+ {
+ 	return(file64_to_cpu(*(uint64_t *)(ptr + offset)));
+ }
+-- 
+1.8.4.2
+
