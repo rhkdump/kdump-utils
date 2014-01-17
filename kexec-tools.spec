@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.4
-Release: 18%{?dist}
+Release: 20%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -360,6 +360,13 @@ done
 %endif
 
 %changelog
+* Fri Jan 17 2014 WANG Chao <chaowang@redhat.com> - 2.0.4-20
+- vmcore-dmesg: fix timestamp error in vmcore-dmesg.txt
+- makedumpfile: re-enable mmap() and introduce --non-mmap
+- kdump.conf uncomment default core_collector line
+- fix an issue when 'ssh' directive appearing in kdump.conf, the rest part of
+  lines in this file are ignored
+
 * Tue Dec 24 2013 WANG Chao <chaowang@redhat.com> - 2.0.4-18
 - update translation files
 - makedumpfile: default to lzo compression
