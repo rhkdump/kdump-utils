@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.4
-Release: 20%{?dist}
+Release: 21%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -362,6 +362,10 @@ done
 %endif
 
 %changelog
+* Wed Jan 22 2014 WANG Chao <chaowang@redhat.com> - 2.0.4-21
+- makedumpfile: Improve progress information for huge memory system
+- s390: use nr_cpus=1 instead of maxcpus=1
+
 * Fri Jan 17 2014 WANG Chao <chaowang@redhat.com> - 2.0.4-20
 - vmcore-dmesg: fix timestamp error in vmcore-dmesg.txt
 - makedumpfile: re-enable mmap() and introduce --non-mmap
