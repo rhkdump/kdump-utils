@@ -485,3 +485,11 @@ install() {
     # at some point of time.
     kdump_check_iscsi_targets
 }
+
+installkernel() {
+    wdt=$(lsmod|cut -f1 -d' '|grep "wdt$")
+    if [ -n "$wdt" ]; then
+        instmods $wdt
+        [ "$wdt" = "iTCO_wdt" ] && instmods lpc_ich
+    fi
+}
