@@ -13,7 +13,7 @@ Source5: kdump.sysconfig.ppc64
 Source6: kdump.sysconfig.ia64
 Source7: mkdumprd
 Source8: kdump.conf
-Source9: http://downloads.sourceforge.net/project/makedumpfile/makedumpfile/1.5.4/makedumpfile-1.5.4.tar.gz
+Source9: http://downloads.sourceforge.net/project/makedumpfile/makedumpfile/1.5.5/makedumpfile-1.5.5.tar.gz
 Source10: kexec-kdump-howto.txt
 Source11: firstboot_kdump.py
 Source12: mkdumprd.8
@@ -68,8 +68,6 @@ Patch101: kexec-tools-2.0.4-kdump-x86-Process-multiple-Crash-kernel-in-proc-iome
 #
 # Patches 301 through 400 are meant for ppc64 kexec-tools enablement
 #
-Patch301: kexec-tools-2.0.4-makedumpfile-Add-vmap_area_list-definition-for-ppc-ppc64.patch
-Patch302: kexec-tools-2.0.4-makedumpfile-Support-to-filter-dump-for-kernels-that-use.patch
 
 #
 # Patches 401 through 500 are meant for s390 kexec-tools enablement
@@ -83,19 +81,7 @@ Patch302: kexec-tools-2.0.4-makedumpfile-Support-to-filter-dump-for-kernels-that
 #
 Patch601: kexec-tools-2.0.3-disable-kexec-test.patch
 Patch604: kexec-tools-2.0.3-build-makedumpfile-eppic-shared-object.patch
-Patch605: kexec-tools-2.0.4-makedumpfile-PATCH-Support-newer-kernels.patch
-Patch606: kexec-tools-2.0.4-makedumpfile-Fix-max_mapnr-issue-on-system-has-over-44-b.patch
-Patch607: kexec-tools-2.0.4-makedumpfile-Update-pfn_cyclic-when-the-cyclic-buffer-size-.patch
-Patch608: kexec-tools-2.0.4-makedumpfile-Use-divideup-to-calculate-maximum-required-bit.patch
-Patch609: kexec-tools-2.0.4-makedumpfile-cache-Allocate-buffers-at-initialization-t.patch
-Patch610: kexec-tools-2.0.4-makedumpfile-cache-Reuse-entry-in-pending-list.patch
-Patch612: kexec-tools-2.0.4-makedumpfile-Understand-v3.11-rc4-dmesg.patch
-Patch613: kexec-tools-2.0.4-makedumpfile-Assign-non-printable-value-as-short-option.patch
-Patch614: kexec-tools-2.0.4-makedumpfile-Add-help-and-man-message-for-help.patch
-Patch615: kexec-tools-2.0.4-makedumpfile-Add-non-mmap-option-to-disable-mmap-manually.patch
-Patch616: kexec-tools-2.0.4-makedumpfile-Fall-back-to-read-when-mmap-fails.patch
 Patch617: kexec-tools-2.0.4-vmcore-dmesg-struct_val_u64-not-casting-u64-to-u32.patch
-Patch618: kexec-tools-2.0.4-makedumpfile-Improve-progress-information-for-huge-memor.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -125,26 +111,12 @@ tar -z -x -v -f %{SOURCE19}
 
 
 %patch101 -p1
-%patch301 -p1
 %patch601 -p1
 %patch604 -p1
-%patch605 -p1
-%patch606 -p1
-%patch607 -p1
-%patch608 -p1
-%patch609 -p1
-%patch610 -p1
 %patch001 -p1
 %patch002 -p1
 %patch003 -p1
-%patch612 -p1
-%patch302 -p1
-%patch613 -p1
-%patch614 -p1
-%patch615 -p1
-%patch616 -p1
 %patch617 -p1
-%patch618 -p1
 
 tar -z -x -v -f %{SOURCE13}
 
@@ -175,7 +147,7 @@ cp %{SOURCE10} .
 make
 %ifarch %{ix86} x86_64 ia64 ppc64 s390x
 make -C eppic/libeppic
-make -C makedumpfile-1.5.4 LINKTYPE=dynamic USELZO=on USESNAPPY=on
+make -C makedumpfile-1.5.5 LINKTYPE=dynamic USELZO=on USESNAPPY=on
 %endif
 make -C kexec-tools-po
 
@@ -216,11 +188,11 @@ mkdir -p $RPM_BUILD_ROOT/usr/sbin
 install -m 755 %{SOURCE17} $RPM_BUILD_ROOT/usr/sbin/rhcrashkernel-param
 
 %ifarch %{ix86} x86_64 ia64 ppc64 s390x
-install -m 755 makedumpfile-1.5.4/makedumpfile $RPM_BUILD_ROOT/sbin/makedumpfile
-install -m 644 makedumpfile-1.5.4/makedumpfile.8.gz $RPM_BUILD_ROOT/%{_mandir}/man8/makedumpfile.8.gz
-install -m 644 makedumpfile-1.5.4/makedumpfile.conf.5.gz $RPM_BUILD_ROOT/%{_mandir}/man5/makedumpfile.conf.5.gz
-install -m 644 makedumpfile-1.5.4/makedumpfile.conf $RPM_BUILD_ROOT/%{_sysconfdir}/makedumpfile.conf.sample
-install -m 755 makedumpfile-1.5.4/eppic_makedumpfile.so $RPM_BUILD_ROOT/%{_libdir}/eppic_makedumpfile.so
+install -m 755 makedumpfile-1.5.5/makedumpfile $RPM_BUILD_ROOT/sbin/makedumpfile
+install -m 644 makedumpfile-1.5.5/makedumpfile.8.gz $RPM_BUILD_ROOT/%{_mandir}/man8/makedumpfile.8.gz
+install -m 644 makedumpfile-1.5.5/makedumpfile.conf.5.gz $RPM_BUILD_ROOT/%{_mandir}/man5/makedumpfile.conf.5.gz
+install -m 644 makedumpfile-1.5.5/makedumpfile.conf $RPM_BUILD_ROOT/%{_sysconfdir}/makedumpfile.conf.sample
+install -m 755 makedumpfile-1.5.5/eppic_makedumpfile.so $RPM_BUILD_ROOT/%{_libdir}/eppic_makedumpfile.so
 %endif
 make -C kexec-tools-po install DESTDIR=$RPM_BUILD_ROOT
 %find_lang %{name}
