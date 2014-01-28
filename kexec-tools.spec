@@ -82,6 +82,7 @@ Patch101: kexec-tools-2.0.4-kdump-x86-Process-multiple-Crash-kernel-in-proc-iome
 Patch601: kexec-tools-2.0.3-disable-kexec-test.patch
 Patch604: kexec-tools-2.0.3-build-makedumpfile-eppic-shared-object.patch
 Patch617: kexec-tools-2.0.4-vmcore-dmesg-struct_val_u64-not-casting-u64-to-u32.patch
+Patch618: kexec-tools-2.0.4-makedumpfile-memset-in-cyclic-bitmap-initialization-introdu.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -117,6 +118,7 @@ tar -z -x -v -f %{SOURCE19}
 %patch002 -p1
 %patch003 -p1
 %patch617 -p1
+%patch618 -p1
 
 tar -z -x -v -f %{SOURCE13}
 
