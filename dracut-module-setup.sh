@@ -447,12 +447,25 @@ kdump_check_fence_kdump () {
     dracut_install -o $FENCE_KDUMP_CONFIG
 }
 
+# Install a random seed used to feed /dev/urandom
+# By the time kdump service starts, /dev/uramdom is already fed by systemd
+kdump_install_random_seed() {
+    local poolsize=`cat /proc/sys/kernel/random/poolsize`
+
+    if [ ! -d ${initdir}/var/lib/ ]; then
+        mkdir -p ${initdir}/var/lib/
+    fi
+
+    dd if=/dev/urandom of=${initdir}/var/lib/random-seed \
+       bs=$poolsize count=1 2> /dev/null
+}
+
 install() {
     kdump_install_conf
     >"$initdir/lib/dracut/no-emergency-shell"
 
     if is_ssh_dump_target; then
-        dracut_install /var/lib/random-seed || exit $?
+        kdump_install_random_seed
     fi
     dracut_install -o /etc/adjtime /etc/localtime
     inst "$moddir/monitor_dd_progress" "/kdumpscripts/monitor_dd_progress"
