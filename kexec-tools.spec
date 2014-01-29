@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.4
-Release: 22%{?dist}
+Release: 23%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -336,6 +336,12 @@ done
 %endif
 
 %changelog
+* Wed Jan 29 2014 WANG Chao <chaowang@redhat.com> - 2.0.4-23
+- ssh dump: create random-seed manually
+- makedumpfile: memset() in cyclic bitmap initialization introduce segment fault.
+- Add acpi_no_memhotplug to kdump kernel
+- Add fence kdump support
+
 * Tue Jan 28 2014 WANG Chao <chaowang@redhat.com> - 2.0.4-22
 - Rebase makedumpfile-1.5.5
 
