@@ -1,10 +1,10 @@
 Name: kexec-tools
-Version: 2.0.4
-Release: 25%{?dist}
+Version: 2.0.5
+Release: 1%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
-Source0: http://kernel.org/pub/linux/utils/kernel/kexec/%{name}-%{version}.tar.bz2
+Source0: http://kernel.org/pub/linux/utils/kernel/kexec/%{name}-%{version}.tar.xz
 Source1: kdumpctl
 Source2: kdump.sysconfig
 Source3: kdump.sysconfig.x86_64
@@ -53,14 +53,12 @@ Obsoletes: diskdumputils netdump
 #
 # Patches 0 through 100 are meant for x86 kexec-tools enablement
 #
-Patch001: kexec-tools-2.0.4-Revert-kexec-lengthen-the-kernel-command-line-image.patch
-Patch002: kexec-tools-2.0.4-kexec-i386-Add-cmdline_add_memmap_internal-to-reduce.patch
-Patch003: kexec-tools-2.0.4-Revert-kexec-include-reserved-e820-sections-in-crash.patch
+Patch000: kexec-tools-2.0.5-i386-fix-build-failure-bzImage_support_efi_boot.patch
+Patch001: kexec-tools-2.0.5-i386-fix-redefinition-error-for-e820entry.patch
 
 #
 # Patches 101 through 200 are meant for x86_64 kexec-tools enablement
 #
-Patch101: kexec-tools-2.0.4-kdump-x86-Process-multiple-Crash-kernel-in-proc-iome.patch
 
 #
 # Patches 201 through 300 are meant for ia64 kexec-tools enablement
@@ -82,7 +80,6 @@ Patch101: kexec-tools-2.0.4-kdump-x86-Process-multiple-Crash-kernel-in-proc-iome
 #
 Patch601: kexec-tools-2.0.3-disable-kexec-test.patch
 Patch604: kexec-tools-2.0.3-build-makedumpfile-eppic-shared-object.patch
-Patch617: kexec-tools-2.0.4-vmcore-dmesg-struct_val_u64-not-casting-u64-to-u32.patch
 Patch618: kexec-tools-2.0.4-makedumpfile-memset-in-cyclic-bitmap-initialization-introdu.patch
 
 %description
@@ -112,14 +109,11 @@ tar -z -x -v -f %{SOURCE9}
 tar -z -x -v -f %{SOURCE19}
 
 
-%patch101 -p1
 %patch601 -p1
 %patch604 -p1
-%patch001 -p1
-%patch002 -p1
-%patch003 -p1
-%patch617 -p1
 %patch618 -p1
+%patch000 -p1
+%patch001 -p1
 
 tar -z -x -v -f %{SOURCE13}
 
@@ -339,6 +333,10 @@ done
 %endif
 
 %changelog
+* Tue Mar 04 2014 WANG Chao <chaowang@redhat.com> - 2.0.5-1
+- Rebase kexec-tools-2.0.5
+- backport several patches from upstream for i386 build
+
 * Mon Mar 03 2014 WANG Chao <chaowang@redhat.com> - 2.0.4-25
 - Pass disable_cpu_apicid to kexec of capture kernel
 - Relax restriction of dumping on encrypted target
