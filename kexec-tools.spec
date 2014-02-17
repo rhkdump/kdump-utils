@@ -25,6 +25,7 @@ Source17: rhcrashkernel-param
 Source18: kdump.sysconfig.s390x
 Source19: eppic_030413.tar.gz
 Source20: kdump-lib.sh
+Source21: kdump-in-cluster-environment.txt
 
 #######################################
 # These are sources for mkdumpramfs
@@ -144,7 +145,8 @@ export CFLAGS="-O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2"
     --sbindir=/sbin
 rm -f kexec-tools.spec.in
 # setup the docs
-cp %{SOURCE10} . 
+cp %{SOURCE10} .
+cp %{SOURCE21} .
 
 make
 %ifarch %{ix86} x86_64 ia64 ppc64 s390x
@@ -329,6 +331,7 @@ done
 %doc COPYING
 %doc TODO
 %doc kexec-kdump-howto.txt
+%doc kdump-in-cluster-environment.txt
 
 %ifarch %{ix86} x86_64 ia64 ppc64 s390x
 %files eppic
