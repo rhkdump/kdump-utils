@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.4
-Release: 23%{?dist}
+Release: 24%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -339,6 +339,11 @@ done
 %endif
 
 %changelog
+* Mon Feb 17 2014 WANG Chao <chaowang@redhat.com> - 2.0.4-24
+- add kdump-in-cluster-environment.txt to rpm pkg
+- Secure Boot status check warning
+- Some watchdog driver support
+
 * Wed Jan 29 2014 WANG Chao <chaowang@redhat.com> - 2.0.4-23
 - ssh dump: create random-seed manually
 - makedumpfile: memset() in cyclic bitmap initialization introduce segment fault.
