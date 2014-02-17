@@ -343,13 +343,6 @@ function propagate_ssh_key()
 		exit 1
 	fi
 
-	#Check if selinux is on... must flip to permissive mode
-	#for the moment to create key, then flip back...
-	se_enforce=`/usr/sbin/sestatus | grep -c "^Current mode.*enforcing"`
-	if [ "$se_enforce" -ge 1 ]; then
-		/usr/sbin/setenforce 0 2>&1 > /dev/null
-	fi
-
 	local KEYFILE=$SSH_KEY_LOCATION
 	local errmsg="Failed to propagate ssh key"
 
@@ -362,11 +355,6 @@ function propagate_ssh_key()
 		echo "done."
 	fi
 
-	#If necessary, flip selinux back to enforcing
-	if [ "$se_enforce" -ge 1 ]; then
-		/usr/sbin/setenforce 1 2>&1 > /dev/null
-	fi
-	
 	#now find the target ssh user and server to contact.
 	SSH_USER=`echo $DUMP_TARGET | cut -d\  -f2 | cut -d@ -f1`
 	SSH_SERVER=`echo $DUMP_TARGET | sed -e's/\(.*@\)\(.*$\)/\2/'`
