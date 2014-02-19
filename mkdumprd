@@ -467,7 +467,7 @@ is_crypt()
     eval "$line"
     [[ "$ID_FS_TYPE" = "crypto_LUKS" ]] && {
         dev=$(udevadm info --query=all --path=/sys/dev/block/$majmin | awk -F= '/DEVNAME/{print $2}')
-        perror "Device $dev is encrypted, can not be used in kdump."
+        echo "Device $dev is encrypted."
         return 0
     }
     return 1
@@ -482,18 +482,11 @@ check_crypt()
 
     [ $_ret -eq 0 ] && return
 
-    if [ $_ret -eq 1 ]; then
-        _target=$(get_block_dump_target)
-        perror "Can not save vmcore to target device $_target."
-    elif [ $_ret -eq 2 ]; then
-        perror "Default action is dump_to_rootfs but can not save vmcore to root device."
-    fi
-
     return 1
 }
 
 if ! check_crypt; then
-    exit 1
+    echo "Warning: Encrypted device is in dump path. User will prompted for password during second kernel boot." 
 fi
 
 # firstly get right SSH_KEY_LOCATION
