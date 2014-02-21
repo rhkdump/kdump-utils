@@ -41,6 +41,59 @@ function remove_cmdline_param()
 	echo $cmdline
 }
 
+#
+# This function returns the "initial apicid" of the
+# boot cpu (cpu 0) if present.
+#
+function get_bootcpu_initial_apicid()
+{
+    awk '							\
+	BEGIN { CPU = "-1"; }					\
+	$1=="processor" && $2==":"	{ CPU = $NF; }		\
+	CPU=="0" && /initial apicid/	{ print $NF; }		\
+	'							\
+	/proc/cpuinfo
+}
+
+#
+# This function appends argument "$2=$3" to string ($1) if not already present.
+#
+function append_cmdline()
+{
+    local cmdline=$1
+    local newstr=${cmdline/$2/""}
+
+    # unchanged str implies argument wasn't there
+    if [ "$cmdline" == "$newstr" ]; then
+	cmdline="${cmdline} ${2}=${3}"
+    fi
+
+    echo $cmdline
+}
+
+# This function performs a series of edits on the command line
+function prepare_cmdline()
+{
+	local cmdline;
+	if [ -z "$KDUMP_COMMANDLINE" ]; then
+		cmdline=`cat /proc/cmdline`
+	else
+		cmdline=${KDUMP_COMMANDLINE}
+	fi
+	cmdline=`remove_cmdline_param "$cmdline" crashkernel hugepages hugepagesz`
+
+
+	cmdline="${cmdline} ${KDUMP_COMMANDLINE_APPEND}"
+
+	local id=`get_bootcpu_initial_apicid`
+	if [ ! -z ${id} ] ; then
+		cmdline=`append_cmdline "${cmdline}" disable_cpu_apicid ${id}`
+	fi
+
+	echo $cmdline
+}
+
+
 function save_core()
 {
 	coredir="/var/crash/`date +"%Y-%m-%d-%H:%M"`"
@@ -270,13 +323,7 @@ function load_kdump()
 		fi
 	fi
 
-	if [ -z "$KDUMP_COMMANDLINE" ]
-	then
-		KDUMP_COMMANDLINE=`cat /proc/cmdline`
-	fi
-	KDUMP_COMMANDLINE=`remove_cmdline_param "$KDUMP_COMMANDLINE" crashkernel hugepages hugepagesz`
-
-	KDUMP_COMMANDLINE="${KDUMP_COMMANDLINE} ${KDUMP_COMMANDLINE_APPEND}"
+	KDUMP_COMMANDLINE=`prepare_cmdline`
 
 	$KEXEC $KEXEC_ARGS $standard_kexec_args \
 		--command-line="$KDUMP_COMMANDLINE" \
