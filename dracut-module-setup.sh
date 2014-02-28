@@ -489,7 +489,7 @@ install() {
 installkernel() {
     wdt=$(lsmod|cut -f1 -d' '|grep "wdt$")
     if [ -n "$wdt" ]; then
-        instmods $wdt
         [ "$wdt" = "iTCO_wdt" ] && instmods lpc_ich
+        instmods $wdt
     fi
 }
