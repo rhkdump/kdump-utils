@@ -450,10 +450,6 @@ check_resettable()
     return 1
 }
 
-if ! check_resettable; then
-    exit 1
-fi
-
 # $1: maj:min
 is_crypt()
 {
@@ -481,6 +477,10 @@ check_crypt()
 
     return 1
 }
+
+if ! check_resettable; then
+    exit 1
+fi
 
 if ! check_crypt; then
     echo "Warning: Encrypted device is in dump path. User will prompted for password during second kernel boot." 
