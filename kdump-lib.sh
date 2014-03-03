@@ -37,3 +37,27 @@ is_fence_kdump()
     # fence kdump not configured?
     (pcs cluster cib | grep -q 'type="fence_kdump"') &> /dev/null || return 1
 }
+
+get_user_configured_dump_disk()
+{
+    local _target
+
+    if is_ssh_dump_target || is_nfs_dump_target; then
+        return
+    fi
+
+    _target=$(egrep "^ext[234]|^xfs|^btrfs|^minix|^raw" /etc/kdump.conf 2>/dev/null |awk '{print $2}')
+    [ -n "$_target" ] && echo $_target
+
+    return
+}
+
+get_root_fs_device()
+{
+    local _target
+    _target=$(findmnt -k -f -n -o SOURCE /)
+    [ -n "$_target" ] && echo $_target
+
+    return
+}
+
