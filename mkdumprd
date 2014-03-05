@@ -355,6 +355,28 @@ get_block_dump_target()
     [ -b "$_target" ] && echo $(to_dev_name $_target)
 }
 
+# If no dump disk is specified make sure /var/crash is not mounted on a
+# separate disk.
+check_block_dump_target()
+{
+    local _target
+    local _mntpoint
+
+    _target=$(get_user_configured_dump_disk)
+    [ -n "$_target" ] && return
+
+    _target=$(get_root_fs_device)
+    if [ -b "$_target" ]; then
+        mkdir -p $SAVE_PATH
+        _mntpoint=`df $SAVE_PATH | tail -1 |  awk '{print $NF}'`
+        if [ "$_mntpoint" != "/" ]; then
+            perror "No dump target specified. Default dump target is rootfs block device."
+            perror "But dump path $SAVE_PATH is not backed by rootfs block device. "
+            perror_exit "Either explicitly specify a dump target or specify a dump path backed by rootfs block device"
+        fi
+    fi
+}
+
 get_default_action_target()
 {
     local _target
@@ -477,6 +499,8 @@ check_crypt()
 
     return 1
 }
+
+check_block_dump_target
 
 if ! check_resettable; then
     exit 1
