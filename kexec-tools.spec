@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.5
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -333,6 +333,10 @@ done
 %endif
 
 %changelog
+* Mon Mar 10 2014 WANG Chao <chaowang@redhat.com> - 2.0.5-2
+- Warn about save vmcore patch mounted by another disk
+- Omit dracut resume module
+
 * Tue Mar 04 2014 WANG Chao <chaowang@redhat.com> - 2.0.5-1
 - Rebase kexec-tools-2.0.5
 - backport several patches from upstream for i386 build
