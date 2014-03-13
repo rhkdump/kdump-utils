@@ -142,8 +142,9 @@ get_ssh_size() {
     [ $? -ne 0 ] && {
         perror_exit "checking remote ssh server available size failed."
     }
-    #ssh output removed the line break, so print $11 instead of $4
-    _size=$(echo -n $_out|tail -1 | awk '{print $11}')
+
+    #ssh output removed the line break, so print field NF-2
+    _size=$(echo -n $_out| awk '{avail=NF-2; print $avail}')
     echo -n $_size
 }
 
