@@ -81,6 +81,7 @@ Patch001: kexec-tools-2.0.5-i386-fix-redefinition-error-for-e820entry.patch
 Patch601: kexec-tools-2.0.3-disable-kexec-test.patch
 Patch604: kexec-tools-2.0.3-build-makedumpfile-eppic-shared-object.patch
 Patch618: kexec-tools-2.0.4-makedumpfile-memset-in-cyclic-bitmap-initialization-introdu.patch
+Patch619: kexec-tools-2.0.5-vmcore-dmesg-stack-smashing-happend-in-extreme-case.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -114,6 +115,7 @@ tar -z -x -v -f %{SOURCE19}
 %patch618 -p1
 %patch000 -p1
 %patch001 -p1
+%patch619 -p1
 
 tar -z -x -v -f %{SOURCE13}
 
