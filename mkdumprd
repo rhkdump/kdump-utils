@@ -363,8 +363,7 @@ check_block_dump_target()
     local _target
     local _mntpoint
 
-    _target=$(get_user_configured_dump_disk)
-    [ -n "$_target" ] && return
+    is_user_configured_dump_target && return
 
     _target=$(get_root_fs_device)
     if [ -b "$_target" ]; then

@@ -52,6 +52,20 @@ get_user_configured_dump_disk()
     return
 }
 
+is_user_configured_dump_target()
+{
+    local _target
+
+    if is_ssh_dump_target || is_nfs_dump_target; then
+        return 0
+    fi
+
+    _target=$(egrep "^ext[234]|^xfs|^btrfs|^minix|^raw" /etc/kdump.conf 2>/dev/null |awk '{print $2}')
+    [ -n "$_target" ] && return 0
+
+    return 1
+}
+
 get_root_fs_device()
 {
     local _target
