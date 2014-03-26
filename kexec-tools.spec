@@ -1,6 +1,6 @@
 Name: kexec-tools
-Version: 2.0.5
-Release: 2%{?dist}
+Version: 2.0.6
+Release: 1%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -53,8 +53,6 @@ Obsoletes: diskdumputils netdump
 #
 # Patches 0 through 100 are meant for x86 kexec-tools enablement
 #
-Patch000: kexec-tools-2.0.5-i386-fix-build-failure-bzImage_support_efi_boot.patch
-Patch001: kexec-tools-2.0.5-i386-fix-redefinition-error-for-e820entry.patch
 
 #
 # Patches 101 through 200 are meant for x86_64 kexec-tools enablement
@@ -113,8 +111,6 @@ tar -z -x -v -f %{SOURCE19}
 %patch601 -p1
 %patch604 -p1
 %patch618 -p1
-%patch000 -p1
-%patch001 -p1
 %patch619 -p1
 
 tar -z -x -v -f %{SOURCE13}
@@ -335,6 +331,12 @@ done
 %endif
 
 %changelog
+* Wed Mar 26 2014 WANG Chao <chaowang@redhat.com> - 2.0.6-1
+- Rebase kexec-tools-2.0.6
+- fix an issue when dump path is mounted on nfs
+- vmcore-dmesg: stack smashing fix
+- get_ssh_size fix for localized df output
+
 * Mon Mar 10 2014 WANG Chao <chaowang@redhat.com> - 2.0.5-2
 - Warn about save vmcore patch mounted by another disk
 - Omit dracut resume module
