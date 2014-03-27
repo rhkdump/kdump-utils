@@ -1,0 +1,12 @@
+Adding a patch to kexec-tools
+=============================
+There is a mailing list kexec@lists.fedoraproject.org where all the dicussion
+related to fedora kexec-tools happen. All the patches are posted there for
+inclusion and committed to kexec-tools after review.
+
+So if you want your patches to be included in fedora kexec-tools package,
+post these to kexec@lists.fedoraproject.org.
+
+One can subscribe to list and browse through archives here.
+
+https://admin.fedoraproject.org/mailman/listinfo/kexec
