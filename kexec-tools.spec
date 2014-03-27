@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.6
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -80,6 +80,7 @@ Patch601: kexec-tools-2.0.3-disable-kexec-test.patch
 Patch604: kexec-tools-2.0.3-build-makedumpfile-eppic-shared-object.patch
 Patch618: kexec-tools-2.0.4-makedumpfile-memset-in-cyclic-bitmap-initialization-introdu.patch
 Patch619: kexec-tools-2.0.5-vmcore-dmesg-stack-smashing-happend-in-extreme-case.patch
+Patch700: kexec-aarch64.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -112,6 +113,7 @@ tar -z -x -v -f %{SOURCE19}
 %patch604 -p1
 %patch618 -p1
 %patch619 -p1
+%patch700 -p1
 
 tar -z -x -v -f %{SOURCE13}
 
@@ -331,6 +333,9 @@ done
 %endif
 
 %changelog
+* Thu Mar 27 2014 Marcin Juszkiewicz <mjuszkiewicz@redhat.com> - 2.0.6-2
+- Add initial aarch64 support.
+
 * Wed Mar 26 2014 WANG Chao <chaowang@redhat.com> - 2.0.6-1
 - Rebase kexec-tools-2.0.6
 - fix an issue when dump path is mounted on nfs
