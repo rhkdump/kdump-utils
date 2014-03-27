@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.6
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -47,6 +47,7 @@ BuildRequires: systemd-units
 Obsoletes: diskdumputils netdump
 %endif
 
+ExcludeArch: aarch64
 
 #START INSERT
 
@@ -331,6 +332,9 @@ done
 %endif
 
 %changelog
+* Thu Mar 27 2014 Peter Robinson <pbrobinson@fedoraproject.org> 2.0.6-2
+- Exclude AArch64
+
 * Wed Mar 26 2014 WANG Chao <chaowang@redhat.com> - 2.0.6-1
 - Rebase kexec-tools-2.0.6
 - fix an issue when dump path is mounted on nfs
