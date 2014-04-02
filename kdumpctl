@@ -185,9 +185,9 @@ function check_config()
 	return 0
 }
 
-# check_fence_kdump <image timestamp>
-# return 0 if fence_kdump is configured and kdump initrd needs to be rebuilt
-function check_fence_kdump()
+# check_pcs_fence_kdump <image timestamp>
+# return 0 if fence_kdump is configured in Pacemaker cluster and kdump initrd needs to be rebuilt
+function check_pcs_fence_kdump()
 {
 	local image_time=$1
 	local cib_time
@@ -239,8 +239,8 @@ function check_rebuild()
 		image_time=0
 	fi
 
-	#also rebuild when cluster conf is changed and fence kdump is enabled.
-	check_fence_kdump $image_time && modified_files="cluster-cib"
+	#also rebuild when Pacemaker cluster conf is changed and fence kdump is enabled.
+	check_pcs_fence_kdump $image_time && modified_files="cluster-cib"
 
 	EXTRA_BINS=`grep ^kdump_post $KDUMP_CONFIG_FILE | cut -d\  -f2`
 	CHECK_FILES=`grep ^kdump_pre $KDUMP_CONFIG_FILE | cut -d\  -f2`
