@@ -20,7 +20,7 @@ depends() {
         _dep="$_dep drm"
     fi
 
-    if is_fence_kdump; then
+    if is_pcs_fence_kdump; then
         _dep="$_dep network"
     fi
 
@@ -421,7 +421,7 @@ kdump_check_iscsi_targets () {
 # also preserve '[node list]' for 2nd kernel /etc/fence_kdump_nodes
 kdump_check_fence_kdump () {
     local nodes
-    is_fence_kdump || return 1
+    is_pcs_fence_kdump || return 1
 
     # get cluster nodes from cluster cib, get interface and ip address
     nodelist=`pcs cluster cib | xmllint --xpath "/cib/status/node_state/@uname" -`

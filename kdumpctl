@@ -192,7 +192,7 @@ function check_fence_kdump()
 	local image_time=$1
 	local cib_time
 
-	is_fence_kdump || return 1
+	is_pcs_fence_kdump || return 1
 
 	cib_time=`pcs cluster cib | xmllint --xpath 'string(/cib/@cib-last-written)' - | \
 		  xargs -0 date +%s --date`

@@ -27,8 +27,8 @@ strip_comments()
     echo $@ | sed -e 's/\(.*\)#.*/\1/'
 }
 
-# Check if fence kdump is configured in cluster
-is_fence_kdump()
+# Check if fence kdump is configured in Pacemaker cluster
+is_pcs_fence_kdump()
 {
     # no pcs or fence_kdump_send executables installed?
     type -P pcs > /dev/null || return 1
