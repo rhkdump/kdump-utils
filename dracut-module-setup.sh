@@ -442,7 +442,7 @@ kdump_check_fence_kdump () {
     done
     echo
 
-    echo "$nodes" > ${initdir}/$FENCE_KDUMP_NODES
+    echo "$nodes" > ${initdir}/$FENCE_KDUMP_NODES_FILE
     dracut_install $FENCE_KDUMP_SEND
     dracut_install -o $FENCE_KDUMP_CONFIG_FILE
 }

@@ -5,7 +5,7 @@
 
 FENCE_KDUMP_CONFIG_FILE="/etc/sysconfig/fence_kdump"
 FENCE_KDUMP_SEND="/usr/libexec/fence_kdump_send"
-FENCE_KDUMP_NODES="/etc/fence_kdump_nodes"
+FENCE_KDUMP_NODES_FILE="/etc/fence_kdump_nodes"
 
 is_ssh_dump_target()
 {

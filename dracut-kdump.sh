@@ -291,12 +291,12 @@ fence_kdump_notify()
 {
     local nodes
 
-    if [ -f $FENCE_KDUMP_NODES ]; then
+    if [ -f $FENCE_KDUMP_NODES_FILE ]; then
         if [ -f $FENCE_KDUMP_CONFIG_FILE ]; then
             . $FENCE_KDUMP_CONFIG_FILE
         fi
 
-        read nodes < $FENCE_KDUMP_NODES
+        read nodes < $FENCE_KDUMP_NODES_FILE
         $FENCE_KDUMP_SEND $FENCE_KDUMP_OPTS $nodes &
     fi
 }
