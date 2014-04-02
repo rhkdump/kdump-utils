@@ -177,6 +177,21 @@ Kdump uses dracut to generate initramfs for second kernel. This option
 allows a user to pass arguments to dracut directly.
 .RE
 
+
+.B fence_kdump_args <arg(s)>
+.RS
+Command line arguments for fence_kdump_send (it can contain all valid
+arguments except hosts to send notification to).
+.RE
+
+
+.B fence_kdump_nodes <node(s)>
+.RS
+List of cluster node(s) separated by space to send fence_kdump notification
+to (this option is mandatory to enable fence_kdump).
+.RE
+
+
 .SH DEPRECATED OPTIONS
 
 .B net <nfs mount>|<user@server>

@@ -246,6 +246,12 @@ read_kdump_conf()
         kdump_post)
             KDUMP_POST="$config_val"
             ;;
+        fence_kdump_args)
+            FENCE_KDUMP_ARGS="$config_val"
+            ;;
+        fence_kdump_nodes)
+            FENCE_KDUMP_NODES="$config_val"
+            ;;
         default)
             case $config_val in
                 shell)
@@ -289,20 +295,13 @@ read_kdump_conf()
 
 fence_kdump_notify()
 {
-    local nodes
-
-    if [ -f $FENCE_KDUMP_NODES_FILE ]; then
-        if [ -f $FENCE_KDUMP_CONFIG_FILE ]; then
-            . $FENCE_KDUMP_CONFIG_FILE
-        fi
-
-        read nodes < $FENCE_KDUMP_NODES_FILE
-        $FENCE_KDUMP_SEND $FENCE_KDUMP_OPTS $nodes &
+    if [ -n "$FENCE_KDUMP_NODES" ]; then
+        $FENCE_KDUMP_SEND $FENCE_KDUMP_ARGS $FENCE_KDUMP_NODES &
     fi
 }
 
-fence_kdump_notify
 read_kdump_conf
+fence_kdump_notify
 
 if [ -z "$CORE_COLLECTOR" ];then
     CORE_COLLECTOR=$DEFAULT_CORE_COLLECTOR

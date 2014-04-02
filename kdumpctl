@@ -166,7 +166,7 @@ function check_config()
 		case "$config_opt" in
 		\#* | "")
 			;;
-		raw|ext2|ext3|ext4|minix|btrfs|xfs|nfs|ssh|sshkey|path|core_collector|kdump_post|kdump_pre|extra_bins|extra_modules|default|force_rebuild|dracut_args)
+		raw|ext2|ext3|ext4|minix|btrfs|xfs|nfs|ssh|sshkey|path|core_collector|kdump_post|kdump_pre|extra_bins|extra_modules|default|force_rebuild|dracut_args|fence_kdump_args|fence_kdump_nodes)
 			[ -z "$config_val" ] && {
 				echo "Invalid kdump config value for option $config_opt."
 				return 1;
@@ -182,26 +182,38 @@ function check_config()
 			;;
 		esac
 	done < $KDUMP_CONFIG_FILE
+	
+	check_fence_kdump_config || return 1
+
 	return 0
 }
 
-# check_pcs_fence_kdump <image timestamp>
-# return 0 if fence_kdump is configured in Pacemaker cluster and kdump initrd needs to be rebuilt
-function check_pcs_fence_kdump()
+# get_pcs_cluster_modified_files <image timestamp>
+# return list of modified file for fence_kdump modified in Pacemaker cluster
+get_pcs_cluster_modified_files()
 {
 	local image_time=$1
-	local cib_time
+	local time_stamp
+	local modified_files
 
+	is_generic_fence_kdump && return 1
 	is_pcs_fence_kdump || return 1
 
-	cib_time=`pcs cluster cib | xmllint --xpath 'string(/cib/@cib-last-written)' - | \
-		  xargs -0 date +%s --date`
+	time_stamp=`pcs cluster cib | xmllint --xpath 'string(/cib/@cib-last-written)' - | \
+		xargs -0 date +%s --date`
 
-	if [ -z $cib_time -o $cib_time -le $image_time ]; then
-		return 1
+	if [ -n $time_stamp -a $time_stamp -gt $image_time ]; then
+		modified_files="cluster-cib"
 	fi
 
-	return 0
+	if [ -f $FENCE_KDUMP_CONFIG_FILE ]; then
+		time_stamp=`stat -c "%Y" $FENCE_KDUMP_CONFIG_FILE`
+		if [ "$time_stamp" -gt "$image_time" ]; then
+			modified_files="$modified_files $FENCE_KDUMP_CONFIG_FILE"
+		fi
+	fi
+
+	echo $modified_files
 }
 
 function check_rebuild()
@@ -240,7 +252,7 @@ function check_rebuild()
 	fi
 
 	#also rebuild when Pacemaker cluster conf is changed and fence kdump is enabled.
-	check_pcs_fence_kdump $image_time && modified_files="cluster-cib"
+	modified_files=$(get_pcs_cluster_modified_files $image_time)
 
 	EXTRA_BINS=`grep ^kdump_post $KDUMP_CONFIG_FILE | cut -d\  -f2`
 	CHECK_FILES=`grep ^kdump_pre $KDUMP_CONFIG_FILE | cut -d\  -f2`
@@ -248,10 +260,6 @@ function check_rebuild()
 	CHECK_FILES=`grep ^extra_bins $KDUMP_CONFIG_FILE | cut -d\  -f2-`
 	EXTRA_BINS="$EXTRA_BINS $CHECK_FILES"
 	files="$KDUMP_CONFIG_FILE $kdump_kernel $EXTRA_BINS"
-
-	if [ -f $FENCE_KDUMP_CONFIG_FILE ]; then
-		files="$files $FENCE_KDUMP_CONFIG_FILE"
-	fi
 
 	check_exist "$files" && check_executable "$EXTRA_BINS"
 	[ $? -ne 0 ] && return 1
@@ -571,6 +579,21 @@ function check_kdump_feasibility()
 		echo "Kdump is not supported on this kernel"
 		return 1
 	fi
+}
+
+function check_fence_kdump_config()
+{
+	local hostname=`hostname`
+	local nodes=$(get_option_value "fence_kdump_nodes")
+
+	for node in $nodes; do
+		if [ "$node" = "$hostname" ]; then
+			echo "Option fence_kdump_nodes cannot contain $hostname"
+			return 1
+		fi
+	done
+
+	return 0
 }
 
 function start()

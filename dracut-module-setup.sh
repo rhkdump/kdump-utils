@@ -20,7 +20,7 @@ depends() {
         _dep="$_dep drm"
     fi
 
-    if is_pcs_fence_kdump; then
+    if [ is_generic_fence_kdump -o is_pcs_fence_kdump ]; then
         _dep="$_dep network"
     fi
 
@@ -285,7 +285,7 @@ kdump_install_conf() {
         esac
     done < /etc/kdump.conf
 
-    kdump_configure_fence_kdump
+    kdump_configure_fence_kdump  "/tmp/$$-kdump.conf"
     inst "/tmp/$$-kdump.conf" "/etc/kdump.conf"
     rm -f /tmp/$$-kdump.conf
 }
@@ -415,13 +415,9 @@ kdump_check_iscsi_targets () {
     }
 }
 
-
-# setup fence_kdump in cluster
-# setup proper network and install needed files
-# also preserve '[node list]' for 2nd kernel /etc/fence_kdump_nodes
-kdump_configure_fence_kdump () {
+# retrieves fence_kdump nodes from Pacemaker cluster configuration
+get_pcs_fence_kdump_nodes() {
     local nodes
-    is_pcs_fence_kdump || return 1
 
     # get cluster nodes from cluster cib, get interface and ip address
     nodelist=`pcs cluster cib | xmllint --xpath "/cib/status/node_state/@uname" -`
@@ -437,14 +433,51 @@ kdump_configure_fence_kdump () {
             continue
         fi
         nodes="$nodes $nodename"
-
-        kdump_install_net $nodename
     done
-    echo
 
-    echo "$nodes" > ${initdir}/$FENCE_KDUMP_NODES_FILE
+    echo $nodes
+}
+
+# retrieves fence_kdump args from config file
+get_pcs_fence_kdump_args() {
+    if [ -f $FENCE_KDUMP_CONFIG_FILE ]; then
+        . $FENCE_KDUMP_CONFIG_FILE
+        echo $FENCE_KDUMP_OPTS
+    fi
+}
+
+# setup fence_kdump in cluster
+# setup proper network and install needed files
+kdump_configure_fence_kdump () {
+    local kdump_cfg_file=$1
+    local nodes
+    local args
+
+    if is_generic_fence_kdump; then
+        nodes=$(get_option_value "fence_kdump_nodes")
+
+    elif is_pcs_fence_kdump; then
+        nodes=$(get_pcs_fence_kdump_nodes)
+
+        # set appropriate options in kdump.conf
+        echo "fence_kdump_nodes $nodes" >> ${kdump_cfg_file}
+
+        args=$(get_pcs_fence_kdump_args)
+        if [ -n "$args" ]; then
+            echo "fence_kdump_args $args" >> ${kdump_cfg_file}
+        fi
+
+    else
+        # fence_kdump not configured
+        return 1
+    fi
+
+    # setup network for each node
+    for node in ${nodes}; do
+        kdump_install_net $node
+    done
+
     dracut_install $FENCE_KDUMP_SEND
-    dracut_install -o $FENCE_KDUMP_CONFIG_FILE
 }
 
 # Install a random seed used to feed /dev/urandom

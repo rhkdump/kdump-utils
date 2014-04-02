@@ -34,11 +34,11 @@ recovery service, fence_kdump_send will periodically send messages to all
 cluster nodes. When the fence_kdump agent receives a valid message from the 
 failed nodes, fencing is complete.
 
-How to configure cluster environment:
+How to configure Pacemaker cluster environment:
 
-If we want to use kdump in cluster environment, fence-agents-kdump should be 
-installed in every nodes in the cluster. You can achieve this via the following 
-command:
+If we want to use kdump in Pacemaker cluster environment, fence-agents-kdump
+should be installed in every nodes in the cluster. You can achieve this via
+the following command:
 
   # yum install -y fence-agents-kdump
 
@@ -61,6 +61,31 @@ Then enable stonith
 
 How to configure kdump:
 
-Actually there is nothing special in configuration between normal kdump and
-cluster environment kdump. So please refer to Kexec-Kdump-howto file for more
-information.
+Actually there are two ways how to configure fence_kdump support:
+
+1) Pacemaker based clusters
+     If you have successfully configured fence_kdump in Pacemaker, there is
+     no need to add some special configuration in kdump. So please refer to
+     Kexec-Kdump-howto file for more information.
+
+2) Generic clusters
+     For other types of clusters there are two configuration options in
+     kdump.conf which enables fence_kdump support:
+
+       fence_kdump_nodes <node(s)>
+            Contains list of cluster node(s) separated by space to send
+            fence_kdump notification to (this option is mandatory to enable
+            fence_kdump)
+
+       fence_kdump_args <arg(s)>
+            Command line arguments for fence_kdump_send (it can contain
+            all valid arguments except hosts to send notification to)
+
+     These options will most probably be configured by your cluster software,
+     so please refer to your cluster documentation how to enable fence_kdump
+     support.
+
+Please be aware that these two ways cannot be combined and 2) has precedence
+over 1). It means that if fence_kdump is configured using fence_kdump_nodes
+and fence_kdump_args options in kdump.conf, Pacemaker configuration is not
+used even if it exists.

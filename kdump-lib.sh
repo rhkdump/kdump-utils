@@ -5,7 +5,6 @@
 
 FENCE_KDUMP_CONFIG_FILE="/etc/sysconfig/fence_kdump"
 FENCE_KDUMP_SEND="/usr/libexec/fence_kdump_send"
-FENCE_KDUMP_NODES_FILE="/etc/fence_kdump_nodes"
 
 is_ssh_dump_target()
 {
@@ -36,6 +35,14 @@ is_pcs_fence_kdump()
 
     # fence kdump not configured?
     (pcs cluster cib | grep -q 'type="fence_kdump"') &> /dev/null || return 1
+}
+
+# Check if fence_kdump is configured using kdump options
+is_generic_fence_kdump()
+{
+    [ -x $FENCE_KDUMP_SEND ] || return 1
+
+    grep -q "^fence_kdump_nodes" /etc/kdump.conf
 }
 
 get_user_configured_dump_disk()
