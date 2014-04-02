@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.6
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -332,6 +332,10 @@ done
 %endif
 
 %changelog
+* Wed Apr 02 2014 WANG Chao <chaowang@redhat.com> - 2.0.6-3
+- Add README to git repo
+- Add fence_kdump support for generic clusters
+
 * Thu Mar 27 2014 Peter Robinson <pbrobinson@fedoraproject.org> 2.0.6-2
 - Exclude AArch64
 
