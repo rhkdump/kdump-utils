@@ -285,7 +285,7 @@ kdump_install_conf() {
         esac
     done < /etc/kdump.conf
 
-    kdump_check_fence_kdump
+    kdump_configure_fence_kdump
     inst "/tmp/$$-kdump.conf" "/etc/kdump.conf"
     rm -f /tmp/$$-kdump.conf
 }
@@ -419,7 +419,7 @@ kdump_check_iscsi_targets () {
 # setup fence_kdump in cluster
 # setup proper network and install needed files
 # also preserve '[node list]' for 2nd kernel /etc/fence_kdump_nodes
-kdump_check_fence_kdump () {
+kdump_configure_fence_kdump () {
     local nodes
     is_pcs_fence_kdump || return 1
 
