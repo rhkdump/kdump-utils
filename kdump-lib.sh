@@ -75,3 +75,9 @@ get_root_fs_device()
     return
 }
 
+# get_option_value <option_name>
+# retrieves value of option defined in kdump.conf
+get_option_value() {
+    echo $(strip_comments `grep ^$1 /etc/kdump.conf | tail -1 | cut -d\  -f2-`)
+}
+
