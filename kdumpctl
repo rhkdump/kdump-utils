@@ -249,8 +249,8 @@ function check_rebuild()
 	EXTRA_BINS="$EXTRA_BINS $CHECK_FILES"
 	files="$KDUMP_CONFIG_FILE $kdump_kernel $EXTRA_BINS"
 
-	if [ -f $FENCE_KDUMP_CONFIG ]; then
-		files="$files $FENCE_KDUMP_CONFIG"
+	if [ -f $FENCE_KDUMP_CONFIG_FILE ]; then
+		files="$files $FENCE_KDUMP_CONFIG_FILE"
 	fi
 
 	check_exist "$files" && check_executable "$EXTRA_BINS"

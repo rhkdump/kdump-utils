@@ -444,7 +444,7 @@ kdump_check_fence_kdump () {
 
     echo "$nodes" > ${initdir}/$FENCE_KDUMP_NODES
     dracut_install $FENCE_KDUMP_SEND
-    dracut_install -o $FENCE_KDUMP_CONFIG
+    dracut_install -o $FENCE_KDUMP_CONFIG_FILE
 }
 
 # Install a random seed used to feed /dev/urandom

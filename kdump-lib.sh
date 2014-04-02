@@ -3,7 +3,7 @@
 # Kdump common variables and functions
 #
 
-FENCE_KDUMP_CONFIG="/etc/sysconfig/fence_kdump"
+FENCE_KDUMP_CONFIG_FILE="/etc/sysconfig/fence_kdump"
 FENCE_KDUMP_SEND="/usr/libexec/fence_kdump_send"
 FENCE_KDUMP_NODES="/etc/fence_kdump_nodes"
 

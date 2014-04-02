@@ -292,8 +292,8 @@ fence_kdump_notify()
     local nodes
 
     if [ -f $FENCE_KDUMP_NODES ]; then
-        if [ -f $FENCE_KDUMP_CONFIG ]; then
-            . $FENCE_KDUMP_CONFIG
+        if [ -f $FENCE_KDUMP_CONFIG_FILE ]; then
+            . $FENCE_KDUMP_CONFIG_FILE
         fi
 
         read nodes < $FENCE_KDUMP_NODES
