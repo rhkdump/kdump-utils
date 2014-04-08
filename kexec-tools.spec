@@ -26,6 +26,7 @@ Source18: kdump.sysconfig.s390x
 Source19: eppic_030413.tar.gz
 Source20: kdump-lib.sh
 Source21: kdump-in-cluster-environment.txt
+Source22: kdump-dep-generator.sh
 
 #######################################
 # These are sources for mkdumpramfs
@@ -181,6 +182,7 @@ install -m 644 %{SOURCE14} $RPM_BUILD_ROOT%{_sysconfdir}/udev/rules.d/98-kexec.r
 %endif
 install -m 644 %{SOURCE15} $RPM_BUILD_ROOT%{_mandir}/man5/kdump.conf.5
 install -m 644 %{SOURCE16} $RPM_BUILD_ROOT%{_unitdir}/kdump.service
+install -m 755 -D %{SOURCE22} $RPM_BUILD_ROOT%{_prefix}/lib/systemd/system-generators/kdump-dep-generator.sh
 mkdir -p $RPM_BUILD_ROOT/usr/sbin
 install -m 755 %{SOURCE17} $RPM_BUILD_ROOT/usr/sbin/rhcrashkernel-param
 
@@ -320,6 +322,7 @@ done
 %{_mandir}/man8/*
 %{_mandir}/man5/*
 %{_unitdir}/kdump.service
+%{_prefix}/lib/systemd/system-generators/kdump-dep-generator.sh
 %doc News
 %doc COPYING
 %doc TODO
