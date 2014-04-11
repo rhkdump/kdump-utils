@@ -29,6 +29,16 @@ is_fs_type_nfs()
     return 1
 }
 
+is_fs_dump_target()
+{
+    egrep -q "^ext[234]|^xfs|^btrfs|^minix" /etc/kdump.conf
+}
+
+is_user_configured_dump_target()
+{
+    return $(is_ssh_dump_target || is_nfs_dump_target || is_raw_dump_target || is_fs_dump_target)
+}
+
 strip_comments()
 {
     echo $@ | sed -e 's/\(.*\)#.*/\1/'
@@ -65,20 +75,6 @@ get_user_configured_dump_disk()
     [ -n "$_target" ] && echo $_target
 
     return
-}
-
-is_user_configured_dump_target()
-{
-    local _target
-
-    if is_ssh_dump_target || is_nfs_dump_target; then
-        return 0
-    fi
-
-    _target=$(egrep "^ext[234]|^xfs|^btrfs|^minix|^raw" /etc/kdump.conf 2>/dev/null |awk '{print $2}')
-    [ -n "$_target" ] && return 0
-
-    return 1
 }
 
 get_root_fs_device()

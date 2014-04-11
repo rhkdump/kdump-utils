@@ -325,24 +325,29 @@ get_block_dump_target()
     [ -b "$_target" ] && echo $(to_dev_name $_target)
 }
 
-# If no dump disk is specified make sure /var/crash is not mounted on a
-# separate disk.
-check_block_dump_target()
+#handle the case user does not specify the dump target explicitly
+handle_default_dump_target()
 {
     local _target
     local _mntpoint
+    local _fstype
 
     is_user_configured_dump_target && return
 
-    _target=$(get_root_fs_device)
-    if [ -b "$_target" ]; then
-        mkdir -p $SAVE_PATH
-        _mntpoint=`df $SAVE_PATH | tail -1 |  awk '{print $NF}'`
-        if [ "$_mntpoint" != "/" ]; then
-            perror "No dump target specified. Default dump target is rootfs block device."
-            perror "But dump path $SAVE_PATH is not backed by rootfs block device. "
-            perror_exit "Either explicitly specify a dump target or specify a dump path backed by rootfs block device"
+    check_save_path_fs $SAVE_PATH
+
+    _mntpoint=$(get_mntpoint_from_path $SAVE_PATH)
+    _target=$(get_target_from_path $SAVE_PATH)
+    if [ "$_mntpoint" != "/" ]; then
+        SAVE_PATH=${SAVE_PATH##"$_mntpoint"}
+        _fstype=$(get_fs_type_from_target $_target)
+
+        if $(is_fs_type_nfs $_fstype); then
+            add_dracut_module "nfs"
         fi
+
+        add_mount "$_target"
+        check_size fs $_target
     fi
 }
 
@@ -469,8 +474,6 @@ check_crypt()
     return 1
 }
 
-check_block_dump_target
-
 if ! check_resettable; then
     exit 1
 fi
@@ -547,6 +550,8 @@ do
         ;;
     esac
 done < $conf_file
+
+handle_default_dump_target
 
 if [ -n "$extra_modules" ]
 then
