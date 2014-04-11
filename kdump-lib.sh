@@ -3,6 +3,7 @@
 # Kdump common variables and functions
 #
 
+DEFAULT_PATH="/var/crash/"
 FENCE_KDUMP_CONFIG_FILE="/etc/sysconfig/fence_kdump"
 FENCE_KDUMP_SEND="/usr/libexec/fence_kdump_send"
 
@@ -19,6 +20,13 @@ is_nfs_dump_target()
 is_raw_dump_target()
 {
     grep -q "^raw" /etc/kdump.conf
+}
+
+is_fs_type_nfs()
+{
+    local _fstype=$1
+    [ $_fstype = "nfs" ] || [ $_fstype = "nfs4" ] && return 0
+    return 1
 }
 
 strip_comments()
@@ -80,6 +88,26 @@ get_root_fs_device()
     [ -n "$_target" ] && echo $_target
 
     return
+}
+
+get_mntpoint_from_path() 
+{
+    echo $(df $1 | tail -1 |  awk '{print $NF}')
+}
+
+get_target_from_path()
+{
+    echo $(df $1 | tail -1 |  awk '{print $1}')
+}
+
+get_fs_type_from_target() 
+{
+    echo $(findmnt -k -f -n -r -o FSTYPE $1)
+}
+
+get_mntpoint_from_target()
+{
+    echo $(findmnt -k -f -n -r -o TARGET $1)
 }
 
 # get_option_value <option_name>
