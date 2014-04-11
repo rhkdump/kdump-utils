@@ -364,18 +364,46 @@ to send over the necessary ssh key file. Restart the kdump service via
 '/sbin/systemctl restart kdump.service' to commit this change to your kdump initrd.
 
 Path
+====
+"path" represents the file system path in which vmcore will be saved. In
+fact kdump creates a directory $hostip-$date with-in "path" and saves
+vmcore there. So practically dump is saved in $path/$hostip-$date/. To
+simplify discussion further, if we say dump will be saved in $path, it
+is implied that kdump will create another directory inside path and
+save vmcore there.
 
-By default, local file system vmcore files are written to /var/crash/%DATE
-on the local system, ssh/scp dumps to /var/crash/%HOST-%DATE on the target
-system, dedicated file system partition dumps to ./var/crash/%DATE, and
-NFS dumps to ./var/crash/%HOST-%DATE, the latter two both relative to
-their respective mount points within the kdump initrd (usually /mnt). The
-'/var/crash' portion of the path can be overridden using kdump.conf's 'path'
-variable, should you wish to write the vmcore out to a different location. For
-example, 'path /data/coredumps' would lead to vmcore files being written to
-/data/coredumps/%DATE if you were dumping to your local file system.  Note
-that the path option is ingnored if your kdump configuration results in the
-core being saved from the initscripts in the root filesystem.
+If a dump target is specified in kdump.conf, then "path" is relative to the
+specified dump target. For example, if dump target is "ext4 /dev/sda", then
+dump will be saved in "$path" directory on /dev/sda.
+
+Same is the case for nfs dump. If user specified "nfs foo.com:/export/tmp/"
+as dump target, then dump will effectively be saved in
+"foo.com:/export/tmp/var/crash/" directory.
+
+Interpretation of path changes a bit if user has not specified a dump
+target explicitly in kdump.conf. In this case, "path" represents the
+absolute path from root. And dump target and adjusted path are arrived
+at automatically depending on what's mounted in the current system.
+
+Following are few examples.
+
+path /var/crash/
+----------------
+Assuming there is no disk mounted on /var/ or on /var/crash, dump will
+be saved on disk backing rootfs in directory /var/crash.
+
+path /var/crash/ (A separate disk mounted on /var)
+--------------------------------------------------
+Say a disk /dev/sdb is mouted on /var. In this case dump target will
+become /dev/sdb and path will become "/crash" and dump will be saved
+on "sdb:/crash/" directory.
+
+path /var/crash/ (NFS mounted on /var)
+-------------------------------------
+Say foo.com:/export/tmp is mounted on /var. In this case dump target is
+nfs server and path will be adjusted to "/crash" and dump will be saved to
+foo.com:/export/tmp/crash/ directory.
+
 
 Kdump Post-Capture Executable
 
