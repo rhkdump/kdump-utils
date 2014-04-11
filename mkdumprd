@@ -173,37 +173,6 @@ mkdir_save_path_ssh()
     return 0
 }
 
-
-#mkdir if save path does not exist on dump target filesystem
-#$1=dump target
-#caller should ensure $1 is mounted
-mkdir_save_path_fs() {
-    local _mnt=$(to_mount_point $1)
-    local _remount="no"
-    local _ret
-
-    [ ! -d ${_mnt}/$SAVE_PATH ] && {
-        if is_readonly_mount $1; then
-            echo "Mounting $1 as read-write for creating dump directory.."
-            mount -o remount,rw $1 || {
-                perror_exit "Mounting $1 as read-write failed."
-            }
-            _remount="yes"
-        fi
-        mkdir -p ${_mnt}/$SAVE_PATH
-        _ret=$?
-        [ "$_remount" = "yes" ] && {
-            echo "Remounting $1 as read-only."
-            mount -o remount,ro $1 || {
-                perror_exit "Remounting $1 as read-only failed."
-            }
-        }
-        [ $_ret -ne 0 ] && {
-            perror_exit "Creating ${_mnt}/$SAVE_PATH failed."
-        }
-    }
-}
-
 #Function: get_fs_size
 #$1=dump target
 get_fs_size() {
@@ -538,7 +507,7 @@ do
             add_dracut_module "nfs"
         fi
         add_mount "$config_val"
-        mkdir_save_path_fs $config_val
+        check_save_path_fs $(make_absolute_save_path $config_val)
         check_size fs $config_val
         ;;
     raw)

@@ -116,3 +116,29 @@ get_option_value() {
     echo $(strip_comments `grep ^$1 /etc/kdump.conf | tail -1 | cut -d\  -f2-`)
 }
 
+#This function compose a absolute path with the mount
+#point and the relative $SAVE_PATH.
+#target is passed in as argument, could be UUID, LABEL,
+#block device or even nfs server export of the form of
+#"my.server.com:/tmp/export"?
+#And possibly this could be used for both default case
+#as well as when dump taret is specified. When dump
+#target is not specified, then $target would be null.
+make_absolute_save_path()
+{
+    local _target=$1
+    local _mnt
+
+    [ -n $_target ] && _mnt=$(get_mntpoint_from_target $1)
+    echo "${_mnt}/$SAVE_PATH"
+}
+
+check_save_path_fs()
+{
+    local _path=$1
+
+    if [ ! -d $_path ]; then
+        perror_exit "Dump path $_path does not exist."
+    fi
+}
+
