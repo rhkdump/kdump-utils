@@ -261,6 +261,38 @@ kdump_install_net() {
     fi
 }
 
+default_dump_target_install_conf()
+{
+    local _target _fstype
+    local _s  _t
+    local _mntpoint
+    local _path _save_path
+
+    is_user_configured_dump_target && return
+
+    _save_path=$(grep ^path "/etc/kdump.conf"| cut -d' '  -f2)
+    [ -z "$_save_path" ] && _save_path=$DEFAULT_PATH
+
+    _mntpoint=$(get_mntpoint_from_path $_save_path)
+    _target=$(get_target_from_path $_save_path)
+    if [ "$_mntpoint" != "/" ]; then
+        _fstype=$(get_fs_type_from_target $_target)
+
+        if $(is_fs_type_nfs $_fstype); then
+            kdump_install_net "$_target"
+            _fstype="nfs"
+        else
+            _target=$(kdump_to_udev_name $_target)
+        fi
+
+        echo "$_fstype $_target" >> /tmp/$$-kdump.conf
+
+        _path=${_save_path##"$_mntpoint"}
+        sed -i -e "s#$_save_path#$_path#" /tmp/$$-kdump.conf
+    fi
+
+}
+
 #install kdump.conf and what user specifies in kdump.conf
 kdump_install_conf() {
     sed -ne '/^#/!p' /etc/kdump.conf > /tmp/$$-kdump.conf
@@ -284,6 +316,8 @@ kdump_install_conf() {
             ;;
         esac
     done < /etc/kdump.conf
+
+    default_dump_target_install_conf
 
     kdump_configure_fence_kdump  "/tmp/$$-kdump.conf"
     inst "/tmp/$$-kdump.conf" "/etc/kdump.conf"
