@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.6
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -335,6 +335,10 @@ done
 %endif
 
 %changelog
+* Thu Apr 17 2014 WANG Chao <chaowang@redhat.com> - 2.0.6-4
+- generate kdump service dependencies on the fly
+- kdump.conf: a standalone path directive becomes a relative path to it's backed disk.
+
 * Wed Apr 02 2014 WANG Chao <chaowang@redhat.com> - 2.0.6-3
 - Add README to git repo
 - Add fence_kdump support for generic clusters
