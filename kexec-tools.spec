@@ -10,7 +10,6 @@ Source2: kdump.sysconfig
 Source3: kdump.sysconfig.x86_64
 Source4: kdump.sysconfig.i386
 Source5: kdump.sysconfig.ppc64
-Source6: kdump.sysconfig.ia64
 Source7: mkdumprd
 Source8: kdump.conf
 Source9: http://downloads.sourceforge.net/project/makedumpfile/makedumpfile/1.5.5/makedumpfile-1.5.5.tar.gz
@@ -44,7 +43,7 @@ Requires: dracut, dracut-network, ethtool
 BuildRequires: zlib-devel zlib zlib-static elfutils-devel-static glib2-devel bzip2-devel ncurses-devel bison flex lzo-devel snappy-devel
 BuildRequires: pkgconfig intltool gettext 
 BuildRequires: systemd-units
-%ifarch %{ix86} x86_64 ppc64 ia64 ppc s390x
+%ifarch %{ix86} x86_64 ppc64 ppc s390x
 Obsoletes: diskdumputils netdump
 %endif
 
@@ -58,10 +57,6 @@ ExcludeArch: aarch64
 
 #
 # Patches 101 through 200 are meant for x86_64 kexec-tools enablement
-#
-
-#
-# Patches 201 through 300 are meant for ia64 kexec-tools enablement
 #
 
 #
@@ -90,7 +85,7 @@ normal or a panic reboot. This package contains the /sbin/kexec
 binary and ancillary utilities that together form the userspace
 component of the kernel's kexec feature.
 
-%ifarch %{ix86} x86_64 ia64 ppc64 s390x
+%ifarch %{ix86} x86_64 ppc64 s390x
 %package eppic
 Requires: %{name} = %{version}
 Summary: Additional eppic_makedumpfile.so shared object
@@ -122,14 +117,6 @@ tar -z -x -v -f %{SOURCE13}
 %endif
 
 %build
-%ifarch ia64
-# ia64 gcc seems to have a problem adding -fexception -fstack-protect and
-# -param ssp-protect-size, like the %configure macro does
-# while that shouldn't be a problem, and it still builds fine, it results in
-# the kdump kernel hanging on kexec boot.  I don't yet know why, but since those
-# options aren't critical, I'm just overrideing them here for ia64
-export CFLAGS="-O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2"
-%endif
 
 %configure \
 %ifarch ppc64
@@ -143,7 +130,7 @@ cp %{SOURCE10} .
 cp %{SOURCE21} .
 
 make
-%ifarch %{ix86} x86_64 ia64 ppc64 s390x
+%ifarch %{ix86} x86_64 ppc64 s390x
 make -C eppic/libeppic
 make -C makedumpfile-1.5.5 LINKTYPE=dynamic USELZO=on USESNAPPY=on
 %endif
@@ -186,7 +173,7 @@ install -m 755 -D %{SOURCE22} $RPM_BUILD_ROOT%{_prefix}/lib/systemd/system-gener
 mkdir -p $RPM_BUILD_ROOT/usr/sbin
 install -m 755 %{SOURCE17} $RPM_BUILD_ROOT/usr/sbin/rhcrashkernel-param
 
-%ifarch %{ix86} x86_64 ia64 ppc64 s390x
+%ifarch %{ix86} x86_64 ppc64 s390x
 install -m 755 makedumpfile-1.5.5/makedumpfile $RPM_BUILD_ROOT/sbin/makedumpfile
 install -m 644 makedumpfile-1.5.5/makedumpfile.8.gz $RPM_BUILD_ROOT/%{_mandir}/man8/makedumpfile.8.gz
 install -m 644 makedumpfile-1.5.5/makedumpfile.conf.5.gz $RPM_BUILD_ROOT/%{_mandir}/man5/makedumpfile.conf.5.gz
@@ -283,15 +270,8 @@ rm -f %{_datadir}/firstboot/modules/firstboot_kdump.py
 # and search for corresponding kernel installs, if a kernel
 # is not found, remove the corresponding kdump initrd
 
-#start by getting a list of all the kdump initrds
-MY_ARCH=`uname -m`
-if [ "$MY_ARCH" == "ia64" ]
-then
-	IMGDIR=/boot/efi/efi/redhat
-else
-	IMGDIR=/boot
-fi
 
+IMGDIR=/boot
 for i in `ls $IMGDIR/initramfs*kdump.img 2>/dev/null`
 do
 	KDVER=`echo $i | sed -e's/^.*initramfs-//' -e's/kdump.*$//'`
@@ -309,7 +289,7 @@ done
 %{_bindir}/*
 %{_datadir}/kdump
 %{_prefix}/lib/kdump
-%ifarch %{ix86} x86_64 ia64 ppc64 s390x
+%ifarch %{ix86} x86_64 ppc64 s390x
 %{_sysconfdir}/makedumpfile.conf.sample
 %endif
 %config(noreplace,missingok) %{_sysconfdir}/sysconfig/kdump
@@ -329,7 +309,7 @@ done
 %doc kexec-kdump-howto.txt
 %doc kdump-in-cluster-environment.txt
 
-%ifarch %{ix86} x86_64 ia64 ppc64 s390x
+%ifarch %{ix86} x86_64 ppc64 s390x
 %files eppic
 %{_libdir}/eppic_makedumpfile.so
 %endif
