@@ -12,7 +12,7 @@ Source4: kdump.sysconfig.i386
 Source5: kdump.sysconfig.ppc64
 Source7: mkdumprd
 Source8: kdump.conf
-Source9: http://downloads.sourceforge.net/project/makedumpfile/makedumpfile/1.5.5/makedumpfile-1.5.5.tar.gz
+Source9: http://downloads.sourceforge.net/project/makedumpfile/makedumpfile/1.5.6/makedumpfile-1.5.6.tar.gz
 Source10: kexec-kdump-howto.txt
 Source11: firstboot_kdump.py
 Source12: mkdumprd.8
@@ -75,7 +75,6 @@ ExcludeArch: aarch64
 #
 Patch601: kexec-tools-2.0.3-disable-kexec-test.patch
 Patch604: kexec-tools-2.0.3-build-makedumpfile-eppic-shared-object.patch
-Patch618: kexec-tools-2.0.4-makedumpfile-memset-in-cyclic-bitmap-initialization-introdu.patch
 Patch619: kexec-tools-2.0.5-vmcore-dmesg-stack-smashing-happend-in-extreme-case.patch
 
 %description
@@ -107,7 +106,6 @@ tar -z -x -v -f %{SOURCE19}
 
 %patch601 -p1
 %patch604 -p1
-%patch618 -p1
 %patch619 -p1
 
 tar -z -x -v -f %{SOURCE13}
@@ -132,7 +130,7 @@ cp %{SOURCE21} .
 make
 %ifarch %{ix86} x86_64 ppc64 s390x
 make -C eppic/libeppic
-make -C makedumpfile-1.5.5 LINKTYPE=dynamic USELZO=on USESNAPPY=on
+make -C makedumpfile-1.5.6 LINKTYPE=dynamic USELZO=on USESNAPPY=on
 %endif
 make -C kexec-tools-po
 
@@ -174,11 +172,11 @@ mkdir -p $RPM_BUILD_ROOT/usr/sbin
 install -m 755 %{SOURCE17} $RPM_BUILD_ROOT/usr/sbin/rhcrashkernel-param
 
 %ifarch %{ix86} x86_64 ppc64 s390x
-install -m 755 makedumpfile-1.5.5/makedumpfile $RPM_BUILD_ROOT/sbin/makedumpfile
-install -m 644 makedumpfile-1.5.5/makedumpfile.8.gz $RPM_BUILD_ROOT/%{_mandir}/man8/makedumpfile.8.gz
-install -m 644 makedumpfile-1.5.5/makedumpfile.conf.5.gz $RPM_BUILD_ROOT/%{_mandir}/man5/makedumpfile.conf.5.gz
-install -m 644 makedumpfile-1.5.5/makedumpfile.conf $RPM_BUILD_ROOT/%{_sysconfdir}/makedumpfile.conf.sample
-install -m 755 makedumpfile-1.5.5/eppic_makedumpfile.so $RPM_BUILD_ROOT/%{_libdir}/eppic_makedumpfile.so
+install -m 755 makedumpfile-1.5.6/makedumpfile $RPM_BUILD_ROOT/sbin/makedumpfile
+install -m 644 makedumpfile-1.5.6/makedumpfile.8.gz $RPM_BUILD_ROOT/%{_mandir}/man8/makedumpfile.8.gz
+install -m 644 makedumpfile-1.5.6/makedumpfile.conf.5.gz $RPM_BUILD_ROOT/%{_mandir}/man5/makedumpfile.conf.5.gz
+install -m 644 makedumpfile-1.5.6/makedumpfile.conf $RPM_BUILD_ROOT/%{_sysconfdir}/makedumpfile.conf.sample
+install -m 755 makedumpfile-1.5.6/eppic_makedumpfile.so $RPM_BUILD_ROOT/%{_libdir}/eppic_makedumpfile.so
 %endif
 make -C kexec-tools-po install DESTDIR=$RPM_BUILD_ROOT
 %find_lang %{name}
