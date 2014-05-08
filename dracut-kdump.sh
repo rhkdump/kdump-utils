@@ -9,10 +9,6 @@ exec &> /dev/console
 . /lib/dracut-lib.sh
 . /lib/kdump-lib-initramfs.sh
 
-if [ -f "$initdir/lib/dracut/no-emergency-shell" ]; then
-    rm -f -- $initdir/lib/dracut/no-emergency-shell
-fi
-
 set -o pipefail
 DUMP_RETVAL=0
 

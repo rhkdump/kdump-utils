@@ -563,7 +563,6 @@ kdump_install_random_seed() {
 
 install() {
     kdump_install_conf
-    >"$initdir/lib/dracut/no-emergency-shell"
 
     if is_ssh_dump_target; then
         kdump_install_random_seed
@@ -581,6 +580,12 @@ install() {
     inst_hook pre-pivot 9999 "$moddir/kdump.sh"
     inst "/lib/kdump/kdump-lib.sh" "/lib/kdump-lib.sh"
     inst "/lib/kdump/kdump-lib-initramfs.sh" "/lib/kdump-lib-initramfs.sh"
+    inst "$moddir/kdump-error-handler.sh" "/usr/bin/kdump-error-handler.sh"
+    inst "$moddir/kdump-error-handler.service" "$systemdsystemunitdir/kdump-error-handler.service"
+    # Replace existing emergency service
+    cp "$moddir/kdump-emergency.service" "$initdir/$systemdsystemunitdir/emergency.service"
+    # Also redirect dracut-emergency to kdump error handler
+    ln_r "$systemdsystemunitdir/emergency.service" "$systemdsystemunitdir/dracut-emergency.service"
 
     # Check for all the devices and if any device is iscsi, bring up iscsi
     # target. Ideally all this should be pushed into dracut iscsi module

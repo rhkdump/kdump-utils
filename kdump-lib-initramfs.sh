@@ -1,6 +1,5 @@
 # These variables and functions are useful in 2nd kernel
 
-. /lib/dracut-lib.sh
 . /lib/kdump-lib.sh
 
 KDUMP_PATH="/var/crash"
@@ -23,6 +22,7 @@ NEWROOT="/sysroot"
 get_kdump_confs()
 {
     local config_opt config_val
+    local user_specified_cc
 
     while read config_opt config_val;
     do
@@ -34,6 +34,7 @@ get_kdump_confs()
             ;;
             core_collector)
                 [ -n "$config_val" ] && CORE_COLLECTOR="$config_val"
+                user_specified_cc=yes
             ;;
             sshkey)
                 if [ -f "$config_val" ]; then
@@ -55,7 +56,7 @@ get_kdump_confs()
             default)
                 case $config_val in
                     shell)
-                        DEFAULT_ACTION="_emergency_shell kdump"
+                        DEFAULT_ACTION="kdump_emergency_shell"
                     ;;
                     reboot)
                         DEFAULT_ACTION="do_umount; reboot -f"
@@ -67,12 +68,19 @@ get_kdump_confs()
                         DEFAULT_ACTION="do_umount; poweroff -f"
                     ;;
                     dump_to_rootfs)
-                        DEFAULT_ACTION="dump_fs $NEWROOT"
+                        DEFAULT_ACTION="dump_to_rootfs"
                     ;;
                 esac
             ;;
         esac
     done < $KDUMP_CONF
+
+    if is_ssh_dump_target || is_raw_dump_target; then
+        if [ -z "$user_specified_cc" ]; then
+            CORE_COLLECTOR="$CORE_COLLECTOR -F"
+        fi
+    fi
+
 }
 
 # dump_fs <mount point| device>
@@ -127,6 +135,24 @@ save_vmcore_dmesg_fs() {
     fi
 }
 
+dump_to_rootfs()
+{
+
+    echo "Kdump: trying to bring up rootfs device"
+    systemctl start dracut-initqueue
+    echo "Kdump: waiting for rootfs mount, will timeout after 90 seconds"
+    systemctl start sysroot.mount
+
+    dump_fs $NEWROOT
+}
+
+kdump_emergency_shell()
+{
+    echo "PS1=\"kdump:\\\${PWD}# \"" >/etc/profile
+    /bin/dracut-emergency
+    rm -f /etc/profile
+}
+
 do_umount()
 {
     umount -Rf $NEWROOT
@@ -134,7 +160,7 @@ do_umount()
 
 do_default_action()
 {
-    wait_for_loginit
+    echo "Kdump: Executing default action $DEFAULT_ACTION"
     eval $DEFAULT_ACTION
 }
 
