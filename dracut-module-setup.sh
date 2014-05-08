@@ -577,9 +577,11 @@ install() {
     inst "/bin/cut" "/bin/cut"
     inst "/sbin/makedumpfile" "/sbin/makedumpfile"
     inst "/sbin/vmcore-dmesg" "/sbin/vmcore-dmesg"
-    inst_hook pre-pivot 9999 "$moddir/kdump.sh"
     inst "/lib/kdump/kdump-lib.sh" "/lib/kdump-lib.sh"
     inst "/lib/kdump/kdump-lib-initramfs.sh" "/lib/kdump-lib-initramfs.sh"
+    inst "$moddir/kdump.sh" "/usr/bin/kdump.sh"
+    inst "$moddir/kdump-capture.service" "$systemdsystemunitdir/kdump-capture.service"
+    ln_r "$systemdsystemunitdir/kdump-capture.service" "$systemdsystemunitdir/initrd.target.wants/kdump-capture.service"
     inst "$moddir/kdump-error-handler.sh" "/usr/bin/kdump-error-handler.sh"
     inst "$moddir/kdump-error-handler.service" "$systemdsystemunitdir/kdump-error-handler.service"
     # Replace existing emergency service

@@ -179,8 +179,7 @@ fi
 get_host_ip
 if [ $? -ne 0 ]; then
     echo "kdump: get_host_ip exited with non-zero status!"
-    do_default_action
-    do_final_action
+    exit 1
 fi
 
 if [ -z "$DUMP_INSTRUCTION" ]; then
@@ -202,7 +201,7 @@ if [ $? -ne 0 ]; then
 fi
 
 if [ $DUMP_RETVAL -ne 0 ]; then
-    do_default_action
+    exit 1
 fi
 
 do_final_action
