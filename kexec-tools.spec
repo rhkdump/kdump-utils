@@ -27,6 +27,7 @@ Source20: kdump-lib.sh
 Source21: kdump-in-cluster-environment.txt
 Source22: kdump-dep-generator.sh
 Source23: kdump-anaconda-addon-001-4-g03898ef.tar.gz
+Source24: kdump-lib-initramfs.sh
 
 #######################################
 # These are sources for mkdumpramfs
@@ -178,6 +179,7 @@ install -m 644 kexec/kexec.8 $RPM_BUILD_ROOT%{_mandir}/man8/kexec.8
 install -m 755 %{SOURCE11} $RPM_BUILD_ROOT%{_datadir}/kdump/firstboot_kdump.py
 install -m 644 %{SOURCE12} $RPM_BUILD_ROOT%{_mandir}/man8/mkdumprd.8
 install -m 755 %{SOURCE20} $RPM_BUILD_ROOT%{_prefix}/lib/kdump/kdump-lib.sh
+install -m 755 %{SOURCE24} $RPM_BUILD_ROOT%{_prefix}/lib/kdump/kdump-lib-initramfs.sh
 %ifnarch s390x
 # For s390x the ELF header is created in the kdump kernel and therefore kexec
 # udev rules are not required

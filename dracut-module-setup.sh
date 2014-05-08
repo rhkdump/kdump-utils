@@ -580,6 +580,7 @@ install() {
     inst "/sbin/vmcore-dmesg" "/sbin/vmcore-dmesg"
     inst_hook pre-pivot 9999 "$moddir/kdump.sh"
     inst "/lib/kdump/kdump-lib.sh" "/lib/kdump-lib.sh"
+    inst "/lib/kdump/kdump-lib-initramfs.sh" "/lib/kdump-lib-initramfs.sh"
 
     # Check for all the devices and if any device is iscsi, bring up iscsi
     # target. Ideally all this should be pushed into dracut iscsi module
