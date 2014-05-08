@@ -97,19 +97,19 @@ target_is_root() {
 
 # caller should ensure $1 is valid and mounted in 1st kernel
 to_mount() {
-    local _dev=$1 _s _t _o _mntopts _pdev
+    local _dev=$1 _source _target _fstype _options _mntopts _pdev
 
-    _s=$(findmnt -k -f -n -r -o SOURCE $_dev)
-    _t=$(findmnt -k -f -n -r -o TARGET,FSTYPE $_dev)
-    _o=$(findmnt -k -f -n -r -o OPTIONS $_dev)
-    _o=${_o/#ro/rw} #mount fs target as rw in 2nd kernel
-    # "nofail" mount could be run later than kdump.sh. So we don't pass nofail
-    # for short term.
-    #_o="${_o},nofail" #with nofail set, systemd won't block for mount failure
-    _mntopts="$_t $_o"
+    _source=$(findmnt -k -f -n -r -o SOURCE $_dev)
+    _target=$(findmnt -k -f -n -r -o TARGET $_dev)
+    # mount under /sysroot in 2nd kernel, and we umount -R /sysroot before exit
+    _target="/sysroot$_target"
+    _fstype=$(findmnt -k -f -n -r -o FSTYPE $_dev)
+    _options=$(findmnt -k -f -n -r -o OPTIONS $_dev)
+    _options=${_options/#ro/rw} #mount fs target as rw in 2nd kernel
+    _mntopts="$_target $_fstype $_options"
     #for non-nfs _dev converting to use udev persistent name
-    if [ -b "$_s" ]; then
-        _pdev="$(get_persistent_dev $_s)"
+    if [ -b "$_source" ]; then
+        _pdev="$(get_persistent_dev $_source)"
         if [ $? -ne 0 ]; then
             return 1
         fi

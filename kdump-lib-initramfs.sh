@@ -19,7 +19,6 @@ KDUMP_CONF="/etc/kdump.conf"
 KDUMP_PRE=""
 KDUMP_POST=""
 NEWROOT="/sysroot"
-MOUNTS=""
 
 get_kdump_confs()
 {
@@ -89,7 +88,6 @@ dump_fs()
         echo "kdump: error: Dump target $_dev is not mounted."
         return 1
     fi
-    MOUNTS="$MOUNTS $_mp"
 
     # Remove -F in makedumpfile case. We don't want a flat format dump here.
     [[ $CORE_COLLECTOR = *makedumpfile* ]] && CORE_COLLECTOR=`echo $CORE_COLLECTOR | sed -e "s/-F//g"`
@@ -131,11 +129,7 @@ save_vmcore_dmesg_fs() {
 
 do_umount()
 {
-    if [ -n "$MOUNTS" ]; then
-        for mount in $MOUNTS; do
-            ismounted $mount && umount -R $mount
-        done
-    fi
+    umount -Rf $NEWROOT
 }
 
 do_default_action()
