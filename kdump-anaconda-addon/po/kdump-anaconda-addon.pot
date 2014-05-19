@@ -1,0 +1,81 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2014-04-09 15:07+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../com_redhat_kdump/ks/kdump.py:112
+#, python-format
+msgid "Invalid value %s for --reserve-mb"
+msgstr ""
+
+#: ../com_redhat_kdump/tui/spokes/kdump.py:56
+msgid "Kdump"
+msgstr ""
+
+#: ../com_redhat_kdump/tui/spokes/kdump.py:84
+#: ../com_redhat_kdump/gui/spokes/kdump.py:138
+msgid "Kdump is enabled"
+msgstr ""
+
+#: ../com_redhat_kdump/tui/spokes/kdump.py:86
+#: ../com_redhat_kdump/gui/spokes/kdump.py:140
+msgid "Kdump is disabled"
+msgstr ""
+
+#: ../com_redhat_kdump/gui/spokes/kdump.py:43
+msgid "_KDUMP"
+msgstr ""
+
+#: tmp/fedora.glade.h:1 tmp/kdump.glade.h:1
+msgid "KDUMP"
+msgstr ""
+
+#: tmp/fedora.glade.h:2 tmp/kdump.glade.h:2
+msgid ""
+"Kdump is a kernel crash dumping mechanism. In the event of a system crash, "
+"kdump will capture information from your system that can be invaluable in "
+"determining the cause of the crash. Note that kdump does require reserving a "
+"portion of system memory that will be unavailable for other uses."
+msgstr ""
+
+#: tmp/fedora.glade.h:3 tmp/kdump.glade.h:7
+msgid "Memory To Be Reserved (MB):"
+msgstr ""
+
+#: tmp/fedora.glade.h:4 tmp/kdump.glade.h:8
+msgid "Total System Memory (MB):"
+msgstr ""
+
+#: tmp/fedora.glade.h:5 tmp/kdump.glade.h:9
+msgid "Usable System Memory (MB):"
+msgstr ""
+
+#: tmp/fedora.glade.h:6 tmp/kdump.glade.h:3
+msgid "_Enable kdump?"
+msgstr ""
+
+#: tmp/kdump.glade.h:4
+msgid "Kdump Memory Reservation:"
+msgstr ""
+
+#: tmp/kdump.glade.h:5
+msgid "_Automatic"
+msgstr ""
+
+#: tmp/kdump.glade.h:6
+msgid "_Manual"
+msgstr ""
