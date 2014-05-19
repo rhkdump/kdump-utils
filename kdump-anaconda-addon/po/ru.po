@@ -1,0 +1,122 @@
+# translation of ru.po to
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+#
+# Yulia Poyarkova <yulia.poyarkova@redhat.com>, 2007.
+# Yulia <ypoyarko@redhat.com>, 2010.
+# ypoyarko <ypoyarko@redhat.com>, 2012. #zanata
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2014-05-08 15:52+0800\n"
+"PO-Revision-Date: 2012-12-18 05:21-0500\n"
+"Last-Translator: ypoyarko <ypoyarko@redhat.com>\n"
+"Language-Team: Russian\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Zanata 2.0.2\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#: ../com_redhat_kdump/ks/kdump.py:112
+#, python-format
+msgid "Invalid value %s for --reserve-mb"
+msgstr ""
+
+#: ../com_redhat_kdump/tui/spokes/kdump.py:56
+msgid "Kdump"
+msgstr "Kdump"
+
+#: ../com_redhat_kdump/tui/spokes/kdump.py:84
+#: ../com_redhat_kdump/gui/spokes/kdump.py:139
+msgid "Kdump is enabled"
+msgstr ""
+
+#: ../com_redhat_kdump/tui/spokes/kdump.py:86
+#: ../com_redhat_kdump/gui/spokes/kdump.py:141
+msgid "Kdump is disabled"
+msgstr ""
+
+#: ../com_redhat_kdump/gui/spokes/kdump.py:44 tmp/fedora.glade.h:1
+#: tmp/RHEL.glade.h:1
+msgid "KDUMP"
+msgstr ""
+
+#: tmp/fedora.glade.h:2 tmp/RHEL.glade.h:2
+msgid ""
+"Kdump is a kernel crash dumping mechanism. In the event of a system crash, "
+"kdump will capture information from your system that can be invaluable in "
+"determining the cause of the crash. Note that kdump does require reserving a "
+"portion of system memory that will be unavailable for other uses."
+msgstr ""
+"Kdump предоставляет новый механизм сбора статистики о сбоях ядра. В случае "
+"сбоя kdump осуществляет сбор статистики для последующего определения причины "
+"сбоя. Нужно иметь в виду, что kdump требует резервирования части системной "
+"памяти, что делает её недоступной для использования."
+
+#: tmp/fedora.glade.h:3 tmp/RHEL.glade.h:7
+msgid "Memory To Be _Reserved (MB):"
+msgstr "Будет зарезервировано (МБ):"
+
+#: tmp/fedora.glade.h:4 tmp/RHEL.glade.h:8
+msgid "Total System Memory (MB):"
+msgstr "_Общий объем памяти (МБ):"
+
+#: tmp/fedora.glade.h:5 tmp/RHEL.glade.h:9
+msgid "Usable System Memory (MB):"
+msgstr "_Доступно памяти (МБ):"
+
+#: tmp/fedora.glade.h:6 tmp/RHEL.glade.h:3
+msgid "_Enable kdump?"
+msgstr "_Включить Kdump?"
+
+#: tmp/RHEL.glade.h:4
+msgid "Kdump Memory Reservation:"
+msgstr "Резервирование памяти Kdump:"
+
+#: tmp/RHEL.glade.h:5
+msgid "_Automatic"
+msgstr "_Автоматически"
+
+#: tmp/RHEL.glade.h:6
+msgid "_Manual"
+msgstr "В_ручную"
+
+#~ msgid "%s"
+#~ msgstr "%s"
+
+#~ msgid "Memory Currently Reserved (MB):"
+#~ msgstr "Зарезервировано памяти (МБ):"
+
+#~ msgid ""
+#~ "\n"
+#~ "Advanced kdump configuration"
+#~ msgstr ""
+#~ "\n"
+#~ "Дополнительные настройки kdump"
+
+#~ msgid ""
+#~ "Sorry, your system does not have enough memory for kdump to be viable!"
+#~ msgstr "Извините, ваша система не имеет достаточно памяти для работы kdump!"
+
+#~ msgid "Sorry, Xen kernels do not support kdump at this time!"
+#~ msgstr "К сожалению, в настоящее время ядро Xen не поддерживает kdump."
+
+#~ msgid "Sorry, the %s architecture does not support kdump at this time!"
+#~ msgstr "Извините, архитектура %s в настоящее время не поддерживает kdump!"
+
+#~ msgid ""
+#~ "Changing Kdump settings requires rebooting the system to reallocate "
+#~ "memory accordingly. Would you like to continue with this change and "
+#~ "reboot the system after firstboot is complete?"
+#~ msgstr ""
+#~ "Изменение настроек Kdump требует перезагрузки системы для "
+#~ "перераспределения памяти. Продолжить и перезагрузить систему по "
+#~ "завершению firstboot? "
+
+#~ msgid "Error! No bootloader config file found, aborting configuration!"
+#~ msgstr ""
+#~ "Ошибка! Не найден конфигурационный файл загрузчика, настройка прервана."
