@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.6
-Release: 5%{?dist}
+Release: 6%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -330,6 +330,10 @@ done
 %doc
 
 %changelog
+* Tue May 20 2014 WANG Chao <chaowang@redhat.com> - 2.0.6-6
+- New package kdump-anaconda-addon
+- fixes for udev event based service restart
+
 * Wed Apr 30 2014 WANG Chao <chaowang@redhat.com> - 2.0.6-5
 - Remove nofail mount option
 - Rebase makedumpfile-1.5.6
