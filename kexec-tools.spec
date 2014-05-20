@@ -87,7 +87,7 @@ component of the kernel's kexec feature.
 
 %ifarch %{ix86} x86_64 ppc64 s390x
 %package eppic
-Requires: %{name} = %{version}
+Requires: %{name} = %{version}.%{release}
 Summary: Additional eppic_makedumpfile.so shared object
 Group: Applications/System
 
