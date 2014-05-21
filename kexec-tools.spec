@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.6
-Release: 6%{?dist}
+Release: 7%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -330,6 +330,9 @@ done
 %doc
 
 %changelog
+* Wed May 21 2014 WANG Chao <chaowang@redhat.com> - 2.0.6-7
+- fix a typo in kexec-tools.spec
+
 * Tue May 20 2014 WANG Chao <chaowang@redhat.com> - 2.0.6-6
 - New package kdump-anaconda-addon
 - fixes for udev event based service restart
