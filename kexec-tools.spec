@@ -26,7 +26,7 @@ Source19: eppic_030413.tar.gz
 Source20: kdump-lib.sh
 Source21: kdump-in-cluster-environment.txt
 Source22: kdump-dep-generator.sh
-Source23: kdump-anaconda-addon-0.1.tar.gz
+Source23: kdump-anaconda-addon-20140522.tar.gz
 
 #######################################
 # These are sources for mkdumpramfs
@@ -97,12 +97,10 @@ The eppic_makedumpfile.so shared object is loaded by the
 or confidential kernel data from a dumpfile.
 %endif
 
-%package -n kdump-anaconda-addon
-Version:        0.1
-Release:        1%{?dist}
+%package anaconda-addon
 Summary:        Kdump configration anaconda addon
 Requires:       anaconda >= 21.33
-%description -n kdump-anaconda-addon
+%description anaconda-addon
 Kdump anaconda addon
 
 %prep
@@ -143,7 +141,7 @@ make -C eppic/libeppic
 make -C makedumpfile-1.5.6 LINKTYPE=dynamic USELZO=on USESNAPPY=on
 %endif
 make -C kexec-tools-po
-make -C kdump-anaconda-addon-0.1/po
+make -C kdump-anaconda-addon/po
 
 %install
 make install DESTDIR=$RPM_BUILD_ROOT
@@ -191,7 +189,7 @@ install -m 755 makedumpfile-1.5.6/eppic_makedumpfile.so $RPM_BUILD_ROOT/%{_libdi
 %endif
 make -C kexec-tools-po install DESTDIR=$RPM_BUILD_ROOT
 %find_lang %{name}
-make -C kdump-anaconda-addon-0.1 install DESTDIR=$RPM_BUILD_ROOT
+make -C kdump-anaconda-addon install DESTDIR=$RPM_BUILD_ROOT
 %find_lang kdump-anaconda-addon
 
 %define remove_dracut_prefix() %(echo -n %1|sed 's/.*dracut-//g')
@@ -325,7 +323,7 @@ done
 %{_libdir}/eppic_makedumpfile.so
 %endif
 
-%files -n kdump-anaconda-addon -f kdump-anaconda-addon.lang
+%files anaconda-addon -f kdump-anaconda-addon.lang
 %{_datadir}/anaconda/addons/com_redhat_kdump
 %doc
 

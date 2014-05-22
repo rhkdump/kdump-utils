@@ -1,7 +1,5 @@
 NAME = kdump-anaconda-addon
 
-VERSION = 0.1
-
 ADDON = com_redhat_kdump
 TESTS = test
 
@@ -20,7 +18,7 @@ all:
 	@echo "       make install"
 	@echo "       make uninstall"
 
-DISTNAME = $(NAME)-$(VERSION)
+DISTNAME = $(NAME)-$(shell date +%Y%m%d)
 ADDONDIR = /usr/share/anaconda/addons/
 DISTBALL = $(DISTNAME).tar.gz
 NUM_PROCS = $$(getconf _NPROCESSORS_ONLN)
@@ -34,28 +32,28 @@ uninstall:
 	rm -rfv $(DESTDIR)$(ADDONDIR)
 
 dist:
-	rm -rf $(DISTNAME)
-	mkdir -p $(DISTNAME)
+	rm -rf $(NAME)
+	mkdir -p $(NAME)
 	@if test -d ".git"; \
 	then \
 		echo Creating ChangeLog && \
 		( cd "$(top_srcdir)" && \
 		  echo '# Generate automatically. Do not edit.'; echo; \
 		  git log --stat --date=short ) > ChangeLog.tmp \
-		&& mv -f ChangeLog.tmp $(DISTNAME)/ChangeLog \
+		&& mv -f ChangeLog.tmp $(NAME)/ChangeLog \
 		|| ( rm -f ChangeLog.tmp ; \
 		     echo Failed to generate ChangeLog >&2 ); \
 	else \
 		echo A git clone is required to generate a ChangeLog >&2; \
 	fi
 	for file in $(FILES); do \
-		cp -rpv $$file $(DISTNAME)/$$file; \
+		cp -rpv $$file $(NAME)/$$file; \
 	done
 	for excl in $(EXCLUDES); do \
-		find $(DISTNAME) -name "$$excl" -delete; \
+		find $(NAME) -name "$$excl" -delete; \
 	done
-	tar -czvf ../$(DISTBALL) $(DISTNAME)
-	rm -rf $(DISTNAME)
+	tar -czvf ../$(DISTBALL) $(NAME)
+	rm -rf $(NAME)
 
 potfile:
 	$(MAKE) DESTDIR=$(DESTDIR) -C po potfile
