@@ -67,14 +67,17 @@ kdump_setup_dns() {
 }
 
 #$1: netdev name
-#checking /etc/sysconfig/network-scripts/ifcfg-$1,
+#$2: srcaddr
 #if it use static ip echo it, or echo null
 kdump_static_ip() {
-    . /etc/sysconfig/network-scripts/ifcfg-$1
-    if [ -n "$IPADDR" ]; then
-       [ -z "$NETMASK" -a -n "$PREFIX" ] && \
-           NETMASK=$(ipcalc -m $IPADDR/$PREFIX | cut -d'=' -f2)
-       echo -n "${IPADDR}::${GATEWAY}:${NETMASK}::"
+    local _netmask _gateway
+    local _netdev="$1" _srcaddr="$2"
+    local _ipaddr=$(ip addr show dev $_netdev permanent | \
+                    awk "/ $_srcaddr\/.* $_netdev\$/{print \$2}")
+    if [ -n "$_ipaddr" ]; then
+       _netmask=$(ipcalc -m $_ipaddr | cut -d'=' -f2)
+       _gateway=$(ip route list dev $_netdev | awk '/^default /{print $3}')
+       echo -n "${_srcaddr}::${_gateway}:${_netmask}::"
     fi
 }
 
@@ -181,7 +184,7 @@ kdump_setup_znet() {
 
 # Setup dracut to bringup a given network interface
 kdump_setup_netdev() {
-    local _netdev=$1
+    local _netdev=$1 _srcaddr=$2
     local _static _proto _ip_conf _ip_opts _ifname_opts
 
     if [ "$(uname -m)" = "s390x" ]; then
@@ -189,7 +192,7 @@ kdump_setup_netdev() {
     fi
 
     _netmac=$(kdump_get_mac_addr $_netdev)
-    _static=$(kdump_static_ip $_netdev)
+    _static=$(kdump_static_ip $_netdev $_srcaddr)
     if [ -n "$_static" ]; then
         _proto=none
     else
@@ -223,8 +226,9 @@ kdump_setup_netdev() {
 
 #Function:kdump_install_net
 #$1: config values of net line in kdump.conf
+#$2: srcaddr of network device
 kdump_install_net() {
-    local _server _netdev
+    local _server _netdev _srcaddr
     local config_val="$1"
 
     _server=`echo $config_val | sed 's/.*@//' | cut -d':' -f1`
@@ -239,13 +243,15 @@ kdump_install_net() {
     if [ -n "`echo $_netdev | grep via`" ]
     then
         # we are going to a different subnet
+        _srcaddr=`echo $_netdev|awk '{print $7}'|head -n 1`
         _netdev=`echo $_netdev|awk '{print $5;}'|head -n 1`
     else
         # we are on the same subnet
+        _srcaddr=`echo $_netdev|awk '{print $5}'|head -n 1`
         _netdev=`echo $_netdev|awk '{print $3}'|head -n 1`
     fi
 
-    kdump_setup_netdev "${_netdev}"
+    kdump_setup_netdev "${_netdev}" "${_srcaddr}"
 
     #save netdev used for kdump as cmdline
     # Whoever calling kdump_install_net() is setting up the default gateway,
@@ -364,6 +370,7 @@ kdump_setup_iscsi_device() {
     local username; local password; local userpwd_str;
     local username_in; local password_in; local userpwd_in_str;
     local netdev
+    local srcaddr
     local idev
     local netroot_str ; local initiator_str;
     local netroot_conf="${initdir}/etc/cmdline.d/50iscsi.conf"
@@ -398,9 +405,11 @@ kdump_setup_iscsi_device() {
     [ -n "$username_in" ] && userpwd_in_str=":$username_in:$password_in"
 
     netdev=$(/sbin/ip route get to ${tgt_ipaddr} | \
-        sed 's|.*dev \(.*\).*|\1|g' | awk '{ print $1; exit }')
+        sed 's|.*dev \(.*\).*|\1|g')
+    srcaddr=$(echo $netdev | awk '{ print $3; exit }')
+    netdev=$(echo $netdev | awk '{ print $1; exit }')
 
-    kdump_setup_netdev $netdev
+    kdump_setup_netdev $netdev $srcaddr
 
     # prepare netroot= command line
     # FIXME: IPV6 addresses require explicit [] around $tgt_ipaddr
