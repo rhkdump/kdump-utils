@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.6
-Release: 8%{?dist}
+Release: 9%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -328,6 +328,9 @@ done
 %doc
 
 %changelog
+* Sun Jun 08 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.0.6-9
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_21_Mass_Rebuild
+
 * Thu May 22 2014 WANG Chao <chaowang@redhat.com> - 2.0.6-8
 - re-construct anaconda-addon file hierarchy
 
