@@ -326,6 +326,9 @@ done
 %doc
 
 %changelog
+* Tue Jun 10 2014 WANG Chao <chaowang@redhat.com> - 2.0.7-1
+- Rebase kexec-tools-2.0.7
+
 * Sun Jun 08 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.0.6-9
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_21_Mass_Rebuild
 
