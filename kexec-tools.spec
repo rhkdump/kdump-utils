@@ -1,6 +1,6 @@
 Name: kexec-tools
-Version: 2.0.6
-Release: 9%{?dist}
+Version: 2.0.7
+Release: 1%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -76,7 +76,6 @@ ExcludeArch: aarch64
 #
 Patch601: kexec-tools-2.0.3-disable-kexec-test.patch
 Patch604: kexec-tools-2.0.3-build-makedumpfile-eppic-shared-object.patch
-Patch619: kexec-tools-2.0.5-vmcore-dmesg-stack-smashing-happend-in-extreme-case.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -114,7 +113,6 @@ tar -z -x -v -f %{SOURCE23}
 
 %patch601 -p1
 %patch604 -p1
-%patch619 -p1
 
 tar -z -x -v -f %{SOURCE13}
 
