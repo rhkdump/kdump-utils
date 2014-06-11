@@ -75,7 +75,7 @@ ExcludeArch: aarch64
 # Patches 601 onward are generic patches
 #
 Patch601: kexec-tools-2.0.3-disable-kexec-test.patch
-Patch604: kexec-tools-2.0.3-build-makedumpfile-eppic-shared-object.patch
+Patch602: kexec-tools-2.0.4-makedumpfile-Fix-Makefile-for-eppic_makedumpfile.so-build.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -112,7 +112,7 @@ tar -z -x -v -f %{SOURCE23}
 
 
 %patch601 -p1
-%patch604 -p1
+%patch602 -p1
 
 tar -z -x -v -f %{SOURCE13}
 
@@ -137,6 +137,7 @@ make
 %ifarch %{ix86} x86_64 ppc64 s390x
 make -C eppic/libeppic
 make -C makedumpfile-1.5.6 LINKTYPE=dynamic USELZO=on USESNAPPY=on
+make -C makedumpfile-1.5.6 LDFLAGS="-I../eppic/libeppic -L../eppic/libeppic" eppic_makedumpfile.so
 %endif
 make -C kexec-tools-po
 make -C kdump-anaconda-addon/po
