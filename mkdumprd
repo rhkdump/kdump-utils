@@ -106,6 +106,20 @@ to_mount() {
     _fstype=$(findmnt -k -f -n -r -o FSTYPE $_dev)
     _options=$(findmnt -k -f -n -r -o OPTIONS $_dev)
     _options=${_options/#ro/rw} #mount fs target as rw in 2nd kernel
+    # "x-initrd.mount" mount failure will trigger isolate emergency service
+    # W/o this, systemd won't isolate, thus we won't get to emergency.
+    # This is not applicable to remote fs mount, because if we use
+    # "x-initrd.mount", remote mount will become required by
+    # "initrd-root-fs.target", instead of "remote-fs.target". That's how it is
+    # handled within systemd internal. We need remote mount to be required
+    # "remote-fs.target", because we need to bring up network before any remote
+    # mount and "remote-fs.target" can be a checkpoint of that.
+    # If remote mount fails, dracut-initqueue will still start and once
+    # dracut-initqueue finishes, kdump service will start. Because remote mount
+    # failed, kdump service will fail and it will lead to kdump error handler.
+    if ! is_nfs_dump_target; then
+       _options="$_options,x-initrd.mount"
+    fi
     _mntopts="$_target $_fstype $_options"
     #for non-nfs _dev converting to use udev persistent name
     if [ -b "$_source" ]; then
