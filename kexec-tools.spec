@@ -77,6 +77,7 @@ ExcludeArch: aarch64
 Patch601: kexec-tools-2.0.3-disable-kexec-test.patch
 Patch602: kexec-tools-2.0.4-makedumpfile-Fix-Makefile-for-eppic_makedumpfile.so-build.patch
 Patch603: kexec-tools-2.0.4-makedumpfile-Introduce-the-mdf_pfn_t-type.patch
+Patch604: kexec-tools-2.0.4-makedumpfile-Fix-free-bitmap_buffer_cyclic-error.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -115,6 +116,7 @@ tar -z -x -v -f %{SOURCE23}
 %patch601 -p1
 %patch602 -p1
 %patch603 -p1
+%patch604 -p1
 
 tar -z -x -v -f %{SOURCE13}
 
