@@ -80,6 +80,7 @@ Patch603: kexec-tools-2.0.4-makedumpfile-Introduce-the-mdf_pfn_t-type.patch
 Patch604: kexec-tools-2.0.4-makedumpfile-Fix-free-bitmap_buffer_cyclic-error.patch
 Patch605: kexec-tools-2.0.4-makedumpfile-Remove-the-1st-bitmap-buffer-from-the-ELF-.patch
 Patch606: kexec-tools-2.0.4-makedumpfile-Move-counting-pfn_memhole-for-cyclic-mode.patch
+Patch607: kexec-tools-2.0.4-makedumpfile-Stop-maximizing-the-bitmap-buffer-to-reduc.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -121,6 +122,7 @@ tar -z -x -v -f %{SOURCE23}
 %patch604 -p1
 %patch605 -p1
 %patch606 -p1
+%patch607 -p1
 
 tar -z -x -v -f %{SOURCE13}
 
