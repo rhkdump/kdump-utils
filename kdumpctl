@@ -37,7 +37,7 @@ single_instance_lock()
 # remove_cmdline_param <kernel cmdline> <param1> [<param2>] ... [<paramN>]
 # Remove a list of kernel parameters from a given kernel cmdline and print the result.
 # For each "arg" in the removing params list, "arg" and "arg=xxx" will be removed if exists.
-function remove_cmdline_param()
+remove_cmdline_param()
 {
 	local cmdline=$1
 	shift
@@ -55,7 +55,7 @@ function remove_cmdline_param()
 # This function returns the "initial apicid" of the
 # boot cpu (cpu 0) if present.
 #
-function get_bootcpu_initial_apicid()
+get_bootcpu_initial_apicid()
 {
     awk '							\
 	BEGIN { CPU = "-1"; }					\
@@ -68,21 +68,21 @@ function get_bootcpu_initial_apicid()
 #
 # This function appends argument "$2=$3" to string ($1) if not already present.
 #
-function append_cmdline()
+append_cmdline()
 {
-    local cmdline=$1
-    local newstr=${cmdline/$2/""}
+	local cmdline=$1
+	local newstr=${cmdline/$2/""}
 
-    # unchanged str implies argument wasn't there
-    if [ "$cmdline" == "$newstr" ]; then
-	cmdline="${cmdline} ${2}=${3}"
-    fi
+	# unchanged str implies argument wasn't there
+	if [ "$cmdline" == "$newstr" ]; then
+		cmdline="${cmdline} ${2}=${3}"
+	fi
 
-    echo $cmdline
+	echo $cmdline
 }
 
 # This function performs a series of edits on the command line
-function prepare_cmdline()
+prepare_cmdline()
 {
 	local cmdline;
 	if [ -z "$KDUMP_COMMANDLINE" ]; then
@@ -104,7 +104,7 @@ function prepare_cmdline()
 }
 
 
-function save_core()
+save_core()
 {
 	coredir="/var/crash/`date +"%Y-%m-%d-%H:%M"`"
 
@@ -129,7 +129,7 @@ function save_core()
 	fi
 }
 
-function rebuild_initrd()
+rebuild_initrd()
 {
 	$MKDUMPRD $kdump_initrd $kdump_kver
 	if [ $? != 0 ]; then
@@ -139,7 +139,7 @@ function rebuild_initrd()
 }
 
 #$1: the files to be checked with IFS=' '
-function check_exist()
+check_exist()
 {
 	for file in $1; do
 		if [ ! -f "$file" ]; then
@@ -150,7 +150,7 @@ function check_exist()
 }
 
 #$1: the files to be checked with IFS=' '
-function check_executable()
+check_executable()
 {
 	for file in $1; do
 		if [ ! -x "$file" ]; then
@@ -160,7 +160,7 @@ function check_executable()
 	done
 }
 
-function check_config()
+check_config()
 {
 	local nr
 
@@ -171,8 +171,8 @@ function check_config()
 	}
 
 	while read config_opt config_val; do
-               # remove inline comments after the end of a directive.                                                                      
-               config_val=$(strip_comments $config_val)
+		# remove inline comments after the end of a directive.
+		config_val=$(strip_comments $config_val)
 		case "$config_opt" in
 		\#* | "")
 			;;
@@ -192,7 +192,7 @@ function check_config()
 			;;
 		esac
 	done < $KDUMP_CONFIG_FILE
-	
+
 	check_fence_kdump_config || return 1
 
 	return 0
@@ -226,7 +226,7 @@ get_pcs_cluster_modified_files()
 	echo $modified_files
 }
 
-function check_rebuild()
+check_rebuild()
 {
 	local extra_modules modified_files=""
 	local _force_rebuild force_rebuild="0"
@@ -286,7 +286,7 @@ function check_rebuild()
 	elif [ "$force_rebuild" != "0" ]; then
 		echo -n "Force rebuild $kdump_initrd"; echo
 	elif [ -n "$modified_files" ]; then
-		echo "Detected change(s) the following file(s):"
+		echo "Detected change(s) in the following file(s):"
 		echo -n "  "; echo "$modified_files" | sed 's/\s/\n  /g'
 	else
 		return 0
@@ -299,16 +299,16 @@ function check_rebuild()
 
 # This function check iomem and determines if we have more than
 # 4GB of ram available. Returns 1 if we do, 0 if we dont
-function need_64bit_headers()
+need_64bit_headers()
 {
-    return `tail -n 1 /proc/iomem | awk '{ split ($1, r, "-"); \
-    print (strtonum("0x" r[2]) > strtonum("0xffffffff")); }'`
+	return `tail -n 1 /proc/iomem | awk '{ split ($1, r, "-"); \
+	print (strtonum("0x" r[2]) > strtonum("0xffffffff")); }'`
 }
 
 # Load the kdump kerel specified in /etc/sysconfig/kdump
 # If none is specified, try to load a kdump kernel with the same version
 # as the currently running kernel.
-function load_kdump()
+load_kdump()
 {
 	MEM_RESERVED=$(cat /sys/kernel/kexec_crash_size)
 	if [ $MEM_RESERVED -eq 0 ]
@@ -355,11 +355,11 @@ function load_kdump()
 	fi
 }
 
-function check_ssh_config()
+check_ssh_config()
 {
 	while read config_opt config_val; do
-               # remove inline comments after the end of a directive.
-               config_val=$(strip_comments $config_val)
+		# remove inline comments after the end of a directive.
+		config_val=$(strip_comments $config_val)
 		case "$config_opt" in
 		sshkey)
 			if [ -f "$config_val" ]; then
@@ -388,7 +388,7 @@ function check_ssh_config()
 	return 0
 }
 
-function check_ssh_target()
+check_ssh_target()
 {
 	local _ret
 	ssh -q -i $SSH_KEY_LOCATION -o BatchMode=yes $DUMP_TARGET mkdir -p $SAVE_PATH
@@ -400,7 +400,7 @@ function check_ssh_target()
 	return 0
 }
 
-function propagate_ssh_key()
+propagate_ssh_key()
 {
 	check_ssh_config
 	if [ $? -ne 0 ]; then
@@ -423,7 +423,7 @@ function propagate_ssh_key()
 	#now find the target ssh user and server to contact.
 	SSH_USER=`echo $DUMP_TARGET | cut -d\  -f2 | cut -d@ -f1`
 	SSH_SERVER=`echo $DUMP_TARGET | sed -e's/\(.*@\)\(.*$\)/\2/'`
- 
+
 	#now send the found key to the found server
 	ssh-copy-id -i $KEYFILE $SSH_USER@$SSH_SERVER
 	RET=$?
@@ -434,10 +434,9 @@ function propagate_ssh_key()
 		echo $errmsg, $KEYFILE failed in transfer to $SSH_SERVER  >&2
 		exit 1
 	fi
-		
 }
 
-function check_current_kdump_status()
+check_current_kdump_status()
 {
 	rc=`cat /sys/kernel/kexec_crash_loaded`
 	if [ $rc == 1 ]; then
@@ -447,7 +446,7 @@ function check_current_kdump_status()
 	fi
 }
 
-function save_raw()
+save_raw()
 {
 	local kdump_dir
 	local raw_target
@@ -482,7 +481,8 @@ function save_raw()
 	return 0
 }
 
-get_save_path() {
+get_save_path()
+{
 	local _save_path=$(grep "^path" /etc/kdump.conf|awk '{print $2}')
 	if [ -z "$_save_path" ]; then
 		_save_path="/var/crash"
@@ -491,12 +491,13 @@ get_save_path() {
 	echo $_save_path
 }
 
-is_dump_target_configured() {
-    local _target
+is_dump_target_configured()
+{
+	local _target
 
-    _target=$(egrep "^ext[234]|^xfs|^btrfs|^minix|^raw|^ssh|^nfs" /etc/kdump.conf)
+	_target=$(egrep "^ext[234]|^xfs|^btrfs|^minix|^raw|^ssh|^nfs" /etc/kdump.conf)
 
-     [ -n "$_target" ]
+	[ -n "$_target" ]
 }
 
 local_fs_dump_target()
@@ -509,7 +510,8 @@ local_fs_dump_target()
 	fi
 }
 
-path_to_be_relabeled() {
+path_to_be_relabeled()
+{
 	local _path _target _mnt="/" _rmnt
 
 	if is_dump_target_configured; then
@@ -558,7 +560,7 @@ selinux_relabel()
 # is 1 and SetupMode is 0, then secure boot is being enforced.
 #
 # Assume efivars is mounted at /sys/firmware/efi/efivars.
-function is_secure_boot_enforced()
+is_secure_boot_enforced()
 {
 	local secure_boot_file setup_mode_file
 	local secure_boot_byte setup_mode_byte
@@ -578,7 +580,7 @@ function is_secure_boot_enforced()
 	return 1
 }
 
-function check_kdump_feasibility()
+check_kdump_feasibility()
 {
 	if is_secure_boot_enforced; then
 		echo "Secure Boot is Enabled. Kdump service can't be started. Disable Secure Boot and retry"
@@ -591,7 +593,7 @@ function check_kdump_feasibility()
 	fi
 }
 
-function check_fence_kdump_config()
+check_fence_kdump_config()
 {
 	local hostname=`hostname`
 	local nodes=$(get_option_value "fence_kdump_nodes")
@@ -606,7 +608,7 @@ function check_fence_kdump_config()
 	return 0
 }
 
-function start()
+start()
 {
 	check_config
 	if [ $? -ne 0 ]; then
@@ -656,7 +658,7 @@ function start()
 	echo "Starting kdump: [OK]"
 }
 
-function stop()
+stop()
 {
 	$KEXEC -p -u 2>/dev/null
 	if [ $? == 0 ]; then
@@ -664,7 +666,7 @@ function stop()
 		echo "Stopping kdump: [OK]"
 		return 0
 	else
-		echo "kexec: failed to unloaded kdump kernel"
+		echo "kexec: failed to unload kdump kernel"
 		echo "Stopping kdump: [FAILED]"
 		return 1
 	fi
