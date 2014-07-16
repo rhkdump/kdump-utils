@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.7
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -337,6 +337,9 @@ done
 %doc
 
 %changelog
+- Wed Jul 16 2014 WANG Chao <chaowang@redhat.com> - 2.0.7-2
+- Fix makedumpfile OOM issue
+
 * Tue Jun 10 2014 WANG Chao <chaowang@redhat.com> - 2.0.7-1
 - Rebase kexec-tools-2.0.7
 
