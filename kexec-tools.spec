@@ -337,7 +337,7 @@ done
 %doc
 
 %changelog
-- Wed Jul 16 2014 WANG Chao <chaowang@redhat.com> - 2.0.7-2
+* Wed Jul 16 2014 WANG Chao <chaowang@redhat.com> - 2.0.7-2
 - Fix makedumpfile OOM issue
 
 * Tue Jun 10 2014 WANG Chao <chaowang@redhat.com> - 2.0.7-1
