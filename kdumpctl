@@ -20,8 +20,18 @@ fi
 
 single_instance_lock()
 {
+	local rc timeout=5
+
 	exec 9>/var/lock/kdump
-	flock 9
+
+	flock -n 9
+	rc=$?
+
+	while [ $rc -ne 0 ]; do
+		echo "Another app is currently holding the kdump lock; waiting for it to exit..."
+		flock -w $timeout 9
+		rc=$?
+	done
 }
 
 # remove_cmdline_param <kernel cmdline> <param1> [<param2>] ... [<paramN>]
