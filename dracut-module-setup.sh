@@ -97,10 +97,27 @@ kdump_get_perm_addr() {
     fi
 }
 
+# Prefix kernel assigned names with "kdump-". EX: eth0 -> kdump-eth0
+# Because kernel assigned names are not persistent between 1st and 2nd
+# kernel. We could probably end up with eth0 being eth1, eth0 being
+# eth1, and naming conflict happens.
+kdump_setup_ifname() {
+    local _ifname
+
+    if [[ $1 =~ eth* ]]; then
+        _ifname="kdump-$1"
+    else
+        _ifname="$1"
+    fi
+
+    echo "$_ifname"
+}
+
 kdump_setup_bridge() {
     local _netdev=$1
-    local _brif _dev
+    local _brif _dev _mac _kdumpdev
     for _dev in `ls /sys/class/net/$_netdev/brif/`; do
+        _kdumpdev=$_dev
         if kdump_is_bond "$_dev"; then
             kdump_setup_bond "$_dev"
         elif kdump_is_team "$_dev"; then
@@ -108,20 +125,25 @@ kdump_setup_bridge() {
         elif kdump_is_vlan "$_dev"; then
             kdump_setup_vlan "$_dev"
         else
-            echo -n " ifname=$_dev:$(kdump_get_mac_addr $_dev)" >> ${initdir}/etc/cmdline.d/41bridge.conf
+            _mac=$(kdump_get_mac_addr $_dev)
+            _kdumpdev=$(kdump_setup_ifname $_dev)
+            echo -n " ifname=$_kdumpdev:$_mac" >> ${initdir}/etc/cmdline.d/41bridge.conf
         fi
-        _brif+="$_dev,"
+        _brif+="$_kdumpdev,"
     done
     echo " bridge=$_netdev:$(echo $_brif | sed -e 's/,$//')" >> ${initdir}/etc/cmdline.d/41bridge.conf
 }
 
 kdump_setup_bond() {
     local _netdev=$1
-    local _dev
+    local _dev _mac _slaves _kdumpdev
     for _dev in `cat /sys/class/net/$_netdev/bonding/slaves`; do
-        echo -n " ifname=$_dev:$(kdump_get_perm_addr $_dev)" >> ${initdir}/etc/cmdline.d/42bond.conf
+        _mac=$(kdump_get_perm_addr $_dev)
+        _kdumpdev=$(kdump_setup_ifname $_dev)
+        echo -n " ifname=$_kdumpdev:$_mac" >> ${initdir}/etc/cmdline.d/42bond.conf
+        _slaves+="$_kdumpdev,"
     done
-    echo -n " bond=$_netdev:$(sed -e 's/ /,/g' /sys/class/net/$_netdev/bonding/slaves)" >> ${initdir}/etc/cmdline.d/42bond.conf
+    echo -n " bond=$_netdev:$(echo $_slaves | sed 's/,$//')" >> ${initdir}/etc/cmdline.d/42bond.conf
     # Get bond options specified in ifcfg
     . /etc/sysconfig/network-scripts/ifcfg-$_netdev
     bondoptions="$(echo :$BONDING_OPTS | sed 's/\s\+/,/')"
@@ -130,12 +152,14 @@ kdump_setup_bond() {
 
 kdump_setup_team() {
     local _netdev=$1
-    local slaves _dev
+    local _dev _mac _slaves _kdumpdev
     for _dev in `teamnl $_netdev ports | awk -F':' '{print $2}'`; do
-        echo -n " ifname=$_dev:$(kdump_get_perm_addr $_dev)" >> ${initdir}/etc/cmdline.d/44team.conf
-        slaves+="$_dev,"
+        _mac=$(kdump_get_perm_addr $_dev)
+        _kdumpdev=$(kdump_setup_ifname $_dev)
+        echo -n " ifname=$_kdumpdev:$_mac" >> ${initdir}/etc/cmdline.d/44team.conf
+        _slaves+="$_kdumpdev,"
     done
-    echo " team=$_netdev:$(echo $slaves | sed -e 's/,$//')" >> ${initdir}/etc/cmdline.d/44team.conf
+    echo " team=$_netdev:$(echo $_slaves | sed -e 's/,$//')" >> ${initdir}/etc/cmdline.d/44team.conf
     #Buggy version teamdctl outputs to stderr!
     #Try to use the latest version of teamd.
     teamdctl "$_netdev" config dump > /tmp/$$-$_netdev.conf
@@ -153,6 +177,7 @@ kdump_setup_vlan() {
     local _netdev=$1
     local _phydev="$(awk '/^Device:/{print $2}' /proc/net/vlan/"$_netdev")"
     local _netmac="$(kdump_get_mac_addr $_phydev)"
+    local _kdumpdev
 
     #Just support vlan over bond, it is not easy
     #to support all other complex setup
@@ -166,7 +191,8 @@ kdump_setup_vlan() {
         kdump_setup_bond "$_phydev"
         echo " vlan=$_netdev:$_phydev" > ${initdir}/etc/cmdline.d/43vlan.conf
     else
-        echo " vlan=$_netdev:$_phydev ifname=$_phydev:$_netmac" > ${initdir}/etc/cmdline.d/43vlan.conf
+        _kdumpdev="$(kdump_setup_ifname $_phydev)"
+        echo " vlan=$_netdev:$_kdumpdev ifname=$_kdumpdev:$_netmac" > ${initdir}/etc/cmdline.d/43vlan.conf
     fi
 }
 
@@ -199,7 +225,7 @@ kdump_setup_netdev() {
     fi
 
     _ip_conf="${initdir}/etc/cmdline.d/40ip.conf"
-    _ip_opts=" ip=${_static}$_netdev:${_proto}"
+    _ip_opts=" ip=${_static}$(kdump_setup_ifname $_netdev):${_proto}"
 
     # dracut doesn't allow duplicated configuration for same NIC, even they're exactly the same.
     # so we have to avoid adding duplicates
@@ -216,7 +242,7 @@ kdump_setup_netdev() {
     elif kdump_is_vlan "$_netdev"; then
         kdump_setup_vlan "$_netdev"
     else
-        _ifname_opts=" ifname=$_netdev:$(kdump_get_mac_addr $_netdev)"
+        _ifname_opts=" ifname=$(kdump_setup_ifname $_netdev):$(kdump_get_mac_addr $_netdev)"
         echo "$_ifname_opts" >> $_ip_conf
     fi
 
@@ -261,8 +287,8 @@ kdump_install_net() {
     # gateway.
     if [ ! -f ${initdir}${initdir}/etc/cmdline.d/60kdumpnic.conf ] &&
        [ ! -f ${initdir}/etc/cmdline.d/70bootdev.conf ]; then
-        echo "kdumpnic=${_netdev}" > ${initdir}/etc/cmdline.d/60kdumpnic.conf
-        echo "bootdev=${_netdev}" > ${initdir}/etc/cmdline.d/70bootdev.conf
+        echo "kdumpnic=$(kdump_setup_ifname $_netdev)" > ${initdir}/etc/cmdline.d/60kdumpnic.conf
+        echo "bootdev=$(kdump_setup_ifname $_netdev)" > ${initdir}/etc/cmdline.d/70bootdev.conf
     fi
 }
 
