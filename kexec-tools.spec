@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.7
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -337,6 +337,9 @@ done
 %doc
 
 %changelog
+* Mon Jul 21 2014 WANG Chao <chaowang@redhat.com> - 2.0.7-3
+- update to kdump-anaconda-addon-20140721.tar.gz
+
 * Wed Jul 16 2014 WANG Chao <chaowang@redhat.com> - 2.0.7-2
 - Fix makedumpfile OOM issue
 
