@@ -26,7 +26,7 @@ Source19: eppic_030413.tar.gz
 Source20: kdump-lib.sh
 Source21: kdump-in-cluster-environment.txt
 Source22: kdump-dep-generator.sh
-Source23: kdump-anaconda-addon-20140522.tar.gz
+Source23: kdump-anaconda-addon-20140721.tar.gz
 
 #######################################
 # These are sources for mkdumpramfs
@@ -102,7 +102,7 @@ or confidential kernel data from a dumpfile.
 %endif
 
 %package anaconda-addon
-Summary:        Kdump configration anaconda addon
+Summary:        Kdump configuration anaconda addon
 Requires:       anaconda >= 21.33
 %description anaconda-addon
 Kdump anaconda addon
