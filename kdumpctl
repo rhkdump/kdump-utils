@@ -736,18 +736,45 @@ start()
 	echo "Starting kdump: [OK]"
 }
 
-stop()
+stop_fadump()
+{
+	echo 0 > $FADUMP_REGISTER_SYS_NODE
+	if check_current_fadump_status; then
+		echo "fadump: failed to unregister"
+		return 1
+	fi
+
+	echo "fadump: unregistered successfully"
+	return 0
+}
+
+stop_kdump()
 {
 	$KEXEC -p -u 2>/dev/null
-	if [ $? == 0 ]; then
-		echo "kexec: unloaded kdump kernel"
-		echo "Stopping kdump: [OK]"
-		return 0
-	else
+	if [ $? != 0 ]; then
 		echo "kexec: failed to unload kdump kernel"
+		return 1
+	fi
+
+	echo "kexec: unloaded kdump kernel"
+	return 0
+}
+
+stop()
+{
+	if [ $DEFAULT_DUMP_MODE == "fadump" ]; then
+		stop_fadump
+	else
+		stop_kdump
+	fi
+
+	if [ $? != 0 ]; then
 		echo "Stopping kdump: [FAILED]"
 		return 1
 	fi
+
+	echo "Stopping kdump: [OK]"
+	return 0
 }
 
 if [ ! -f "$KDUMP_CONFIG_FILE" ]; then
