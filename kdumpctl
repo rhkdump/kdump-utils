@@ -9,6 +9,7 @@ MKDUMPRD="/sbin/mkdumprd -f"
 SAVE_PATH=/var/crash
 SSH_KEY_LOCATION="/root/.ssh/kdump_id_rsa"
 DUMP_TARGET=""
+TARGET_INITRD=""
 FADUMP_ENABLED_SYS_NODE="/sys/kernel/fadump_enabled"
 FADUMP_REGISTER_SYS_NODE="/sys/kernel/fadump_registered"
 #kdump shall be the default dump mode
@@ -143,13 +144,47 @@ save_core()
 	fi
 }
 
-rebuild_initrd()
+rebuild_fadump_initrd()
 {
-	$MKDUMPRD $kdump_initrd $kdump_kver
+	local target_initrd_tmp
+
+	# backup fadump initrd for reference before replacing it
+	backup_initrd
+
+	target_initrd_tmp="$TARGET_INITRD.tmp"
+	$MKDUMPRD $target_initrd_tmp --rebuild $TARGET_INITRD --kver $kdump_kver
+	if [ $? != 0 ]; then
+		echo "mkdumprd: failed to rebuild initrd with fadump support" >&2
+		return 1
+	fi
+
+	# updating fadump initrd
+	mv $target_initrd_tmp $TARGET_INITRD
+	sync
+
+	return 0
+}
+
+rebuild_kdump_initrd()
+{
+	$MKDUMPRD $TARGET_INITRD $kdump_kver
 	if [ $? != 0 ]; then
 		echo "mkdumprd: failed to make kdump initrd" >&2
 		return 1
 	fi
+
+	return 0
+}
+
+rebuild_initrd()
+{
+	if [ $DEFAULT_DUMP_MODE == "fadump" ]; then
+		rebuild_fadump_initrd
+	else
+		rebuild_kdump_initrd
+	fi
+
+	return $?
 }
 
 #$1: the files to be checked with IFS=' '
@@ -172,6 +207,18 @@ check_executable()
 			return 1
 		fi
 	done
+}
+
+backup_initrd()
+{
+	local target_initrd_bak
+
+	# Check if backup initrd is already present.
+	target_initrd_bak="$TARGET_INITRD.bak"
+	if [ ! -e $target_initrd_bak ];then
+		echo "Backing up $TARGET_INITRD"
+		cp $TARGET_INITRD $target_initrd_bak
+	fi
 }
 
 check_config()
@@ -240,10 +287,24 @@ get_pcs_cluster_modified_files()
 	echo $modified_files
 }
 
+setup_target_initrd()
+{
+	if [ $DEFAULT_DUMP_MODE == "fadump" ]; then
+		TARGET_INITRD="${KDUMP_BOOTDIR}/initramfs-${kdump_kver}.img"
+		if [ ! -s "$TARGET_INITRD" ]; then
+			echo "Error: No initrd found to rebuild!"
+			return 1
+		fi
+	else
+		TARGET_INITRD="${KDUMP_BOOTDIR}/initramfs-${kdump_kver}kdump.img"
+	fi
+}
+
 check_rebuild()
 {
 	local extra_modules modified_files=""
 	local _force_rebuild force_rebuild="0"
+	local initramfs_has_fadump
 
 	if [ -z "$KDUMP_KERNELVER" ]; then
 		kdump_kver=`uname -r`
@@ -252,7 +313,10 @@ check_rebuild()
 	fi
 
 	kdump_kernel="${KDUMP_BOOTDIR}/${KDUMP_IMG}-${kdump_kver}${KDUMP_IMG_EXT}"
-	kdump_initrd="${KDUMP_BOOTDIR}/initramfs-${kdump_kver}kdump.img"
+	setup_target_initrd
+	if [ $? -ne 0 ]; then
+		return 1
+	fi
 
 	_force_rebuild=`grep ^force_rebuild $KDUMP_CONFIG_FILE 2>/dev/null`
 	if [ $? -eq 0 ]; then
@@ -269,8 +333,8 @@ check_rebuild()
 
 	#check to see if dependent files has been modified
 	#since last build of the image file
-	if [ -f $kdump_initrd ]; then
-		image_time=`stat -c "%Y" $kdump_initrd 2>/dev/null`
+	if [ -f $TARGET_INITRD ]; then
+		image_time=`stat -c "%Y" $TARGET_INITRD 2>/dev/null`
 	else
 		image_time=0
 	fi
@@ -295,10 +359,15 @@ check_rebuild()
 		fi
 	done
 
+	#check if target initrd has fadump support
+	initramfs_has_fadump=`lsinitrd -m $TARGET_INITRD | grep ^kdumpbase$ | wc -l`
+
 	if [ $image_time -eq 0 ]; then
 		echo  -n "No kdump initial ramdisk found."; echo
+	elif [ $DEFAULT_DUMP_MODE == "fadump" ] && [ "$initramfs_has_fadump" -eq "0" ]; then
+		echo "$TARGET_INITRD has no fadump support"
 	elif [ "$force_rebuild" != "0" ]; then
-		echo -n "Force rebuild $kdump_initrd"; echo
+		echo -n "Force rebuild $TARGET_INITRD"; echo
 	elif [ -n "$modified_files" ]; then
 		echo "Detected change(s) in the following file(s):"
 		echo -n "  "; echo "$modified_files" | sed 's/\s/\n  /g'
@@ -306,7 +375,7 @@ check_rebuild()
 		return 0
 	fi
 
-	echo "Rebuilding $kdump_initrd"
+	echo "Rebuilding $TARGET_INITRD"
 	rebuild_initrd
 	return $?
 }
@@ -359,7 +428,7 @@ load_kdump()
 
 	$KEXEC $KEXEC_ARGS $standard_kexec_args \
 		--command-line="$KDUMP_COMMANDLINE" \
-		--initrd=$kdump_initrd $kdump_kernel 2>/dev/null
+		--initrd=$TARGET_INITRD $kdump_kernel 2>/dev/null
 	if [ $? == 0 ]; then
 		echo "kexec: loaded kdump kernel"
 		return 0
