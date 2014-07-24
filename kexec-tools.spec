@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.7
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -337,6 +337,10 @@ done
 %doc
 
 %changelog
+* Thu Jul 24 2014 WANG Chao <chaowang@redhat.com> - 2.0.7-4
+- update to kdump-anaconda-addon-001-4-g03898ef.tar.gz
+- prefix "kdump-" to eth name
+
 * Mon Jul 21 2014 WANG Chao <chaowang@redhat.com> - 2.0.7-3
 - update to kdump-anaconda-addon-20140721.tar.gz
 
