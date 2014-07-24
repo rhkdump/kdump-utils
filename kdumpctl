@@ -662,6 +662,29 @@ check_dump_feasibility()
 	return $?
 }
 
+start_fadump()
+{
+	echo 1 > $FADUMP_REGISTER_SYS_NODE
+	if ! check_current_fadump_status; then
+		echo "fadump: failed to register"
+		return 1
+	fi
+
+	echo "fadump: registered successfully"
+	return 0
+}
+
+start_dump()
+{
+	if [ $DEFAULT_DUMP_MODE == "fadump" ]; then
+		start_fadump
+	else
+		load_kdump
+	fi
+
+	return $?
+}
+
 start()
 {
 	check_config
@@ -703,7 +726,8 @@ start()
 		echo "Starting kdump: [FAILED]"
 		return 1
 	fi
-	load_kdump
+
+	start_dump
 	if [ $? != 0 ]; then
 		echo "Starting kdump: [FAILED]"
 		return 1
