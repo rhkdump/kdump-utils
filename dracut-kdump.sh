@@ -179,6 +179,11 @@ save_vmcore_dmesg_fs() {
     _exitcode=$?
     if [ $_exitcode -eq 0 ]; then
         mv ${_path}/vmcore-dmesg-incomplete.txt ${_path}/vmcore-dmesg.txt
+
+	# Make sure file is on disk. There have been instances where later
+	# saving vmcore failed and system rebooted without sync and there
+	# was no vmcore-dmesg.txt available.
+        sync
         echo "kdump: saving vmcore-dmesg.txt complete"
     else
         echo "kdump: saving vmcore-dmesg.txt failed"
