@@ -1,5 +1,10 @@
 #!/bin/sh
 
+# continue here only if we have to save dump.
+if [ -f /etc/fadump.initramfs ] && [ ! -f /proc/device-tree/rtas/ibm,kernel-dump ]; then
+	return
+fi
+
 exec &> /dev/console
 . /lib/dracut-lib.sh
 . /lib/kdump-lib.sh
