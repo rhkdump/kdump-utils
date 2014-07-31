@@ -79,6 +79,11 @@ kdump_static_ip() {
        _gateway=$(ip route list dev $_netdev | awk '/^default /{print $3}')
        echo -n "${_srcaddr}::${_gateway}:${_netmask}::"
     fi
+
+    /sbin/ip route show | grep -v default | grep "^[[:digit:]].*via.* $_netdev " |\
+    while read line; do
+        echo $line | awk '{printf("rd.route=%s:%s:%s\n", $1, $3, $5)}'
+    done >> ${initdir}/etc/cmdline.d/45route-static.conf
 }
 
 kdump_get_mac_addr() {
