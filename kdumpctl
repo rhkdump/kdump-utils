@@ -365,7 +365,9 @@ check_rebuild()
 	done
 
 	#check if target initrd has fadump support
-	initramfs_has_fadump=`lsinitrd -m $TARGET_INITRD | grep ^kdumpbase$ | wc -l`
+	if [ "$DEFAULT_DUMP_MODE" = "fadump" ] && [ -f "$TARGET_INITRD" ]; then
+		initramfs_has_fadump=`lsinitrd -m $TARGET_INITRD | grep ^kdumpbase$ | wc -l`
+	fi
 
 	if [ $image_time -eq 0 ]; then
 		echo  -n "No kdump initial ramdisk found."; echo
