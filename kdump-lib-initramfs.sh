@@ -59,13 +59,13 @@ get_kdump_confs()
                         DEFAULT_ACTION="kdump_emergency_shell"
                     ;;
                     reboot)
-                        DEFAULT_ACTION="do_umount; reboot"
+                        DEFAULT_ACTION="reboot"
                     ;;
                     halt)
-                        DEFAULT_ACTION="do_umount; halt"
+                        DEFAULT_ACTION="halt"
                     ;;
                     poweroff)
-                        DEFAULT_ACTION="do_umount; poweroff"
+                        DEFAULT_ACTION="poweroff"
                     ;;
                     dump_to_rootfs)
                         DEFAULT_ACTION="dump_to_rootfs"
@@ -153,11 +153,6 @@ kdump_emergency_shell()
     rm -f /etc/profile
 }
 
-do_umount()
-{
-    umount -Rf $NEWROOT
-}
-
 do_default_action()
 {
     echo "Kdump: Executing default action $DEFAULT_ACTION"
@@ -166,6 +161,5 @@ do_default_action()
 
 do_final_action()
 {
-    do_umount
     eval $FINAL_ACTION
 }
