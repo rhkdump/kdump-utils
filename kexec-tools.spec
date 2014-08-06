@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.7
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -346,6 +346,12 @@ done
 %doc
 
 %changelog
+* Wed Aug 06 2014 WANG Chao <chaowang@redhat.com> - 2.0.7-5
+- rework of kdump error handling
+- add fadump support
+- add static route support
+- systemd will take care of shutdown and umount filesystems
+
 * Thu Jul 24 2014 WANG Chao <chaowang@redhat.com> - 2.0.7-4
 - update to kdump-anaconda-addon-001-4-g03898ef.tar.gz
 - prefix "kdump-" to eth name
