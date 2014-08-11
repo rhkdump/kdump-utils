@@ -502,7 +502,7 @@ get_pcs_fence_kdump_nodes() {
         eval $node
         nodename=$uname
         # Skip its own node name
-        if [ "$nodename" = `hostname` ]; then
+        if [ "$nodename" = `hostname` -o "$nodename" = `hostname -s` ]; then
             continue
         fi
         nodes="$nodes $nodename"
