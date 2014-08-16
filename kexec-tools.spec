@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.7
-Release: 5%{?dist}
+Release: 6%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -346,6 +346,9 @@ done
 %doc
 
 %changelog
+* Sat Aug 16 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.0.7-6
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_21_22_Mass_Rebuild
+
 * Wed Aug 06 2014 WANG Chao <chaowang@redhat.com> - 2.0.7-5
 - rework of kdump error handling
 - add fadump support
