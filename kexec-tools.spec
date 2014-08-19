@@ -165,7 +165,7 @@ mkdir -p -m755 $RPM_BUILD_ROOT%{_mandir}/man8/
 mkdir -p -m755 $RPM_BUILD_ROOT%{_mandir}/man5/
 mkdir -p -m755 $RPM_BUILD_ROOT%{_docdir}
 mkdir -p -m755 $RPM_BUILD_ROOT%{_datadir}/kdump
-mkdir -p -m755 $RPM_BUILD_ROOT%{_sysconfdir}/udev/rules.d
+mkdir -p -m755 $RPM_BUILD_ROOT%{_udevrulesdir}
 mkdir -p $RPM_BUILD_ROOT%{_unitdir}
 mkdir -p -m755 $RPM_BUILD_ROOT%{_bindir}
 mkdir -p -m755 $RPM_BUILD_ROOT%{_libdir}
@@ -187,7 +187,7 @@ install -m 755 %{SOURCE24} $RPM_BUILD_ROOT%{_prefix}/lib/kdump/kdump-lib-initram
 %ifnarch s390x
 # For s390x the ELF header is created in the kdump kernel and therefore kexec
 # udev rules are not required
-install -m 644 %{SOURCE14} $RPM_BUILD_ROOT%{_sysconfdir}/udev/rules.d/98-kexec.rules
+install -m 644 %{SOURCE14} $RPM_BUILD_ROOT%{_udevrulesdir}/98-kexec.rules
 %endif
 install -m 644 %{SOURCE15} $RPM_BUILD_ROOT%{_mandir}/man5/kdump.conf.5
 install -m 644 %{SOURCE16} $RPM_BUILD_ROOT%{_unitdir}/kdump.service
@@ -322,7 +322,7 @@ done
 %config(noreplace,missingok) %{_sysconfdir}/sysconfig/kdump
 %config(noreplace,missingok) %{_sysconfdir}/kdump.conf
 %ifnarch s390x
-%config %{_sysconfdir}/udev/rules.d/*
+%config %{_udevrulesdir}
 %endif
 %{dracutlibdir}/modules.d/*
 %dir %{_localstatedir}/crash
