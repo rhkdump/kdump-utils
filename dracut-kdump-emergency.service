@@ -14,7 +14,7 @@ Description=Kdump Emergency
 DefaultDependencies=no
 
 [Service]
-ExecStart=systemctl --no-block isolate kdump-error-handler.service
+ExecStart=/usr/bin/systemctl --no-block isolate kdump-error-handler.service
 Type=oneshot
 StandardInput=tty-force
 StandardOutput=inherit
