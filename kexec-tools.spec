@@ -14,9 +14,7 @@ Source7: mkdumprd
 Source8: kdump.conf
 Source9: http://downloads.sourceforge.net/project/makedumpfile/makedumpfile/1.5.6/makedumpfile-1.5.6.tar.gz
 Source10: kexec-kdump-howto.txt
-Source11: firstboot_kdump.py
 Source12: mkdumprd.8
-Source13: kexec-tools-po-20131224.tgz
 Source14: 98-kexec.rules
 Source15: kdump.conf.5
 Source16: kdump.service
@@ -129,8 +127,6 @@ tar -z -x -v -f %{SOURCE23}
 %patch606 -p1
 %patch607 -p1
 
-tar -z -x -v -f %{SOURCE13}
-
 %ifarch ppc
 %define archdef ARCH=ppc
 %endif
@@ -154,7 +150,6 @@ make -C eppic/libeppic
 make -C makedumpfile-1.5.6 LINKTYPE=dynamic USELZO=on USESNAPPY=on
 make -C makedumpfile-1.5.6 LDFLAGS="-I../eppic/libeppic -L../eppic/libeppic" eppic_makedumpfile.so
 %endif
-make -C kexec-tools-po
 make -C kdump-anaconda-addon/po
 
 %install
@@ -180,7 +175,6 @@ install -m 644 $SYSCONFIG $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/kdump
 install -m 755 %{SOURCE7} $RPM_BUILD_ROOT/sbin/mkdumprd
 install -m 644 %{SOURCE8} $RPM_BUILD_ROOT%{_sysconfdir}/kdump.conf
 install -m 644 kexec/kexec.8 $RPM_BUILD_ROOT%{_mandir}/man8/kexec.8
-install -m 755 %{SOURCE11} $RPM_BUILD_ROOT%{_datadir}/kdump/firstboot_kdump.py
 install -m 644 %{SOURCE12} $RPM_BUILD_ROOT%{_mandir}/man8/mkdumprd.8
 install -m 755 %{SOURCE20} $RPM_BUILD_ROOT%{_prefix}/lib/kdump/kdump-lib.sh
 install -m 755 %{SOURCE24} $RPM_BUILD_ROOT%{_prefix}/lib/kdump/kdump-lib-initramfs.sh
@@ -202,8 +196,6 @@ install -m 644 makedumpfile-1.5.6/makedumpfile.conf.5.gz $RPM_BUILD_ROOT/%{_mand
 install -m 644 makedumpfile-1.5.6/makedumpfile.conf $RPM_BUILD_ROOT/%{_sysconfdir}/makedumpfile.conf.sample
 install -m 755 makedumpfile-1.5.6/eppic_makedumpfile.so $RPM_BUILD_ROOT/%{_libdir}/eppic_makedumpfile.so
 %endif
-make -C kexec-tools-po install DESTDIR=$RPM_BUILD_ROOT
-%find_lang %{name}
 make -C kdump-anaconda-addon install DESTDIR=$RPM_BUILD_ROOT
 %find_lang kdump-anaconda-addon
 
@@ -273,24 +265,9 @@ fi
 /bin/systemctl try-restart kdump.service >/dev/null 2>&1 || :
 
 
-%triggerin -- firstboot
-# we enable kdump everywhere except for paravirtualized xen domains; check here
-if [ -f /proc/xen/capabilities ]; then
-	if [ -z `grep control_d /proc/xen/capabilities` ]; then
-		exit 0
-	fi
-fi
-if [ ! -e %{_datadir}/firstboot/modules/firstboot_kdump.py ]
-then
-	ln -s %{_datadir}/kdump/firstboot_kdump.py %{_datadir}/firstboot/modules/firstboot_kdump.py
-fi
-
 %triggerin -- kernel-kdump
 touch %{_sysconfdir}/kdump.conf
 
-
-%triggerun -- firstboot
-rm -f %{_datadir}/firstboot/modules/firstboot_kdump.py
 
 %triggerpostun -- kernel kernel-xen kernel-debug kernel-PAE kernel-kdump
 # List out the initrds here, strip out version nubmers
@@ -310,7 +287,7 @@ do
 	fi
 done
 
-%files -f %{name}.lang
+%files
 /sbin/*
 /usr/sbin/*
 %{_bindir}/*
