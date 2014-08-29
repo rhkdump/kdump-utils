@@ -26,7 +26,7 @@ Source19: eppic_030413.tar.gz
 Source20: kdump-lib.sh
 Source21: kdump-in-cluster-environment.txt
 Source22: kdump-dep-generator.sh
-Source23: kdump-anaconda-addon-002.tar.gz
+Source23: kdump-anaconda-addon-003.tar.gz
 Source24: kdump-lib-initramfs.sh
 
 #######################################
