@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.7
-Release: 7%{?dist}
+Release: 8%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -323,6 +323,11 @@ done
 %doc
 
 %changelog
+* Fri Aug 29 2014 WANG Chao <chaowang@redhat.com> - 2.0.7-8
+- use absolute path for executable in systemd service
+- update to kdump-anaconda-addon-003
+- remove dead kdump firstboot module and po files
+
 * Thu Aug 21 2014 WANG Chao <chaowang@redhat.com> - 2.0.7-7
 - install 98-kexec.rules to /usr/lib/
 - update kdump-anaconda-addon-0.2
