@@ -104,7 +104,8 @@ to_mount() {
     # mount under /sysroot in 2nd kernel, and we umount -R /sysroot before exit
     _target="/sysroot$_target"
     _fstype=$(findmnt -k -f -n -r -o FSTYPE $_dev)
-    _options=$(findmnt -k -f -n -r -o OPTIONS $_dev)
+    _options=$(findmnt --fstab -f -n -r -o OPTIONS $_dev)
+    [ -z "$_options" ] && _options=$(findmnt -k -f -n -r -o OPTIONS $_dev)
     _options=${_options/#ro/rw} #mount fs target as rw in 2nd kernel
     # "x-initrd.mount" mount failure will trigger isolate emergency service
     # W/o this, systemd won't isolate, thus we won't get to emergency.
