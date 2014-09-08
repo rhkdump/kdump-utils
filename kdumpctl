@@ -826,7 +826,12 @@ stop_fadump()
 
 stop_kdump()
 {
-	$KEXEC -p -u
+	if is_secure_boot_enforced; then
+		$KEXEC -s -p -u
+	else
+		$KEXEC -p -u
+	fi
+
 	if [ $? != 0 ]; then
 		echo "kexec: failed to unload kdump kernel"
 		return 1
