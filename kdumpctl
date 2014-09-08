@@ -435,7 +435,7 @@ load_kdump()
 
 	$KEXEC $KEXEC_ARGS $standard_kexec_args \
 		--command-line="$KDUMP_COMMANDLINE" \
-		--initrd=$TARGET_INITRD $kdump_kernel 2>/dev/null
+		--initrd=$TARGET_INITRD $kdump_kernel
 	if [ $? == 0 ]; then
 		echo "kexec: loaded kdump kernel"
 		return 0
@@ -826,7 +826,7 @@ stop_fadump()
 
 stop_kdump()
 {
-	$KEXEC -p -u 2>/dev/null
+	$KEXEC -p -u
 	if [ $? != 0 ]; then
 		echo "kexec: failed to unload kdump kernel"
 		return 1
