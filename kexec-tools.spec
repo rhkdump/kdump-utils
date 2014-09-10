@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.7
-Release: 8%{?dist}
+Release: 9%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -325,6 +325,12 @@ done
 %doc
 
 %changelog
+* Wed Sep 10 2014 Baoquan He <bhe@redhat.com> - 2.0.7-9
+- kdumpctl: Use kexec file based syscall for secureboot enabled machines
+- kdumpctl: Use kexec file based mode to unload kdump kernel
+- kdumpctl: Do not redirect error messages to /dev/null
+- kexec: Provide an option to use new kexec system call
+
 * Fri Aug 29 2014 WANG Chao <chaowang@redhat.com> - 2.0.7-8
 - use absolute path for executable in systemd service
 - update to kdump-anaconda-addon-003
