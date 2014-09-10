@@ -62,6 +62,7 @@ ExcludeArch: aarch64
 #
 # Patches 101 through 200 are meant for x86_64 kexec-tools enablement
 #
+Patch101: kexec-tools-2.0.7-Provide-an-option-to-use-new-kexec-system-call.patch
 
 #
 # Patches 301 through 400 are meant for ppc64 kexec-tools enablement
@@ -119,6 +120,7 @@ tar -z -x -v -f %{SOURCE19}
 tar -z -x -v -f %{SOURCE23}
 
 
+%patch101 -p1
 %patch601 -p1
 %patch602 -p1
 %patch603 -p1
