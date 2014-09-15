@@ -69,6 +69,7 @@ Patch101: kexec-tools-2.0.7-Provide-an-option-to-use-new-kexec-system-call.patch
 #
 Patch301: kexec-tools-2.0.7-kexec-ppc64-move-to-device-tree-version-17.patch
 Patch302: kexec-tools-2.0.7-kexec-ppc64-disabling-exception-handling-when-buildi.patch
+Patch303: kexec-tools-2.0.7-ppc64-kdump-Fix-ELF-header-endianess.patch
 
 #
 # Patches 401 through 500 are meant for s390 kexec-tools enablement
@@ -132,6 +133,7 @@ tar -z -x -v -f %{SOURCE23}
 %patch607 -p1
 %patch301 -p1
 %patch302 -p1
+%patch303 -p1
 
 %ifarch ppc
 %define archdef ARCH=ppc

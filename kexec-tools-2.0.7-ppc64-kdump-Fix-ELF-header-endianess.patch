@@ -1,0 +1,36 @@
+From 45b33eb2e70cd44f41abf1058a92659cb4315011 Mon Sep 17 00:00:00 2001
+From: Laurent Dufour <ldufour@linux.vnet.ibm.com>
+Date: Fri, 25 Jul 2014 17:07:49 +0200
+Subject: [PATCH] ppc64/kdump: Fix ELF header endianess
+
+The ELF header created among the loading of the kdump kernel should be
+flagged using the current endianess and not always as big endian.
+
+Without this patch the data exposed in /proc/vmcore are not readable when
+running in LE mode.
+
+Signed-off-by: Laurent Dufour <ldufour@linux.vnet.ibm.com>
+Signed-off-by: Simon Horman <horms@verge.net.au>
+---
+ kexec/arch/ppc64/crashdump-ppc64.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/kexec/arch/ppc64/crashdump-ppc64.c b/kexec/arch/ppc64/crashdump-ppc64.c
+index 00a0e63..6214b83 100644
+--- a/kexec/arch/ppc64/crashdump-ppc64.c
++++ b/kexec/arch/ppc64/crashdump-ppc64.c
+@@ -38,7 +38,11 @@
+ static struct crash_elf_info elf_info64 =
+ {
+ 	class: ELFCLASS64,
++#if BYTE_ORDER == LITTLE_ENDIAN
++	data: ELFDATA2LSB,
++#else
+ 	data: ELFDATA2MSB,
++#endif
+ 	machine: EM_PPC64,
+ 	page_offset: PAGE_OFFSET,
+ 	lowmem_limit: MAXMEM,
+-- 
+1.9.3
+
