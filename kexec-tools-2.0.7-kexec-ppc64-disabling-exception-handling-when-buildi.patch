@@ -1,0 +1,37 @@
+From 335bad77fb0750f3961aa8df47c83a522d212b08 Mon Sep 17 00:00:00 2001
+From: Laurent Dufour <ldufour@linux.vnet.ibm.com>
+Date: Tue, 22 Jul 2014 18:22:28 +0200
+Subject: [PATCH] kexec/ppc64: disabling exception handling when building the
+ purgatory
+
+Some Linux distributions would like to turn on the GCC exception handling
+by default. As this option introduces symbols in the built code that are
+defined in a separate shared library, this is not a good idea to have such
+an option activated when building the purgatory.
+
+This patch forces the exception handling to be turned off when building the
+purgatory on ppc64 BE and LE.
+
+Signed-off-by: Laurent Dufour <ldufour@linux.vnet.ibm.com>
+Signed-off-by: Simon Horman <horms@verge.net.au>
+---
+ purgatory/arch/ppc64/Makefile | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/purgatory/arch/ppc64/Makefile b/purgatory/arch/ppc64/Makefile
+index 712e2b1..6c58fa2 100644
+--- a/purgatory/arch/ppc64/Makefile
++++ b/purgatory/arch/ppc64/Makefile
+@@ -9,7 +9,8 @@ ppc64_PURGATORY_SRCS += purgatory/arch/ppc64/console-ppc64.c
+ ppc64_PURGATORY_SRCS += purgatory/arch/ppc64/crashdump_backup.c
+ ppc64_PURGATORY_SRCS += purgatory/arch/ppc64/misc.S
+ 
+-ppc64_PURGATORY_EXTRA_CFLAGS += -m64 -msoft-float -fno-stack-protector
++ppc64_PURGATORY_EXTRA_CFLAGS += -m64 -msoft-float -fno-stack-protector	\
++				-fno-exceptions
+ ppc64_PURGATORY_EXTRA_ASFLAGS += -m64
+ ifeq ($(SUBARCH),BE)
+ 	ppc64_PURGATORY_EXTRA_LDFLAGS += -melf64ppc
+-- 
+1.9.3
+
