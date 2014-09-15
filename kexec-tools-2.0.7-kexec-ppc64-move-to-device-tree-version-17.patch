@@ -1,0 +1,42 @@
+From 2ca220389d212249cc842d49084c95e524fb299b Mon Sep 17 00:00:00 2001
+From: Laurent Dufour <ldufour@linux.vnet.ibm.com>
+Date: Mon, 16 Jun 2014 14:42:43 +0200
+Subject: [PATCH] kexec/ppc64: move to device tree version 17
+
+Kernel commit e6a6928c3ea1d0195ed75a091e345696b916c09b changed the way the
+device tree is processed in the kernel. Now version 2 is no more supported.
+
+This patch move the version of the device tree generated in ppc64
+environment from 2 to 17, allowing to kexec kernel 3.16.
+
+In addition, automates the define of NEED_STRUCTURE_BLOCK_EXTRA_PAD which
+should not be set for DT version 16 and above.
+
+Signed-off-by: Laurent Dufour <ldufour@linux.vnet.ibm.com>
+Signed-off-by: Simon Horman <horms@verge.net.au>
+---
+ kexec/arch/ppc64/kexec-ppc64.h | 8 +++++---
+ 1 file changed, 5 insertions(+), 3 deletions(-)
+
+diff --git a/kexec/arch/ppc64/kexec-ppc64.h b/kexec/arch/ppc64/kexec-ppc64.h
+index 9a0aecf..89ee942 100644
+--- a/kexec/arch/ppc64/kexec-ppc64.h
++++ b/kexec/arch/ppc64/kexec-ppc64.h
+@@ -6,9 +6,11 @@
+ #define CORE_TYPE_ELF32 1
+ #define CORE_TYPE_ELF64 2
+ 
+-#define BOOT_BLOCK_VERSION 2
+-#define BOOT_BLOCK_LAST_COMP_VERSION 2
+-#define NEED_STRUCTURE_BLOCK_EXTRA_PAD
++#define BOOT_BLOCK_VERSION 17
++#define BOOT_BLOCK_LAST_COMP_VERSION 17
++#if (BOOT_BLOCK_VERSION < 16)
++#	define NEED_STRUCTURE_BLOCK_EXTRA_PAD
++#endif
+ #define HAVE_DYNAMIC_MEMORY
+ #define NEED_RESERVE_DTB
+ 
+-- 
+1.9.3
+
