@@ -12,7 +12,7 @@ Source4: kdump.sysconfig.i386
 Source5: kdump.sysconfig.ppc64
 Source7: mkdumprd
 Source8: kdump.conf
-Source9: http://downloads.sourceforge.net/project/makedumpfile/makedumpfile/1.5.6/makedumpfile-1.5.6.tar.gz
+Source9: http://downloads.sourceforge.net/project/makedumpfile/makedumpfile/1.5.7/makedumpfile-1.5.7.tar.gz
 Source10: kexec-kdump-howto.txt
 Source12: mkdumprd.8
 Source14: 98-kexec.rules
@@ -82,12 +82,6 @@ Patch303: kexec-tools-2.0.7-ppc64-kdump-Fix-ELF-header-endianess.patch
 # Patches 601 onward are generic patches
 #
 Patch601: kexec-tools-2.0.3-disable-kexec-test.patch
-Patch602: kexec-tools-2.0.4-makedumpfile-Fix-Makefile-for-eppic_makedumpfile.so-build.patch
-Patch603: kexec-tools-2.0.4-makedumpfile-Introduce-the-mdf_pfn_t-type.patch
-Patch604: kexec-tools-2.0.4-makedumpfile-Fix-free-bitmap_buffer_cyclic-error.patch
-Patch605: kexec-tools-2.0.4-makedumpfile-Remove-the-1st-bitmap-buffer-from-the-ELF-.patch
-Patch606: kexec-tools-2.0.4-makedumpfile-Move-counting-pfn_memhole-for-cyclic-mode.patch
-Patch607: kexec-tools-2.0.4-makedumpfile-Stop-maximizing-the-bitmap-buffer-to-reduc.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -125,12 +119,6 @@ tar -z -x -v -f %{SOURCE23}
 
 %patch101 -p1
 %patch601 -p1
-%patch602 -p1
-%patch603 -p1
-%patch604 -p1
-%patch605 -p1
-%patch606 -p1
-%patch607 -p1
 %patch301 -p1
 %patch302 -p1
 %patch303 -p1
@@ -155,8 +143,8 @@ cp %{SOURCE21} .
 make
 %ifarch %{ix86} x86_64 ppc64 s390x
 make -C eppic/libeppic
-make -C makedumpfile-1.5.6 LINKTYPE=dynamic USELZO=on USESNAPPY=on
-make -C makedumpfile-1.5.6 LDFLAGS="-I../eppic/libeppic -L../eppic/libeppic" eppic_makedumpfile.so
+make -C makedumpfile-1.5.7 LINKTYPE=dynamic USELZO=on USESNAPPY=on
+make -C makedumpfile-1.5.7 LDFLAGS="-I../eppic/libeppic -L../eppic/libeppic" eppic_makedumpfile.so
 %endif
 make -C kdump-anaconda-addon/po
 
@@ -198,13 +186,13 @@ mkdir -p $RPM_BUILD_ROOT/usr/sbin
 install -m 755 %{SOURCE17} $RPM_BUILD_ROOT/usr/sbin/rhcrashkernel-param
 
 %ifarch %{ix86} x86_64 ppc64 s390x
-install -m 755 makedumpfile-1.5.6/makedumpfile $RPM_BUILD_ROOT/sbin/makedumpfile
-install -m 644 makedumpfile-1.5.6/makedumpfile.8.gz $RPM_BUILD_ROOT/%{_mandir}/man8/makedumpfile.8.gz
-install -m 644 makedumpfile-1.5.6/makedumpfile.conf.5.gz $RPM_BUILD_ROOT/%{_mandir}/man5/makedumpfile.conf.5.gz
-install -m 644 makedumpfile-1.5.6/makedumpfile.conf $RPM_BUILD_ROOT/%{_sysconfdir}/makedumpfile.conf.sample
-install -m 755 makedumpfile-1.5.6/eppic_makedumpfile.so $RPM_BUILD_ROOT/%{_libdir}/eppic_makedumpfile.so
+install -m 755 makedumpfile-1.5.7/makedumpfile $RPM_BUILD_ROOT/sbin/makedumpfile
+install -m 644 makedumpfile-1.5.7/makedumpfile.8.gz $RPM_BUILD_ROOT/%{_mandir}/man8/makedumpfile.8.gz
+install -m 644 makedumpfile-1.5.7/makedumpfile.conf.5.gz $RPM_BUILD_ROOT/%{_mandir}/man5/makedumpfile.conf.5.gz
+install -m 644 makedumpfile-1.5.7/makedumpfile.conf $RPM_BUILD_ROOT/%{_sysconfdir}/makedumpfile.conf.sample
+install -m 755 makedumpfile-1.5.7/eppic_makedumpfile.so $RPM_BUILD_ROOT/%{_libdir}/eppic_makedumpfile.so
 mkdir -p $RPM_BUILD_ROOT/usr/share/makedumpfile/eppic_scripts/
-install -m 644 makedumpfile-1.5.6/eppic_scripts/* $RPM_BUILD_ROOT/usr/share/makedumpfile/eppic_scripts/
+install -m 644 makedumpfile-1.5.7/eppic_scripts/* $RPM_BUILD_ROOT/usr/share/makedumpfile/eppic_scripts/
 %endif
 make -C kdump-anaconda-addon install DESTDIR=$RPM_BUILD_ROOT
 %find_lang kdump-anaconda-addon
