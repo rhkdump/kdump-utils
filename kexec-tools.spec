@@ -203,6 +203,8 @@ install -m 644 makedumpfile-1.5.6/makedumpfile.8.gz $RPM_BUILD_ROOT/%{_mandir}/m
 install -m 644 makedumpfile-1.5.6/makedumpfile.conf.5.gz $RPM_BUILD_ROOT/%{_mandir}/man5/makedumpfile.conf.5.gz
 install -m 644 makedumpfile-1.5.6/makedumpfile.conf $RPM_BUILD_ROOT/%{_sysconfdir}/makedumpfile.conf.sample
 install -m 755 makedumpfile-1.5.6/eppic_makedumpfile.so $RPM_BUILD_ROOT/%{_libdir}/eppic_makedumpfile.so
+mkdir -p $RPM_BUILD_ROOT/usr/share/makedumpfile/eppic_scripts/
+install -m 644 makedumpfile-1.5.6/eppic_scripts/* $RPM_BUILD_ROOT/usr/share/makedumpfile/eppic_scripts/
 %endif
 make -C kdump-anaconda-addon install DESTDIR=$RPM_BUILD_ROOT
 %find_lang kdump-anaconda-addon
@@ -324,6 +326,7 @@ done
 %ifarch %{ix86} x86_64 ppc64 s390x
 %files eppic
 %{_libdir}/eppic_makedumpfile.so
+/usr/share/makedumpfile/eppic_scripts/
 %endif
 
 %files anaconda-addon -f kdump-anaconda-addon.lang
