@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.7
-Release: 9%{?dist}
+Release: 10%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -322,6 +322,12 @@ done
 %doc
 
 %changelog
+* Tue Sep 23 2014 WANG Chao <chaowang@redhat.com> - 2.0.7-10
+- Enable ppc64le arch.
+- Rebase makedumpfile-1.5.7
+- add sample eppic scripts to kexec-tools-eppic package
+- Restart kdump service on cpu ADD/REMOVE events
+
 * Wed Sep 10 2014 Baoquan He <bhe@redhat.com> - 2.0.7-9
 - kdumpctl: Use kexec file based syscall for secureboot enabled machines
 - kdumpctl: Use kexec file based mode to unload kdump kernel
