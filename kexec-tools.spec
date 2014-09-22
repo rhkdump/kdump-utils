@@ -47,7 +47,7 @@ Requires: dracut, dracut-network, ethtool
 BuildRequires: zlib-devel zlib zlib-static elfutils-devel-static glib2-devel bzip2-devel ncurses-devel bison flex lzo-devel snappy-devel
 BuildRequires: pkgconfig intltool gettext 
 BuildRequires: systemd-units
-%ifarch %{ix86} x86_64 ppc64 ppc s390x
+%ifarch %{ix86} x86_64 ppc64 ppc s390x ppc64le
 Obsoletes: diskdumputils netdump
 %endif
 
@@ -90,7 +90,7 @@ normal or a panic reboot. This package contains the /sbin/kexec
 binary and ancillary utilities that together form the userspace
 component of the kernel's kexec feature.
 
-%ifarch %{ix86} x86_64 ppc64 s390x
+%ifarch %{ix86} x86_64 ppc64 s390x ppc64le
 %package eppic
 Requires: %{name} = %{version}-%{release}
 Summary: Additional eppic_makedumpfile.so shared object
@@ -141,7 +141,7 @@ cp %{SOURCE10} .
 cp %{SOURCE21} .
 
 make
-%ifarch %{ix86} x86_64 ppc64 s390x
+%ifarch %{ix86} x86_64 ppc64 s390x ppc64le
 make -C eppic/libeppic
 make -C makedumpfile-1.5.7 LINKTYPE=dynamic USELZO=on USESNAPPY=on
 make -C makedumpfile-1.5.7 LDFLAGS="-I../eppic/libeppic -L../eppic/libeppic" eppic_makedumpfile.so
@@ -185,7 +185,7 @@ install -m 755 -D %{SOURCE22} $RPM_BUILD_ROOT%{_prefix}/lib/systemd/system-gener
 mkdir -p $RPM_BUILD_ROOT/usr/sbin
 install -m 755 %{SOURCE17} $RPM_BUILD_ROOT/usr/sbin/rhcrashkernel-param
 
-%ifarch %{ix86} x86_64 ppc64 s390x
+%ifarch %{ix86} x86_64 ppc64 s390x ppc64le
 install -m 755 makedumpfile-1.5.7/makedumpfile $RPM_BUILD_ROOT/sbin/makedumpfile
 install -m 644 makedumpfile-1.5.7/makedumpfile.8.gz $RPM_BUILD_ROOT/%{_mandir}/man8/makedumpfile.8.gz
 install -m 644 makedumpfile-1.5.7/makedumpfile.conf.5.gz $RPM_BUILD_ROOT/%{_mandir}/man5/makedumpfile.conf.5.gz
@@ -291,7 +291,7 @@ done
 %{_bindir}/*
 %{_datadir}/kdump
 %{_prefix}/lib/kdump
-%ifarch %{ix86} x86_64 ppc64 s390x
+%ifarch %{ix86} x86_64 ppc64 s390x ppc64le
 %{_sysconfdir}/makedumpfile.conf.sample
 %endif
 %config(noreplace,missingok) %{_sysconfdir}/sysconfig/kdump
@@ -311,7 +311,7 @@ done
 %doc kexec-kdump-howto.txt
 %doc kdump-in-cluster-environment.txt
 
-%ifarch %{ix86} x86_64 ppc64 s390x
+%ifarch %{ix86} x86_64 ppc64 s390x ppc64le
 %files eppic
 %{_libdir}/eppic_makedumpfile.so
 /usr/share/makedumpfile/eppic_scripts/
