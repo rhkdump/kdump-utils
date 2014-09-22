@@ -234,7 +234,10 @@ kdump_setup_netdev() {
 
     # dracut doesn't allow duplicated configuration for same NIC, even they're exactly the same.
     # so we have to avoid adding duplicates
-    if [ ! -f $_ip_conf ] || ! grep -q $_ip_opts $_ip_conf; then
+    # We should also check /proc/cmdline for existing ip=xx arg.
+    # For example, iscsi boot will specify ip=xxx arg in cmdline.
+    if [ ! -f $_ip_conf ] || ! grep -q $_ip_opts $_ip_conf &&\
+        ! grep -q "ip=[^[:space:]]*$_netdev" /proc/cmdline; then
         echo "$_ip_opts" >> $_ip_conf
     fi
 
