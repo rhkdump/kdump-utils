@@ -134,6 +134,10 @@ tar -z -x -v -f %{SOURCE23}
     --host=powerpc64-redhat-linux-gnu \
     --build=powerpc64-redhat-linux-gnu \
 %endif
+%ifarch ppc64le
+    --host=powerpc64le-redhat-linux-gnu \
+    --build=powerpc64le-redhat-linux-gnu \
+%endif
     --sbindir=/sbin
 rm -f kexec-tools.spec.in
 # setup the docs
