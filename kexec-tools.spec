@@ -48,7 +48,7 @@ BuildRequires: zlib-devel zlib zlib-static elfutils-devel-static glib2-devel bzi
 BuildRequires: pkgconfig intltool gettext 
 BuildRequires: systemd-units
 %ifarch %{ix86} x86_64 ppc64 ppc s390x ppc64le
-Obsoletes: diskdumputils netdump
+Obsoletes: diskdumputils netdump kexec-tools-eppic
 %endif
 
 ExcludeArch: aarch64
@@ -89,18 +89,6 @@ kernel to boot using the kernel's kexec feature either on a
 normal or a panic reboot. This package contains the /sbin/kexec
 binary and ancillary utilities that together form the userspace
 component of the kernel's kexec feature.
-
-%ifarch %{ix86} x86_64 ppc64 s390x ppc64le
-%package eppic
-Requires: %{name} = %{version}-%{release}
-Summary: Additional eppic_makedumpfile.so shared object
-Group: Applications/System
-
-%description eppic
-The eppic_makedumpfile.so shared object is loaded by the
-"makedumpfile --eppic" option, and is used to erase sensitive
-or confidential kernel data from a dumpfile.
-%endif
 
 %package anaconda-addon
 Summary:        Kdump configuration anaconda addon
@@ -314,12 +302,8 @@ done
 %doc TODO
 %doc kexec-kdump-howto.txt
 %doc kdump-in-cluster-environment.txt
-
-%ifarch %{ix86} x86_64 ppc64 s390x ppc64le
-%files eppic
 %{_libdir}/eppic_makedumpfile.so
 /usr/share/makedumpfile/eppic_scripts/
-%endif
 
 %files anaconda-addon -f kdump-anaconda-addon.lang
 %{_datadir}/anaconda/addons/com_redhat_kdump
