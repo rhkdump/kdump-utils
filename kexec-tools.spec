@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.8
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -304,6 +304,9 @@ done
 %doc
 
 %changelog
+* Wue Oct 21 2014 WANG Chao <chaowang@redhat.com> - 2.0.8-2
+- Fix build issue on ARM
+
 * Mon Oct 20 2014 WANG Chao <chaowang@redhat.com> - 2.0.8-1
 - Rebase kexec-tools-2.0.8
 - Remove subpackage kexec-tools-eppic
