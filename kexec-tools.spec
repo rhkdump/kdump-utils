@@ -304,7 +304,7 @@ done
 %doc
 
 %changelog
-* Wue Oct 21 2014 WANG Chao <chaowang@redhat.com> - 2.0.8-2
+* Tue Oct 21 2014 WANG Chao <chaowang@redhat.com> - 2.0.8-2
 - Fix build issue on ARM
 
 * Mon Oct 20 2014 WANG Chao <chaowang@redhat.com> - 2.0.8-1
