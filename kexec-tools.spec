@@ -294,8 +294,10 @@ done
 %doc TODO
 %doc kexec-kdump-howto.txt
 %doc kdump-in-cluster-environment.txt
+%ifarch %{ix86} x86_64 ppc64 s390x ppc64le
 %{_libdir}/eppic_makedumpfile.so
 /usr/share/makedumpfile/eppic_scripts/
+%endif
 
 %files anaconda-addon -f kdump-anaconda-addon.lang
 %{_datadir}/anaconda/addons/com_redhat_kdump
