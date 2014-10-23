@@ -2,7 +2,7 @@
 
 # continue here only if we have to save dump.
 if [ -f /etc/fadump.initramfs ] && [ ! -f /proc/device-tree/rtas/ibm,kernel-dump ]; then
-	return
+	exit 0
 fi
 
 exec &> /dev/console
