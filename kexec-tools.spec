@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.8
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -304,6 +304,10 @@ done
 %doc
 
 %changelog
+* Tue Oct 28 2014 WANG Chao <chaowang@redhat.com> - 2.0.8-3
+- fix static route corner case
+- fadump fix
+
 * Tue Oct 21 2014 WANG Chao <chaowang@redhat.com> - 2.0.8-2
 - Fix build issue on ARM
 
