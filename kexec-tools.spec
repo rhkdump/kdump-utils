@@ -26,6 +26,7 @@ Source21: kdump-in-cluster-environment.txt
 Source22: kdump-dep-generator.sh
 Source23: kdump-anaconda-addon-005.tar.gz
 Source24: kdump-lib-initramfs.sh
+Source25: kdump.sysconfig.ppc64le
 
 #######################################
 # These are sources for mkdumpramfs
