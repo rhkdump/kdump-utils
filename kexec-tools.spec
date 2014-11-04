@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.8
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -305,6 +305,10 @@ done
 %doc
 
 %changelog
+* Tue Nov 04 2014 WANG Chao <chaowang@redhat.com> - 2.0.8-4
+- Fix ppc64le installation issue
+- Fix get_option_value function
+
 * Tue Oct 28 2014 WANG Chao <chaowang@redhat.com> - 2.0.8-3
 - fix static route corner case
 - fadump fix
