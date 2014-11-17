@@ -105,7 +105,7 @@ prepare_cmdline()
 	else
 		cmdline=${KDUMP_COMMANDLINE}
 	fi
-	cmdline=`remove_cmdline_param "$cmdline" crashkernel hugepages hugepagesz`
+	cmdline=`remove_cmdline_param "$cmdline" crashkernel hugepages hugepagesz panic_on_warn`
 
 
 	cmdline="${cmdline} ${KDUMP_COMMANDLINE_APPEND}"
