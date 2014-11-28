@@ -22,7 +22,6 @@ NEWROOT="/sysroot"
 get_kdump_confs()
 {
     local config_opt config_val
-    local user_specified_cc
 
     while read config_opt config_val;
     do
@@ -34,7 +33,6 @@ get_kdump_confs()
             ;;
             core_collector)
                 [ -n "$config_val" ] && CORE_COLLECTOR="$config_val"
-                user_specified_cc=yes
             ;;
             sshkey)
                 if [ -f "$config_val" ]; then
@@ -75,12 +73,12 @@ get_kdump_confs()
         esac
     done < $KDUMP_CONF
 
-    if is_ssh_dump_target || is_raw_dump_target; then
-        if [ -z "$user_specified_cc" ]; then
+    if [ -z "$CORE_COLLECTOR" ]; then
+        CORE_COLLECTOR="$DEFAULT_CORE_COLLECTOR"
+        if is_ssh_dump_target || is_raw_dump_target; then
             CORE_COLLECTOR="$CORE_COLLECTOR -F"
         fi
     fi
-
 }
 
 # dump_fs <mount point| device>

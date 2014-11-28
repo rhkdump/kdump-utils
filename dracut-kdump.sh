@@ -169,13 +169,6 @@ fence_kdump_notify()
 read_kdump_conf
 fence_kdump_notify
 
-if [ -z "$CORE_COLLECTOR" ];then
-    CORE_COLLECTOR=$DEFAULT_CORE_COLLECTOR
-    if is_ssh_dump_target || is_raw_dump_target; then
-        CORE_COLLECTOR="$CORE_COLLECTOR -F"
-    fi
-fi
-
 get_host_ip
 if [ $? -ne 0 ]; then
     echo "kdump: get_host_ip exited with non-zero status!"
