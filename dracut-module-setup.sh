@@ -212,7 +212,7 @@ get_routes() {
     local _route
 
     _route=`/sbin/ip route get to $_target 2>&1`
-    if /sbin/ip route get to $_target | grep "via";
+    if /sbin/ip route get to $_target | grep -q "via";
     then
         # route going to a different subnet via a router
         echo $_route | awk '{printf("rd.route=%s:%s:%s\n", $1, $3, $5)}' \
