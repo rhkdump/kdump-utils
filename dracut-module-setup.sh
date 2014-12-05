@@ -209,20 +209,25 @@ kdump_setup_znet() {
 
 get_routes() {
     local _netdev="$1" _target="$2"
-    local _route
+    local _route _nexthop
 
     _route=`/sbin/ip route get to $_target 2>&1`
-    if /sbin/ip route get to $_target | grep -q "via";
-    then
+#
+# in the same subnet region, following is the route format
+# _route='192.168.200.137 dev eth1  src 192.168.200.129
+#   cache '
+#
+# in the different subnet region, following is the route format
+# _route='192.168.201.215 via 192.168.200.137 dev eth1  src 192.168.200.129
+#   cache '
+#
+    if `echo $_route | grep -q "via"`; then
         # route going to a different subnet via a router
-        echo $_route | awk '{printf("rd.route=%s:%s:%s\n", $1, $3, $5)}' \
-            >> ${initdir}/etc/cmdline.d/45route-static.conf
-    else
-        # route going to a different subnet though directly connected
-        echo $_route | awk '{printf("rd.route=%s::%s\n", $1, $3)}' \
-            >> ${initdir}/etc/cmdline.d/45route-static.conf
+        _nexthop=`echo $_route | awk '{print $3}'`
     fi
+    _netdev=$(kdump_setup_ifname $_netdev)
 
+    echo "rd.route=$_target:$_nexthop:$_netdev" >> ${initdir}/etc/cmdline.d/45route-static.conf
 }
 
 # Setup dracut to bringup a given network interface
