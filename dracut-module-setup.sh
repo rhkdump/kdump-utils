@@ -367,6 +367,18 @@ kdump_install_conf() {
     rm -f /tmp/$$-kdump.conf
 }
 
+# Default sysctl parameters should suffice for kdump kernel.
+# Remove custom configurations sysctl.conf & sysctl.d/*
+remove_sysctl_conf() {
+
+    # As custom configurations like vm.min_free_kbytes can lead
+    # to OOM issues in kdump kernel, avoid them
+    rm -f "${initdir}/etc/sysctl.conf"
+    rm -rf "${initdir}/etc/sysctl.d"
+    rm -rf "${initdir}/run/sysctl.d"
+    rm -rf "${initdir}/usr/lib/sysctl.d"
+}
+
 kdump_iscsi_get_rec_val() {
 
     local result
@@ -575,6 +587,7 @@ kdump_install_random_seed() {
 
 install() {
     kdump_install_conf
+    remove_sysctl_conf
 
     if is_ssh_dump_target; then
         kdump_install_random_seed
