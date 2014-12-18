@@ -313,7 +313,7 @@ default_dump_target_install_conf()
 
     is_user_configured_dump_target && return
 
-    _save_path=$(grep ^path "/etc/kdump.conf"| cut -d' '  -f2)
+    _save_path=$(get_option_value "path")
     [ -z "$_save_path" ] && _save_path=$DEFAULT_PATH
 
     _mntpoint=$(get_mntpoint_from_path $_save_path)
@@ -331,7 +331,7 @@ default_dump_target_install_conf()
         echo "$_fstype $_target" >> /tmp/$$-kdump.conf
 
         _path=${_save_path##"$_mntpoint"}
-        sed -i -e "s#$_save_path#$_path#" /tmp/$$-kdump.conf
+        sed -i -e "s#^path[[:space:]]\+$_save_path#path $_path#" /tmp/$$-kdump.conf
     fi
 
 }
@@ -346,7 +346,7 @@ kdump_install_conf() {
         config_val=$(strip_comments $config_val)
         case "$config_opt" in
         ext[234]|xfs|btrfs|minix|raw)
-            sed -i -e "s#$config_val#$(kdump_to_udev_name $config_val)#" /tmp/$$-kdump.conf
+            sed -i -e "s#^$config_opt[[:space:]]\+$config_val#$config_opt $(kdump_to_udev_name $config_val)#" /tmp/$$-kdump.conf
             ;;
         ssh|nfs)
             kdump_install_net "$config_val"
