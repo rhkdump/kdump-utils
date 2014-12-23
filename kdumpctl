@@ -352,7 +352,7 @@ check_rebuild()
 	EXTRA_BINS="$EXTRA_BINS $CHECK_FILES"
 	CHECK_FILES=`grep ^extra_bins $KDUMP_CONFIG_FILE | cut -d\  -f2-`
 	EXTRA_BINS="$EXTRA_BINS $CHECK_FILES"
-	files="$KDUMP_CONFIG_FILE $kdump_kernel $EXTRA_BINS"
+	files="$KDUMP_CONFIG_FILE $kdump_kernel $EXTRA_BINS /etc/fstab"
 
 	check_exist "$files" && check_executable "$EXTRA_BINS"
 	[ $? -ne 0 ] && return 1
