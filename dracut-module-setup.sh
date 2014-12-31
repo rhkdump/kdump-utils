@@ -331,7 +331,10 @@ default_dump_target_install_conf()
         echo "$_fstype $_target" >> /tmp/$$-kdump.conf
 
         _path=${_save_path##"$_mntpoint"}
-        sed -i -e "s#^path[[:space:]]\+$_save_path#path $_path#" /tmp/$$-kdump.conf
+
+        #erase the old path line, then insert the parsed path
+        sed -i "/^path/d" /tmp/$$-kdump.conf
+        echo "path $_path" >> /tmp/$$-kdump.conf
     fi
 
 }
