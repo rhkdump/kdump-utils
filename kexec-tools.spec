@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.8
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -305,6 +305,13 @@ done
 %doc
 
 %changelog
+* Tue Jan 06 2014 WANG Chao <chaowang@redhat.com> - 2.0.8-5
+- remove panic_on_warn kernel param in 2nd kernel
+- remove sysctl.conf to restore sysctl default values in 2nd kernel
+- fix a core_collector issue in ssh and raw dump case
+- update to kdump-anaconda-addon-005-2-g86366ae.tar.gz
+- some cleanups
+
 * Tue Nov 04 2014 WANG Chao <chaowang@redhat.com> - 2.0.8-4
 - Fix ppc64le installation issue
 - Fix get_option_value function
