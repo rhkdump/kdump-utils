@@ -305,7 +305,7 @@ done
 %doc
 
 %changelog
-* Tue Jan 06 2014 WANG Chao <chaowang@redhat.com> - 2.0.8-5
+* Tue Jan 06 2015 WANG Chao <chaowang@redhat.com> - 2.0.8-5
 - remove panic_on_warn kernel param in 2nd kernel
 - remove sysctl.conf to restore sysctl default values in 2nd kernel
 - fix a core_collector issue in ssh and raw dump case
