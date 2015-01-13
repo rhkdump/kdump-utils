@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.8
-Release: 5%{?dist}
+Release: 6%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -305,6 +305,11 @@ done
 %doc
 
 %changelog
+* Tue Jan 13 2015 WANG Chao <chaowang@redhat.com> - 2.0.8-6
+- mount fail if its mount point doesn't exist in /sysroot
+- rebuild initrd dependency during kdump restart
+- fix a dump path issue
+
 * Tue Jan 06 2015 WANG Chao <chaowang@redhat.com> - 2.0.8-5
 - remove panic_on_warn kernel param in 2nd kernel
 - remove sysctl.conf to restore sysctl default values in 2nd kernel
