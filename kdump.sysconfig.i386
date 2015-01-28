@@ -26,7 +26,7 @@ KDUMP_COMMANDLINE_APPEND="irqpoll nr_cpus=1 reset_devices numa=off udev.children
 KEXEC_ARGS=""
 
 #Where to find the boot image
-KDUMP_BOOTDIR="/boot"
+#KDUMP_BOOTDIR="/boot"
 
 #What is the image type used for kdump
 KDUMP_IMG="vmlinuz"

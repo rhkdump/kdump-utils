@@ -29,7 +29,7 @@ MKDUMPRD_ARGS=""
 KEXEC_ARGS=""
 
 #Where to find the boot image
-KDUMP_BOOTDIR="/boot"
+#KDUMP_BOOTDIR="/boot"
 
 #What is the image type used for kdump
 KDUMP_IMG="vmlinuz"

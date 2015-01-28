@@ -404,6 +404,16 @@ Say foo.com:/export/tmp is mounted on /var. In this case dump target is
 nfs server and path will be adjusted to "/crash" and dump will be saved to
 foo.com:/export/tmp/crash/ directory.
 
+Kdump boot directory
+====================
+Usually kdump kernel is the same as 1st kernel. So kdump will try to find
+kdump kernel under /boot according to /proc/cmdline. E.g we execute below
+command and get an output:
+	cat /proc/cmdline
+	BOOT_IMAGE=/xxx/vmlinuz-3.yyy.zzz  root=xxxx .....
+Then kdump kernel will be /boot/xxx/vmlinuz-3.yyy.zzz.
+However a variable KDUMP_BOOTDIR in /etc/sysconfig/kdump is provided to
+user if kdump kernel is put in a different directory.
 
 Kdump Post-Capture Executable
 
