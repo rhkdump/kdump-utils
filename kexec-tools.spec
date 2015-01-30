@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.8
-Release: 6%{?dist}
+Release: 7%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -305,6 +305,9 @@ done
 %doc
 
 %changelog
+* Fri Jan 30 2015 Baoquan He <bhe@redhat.com> - 2.0.8-7
+- kdumpctl: adjust the boot dir if kernel is put in sub dir of /boot
+
 * Tue Jan 13 2015 WANG Chao <chaowang@redhat.com> - 2.0.8-6
 - mount fail if its mount point doesn't exist in /sysroot
 - rebuild initrd dependency during kdump restart
