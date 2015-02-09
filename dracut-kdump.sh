@@ -35,13 +35,6 @@ do_kdump_pre()
     fi
 }
 
-do_kdump_post()
-{
-    if [ -n "$KDUMP_POST" ]; then
-        "$KDUMP_POST" "$1"
-    fi
-}
-
 add_dump_code()
 {
     DUMP_INSTRUCTION=$1
