@@ -3,6 +3,10 @@
 . $dracutfunctions
 . /lib/kdump/kdump-lib.sh
 
+if ! [[ -d "${initdir}/tmp" ]]; then
+    mkdir -p "${initdir}/tmp"
+fi
+
 check() {
     [[ $debug ]] && set -x
     #kdumpctl sets this explicitly
@@ -146,15 +150,15 @@ kdump_setup_team() {
     echo " team=$_netdev:$(echo $_slaves | sed -e 's/,$//')" >> ${initdir}/etc/cmdline.d/44team.conf
     #Buggy version teamdctl outputs to stderr!
     #Try to use the latest version of teamd.
-    teamdctl "$_netdev" config dump > /tmp/$$-$_netdev.conf
+    teamdctl "$_netdev" config dump > ${initdir}/tmp/$$-$_netdev.conf
     if [ $? -ne 0 ]
     then
         derror "teamdctl failed."
         exit 1
     fi
     inst_dir /etc/teamd
-    inst_simple /tmp/$$-$_netdev.conf "/etc/teamd/$_netdev.conf"
-    rm -f /tmp/$$-$_netdev.conf
+    inst_simple ${initdir}/tmp/$$-$_netdev.conf "/etc/teamd/$_netdev.conf"
+    rm -f ${initdir}/tmp/$$-$_netdev.conf
 }
 
 kdump_setup_vlan() {
@@ -328,20 +332,20 @@ default_dump_target_install_conf()
             _target=$(kdump_to_udev_name $_target)
         fi
 
-        echo "$_fstype $_target" >> /tmp/$$-kdump.conf
+        echo "$_fstype $_target" >> ${initdir}/tmp/$$-kdump.conf
 
         _path=${_save_path##"$_mntpoint"}
 
         #erase the old path line, then insert the parsed path
-        sed -i "/^path/d" /tmp/$$-kdump.conf
-        echo "path $_path" >> /tmp/$$-kdump.conf
+        sed -i "/^path/d" ${initdir}/tmp/$$-kdump.conf
+        echo "path $_path" >> ${initdir}/tmp/$$-kdump.conf
     fi
 
 }
 
 #install kdump.conf and what user specifies in kdump.conf
 kdump_install_conf() {
-    sed -ne '/^#/!p' /etc/kdump.conf > /tmp/$$-kdump.conf
+    sed -ne '/^#/!p' /etc/kdump.conf > ${initdir}/tmp/$$-kdump.conf
 
     while read config_opt config_val;
     do
@@ -349,7 +353,7 @@ kdump_install_conf() {
         config_val=$(strip_comments $config_val)
         case "$config_opt" in
         ext[234]|xfs|btrfs|minix|raw)
-            sed -i -e "s#^$config_opt[[:space:]]\+$config_val#$config_opt $(kdump_to_udev_name $config_val)#" /tmp/$$-kdump.conf
+            sed -i -e "s#^$config_opt[[:space:]]\+$config_val#$config_opt $(kdump_to_udev_name $config_val)#" ${initdir}/tmp/$$-kdump.conf
             ;;
         ssh|nfs)
             kdump_install_net "$config_val"
@@ -365,9 +369,9 @@ kdump_install_conf() {
 
     default_dump_target_install_conf
 
-    kdump_configure_fence_kdump  "/tmp/$$-kdump.conf"
-    inst "/tmp/$$-kdump.conf" "/etc/kdump.conf"
-    rm -f /tmp/$$-kdump.conf
+    kdump_configure_fence_kdump  "${initdir}/tmp/$$-kdump.conf"
+    inst "${initdir}/tmp/$$-kdump.conf" "/etc/kdump.conf"
+    rm -f ${initdir}/tmp/$$-kdump.conf
 }
 
 # Default sysctl parameters should suffice for kdump kernel.
