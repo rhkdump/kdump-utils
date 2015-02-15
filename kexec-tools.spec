@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.8
-Release: 7%{?dist}
+Release: 8%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -24,7 +24,7 @@ Source19: eppic_030413.tar.gz
 Source20: kdump-lib.sh
 Source21: kdump-in-cluster-environment.txt
 Source22: kdump-dep-generator.sh
-Source23: kdump-anaconda-addon-005-2-g86366ae.tar.gz
+Source23: kdump-anaconda-addon-005-5-gbf53665.tar.gz
 Source24: kdump-lib-initramfs.sh
 Source25: kdump.sysconfig.ppc64le
 
@@ -305,6 +305,10 @@ done
 %doc
 
 %changelog
+* Sun Feb 15 2015 Dave Young <dyoung@redhat.com> - 2.0.8-8
+- execute kdump_post after do_default_action
+- update kdump anaconda addon (translations/help text issus)
+
 * Fri Jan 30 2015 Baoquan He <bhe@redhat.com> - 2.0.8-7
 - kdumpctl: adjust the boot dir if kernel is put in sub dir of /boot
 
