@@ -161,10 +161,3 @@ do_final_action()
 {
     eval $FINAL_ACTION
 }
-
-do_kdump_post()
-{
-    if [ -n "$KDUMP_POST" ]; then
-        "$KDUMP_POST" "$1"
-    fi
-}
