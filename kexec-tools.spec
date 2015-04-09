@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.8
-Release: 8%{?dist}
+Release: 9%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -305,6 +305,11 @@ done
 %doc
 
 %changelog
+* Thu Apr 09 2015 Baoquan He <bhe@redhat.com> -2.0.8-9
+- Revert "execute kdump_post after do_default_action"
+- dracut-module-setup.sh: change the insecure use of /tmp/*$$* filenames
+- make kdump saving directory name consistent with RHEL6
+
 * Sun Feb 15 2015 Dave Young <dyoung@redhat.com> - 2.0.8-8
 - execute kdump_post after do_default_action
 - update kdump anaconda addon (translations/help text issus)
