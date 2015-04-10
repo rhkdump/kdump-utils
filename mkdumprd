@@ -13,6 +13,9 @@ conf_file="/etc/kdump.conf"
 SSH_KEY_LOCATION="/root/.ssh/kdump_id_rsa"
 SAVE_PATH=$(grep ^path $conf_file| cut -d' '  -f2)
 [ -z "$SAVE_PATH" ] && SAVE_PATH=$DEFAULT_PATH
+# strip the duplicated "/"
+SAVE_PATH=$(echo $SAVE_PATH | tr -s /)
+
 extra_modules=""
 dracut_args=("--hostonly" "-o" "plymouth dash resume")
 OVERRIDE_RESETTABLE=0

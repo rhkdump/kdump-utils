@@ -311,14 +311,16 @@ kdump_install_net() {
 default_dump_target_install_conf()
 {
     local _target _fstype
-    local _s  _t
     local _mntpoint
-    local _path _save_path
+    local _save_path
 
     is_user_configured_dump_target && return
 
     _save_path=$(get_option_value "path")
     [ -z "$_save_path" ] && _save_path=$DEFAULT_PATH
+
+    # strip the duplicated "/"
+    _save_path=$(echo $_save_path | tr -s /)
 
     _mntpoint=$(get_mntpoint_from_path $_save_path)
     _target=$(get_target_from_path $_save_path)
@@ -334,13 +336,12 @@ default_dump_target_install_conf()
 
         echo "$_fstype $_target" >> ${initdir}/tmp/$$-kdump.conf
 
-        _path=${_save_path##"$_mntpoint"}
+        _save_path=${_save_path##"$_mntpoint"}
 
         #erase the old path line, then insert the parsed path
         sed -i "/^path/d" ${initdir}/tmp/$$-kdump.conf
-        echo "path $_path" >> ${initdir}/tmp/$$-kdump.conf
+        echo "path $_save_path" >> ${initdir}/tmp/$$-kdump.conf
     fi
-
 }
 
 #install kdump.conf and what user specifies in kdump.conf
