@@ -128,7 +128,7 @@ cp %{SOURCE21} .
 make
 %ifarch %{ix86} x86_64 ppc64 s390x ppc64le
 make -C eppic/libeppic
-make -C makedumpfile-1.5.7 LINKTYPE=dynamic USELZO=on USESNAPPY=on
+make -C makedumpfile-1.5.7 LINKTYPE=dynamic USELZO=on USESNAPPY=on LDFLAGS="-fPIC"
 make -C makedumpfile-1.5.7 LDFLAGS="-I../eppic/libeppic -L../eppic/libeppic" eppic_makedumpfile.so
 %endif
 make -C kdump-anaconda-addon/po
