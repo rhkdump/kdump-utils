@@ -86,6 +86,38 @@ get_root_fs_device()
     return
 }
 
+# findmnt uses the option "-v, --nofsroot" to exclusive the [/dir]
+# in the SOURCE column for bind-mounts, then if $_mntpoint equals to
+# $_mntpoint_nofsroot, the mountpoint is not bind mounted directory.
+is_bind_mount()
+{
+    local _mntpoint=$(findmnt $1 | tail -n 1 | awk '{print $2}')
+    local _mntpoint_nofsroot=$(findmnt -v $1 | tail -n 1 | awk '{print $2}')
+
+    if [[ $_mntpoint = $_mntpoint_nofsroot ]]; then
+        return 1
+    else
+        return 0
+    fi
+}
+
+# Below is just an example for mount info
+# /dev/mapper/atomicos-root[/ostree/deploy/rhel-atomic-host/var], if the
+# directory is bind mounted. The former part represents the device path, rest
+# part is the bind mounted directory which quotes by bracket "[]".
+get_bind_mount_directory()
+{
+    local _mntpoint=$(findmnt $1 | tail -n 1 | awk '{print $2}')
+    local _mntpoint_nofsroot=$(findmnt -v $1 | tail -n 1 | awk '{print $2}')
+
+    _mntpoint=${_mntpoint#*$_mntpoint_nofsroot}
+
+    _mntpoint=${_mntpoint#[}
+    _mntpoint=${_mntpoint%]}
+
+    echo $_mntpoint
+}
+
 get_mntpoint_from_path() 
 {
     echo $(df $1 | tail -1 |  awk '{print $NF}')
