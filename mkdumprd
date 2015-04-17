@@ -103,7 +103,7 @@ to_mount() {
     local _dev=$1 _source _target _fstype _options _mntopts _pdev
 
     _source=$(findmnt -k -f -n -r -o SOURCE $_dev)
-    _target=$(findmnt -k -f -n -r -o TARGET $_dev)
+    _target=$(get_mntpoint_from_target $_dev)
     # mount under /sysroot if dump to root disk or mount under
     #/kdumproot/$_target in other cases in 2nd kernel. systemd
     #will be in charge to umount it.
@@ -145,10 +145,6 @@ to_mount() {
     fi
 
     echo "$_pdev $_mntopts"
-}
-
-to_mount_point() {
-    echo $(findmnt -k -f -n -r -o TARGET $1)
 }
 
 is_readonly_mount() {
@@ -204,7 +200,7 @@ mkdir_save_path_ssh()
 #Function: get_fs_size
 #$1=dump target
 get_fs_size() {
-    local _mnt=$(to_mount_point $1)
+    local _mnt=$(get_mntpoint_from_target $1)
     echo -n $(df -P "${_mnt}/$SAVE_PATH"|tail -1|awk '{print $4}')
 }
 

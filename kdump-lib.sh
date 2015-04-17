@@ -133,9 +133,33 @@ get_fs_type_from_target()
     echo $(findmnt -k -f -n -r -o FSTYPE $1)
 }
 
+# input: device path
+# output: the general mount point
+# find the general mount point, not the bind mounted point in atomic
+# As general system, Use the previous code
+#
+# ERROR and EXIT:
+# the device can be umounted the general mount point, if one of the mount point is bind mounted
+# For example:
+# mount /dev/sda /mnt/
+# mount -o bind /mnt/var /var
+# umount /mnt
 get_mntpoint_from_target()
 {
-    echo $(findmnt -k -f -n -r -o TARGET $1)
+    if is_atomic; then
+        for _mnt in $(findmnt -k -n -r -o TARGET $1)
+        do
+            if ! is_bind_mount $_mnt; then
+                echo $_mnt
+                return
+            fi
+        done
+
+        echo "Mount $1 firstly, without the bind mode" >&2
+        exit 1
+    else
+        echo $(findmnt -k -f -n -r -o TARGET $1)
+    fi
 }
 
 # get_option_value <option_name>
