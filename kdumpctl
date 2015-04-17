@@ -294,14 +294,12 @@ get_pcs_cluster_modified_files()
 
 check_boot_dir()
 {
-	local _is_atomic
 	#If user specify a boot dir for kdump kernel, let's use it. Otherwise
 	#check whether it's a atomic host. If yes parse the subdirectory under
 	#/boot; If not just find it under /boot.
 	[ -n "$KDUMP_BOOTDIR" ] && return
 
-	_is_atomic=$(cat /proc/cmdline | grep "ostree")
-	if [ -z "$_is_atomic" ] || [ "$(uname -m)" = "s390x" ]; then
+	if ! is_atomic || [ "$(uname -m)" = "s390x" ]; then
 		KDUMP_BOOTDIR="/boot"
 	else
 		eval $(cat /proc/cmdline| grep "BOOT_IMAGE" | cut -d' ' -f1)

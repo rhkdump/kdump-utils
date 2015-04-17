@@ -220,3 +220,8 @@ is_ipv6_target()
     _server=${_server:-$_server_tmp}
     echo $_server | grep -q ":"
 }
+
+is_atomic()
+{
+    grep -q "ostree" /proc/cmdline
+}
