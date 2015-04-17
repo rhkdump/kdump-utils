@@ -182,7 +182,10 @@ make_absolute_save_path()
     local _mnt
 
     [ -n $_target ] && _mnt=$(get_mntpoint_from_target $1)
-    echo "${_mnt}/$SAVE_PATH"
+    _mnt="${_mnt}/$SAVE_PATH"
+
+    # strip the duplicated "/"
+    echo "$_mnt" | tr -s /
 }
 
 check_save_path_fs()

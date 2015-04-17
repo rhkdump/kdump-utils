@@ -362,6 +362,17 @@ handle_default_dump_target()
 
     _mntpoint=$(get_mntpoint_from_path $SAVE_PATH)
     _target=$(get_target_from_path $SAVE_PATH)
+
+    if is_atomic && is_bind_mount $_mntpoint; then
+        SAVE_PATH=${SAVE_PATH##"$_mntpoint"}
+        # the real dump path in the 2nd kernel, if the mount point is bind mounted.
+        SAVE_PATH=$(get_bind_mount_directory $_mntpoint)/$SAVE_PATH
+        _mntpoint=$(get_mntpoint_from_target $_target)
+
+        # the absolute path in the 1st kernel
+        SAVE_PATH=$_mntpoint/$SAVE_PATH
+    fi
+
     if [ "$_mntpoint" != "/" ]; then
         SAVE_PATH=${SAVE_PATH##"$_mntpoint"}
         _fstype=$(get_fs_type_from_target $_target)
@@ -533,8 +544,17 @@ do
         if [ "$config_opt" = "nfs" ]; then
             add_dracut_module "nfs"
         fi
+
+        _absolute_save_path=$(make_absolute_save_path $config_val)
+        _mntpoint=$(get_mntpoint_from_path $_absolute_save_path)
+        if is_atomic && is_bind_mount $_mntpoint; then
+            SAVE_PATH=${_absolute_save_path##"$_mntpoint"}
+            # the real dump path in the 2nd kernel, if the mount point is bind mounted.
+            SAVE_PATH=$(get_bind_mount_directory $_mntpoint)/$SAVE_PATH
+        fi
+
         add_mount "$config_val"
-        check_save_path_fs $(make_absolute_save_path $config_val)
+        check_save_path_fs $_absolute_save_path
         check_size fs $config_val
         ;;
     raw)
