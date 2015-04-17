@@ -311,8 +311,7 @@ kdump_install_net() {
 default_dump_target_install_conf()
 {
     local _target _fstype
-    local _mntpoint
-    local _save_path
+    local _mntpoint _save_path
 
     is_user_configured_dump_target && return
 
@@ -324,6 +323,17 @@ default_dump_target_install_conf()
 
     _mntpoint=$(get_mntpoint_from_path $_save_path)
     _target=$(get_target_from_path $_save_path)
+
+    if is_atomic && is_bind_mount $_mntpoint; then
+        _save_path=${_save_path##"$_mntpoint"}
+        # the real dump path in the 2nd kernel, if the mount point is bind mounted.
+        _save_path=$(get_bind_mount_directory $_mntpoint)/$_save_path
+        _mntpoint=$(get_mntpoint_from_target $_target)
+
+        # the absolute path in the 1st kernel
+        _save_path=$_mntpoint/$_save_path
+    fi
+
     if [ "$_mntpoint" != "/" ]; then
         _fstype=$(get_fs_type_from_target $_target)
 
@@ -336,7 +346,33 @@ default_dump_target_install_conf()
 
         echo "$_fstype $_target" >> ${initdir}/tmp/$$-kdump.conf
 
+        # strip the duplicated "/"
+        _save_path=$(echo $_save_path | tr -s /)
         _save_path=${_save_path##"$_mntpoint"}
+    fi
+
+    #erase the old path line, then insert the parsed path
+    sed -i "/^path/d" ${initdir}/tmp/$$-kdump.conf
+    echo "path $_save_path" >> ${initdir}/tmp/$$-kdump.conf
+}
+
+adjust_bind_mount_path()
+{
+    local _target=$1
+    local _save_path=$(get_option_value "path")
+    [ -z "$_save_path" ] && _save_path=$DEFAULT_PATH
+
+    # strip the duplicated "/"
+    _save_path=$(echo $_save_path | tr -s /)
+
+    local _absolute_save_path=$(get_mntpoint_from_target $_target)/$_save_path
+    _absolute_save_path=$(echo "$_absolute_save_path" | tr -s /)
+    local _mntpoint=$(get_mntpoint_from_path $_absolute_save_path)
+
+    if is_bind_mount $_mntpoint; then
+        _save_path=${_absolute_save_path##"$_mntpoint"}
+        # the real dump path in the 2nd kernel, if the mount point is bind mounted.
+        _save_path=$(get_bind_mount_directory $_mntpoint)/$_save_path
 
         #erase the old path line, then insert the parsed path
         sed -i "/^path/d" ${initdir}/tmp/$$-kdump.conf
@@ -355,6 +391,9 @@ kdump_install_conf() {
         case "$config_opt" in
         ext[234]|xfs|btrfs|minix|raw)
             sed -i -e "s#^$config_opt[[:space:]]\+$config_val#$config_opt $(kdump_to_udev_name $config_val)#" ${initdir}/tmp/$$-kdump.conf
+            if is_atomic; then
+                adjust_bind_mount_path "$config_val"
+            fi
             ;;
         ssh|nfs)
             kdump_install_net "$config_val"
