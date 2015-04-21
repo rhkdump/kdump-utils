@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.8
-Release: 9%{?dist}
+Release: 10%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -305,6 +305,15 @@ done
 %doc
 
 %changelog
+* Tue Apr 21 2015 Baoquan He <bhe@redhat.com> -2.0.8-10
+- add fPIC to makefumpfile CFLAGS to support hardening
+- dracut-module-setup: Enhance kdump to support the bind mounted feature in Atomic
+- Fix the warning if the target path is bind mount in Atomic
+- Get the mount point correctly, if the device has several mount point
+- kdump-lib: Add new function to judge the system is Atomic or not
+- kdump-lib: Add the new function to enhance bind mounted judgement
+- Remove duplicate slash in save path
+
 * Thu Apr 09 2015 Baoquan He <bhe@redhat.com> -2.0.8-9
 - Revert "execute kdump_post after do_default_action"
 - dracut-module-setup.sh: change the insecure use of /tmp/*$$* filenames
