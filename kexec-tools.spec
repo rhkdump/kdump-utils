@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.8
-Release: 10%{?dist}
+Release: 11%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -305,6 +305,11 @@ done
 %doc
 
 %changelog
+* Wed Jun 03 2015 Baoquan He <bhe@redhat.com> -2.0.8-11
+- make kdump work when kernel crash after shutdown
+- Disable transparent hugepages in second kernel
+- Filtered out "noauto" options in 2nd kernel fstab
+
 * Tue Apr 21 2015 Baoquan He <bhe@redhat.com> -2.0.8-10
 - add fPIC to makefumpfile CFLAGS to support hardening
 - dracut-module-setup: Enhance kdump to support the bind mounted feature in Atomic
