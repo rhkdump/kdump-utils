@@ -24,7 +24,7 @@ Source19: eppic_030413.tar.gz
 Source20: kdump-lib.sh
 Source21: kdump-in-cluster-environment.txt
 Source22: kdump-dep-generator.sh
-Source23: kdump-anaconda-addon-005-8-ge6ea581.tar.gz
+Source23: kdump-anaconda-addon-005-9-g6115ca7.tar.gz
 Source24: kdump-lib-initramfs.sh
 Source25: kdump.sysconfig.ppc64le
 
@@ -302,9 +302,13 @@ done
 
 %files anaconda-addon -f kdump-anaconda-addon.lang
 %{_datadir}/anaconda/addons/com_redhat_kdump
+%{_datadir}/icons/hicolor/scalable/apps/kdump.svg
 %doc
 
 %changelog
+* Thu Jun 11 2015 Dave Young <dyoung@redhat.com> -2.0.8-13
+- Update kdump anaconda addon icon again.
+
 * Wed Jun 10 2015 Dave Young <dyoung@redhat.com> -2.0.8-12
 - Update kdump anaconda addon, change an icon.
 
