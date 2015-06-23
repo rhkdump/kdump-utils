@@ -1,6 +1,6 @@
 Name: kexec-tools
-Version: 2.0.8
-Release: 13%{?dist}
+Version: 2.0.9
+Release: 1%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -306,6 +306,11 @@ done
 %doc
 
 %changelog
+* Tue Jun 23 2015 Dave Young <dyoung@redhat.com> - 2.0.9-1
+- Rebase kexec-tools 2.0.9
+- Rebase makedumpfile 1.5.8
+- revert 6347630 since ipv6 patches has not been reviewed.
+
 * Wed Jun 17 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.0.8-13
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
 
