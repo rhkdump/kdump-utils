@@ -101,6 +101,22 @@ kdump_get_perm_addr() {
     fi
 }
 
+# Prefix kernel assigned names with "kdump-". EX: eth0 -> kdump-eth0
+# Because kernel assigned names are not persistent between 1st and 2nd
+# kernel. We could probably end up with eth0 being eth1, eth0 being
+# eth1, and naming conflict happens.
+kdump_setup_ifname() {
+    local _ifname
+
+    if [[ $1 =~ eth* ]]; then
+        _ifname="kdump-$1"
+    else
+        _ifname="$1"
+    fi
+
+    echo "$_ifname"
+}
+
 kdump_setup_bridge() {
     local _netdev=$1
     local _brif _dev _mac _kdumpdev

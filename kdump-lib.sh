@@ -197,57 +197,6 @@ check_save_path_fs()
     fi
 }
 
-
-# Prefix kernel assigned names with "kdump-". EX: eth0 -> kdump-eth0
-# Because kernel assigned names are not persistent between 1st and 2nd
-# kernel. We could probably end up with eth0 being eth1, eth0 being
-# eth1, and naming conflict happens.
-kdump_setup_ifname() {
-    local _ifname
-
-    if [[ $1 =~ eth* ]]; then
-        _ifname="kdump-$1"
-    else
-        _ifname="$1"
-    fi
-
-    echo "$_ifname"
-}
-
-# get ip address or hostname from nfs/ssh config value
-get_remote_host()
-{
-    local _config_val=$1
-
-    # in ipv6, the _config_val format is [xxxx:xxxx::xxxx%eth0]:/mnt/nfs or
-    # username at xxxx:xxxx::xxxx%eth0. what we need is just  xxxx:xxxx::xxxx
-    _config_val=${_config_val#*@}
-    _config_val=${_config_val%:/*}
-    _config_val=${_config_val#[}
-    _config_val=${_config_val%]}
-    _config_val=${_config_val%\%*}
-    echo $_config_val
-}
-
-# check the remote server ip address tpye
-is_ipv6_target()
-{
-    local _server _server_tmp
-
-    if is_ssh_dump_target; then
-        _server=`get_option_value ssh`
-    elif is_nfs_dump_target; then
-        _server=`get_option_value nfs`
-    fi
-
-    [ -z "$_server" ] && return 1
-    _server=`get_remote_host $_server`
-    _server_tmp=$_server
-    _server=`getent ahosts $_server | head -n 1 | cut -d' ' -f1`
-    _server=${_server:-$_server_tmp}
-    echo $_server | grep -q ":"
-}
-
 is_atomic()
 {
     grep -q "ostree" /proc/cmdline
