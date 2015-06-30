@@ -64,10 +64,25 @@ kdump_is_vlan() {
 
 # $1: netdev name
 kdump_setup_dns() {
-    _dnsfile=${initdir}/etc/cmdline.d/42dns.conf
+    local _nameserver _dns
+    local _dnsfile=${initdir}/etc/cmdline.d/42dns.conf
     . /etc/sysconfig/network-scripts/ifcfg-$1
+
     [ -n "$DNS1" ] && echo "nameserver=$DNS1" > "$_dnsfile"
     [ -n "$DNS2" ] && echo "nameserver=$DNS2" >> "$_dnsfile"
+
+    while read content;
+    do
+        _nameserver=$(echo $content | grep ^nameserver)
+        [ -z "$_nameserver" ] && continue
+
+        _dns=$(echo $_nameserver | cut -d' ' -f2)
+        [ -z "$_dns" ] && continue
+
+        if [ ! -f $_dnsfile ] || [ ! $(cat $_dnsfile | grep -q $_dns) ]; then
+            echo "nameserver=$_dns" >> "$_dnsfile"
+        fi
+    done < "/etc/resolv.conf"
 }
 
 #$1: netdev name
