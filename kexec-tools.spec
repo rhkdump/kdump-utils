@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.9
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -51,6 +51,8 @@ BuildRequires: systemd-units
 %ifarch %{ix86} x86_64 ppc64 ppc s390x ppc64le
 Obsoletes: diskdumputils netdump kexec-tools-eppic
 %endif
+
+%undefine _hardened_build
 
 ExcludeArch: aarch64
 
@@ -128,7 +130,7 @@ cp %{SOURCE21} .
 make
 %ifarch %{ix86} x86_64 ppc64 s390x ppc64le
 make -C eppic/libeppic
-make -C makedumpfile-1.5.8 LINKTYPE=dynamic USELZO=on USESNAPPY=on LDFLAGS="-fPIC"
+make -C makedumpfile-1.5.8 LINKTYPE=dynamic USELZO=on USESNAPPY=on
 make -C makedumpfile-1.5.8 LDFLAGS="-I../eppic/libeppic -L../eppic/libeppic" eppic_makedumpfile.so
 %endif
 make -C kdump-anaconda-addon/po
@@ -306,6 +308,10 @@ done
 %doc
 
 %changelog
+* Thu Jul 2 2015 Dave Young <dyoung@redhat.com> - 2.0.9-2
+- Resolve bug 1236456, kexec load fail because koji add extra gcc flags.
+- Remove -FPIC for makedumpfile since it is not necessary without harden build
+
 * Tue Jun 23 2015 Dave Young <dyoung@redhat.com> - 2.0.9-1
 - Rebase kexec-tools 2.0.9
 - Rebase makedumpfile 1.5.8
