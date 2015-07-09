@@ -1,6 +1,6 @@
 Name: kexec-tools
-Version: 2.0.9
-Release: 2%{?dist}
+Version: 2.0.10
+Release: 1%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -308,6 +308,11 @@ done
 %doc
 
 %changelog
+* Thu Jul 9 2015 Dave Young <dyoung@redhat.com> - 2.0.10-1
+- Rebase kexec-tools 2.0.10
+- Rebase eppic git tree 050615
+- Enhance kdump.conf "default" parameters check
+
 * Thu Jul 2 2015 Dave Young <dyoung@redhat.com> - 2.0.9-2
 - Resolve bug 1236456, kexec load fail because koji add extra gcc flags.
 - Remove -FPIC for makedumpfile since it is not necessary without harden build
