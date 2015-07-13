@@ -83,6 +83,11 @@ kdump_static_ip() {
        _gateway=$(ip route list dev $_netdev | awk '/^default /{print $3}')
        echo -n "${_srcaddr}::${_gateway}:${_netmask}::"
     fi
+
+    /sbin/ip route show | grep -v default | grep "^[[:digit:]].*via.* $_netdev " |\
+    while read line; do
+        echo $line | awk '{printf("rd.route=%s:%s:%s\n", $1, $3, $5)}'
+    done >> ${initdir}/etc/cmdline.d/45route-static.conf
 }
 
 kdump_get_mac_addr() {
@@ -211,27 +216,9 @@ kdump_setup_znet() {
     echo rd.znet=${NETTYPE},${SUBCHANNELS}${_options} > ${initdir}/etc/cmdline.d/30znet.conf
 }
 
-get_routes() {
-    local _netdev="$1" _target="$2"
-    local _route
-
-    _route=`/sbin/ip route get to $_target 2>&1`
-    if /sbin/ip route get to $_target | grep -q "via";
-    then
-        # route going to a different subnet via a router
-        echo $_route | awk '{printf("rd.route=%s:%s:%s\n", $1, $3, $5)}' \
-            >> ${initdir}/etc/cmdline.d/45route-static.conf
-    else
-        # route going to a different subnet though directly connected
-        echo $_route | awk '{printf("rd.route=%s::%s\n", $1, $3)}' \
-            >> ${initdir}/etc/cmdline.d/45route-static.conf
-    fi
-
-}
-
 # Setup dracut to bringup a given network interface
 kdump_setup_netdev() {
-    local _netdev=$1 _srcaddr=$2 _target=$3
+    local _netdev=$1 _srcaddr=$2
     local _static _proto _ip_conf _ip_opts _ifname_opts
 
     if [ "$(uname -m)" = "s390x" ]; then
@@ -245,8 +232,6 @@ kdump_setup_netdev() {
     else
         _proto=dhcp
     fi
-
-    get_routes $_netdev $_target
 
     _ip_conf="${initdir}/etc/cmdline.d/40ip.conf"
     _ip_opts=" ip=${_static}$(kdump_setup_ifname $_netdev):${_proto}"
@@ -303,7 +288,7 @@ kdump_install_net() {
         _netdev=`echo $_netdev|awk '{print $3}'|head -n 1`
     fi
 
-    kdump_setup_netdev "${_netdev}" "${_srcaddr}" "${_server}"
+    kdump_setup_netdev "${_netdev}" "${_srcaddr}"
 
     #save netdev used for kdump as cmdline
     # Whoever calling kdump_install_net() is setting up the default gateway,
@@ -516,7 +501,7 @@ kdump_setup_iscsi_device() {
     srcaddr=$(echo $netdev | awk '{ print $3; exit }')
     netdev=$(echo $netdev | awk '{ print $1; exit }')
 
-    kdump_setup_netdev $netdev $srcaddr $tgt_ipaddr
+    kdump_setup_netdev $netdev $srcaddr
 
     # prepare netroot= command line
     # FIXME: IPV6 addresses require explicit [] around $tgt_ipaddr
