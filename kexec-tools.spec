@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.10
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -24,7 +24,7 @@ Source19: eppic_050615.tar.gz
 Source20: kdump-lib.sh
 Source21: kdump-in-cluster-environment.txt
 Source22: kdump-dep-generator.sh
-Source23: kdump-anaconda-addon-005-9-g6115ca7.tar.gz
+Source23: kdump-anaconda-addon-005-10-gd16915f.tar.gz
 Source24: kdump-lib-initramfs.sh
 Source25: kdump.sysconfig.ppc64le
 
@@ -308,6 +308,9 @@ done
 %doc
 
 %changelog
+* Mon Jul 13 2015 Dave Young <dyoung@redhat.com> - 2.0.10-2
+- update kdump addon icon
+
 * Thu Jul 9 2015 Dave Young <dyoung@redhat.com> - 2.0.10-1
 - Rebase kexec-tools 2.0.10
 - Rebase eppic git tree 050615
