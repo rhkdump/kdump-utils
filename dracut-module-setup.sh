@@ -542,10 +542,12 @@ kdump_setup_iscsi_device() {
     kdump_setup_netdev $netdev $srcaddr
 
     # prepare netroot= command line
-    # FIXME: IPV6 addresses require explicit [] around $tgt_ipaddr
     # FIXME: Do we need to parse and set other parameters like protocol, port
     #        iscsi_iface_name, netdev_name, LUN etc.
 
+    if is_ipv6_address $tgt_ipaddr; then
+        tgt_ipaddr="[$tgt_ipaddr]"
+    fi
     netroot_str="netroot=iscsi:${userpwd_str}${userpwd_in_str}@$tgt_ipaddr::::$tgt_name"
 
     [[ -f $netroot_conf ]] || touch $netroot_conf
