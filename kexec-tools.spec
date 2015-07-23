@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.10
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -308,6 +308,11 @@ done
 %doc
 
 %changelog
+* Thu Jul 23 2015 Dave Young <dyoung@redhat.com> - 2.0.10-3
+- Update kdump addon icon
+- Revert static route corner case patches per bhe. He discussed with Marc
+  it is just a corner case.
+
 * Mon Jul 13 2015 Dave Young <dyoung@redhat.com> - 2.0.10-2
 - update kdump addon icon
 
