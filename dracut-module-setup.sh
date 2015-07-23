@@ -658,6 +658,7 @@ install() {
     inst "/bin/date" "/bin/date"
     inst "/bin/sync" "/bin/sync"
     inst "/bin/cut" "/bin/cut"
+    inst "/bin/head" "/bin/head"
     inst "/sbin/makedumpfile" "/sbin/makedumpfile"
     inst "/sbin/vmcore-dmesg" "/sbin/vmcore-dmesg"
     inst "/lib/kdump/kdump-lib.sh" "/lib/kdump-lib.sh"

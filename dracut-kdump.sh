@@ -121,9 +121,9 @@ get_host_ip()
     then
         kdumpnic=$(getarg kdumpnic=)
         [ -z "$kdumpnic" ] && echo "kdump: failed to get kdumpnic!" && return 1
-        _host=`ip addr show dev $kdumpnic|grep 'inet '`
+        _host=`ip addr show dev $kdumpnic|grep '[ ]*inet'`
         [ $? -ne 0 ] && echo "kdump: wrong kdumpnic: $kdumpnic" && return 1
-        _host="${_host##*inet }"
+        _host=`echo $_host | head -n 1 | cut -d' ' -f2`
         _host="${_host%%/*}"
         [ -z "$_host" ] && echo "kdump: wrong kdumpnic: $kdumpnic" && return 1
         HOST_IP=$_host
