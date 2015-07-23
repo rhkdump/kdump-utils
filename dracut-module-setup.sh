@@ -666,7 +666,8 @@ install() {
 installkernel() {
     wdt=$(lsmod|cut -f1 -d' '|grep "wdt$")
     if [ -n "$wdt" ]; then
-        [ "$wdt" = "iTCO_wdt" ] && instmods lpc_ich
+        [ "$wdt" = "iTCO_wdt" ] && instmods lpc_ich &&
+            echo "rd.driver.pre=lpc_ich,iTCO_wdt " >> ${initdir}/etc/cmdline.d/00-wdt.conf
         instmods $wdt
     fi
 }
