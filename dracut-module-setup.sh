@@ -306,12 +306,18 @@ get_ip_route_field()
 #$1: config values of net line in kdump.conf
 #$2: srcaddr of network device
 kdump_install_net() {
-    local _server _netdev _srcaddr _route
+    local _server _netdev _srcaddr _route _serv_tmp
     local config_val="$1"
 
     _server=$(get_remote_host $config_val)
 
-    is_hostname $_server && _server=`getent hosts $_server | head -n 1 | cut -d' ' -f1`
+    if is_hostname $_server; then
+        _serv_tmp=`getent ahosts $_server | grep -v : | head -n 1`
+        if [ -z "$_serv_tmp" ]; then
+            _serv_tmp=`getent ahosts $_server | head -n 1`
+        fi
+        _server=`echo $_serv_tmp | cut -d' ' -f1`
+    fi
 
     _route=`/sbin/ip -o route get to $_server 2>&1`
     [ $? != 0 ] && echo "Bad kdump location: $config_val" && exit 1
