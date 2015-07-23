@@ -201,3 +201,32 @@ is_atomic()
 {
     grep -q "ostree" /proc/cmdline
 }
+
+is_ipv6_address()
+{
+    echo $1 | grep -q ":"
+}
+
+# get ip address or hostname from nfs/ssh config value
+get_remote_host()
+{
+    local _config_val=$1
+
+    # ipv6 address in kdump.conf is around with "[]",
+    # factor out the ipv6 address
+    _config_val=${_config_val#*@}
+    _config_val=${_config_val%:/*}
+    _config_val=${_config_val#[}
+    _config_val=${_config_val%]}
+    echo $_config_val
+}
+
+is_hostname()
+{
+    local _hostname=`echo $1 | grep ":"`
+
+    if [ -n "$_hostname" ]; then
+        return 1
+    fi
+    echo $1 | grep -q "[a-zA-Z]"
+}

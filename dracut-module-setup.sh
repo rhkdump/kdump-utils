@@ -89,19 +89,38 @@ kdump_setup_dns() {
 #$2: srcaddr
 #if it use static ip echo it, or echo null
 kdump_static_ip() {
-    local _netmask _gateway
-    local _netdev="$1" _srcaddr="$2"
-    local _ipaddr=$(ip addr show dev $_netdev permanent | \
-                    awk "/ $_srcaddr\/.* $_netdev\$/{print \$2}")
-    if [ -n "$_ipaddr" ]; then
-       _netmask=$(ipcalc -m $_ipaddr | cut -d'=' -f2)
-       _gateway=$(ip route list dev $_netdev | awk '/^default /{print $3}')
-       echo -n "${_srcaddr}::${_gateway}:${_netmask}::"
+    local _netdev="$1" _srcaddr="$2" _ipv6_flag
+    local _netmask _gateway _ipaddr _target _nexthop
+
+    _ipaddr=$(ip addr show dev $_netdev | awk "/ $_srcaddr\/.* /{print \$2}")
+
+    if is_ipv6_address $_srcaddr; then
+        _ipv6_flag="-6"
     fi
 
-    /sbin/ip route show | grep -v default | grep "^[[:digit:]].*via.* $_netdev " |\
-    while read line; do
-        echo $line | awk '{printf("rd.route=%s:%s:%s\n", $1, $3, $5)}'
+    if [ -n "$_ipaddr" ]; then
+        _gateway=$(ip $_ipv6_flag route list dev $_netdev | awk '/^default /{print $3}')
+
+        if [ "x" !=  "x"$_ipv6_flag ]; then
+            # _ipaddr="2002::56ff:feb6:56d5/64", _netmask is the number after "/"
+            _netmask=${_ipaddr#*\/}
+            _srcaddr="[$_srcaddr]"
+            _gateway="[$_gateway]"
+        else
+            _netmask=$(ipcalc -m $_ipaddr | cut -d'=' -f2)
+        fi
+        echo -n "${_srcaddr}::${_gateway}:${_netmask}::"
+    fi
+
+    /sbin/ip $_ipv6_flag route show | grep -v default | grep ".*via.* $_netdev " |\
+    while read _route; do
+        _target=`echo $_route | cut -d ' ' -f1`
+        _nexthop=`echo $_route | cut -d ' ' -f3`
+        if [ "x" !=  "x"$_ipv6_flag ]; then
+            _target="[$_target]"
+            _nexthop="[$_nexthop]"
+        fi
+        echo "rd.route=$_target:$_nexthop:$_netdev"
     done >> ${initdir}/etc/cmdline.d/45route-static.conf
 }
 
@@ -276,32 +295,30 @@ kdump_setup_netdev() {
     kdump_setup_dns "$_netdev"
 }
 
+get_ip_route_field()
+{
+    if `echo $1 | grep -q $2`; then
+        echo ${1##*$2} | cut -d ' ' -f1
+    fi
+}
+
 #Function:kdump_install_net
 #$1: config values of net line in kdump.conf
 #$2: srcaddr of network device
 kdump_install_net() {
-    local _server _netdev _srcaddr
+    local _server _netdev _srcaddr _route
     local config_val="$1"
 
-    _server=`echo $config_val | sed 's/.*@//' | cut -d':' -f1`
+    _server=$(get_remote_host $config_val)
 
-    _need_dns=`echo $_server|grep "[a-zA-Z]"`
-    [ -n "$_need_dns" ] && _server=`getent hosts $_server|cut -d' ' -f1`
+    is_hostname $_server && _server=`getent hosts $_server | head -n 1 | cut -d' ' -f1`
 
-    _netdev=`/sbin/ip route get to $_server 2>&1`
+    _route=`/sbin/ip -o route get to $_server 2>&1`
     [ $? != 0 ] && echo "Bad kdump location: $config_val" && exit 1
 
     #the field in the ip output changes if we go to another subnet
-    if [ -n "`echo $_netdev | grep via`" ]
-    then
-        # we are going to a different subnet
-        _srcaddr=`echo $_netdev|awk '{print $7}'|head -n 1`
-        _netdev=`echo $_netdev|awk '{print $5;}'|head -n 1`
-    else
-        # we are on the same subnet
-        _srcaddr=`echo $_netdev|awk '{print $5}'|head -n 1`
-        _netdev=`echo $_netdev|awk '{print $3}'|head -n 1`
-    fi
+    _srcaddr=$(get_ip_route_field "$_route" "src")
+    _netdev=$(get_ip_route_field "$_route" "dev")
 
     kdump_setup_netdev "${_netdev}" "${_srcaddr}"
 
