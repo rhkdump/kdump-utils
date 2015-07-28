@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.10
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -308,6 +308,11 @@ done
 %doc
 
 %changelog
+* Tue Jul 28 2015 Dave Young <dyoung@redhat.com> - 2.0.10-4
+- ipv6 support (except for link scope addresses)
+- Apply the manual DNS to the 2nd kernel
+- load iTCO_wdt early in cmdline hook
+
 * Thu Jul 23 2015 Dave Young <dyoung@redhat.com> - 2.0.10-3
 - Update kdump addon icon
 - Revert static route corner case patches per bhe. He discussed with Marc
