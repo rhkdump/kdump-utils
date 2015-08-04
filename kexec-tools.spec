@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.10
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -308,6 +308,9 @@ done
 %doc
 
 %changelog
+* Tue Aug 4 2015 Dave Young <dyoung@redhat.com> - 2.0.10-5
+- Update kdump addon to fix an installation hang issue.
+
 * Tue Jul 28 2015 Dave Young <dyoung@redhat.com> - 2.0.10-4
 - ipv6 support (except for link scope addresses)
 - Apply the manual DNS to the 2nd kernel
