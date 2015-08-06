@@ -92,7 +92,7 @@ kdump_static_ip() {
     local _netdev="$1" _srcaddr="$2" _ipv6_flag
     local _netmask _gateway _ipaddr _target _nexthop
 
-    _ipaddr=$(ip addr show dev $_netdev | awk "/ $_srcaddr\/.* /{print \$2}")
+    _ipaddr=$(ip addr show dev $_netdev permanent | awk "/ $_srcaddr\/.* /{print \$2}")
 
     if is_ipv6_address $_srcaddr; then
         _ipv6_flag="-6"
