@@ -99,7 +99,8 @@ kdump_static_ip() {
     fi
 
     if [ -n "$_ipaddr" ]; then
-        _gateway=$(ip $_ipv6_flag route list dev $_netdev | awk '/^default /{print $3}')
+        _gateway=$(ip $_ipv6_flag route list dev $_netdev | \
+                awk '/^default /{print $3}' | head -n 1)
 
         if [ "x" !=  "x"$_ipv6_flag ]; then
             # _ipaddr="2002::56ff:feb6:56d5/64", _netmask is the number after "/"
