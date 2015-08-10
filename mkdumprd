@@ -17,7 +17,7 @@ SAVE_PATH=$(grep ^path $conf_file| cut -d' '  -f2)
 SAVE_PATH=$(echo $SAVE_PATH | tr -s /)
 
 extra_modules=""
-dracut_args=("--hostonly" "-o" "plymouth dash resume")
+dracut_args=("--hostonly" "-o" "plymouth dash resume ifcfg")
 OVERRIDE_RESETTABLE=0
 
 perror_exit() {
