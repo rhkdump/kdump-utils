@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.10
-Release: 5%{?dist}
+Release: 6%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -308,6 +308,11 @@ done
 %doc
 
 %changelog
+* Thu Aug 13 2015 Baoquan He <bhe@redhat.com> - 2.0.10-6
+- mkdumprd: Remove ifcfg from dracut's modules
+- module-setup: Choose the first matched gateway in kdump_static_ip
+- module-setup: Add permanent option to detect static ip address or not
+
 * Tue Aug 4 2015 Dave Young <dyoung@redhat.com> - 2.0.10-5
 - Update kdump addon to fix an installation hang issue.
 
