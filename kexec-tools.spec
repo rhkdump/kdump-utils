@@ -27,6 +27,7 @@ Source22: kdump-dep-generator.sh
 Source23: kdump-anaconda-addon-005-12-g60fa4c1.tar.gz
 Source24: kdump-lib-initramfs.sh
 Source25: kdump.sysconfig.ppc64le
+Source26: kdumpctl.8
 
 #######################################
 # These are sources for mkdumpramfs
@@ -159,6 +160,7 @@ install -m 755 %{SOURCE7} $RPM_BUILD_ROOT/sbin/mkdumprd
 install -m 644 %{SOURCE8} $RPM_BUILD_ROOT%{_sysconfdir}/kdump.conf
 install -m 644 kexec/kexec.8 $RPM_BUILD_ROOT%{_mandir}/man8/kexec.8
 install -m 644 %{SOURCE12} $RPM_BUILD_ROOT%{_mandir}/man8/mkdumprd.8
+install -m 644 %{SOURCE26} $RPM_BUILD_ROOT%{_mandir}/man8/kdumpctl.8
 install -m 755 %{SOURCE20} $RPM_BUILD_ROOT%{_prefix}/lib/kdump/kdump-lib.sh
 install -m 755 %{SOURCE24} $RPM_BUILD_ROOT%{_prefix}/lib/kdump/kdump-lib-initramfs.sh
 %ifnarch s390x
