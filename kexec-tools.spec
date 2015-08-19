@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.10
-Release: 6%{?dist}
+Release: 7%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -310,6 +310,9 @@ done
 %doc
 
 %changelog
+* Wed Aug 19 2015 Dave Young <dyoung@redhat.com> - 2.0.10-7
+- add man page for kdumpctl
+
 * Thu Aug 13 2015 Baoquan He <bhe@redhat.com> - 2.0.10-6
 - mkdumprd: Remove ifcfg from dracut's modules
 - module-setup: Choose the first matched gateway in kdump_static_ip
