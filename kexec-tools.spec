@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.10
-Release: 7%{?dist}
+Release: 8%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -310,6 +310,9 @@ done
 %doc
 
 %changelog
+* Tue Sep 8 2015 Dave Young <dyoung@redhat.com> - 2.0.10-8
+- update kdump addon to fix a kickstart installationi issue 
+
 * Wed Aug 19 2015 Dave Young <dyoung@redhat.com> - 2.0.10-7
 - add man page for kdumpctl
 
