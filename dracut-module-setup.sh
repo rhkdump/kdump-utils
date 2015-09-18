@@ -336,7 +336,7 @@ kdump_install_net() {
     # the default gate way for network dump, eth1 in the fence kdump path will
     # call kdump_install_net again and we don't want eth1 to be the default
     # gateway.
-    if [ ! -f ${initdir}${initdir}/etc/cmdline.d/60kdumpnic.conf ] &&
+    if [ ! -f ${initdir}/etc/cmdline.d/60kdumpnic.conf ] &&
        [ ! -f ${initdir}/etc/cmdline.d/70bootdev.conf ]; then
         echo "kdumpnic=$(kdump_setup_ifname $_netdev)" > ${initdir}/etc/cmdline.d/60kdumpnic.conf
         echo "bootdev=$(kdump_setup_ifname $_netdev)" > ${initdir}/etc/cmdline.d/70bootdev.conf
