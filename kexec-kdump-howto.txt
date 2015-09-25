@@ -616,6 +616,37 @@ options are copied from /proc/cmdline. In general it is best to append
 command line options using "KDUMP_COMMANDLINE_APPEND=" instead of replacing
 the original command line completely.
 
+Parallel Dumping Operation
+==========================
+Kexec allows kdump using multiple cpus. So parallel feature can accelerate
+dumping substantially, especially in executing compression and filter.
+For example:
+
+	1."makedumpfile -c --num-threads [THREAD_NUM] /proc/vmcore dumpfile"
+	2."makedumpfile -c /proc/vmcore dumpfile",
+
+	1 has better performance than 2, if THREAD_NUM is larger than two
+	and the usable cpus number is larger than THREAD_NUM.
+
+Notes on how to use multiple cpus on a capture kernel on x86 system:
+
+Make sure that you are using a kernel that supports disable_cpu_apicid
+kernel option as a capture kernel, which is needed to avoid x86 specific
+hardware issue (*). The disable_cpu_apicid kernel option is automatically
+appended by kdumpctl script and is ignored if the kernel doesn't support it.
+
+You need to specify how many cpus to be used in a capture kernel by specifying
+the number of cpus in nr_cpus kernel option in /etc/sysconfig/kdump. nr_cpus
+is 1 at default.
+
+You should use necessary and sufficient number of cpus on a capture kernel.
+Warning: Don't use too many cpus on a capture kernel, or the capture kernel
+may lead to panic due to Out Of Memory.
+
+(*) Without disable_cpu_apicid kernel option, capture kernel may lead to
+hang, system reset or power-off at boot, depending on your system and runtime
+situation at the time of crash.
+
 Debugging Tips
 --------------
 - One can drop into a shell before/after saving vmcore with the help of
