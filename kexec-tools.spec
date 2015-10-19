@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.10
-Release: 8%{?dist}
+Release: 9%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -310,6 +310,10 @@ done
 %doc
 
 %changelog
+* Mon Oct 19 2015 Dave Young <dyoung@redhat.com> - 2.0.10-9
+- kexec-kdump-howto:Add introduction of parallel dumping
+- Remove duplicate prefix path ${initdir}
+
 * Tue Sep 8 2015 Dave Young <dyoung@redhat.com> - 2.0.10-8
 - update kdump addon to fix a kickstart installationi issue 
 
