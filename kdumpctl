@@ -19,6 +19,9 @@ DEFAULT_DUMP_MODE="kdump"
 
 standard_kexec_args="-p"
 
+# Some default values in case /etc/sysconfig/kdump doesn't include
+KDUMP_COMMANDLINE_REMOVE="hugepages hugepagesz slub_debug"
+
 if [ -f /etc/sysconfig/kdump ]; then
 	. /etc/sysconfig/kdump
 fi
@@ -105,8 +108,10 @@ prepare_cmdline()
 	else
 		cmdline=${KDUMP_COMMANDLINE}
 	fi
-	cmdline=`remove_cmdline_param "$cmdline" crashkernel hugepages hugepagesz panic_on_warn slub_debug`
-
+	# These params should always be removed
+	cmdline=`remove_cmdline_param "$cmdline" crashkernel panic_on_warn`
+	# These params can be removed configurably
+	cmdline=`remove_cmdline_param "$cmdline" ${KDUMP_COMMANDLINE_REMOVE}`
 
 	cmdline="${cmdline} ${KDUMP_COMMANDLINE_APPEND}"
 

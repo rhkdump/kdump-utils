@@ -14,8 +14,13 @@ KDUMP_KERNELVER=""
 # /proc/cmdline
 KDUMP_COMMANDLINE=""
 
+# This variable lets us remove arguments from the current kdump commandline
+# as taken from either KDUMP_COMMANDLINE above, or from /proc/cmdline
+# NOTE: some arguments such as crashkernel will always be removed
+KDUMP_COMMANDLINE_REMOVE="hugepages hugepagesz slub_debug"
+
 # This variable lets us append arguments to the current kdump commandline
-# As taken from either KDUMP_COMMANDLINE above, or from /proc/cmdline
+# after processed by KDUMP_COMMANDLINE_REMOVE
 KDUMP_COMMANDLINE_APPEND="irqpoll nr_cpus=1 reset_devices numa=off udev.children-max=2 panic=10 rootflags=nofail transparent_hugepage=never"
 
 # Any additional kexec arguments required.  In most situations, this should
