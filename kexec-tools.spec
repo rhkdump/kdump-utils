@@ -310,7 +310,7 @@ done
 %doc
 
 %changelog
-* Thu Nov 11 2015 Dave Young <dyoung@redhat.com> - 2.0.11-2
+* Thu Nov 19 2015 Dave Young <dyoung@redhat.com> - 2.0.11-2
 - Rebase to upstream makedumpfile 1.5.9 
 
 * Mon Nov 9 2015 Dave Young <dyoung@redhat.com> - 2.0.11-1
