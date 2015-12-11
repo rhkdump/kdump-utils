@@ -6,14 +6,14 @@ KDUMP_PATH="/var/crash"
 CORE_COLLECTOR=""
 DEFAULT_CORE_COLLECTOR="makedumpfile -l --message-level 1 -d 31"
 DMESG_COLLECTOR="/sbin/vmcore-dmesg"
-DEFAULT_ACTION="reboot"
+DEFAULT_ACTION="systemctl reboot -f"
 DATEDIR=`date +%Y-%m-%d-%T`
 HOST_IP='127.0.0.1'
 DUMP_INSTRUCTION=""
 SSH_KEY_LOCATION="/root/.ssh/kdump_id_rsa"
 KDUMP_SCRIPT_DIR="/kdumpscripts"
 DD_BLKSIZE=512
-FINAL_ACTION="reboot"
+FINAL_ACTION="systemctl reboot -f"
 KDUMP_CONF="/etc/kdump.conf"
 KDUMP_PRE=""
 KDUMP_POST=""
@@ -57,7 +57,7 @@ get_kdump_confs()
                         DEFAULT_ACTION="kdump_emergency_shell"
                     ;;
                     reboot)
-                        DEFAULT_ACTION="reboot"
+                        DEFAULT_ACTION="systemctl reboot -f"
                     ;;
                     halt)
                         DEFAULT_ACTION="halt"
