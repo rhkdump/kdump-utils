@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.11
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -310,6 +310,13 @@ done
 %doc
 
 %changelog
+* Fri Dec 11 2015 Dave Young <dyoung@redhat.com> - 2.0.11-3
+- use "systemctl reboot -f" for reboot action
+- Remove kernel param "quiet" from kdump kernel cmdline
+- kdump.sysconfig: add KDUMP_COMMANDLINE_REMOVE
+- Add missing prefixes in default sysconfig file
+- fix bogus date in changelog
+
 * Thu Nov 19 2015 Dave Young <dyoung@redhat.com> - 2.0.11-2
 - Rebase to upstream makedumpfile 1.5.9 
 
