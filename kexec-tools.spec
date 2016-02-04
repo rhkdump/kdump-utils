@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.11
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -310,6 +310,9 @@ done
 %doc
 
 %changelog
+* Thu Feb 04 2016 Fedora Release Engineering <releng@fedoraproject.org> - 2.0.11-4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_24_Mass_Rebuild
+
 * Fri Dec 11 2015 Dave Young <dyoung@redhat.com> - 2.0.11-3
 - use "systemctl reboot -f" for reboot action
 - Remove kernel param "quiet" from kdump kernel cmdline
