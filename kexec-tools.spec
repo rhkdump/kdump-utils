@@ -1,6 +1,6 @@
 Name: kexec-tools
-Version: 2.0.11
-Release: 4%{?dist}
+Version: 2.0.12
+Release: 1%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -310,6 +310,9 @@ done
 %doc
 
 %changelog
+* Tue Mar 22 2016 Dave Young <dyoung@redhat.com> - 2.0.12-1
+- Rebase kexec-tools to 2.0.12 
+
 * Thu Feb 04 2016 Fedora Release Engineering <releng@fedoraproject.org> - 2.0.11-4
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_24_Mass_Rebuild
 
