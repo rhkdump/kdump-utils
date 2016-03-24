@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.12
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -316,6 +316,10 @@ done
 %doc
 
 %changelog
+* Thu Mar 24 2016 Dave Young <dyoung@redhat.com> - 2.0.12-2
+- Release 2.0.12-2
+- ppc64le: fix kexec hang due to ppc64 elf abi breakage
+
 * Tue Mar 22 2016 Dave Young <dyoung@redhat.com> - 2.0.12-1
 - Rebase kexec-tools to 2.0.12 
 
