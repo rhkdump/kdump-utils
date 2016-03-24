@@ -1,0 +1,69 @@
+From 3debb8cf3272216119cb2e59a4963ce3c18fe8e3 Mon Sep 17 00:00:00 2001
+From: Alan Modra <amodra@gmail.com>
+Date: Fri, 26 Feb 2016 18:06:15 +1100
+Subject: [PATCH 3/3] Properly align powerpc64 .toc
+
+gcc leaves .toc byte aligned, relying on the linker to align the section.
+
+	* kexec/arch/ppc64/kexec-elf-rel-ppc64.c (machine_verify_elf_rel):
+	Fudge alignment of .toc section.
+
+Signed-off-by: Alan Modra <amodra@gmail.com>
+Signed-off-by: Anton Blanchard <anton@samba.org>
+Tested-by: Dave Young <dyoung@redhat.com>
+Signed-off-by: Simon Horman <horms@verge.net.au>
+---
+ kexec/arch/ppc64/kexec-elf-rel-ppc64.c | 30 ++++++++++++++++++------------
+ 1 file changed, 18 insertions(+), 12 deletions(-)
+
+diff --git a/kexec/arch/ppc64/kexec-elf-rel-ppc64.c b/kexec/arch/ppc64/kexec-elf-rel-ppc64.c
+index 43851f6..5f8e3f2 100644
+--- a/kexec/arch/ppc64/kexec-elf-rel-ppc64.c
++++ b/kexec/arch/ppc64/kexec-elf-rel-ppc64.c
+@@ -23,18 +23,6 @@ static unsigned int local_entry_offset(struct mem_sym *UNUSED(sym))
+ }
+ #endif
+ 
+-int machine_verify_elf_rel(struct mem_ehdr *ehdr)
+-{
+-	if (ehdr->ei_class != ELFCLASS64) {
+-		return 0;
+-	}
+-	if (ehdr->e_machine != EM_PPC64) {
+-		return 0;
+-	}
+-
+-	return 1;
+-}
+-
+ static struct mem_shdr *toc_section(const struct mem_ehdr *ehdr)
+ {
+ 	struct mem_shdr *shdr, *shdr_end;
+@@ -52,6 +40,24 @@ static struct mem_shdr *toc_section(const struct mem_ehdr *ehdr)
+ 	return NULL;
+ }
+ 
++int machine_verify_elf_rel(struct mem_ehdr *ehdr)
++{
++	struct mem_shdr *toc;
++
++	if (ehdr->ei_class != ELFCLASS64) {
++		return 0;
++	}
++	if (ehdr->e_machine != EM_PPC64) {
++		return 0;
++	}
++
++	/* Ensure .toc is sufficiently aligned.  */
++	toc = toc_section(ehdr);
++	if (toc && toc->sh_addralign < 256)
++		toc->sh_addralign = 256;
++	return 1;
++}
++
+ /* r2 is the TOC pointer: it actually points 0x8000 into the TOC (this
+    gives the value maximum span in an instruction which uses a signed
+    offset) */
+-- 
+2.5.0
+

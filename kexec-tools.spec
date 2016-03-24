@@ -70,6 +70,9 @@ ExcludeArch: aarch64
 #
 # Patches 301 through 400 are meant for ppc64 kexec-tools enablement
 #
+Patch501: kexec-tools-2.0.12-Pass-struct-mem_sym-into-machine_apply_elf_rel.patch
+Patch502: kexec-tools-2.0.12-ppc64-purgatory-Handle-local-symbols-in-ELF-ABIv2.patch
+Patch503: kexec-tools-2.0.12-Properly-align-powerpc64-.toc.patch
 
 #
 # Patches 401 through 500 are meant for s390 kexec-tools enablement
@@ -105,6 +108,9 @@ tar -z -x -v -f %{SOURCE19}
 tar -z -x -v -f %{SOURCE23}
 
 
+%patch501 -p1
+%patch502 -p1
+%patch503 -p1
 %patch601 -p1
 
 %ifarch ppc

@@ -1,0 +1,57 @@
+From 1e423dc297d10eb7ff25c829d2856ef12fc81d77 Mon Sep 17 00:00:00 2001
+From: Anton Blanchard <anton@samba.org>
+Date: Fri, 26 Feb 2016 18:04:16 +1100
+Subject: [PATCH 2/3] ppc64: purgatory: Handle local symbols in ELF ABIv2
+
+The PowerPC64 ELF ABIv2 has the concept of global and local symbols
+and information on this is encoded in sym->st_other. When doing a
+R_PPC64_REL24 branch we want to hit the local entry point, so adjust
+it as necessary.
+
+Signed-off-by: Anton Blanchard <anton@samba.org>
+Tested-by: Dave Young <dyoung@redhat.com>
+Signed-off-by: Simon Horman <horms@verge.net.au>
+---
+ kexec/arch/ppc64/kexec-elf-rel-ppc64.c | 19 +++++++++++++++++++
+ 1 file changed, 19 insertions(+)
+
+diff --git a/kexec/arch/ppc64/kexec-elf-rel-ppc64.c b/kexec/arch/ppc64/kexec-elf-rel-ppc64.c
+index 8604c4f..43851f6 100644
+--- a/kexec/arch/ppc64/kexec-elf-rel-ppc64.c
++++ b/kexec/arch/ppc64/kexec-elf-rel-ppc64.c
+@@ -5,6 +5,24 @@
+ #include "../../kexec-elf.h"
+ #include "kexec-ppc64.h"
+ 
++#if defined(_CALL_ELF) && _CALL_ELF == 2
++#define STO_PPC64_LOCAL_BIT	5
++#define STO_PPC64_LOCAL_MASK	(7 << STO_PPC64_LOCAL_BIT)
++#define PPC64_LOCAL_ENTRY_OFFSET(other) \
++ (((1 << (((other) & STO_PPC64_LOCAL_MASK) >> STO_PPC64_LOCAL_BIT)) >> 2) << 2)
++
++static unsigned int local_entry_offset(struct mem_sym *sym)
++{
++	/* If this symbol has a local entry point, use it. */
++	return PPC64_LOCAL_ENTRY_OFFSET(sym->st_other);
++}
++#else
++static unsigned int local_entry_offset(struct mem_sym *UNUSED(sym))
++{
++	return 0;
++}
++#endif
++
+ int machine_verify_elf_rel(struct mem_ehdr *ehdr)
+ {
+ 	if (ehdr->ei_class != ELFCLASS64) {
+@@ -114,6 +132,7 @@ void machine_apply_elf_rel(struct mem_ehdr *ehdr, struct mem_sym *sym,
+ 		break;
+ 
+ 	case R_PPC64_REL24:
++		value += local_entry_offset(sym);
+ 		/* Convert value to relative */
+ 		value -= address;
+ 		if (value + 0x2000000 > 0x3ffffff || (value & 3) != 0) {
+-- 
+2.5.0
+
