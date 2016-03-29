@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.12
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -24,7 +24,7 @@ Source19: eppic_050615.tar.gz
 Source20: kdump-lib.sh
 Source21: kdump-in-cluster-environment.txt
 Source22: kdump-dep-generator.sh
-Source23: kdump-anaconda-addon-005-14-g563e904.tar.gz
+Source23: kdump-anaconda-addon-005-16-g586cc82.tar.gz
 Source24: kdump-lib-initramfs.sh
 Source25: kdump.sysconfig.ppc64le
 Source26: kdumpctl.8
@@ -316,6 +316,9 @@ done
 %doc
 
 %changelog
+* Tue Mar 29 2016 Dave Young <dyoung@redhat.com> - 2.0.12-3
+- update kdump anaconda addon to adapt to blivet-2.0 API
+
 * Thu Mar 24 2016 Dave Young <dyoung@redhat.com> - 2.0.12-2
 - Release 2.0.12-2
 - ppc64le: fix kexec hang due to ppc64 elf abi breakage
