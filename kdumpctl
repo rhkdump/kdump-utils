@@ -406,6 +406,11 @@ check_rebuild()
 		return 0
 	fi
 
+	if [[ ! -w "$KDUMP_BOOTDIR" ]];then
+		echo "$KDUMP_BOOTDIR does not have write permission. Can not rebuild $TARGET_INITRD"
+		return 1
+	fi
+
 	echo "Rebuilding $TARGET_INITRD"
 	rebuild_initrd
 	return $?
