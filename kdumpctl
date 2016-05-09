@@ -14,6 +14,7 @@ FADUMP_ENABLED_SYS_NODE="/sys/kernel/fadump_enabled"
 FADUMP_REGISTER_SYS_NODE="/sys/kernel/fadump_registered"
 #kdump shall be the default dump mode
 DEFAULT_DUMP_MODE="kdump"
+image_time=0
 
 . /lib/kdump/kdump-lib.sh
 
@@ -275,7 +276,6 @@ check_config()
 # return list of modified file for fence_kdump modified in Pacemaker cluster
 get_pcs_cluster_modified_files()
 {
-	local image_time=$1
 	local time_stamp
 	local modified_files
 
@@ -327,19 +327,59 @@ setup_target_initrd()
 	fi
 }
 
+check_files_modified()
+{
+	local modified_files=""
+
+	#also rebuild when Pacemaker cluster conf is changed and fence kdump is enabled.
+	modified_files=$(get_pcs_cluster_modified_files)
+
+	EXTRA_BINS=`grep ^kdump_post $KDUMP_CONFIG_FILE | cut -d\  -f2`
+	CHECK_FILES=`grep ^kdump_pre $KDUMP_CONFIG_FILE | cut -d\  -f2`
+	EXTRA_BINS="$EXTRA_BINS $CHECK_FILES"
+	CHECK_FILES=`grep ^extra_bins $KDUMP_CONFIG_FILE | cut -d\  -f2-`
+	EXTRA_BINS="$EXTRA_BINS $CHECK_FILES"
+	files="$KDUMP_CONFIG_FILE $kdump_kernel $EXTRA_BINS /etc/fstab"
+
+	check_exist "$files" && check_executable "$EXTRA_BINS"
+	[ $? -ne 0 ] && return 2
+
+	for file in $files; do
+		time_stamp=`stat -c "%Y" $file`
+		if [ "$time_stamp" -gt "$image_time" ]; then
+			modified_files="$modified_files $file"
+		fi
+	done
+	if [ -n "$modified_files" ]; then
+		echo "Detected change(s) in the following file(s):"
+		echo -n "  "; echo "$modified_files" | sed 's/\s/\n  /g'
+		return 1
+	fi
+
+	return 0
+}
+
 # returns 0 if system is not modified
 # returns 1 if system is modified
 # returns 2 if system modification is invalid
 check_system_modified()
 {
+	local ret
+
 	[[ -f $TARGET_INITRD ]] || return 1
+
+	check_files_modified
+	ret=$?
+	if [ $ret -ne 0 ]; then
+		return $ret
+	fi
 
 	return 0
 }
 
 check_rebuild()
 {
-	local extra_modules modified_files=""
+	local extra_modules
 	local _force_rebuild force_rebuild="0"
 	local ret system_modified="0"
 	local initramfs_has_fadump
@@ -375,8 +415,6 @@ check_rebuild()
 	#since last build of the image file
 	if [ -f $TARGET_INITRD ]; then
 		image_time=`stat -c "%Y" $TARGET_INITRD 2>/dev/null`
-	else
-		image_time=0
 	fi
 
 	#also rebuild when Pacemaker cluster conf is changed and fence kdump is enabled.
@@ -420,9 +458,6 @@ check_rebuild()
 		echo -n "Force rebuild $TARGET_INITRD"; echo
 	elif [ "$system_modified" != "0" ]; then
 		:
-	elif [ -n "$modified_files" ]; then
-		echo "Detected change(s) in the following file(s):"
-		echo -n "  "; echo "$modified_files" | sed 's/\s/\n  /g'
 	else
 		return 0
 	fi
