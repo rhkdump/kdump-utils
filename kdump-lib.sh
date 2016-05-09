@@ -7,6 +7,15 @@ DEFAULT_PATH="/var/crash/"
 FENCE_KDUMP_CONFIG_FILE="/etc/sysconfig/fence_kdump"
 FENCE_KDUMP_SEND="/usr/libexec/fence_kdump_send"
 
+perror_exit() {
+    echo $@ >&2
+    exit 1
+}
+
+perror() {
+    echo $@ >&2
+}
+
 is_ssh_dump_target()
 {
     grep -q "^ssh[[:blank:]].*@" /etc/kdump.conf
@@ -61,6 +70,46 @@ is_generic_fence_kdump()
     [ -x $FENCE_KDUMP_SEND ] || return 1
 
     grep -q "^fence_kdump_nodes" /etc/kdump.conf
+}
+
+to_dev_name() {
+    local dev="${1//\"/}"
+
+    case "$dev" in
+    UUID=*)
+        dev=`blkid -U "${dev#UUID=}"`
+        ;;
+    LABEL=*)
+        dev=`blkid -L "${dev#LABEL=}"`
+        ;;
+    esac
+    echo $dev
+}
+
+get_persistent_dev() {
+    local i _tmp _dev _lookup_dirs
+
+    _dev=$(udevadm info --query=name --name="$1" 2>/dev/null)
+    [ -z "$_dev" ] && {
+        perror_exit "Kernel dev name of $1 is not found."
+    }
+
+    if [[ $2 = "raw" ]];then
+	_lookup_dirs="/dev/mapper/* /dev/disk/by-id/*"
+    else
+	_lookup_dirs="/dev/mapper/* /dev/disk/by-uuid/* /dev/disk/by-id/*"
+    fi
+
+    for i in $_lookup_dirs; do
+        _tmp=$(udevadm info --query=name --name="$i" 2>/dev/null)
+        if [ "$_tmp" = "$_dev" ]; then
+            echo $i
+            return
+        fi
+    done
+
+    perror "WARNING: Persistent device name of $1 not found. Using $1 as dump target name"
+    echo $1
 }
 
 get_user_configured_dump_disk()
