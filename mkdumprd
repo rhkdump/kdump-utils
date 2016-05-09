@@ -30,14 +30,20 @@ perror() {
 }
 
 get_persistent_dev() {
-    local i _tmp _dev
+    local i _tmp _dev _lookup_dirs
 
     _dev=$(udevadm info --query=name --name="$1" 2>/dev/null)
     [ -z "$_dev" ] && {
         perror_exit "Kernel dev name of $1 is not found."
     }
 
-    for i in /dev/mapper/* /dev/disk/by-uuid/* /dev/disk/by-id/*; do
+    if [[ $2 = "raw" ]];then
+	_lookup_dirs="/dev/mapper/* /dev/disk/by-id/*"
+    else
+	_lookup_dirs="/dev/mapper/* /dev/disk/by-uuid/* /dev/disk/by-id/*"
+    fi
+
+    for i in $_lookup_dirs; do
         _tmp=$(udevadm info --query=name --name="$i" 2>/dev/null)
         if [ "$_tmp" = "$_dev" ]; then
             echo $i
@@ -138,7 +144,7 @@ to_mount() {
     _mntopts="$_target $_fstype $_options"
     #for non-nfs _dev converting to use udev persistent name
     if [ -b "$_source" ]; then
-        _pdev="$(get_persistent_dev $_source)"
+        _pdev="$(get_persistent_dev $_source $_fstype)"
         if [ $? -ne 0 ]; then
             return 1
         fi
@@ -565,7 +571,7 @@ do
         dd if=$config_val count=1 of=/dev/null > /dev/null 2>&1 || {
             perror_exit "Bad raw disk $config_val"
         }
-        _praw=$(get_persistent_dev $config_val)
+        _praw=$(get_persistent_dev $config_val "raw")
         if [ $? -ne 0 ]; then
             exit 1
         fi
