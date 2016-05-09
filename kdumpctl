@@ -359,6 +359,74 @@ check_files_modified()
 	return 0
 }
 
+check_dump_fs_modified()
+{
+	local _old_dev _old_mntpoint _old_fstype
+	local _new_dev _new_mntpoint _new_fstype
+	local _target _path _dracut_args
+
+	# No need to check in case of raw target.
+	# Currently we do not check also if ssh/nfs target is specified
+	if is_ssh_dump_target || is_nfs_dump_target || is_raw_dump_target; then
+		return 0
+	fi
+
+	_target=$(get_user_configured_dump_disk)
+
+	if [[ -n "$_target" ]]; then
+		_target=$(to_dev_name $_target)
+		_new_fstype=$(blkid $_target | awk -F"TYPE=" '{print $2}' | cut -d '"' -f 2)
+	else
+		_path=$(get_save_path)
+		set -- $(df -T $_path 2>/dev/null | tail -1 | awk '{ print $1, $2}')
+		_target=$(to_dev_name $1)
+		_new_fstype=$2
+		if [[ -z "$_target" || -z "$_new_fstype" ]];then
+			echo "Dump path $_path does not exist"
+			return 2
+		fi
+	fi
+
+	if [[ $(expr substr $_new_fstype 1 3) = "nfs" ]];then
+		_new_dev=$_target
+	else
+		_new_dev=$(get_persistent_dev $_target $_new_fstype)
+		if ! findmnt $_target >/dev/null; then
+			echo "Dump target $_target is probably not mounted."
+			return 2
+		fi
+	fi
+
+        if ! findmnt $_target >/dev/null; then
+            echo "Dump target $_target is probably not mounted."
+	    return 2
+        fi
+	_new_mntpoint="/kdumproot/$(get_mntpoint_from_target $_target)"
+
+	_dracut_args=$(lsinitrd $TARGET_INITRD | grep "^Arguments:" | head -1)
+	if [[ -z "$_dracut_args" ]];then
+		echo "Warning: No dracut arguments found in initrd"
+		return 0
+	fi
+
+	# if --mount argument present then match old and new target, mount
+	# point and file system. If any of them mismatches then rebuild
+	echo $_dracut_args | grep "\-\-mount" &> /dev/null
+	if [[ $? -eq 0 ]];then
+		set -- $(echo $_dracut_args | awk -F "--mount '" '{print $2}' | cut -d' ' -f1,2,3)
+		_old_dev=$1
+		_old_mntpoint=$2
+		_old_fstype=$3
+		[[ $_new_dev = $_old_dev && $_new_mntpoint = $_old_mntpoint && $_new_fstype = $_old_fstype ]] && return 0
+	# otherwise rebuild if target device is not a root device
+	else
+		[[ "$_target" = "$(get_root_fs_device)" ]] && return 0
+	fi
+
+	echo "Detected change in File System"
+	return 1
+}
+
 # returns 0 if system is not modified
 # returns 1 if system is modified
 # returns 2 if system modification is invalid
@@ -369,6 +437,12 @@ check_system_modified()
 	[[ -f $TARGET_INITRD ]] || return 1
 
 	check_files_modified
+	ret=$?
+	if [ $ret -ne 0 ]; then
+		return $ret
+	fi
+
+	check_dump_fs_modified
 	ret=$?
 	if [ $ret -ne 0 ]; then
 		return $ret
