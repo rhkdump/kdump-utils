@@ -327,10 +327,21 @@ setup_target_initrd()
 	fi
 }
 
+# returns 0 if system is not modified
+# returns 1 if system is modified
+# returns 2 if system modification is invalid
+check_system_modified()
+{
+	[[ -f $TARGET_INITRD ]] || return 1
+
+	return 0
+}
+
 check_rebuild()
 {
 	local extra_modules modified_files=""
 	local _force_rebuild force_rebuild="0"
+	local ret system_modified="0"
 	local initramfs_has_fadump
 
 	check_boot_dir
@@ -388,6 +399,14 @@ check_rebuild()
 		fi
 	done
 
+	check_system_modified
+	ret=$?
+	if [ $ret -eq 2 ]; then
+		return 1
+	elif [ $ret -eq 1 ];then
+		system_modified="1"
+	fi
+
 	#check if target initrd has fadump support
 	if [ "$DEFAULT_DUMP_MODE" = "fadump" ] && [ -f "$TARGET_INITRD" ]; then
 		initramfs_has_fadump=`lsinitrd -m $TARGET_INITRD | grep ^kdumpbase$ | wc -l`
@@ -399,6 +418,8 @@ check_rebuild()
 		echo "$TARGET_INITRD has no fadump support"
 	elif [ "$force_rebuild" != "0" ]; then
 		echo -n "Force rebuild $TARGET_INITRD"; echo
+	elif [ "$system_modified" != "0" ]; then
+		:
 	elif [ -n "$modified_files" ]; then
 		echo "Detected change(s) in the following file(s):"
 		echo -n "  "; echo "$modified_files" | sed 's/\s/\n  /g'
