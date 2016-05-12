@@ -559,13 +559,6 @@ need_64bit_headers()
 # as the currently running kernel.
 load_kdump()
 {
-	MEM_RESERVED=$(cat /sys/kernel/kexec_crash_size)
-	if [ $MEM_RESERVED -eq 0 ]
-	then
-		echo "No memory reserved for crash kernel." >&2
-		return 1
-	fi
-
 	ARCH=`uname -m`
 	if [ "$ARCH" == "i686" -o "$ARCH" == "i386" ]
 	then
@@ -867,12 +860,26 @@ is_secure_boot_enforced()
 	return 1
 }
 
+check_crash_mem_reserved()
+{
+	MEM_RESERVED=$(cat /sys/kernel/kexec_crash_size)
+	if [ $MEM_RESERVED -eq 0 ]
+	then
+		echo "No memory reserved for crash kernel." >&2
+		return 1
+	fi
+
+	return 0
+}
+
 check_kdump_feasibility()
 {
 	if [ ! -e /sys/kernel/kexec_crash_loaded ]; then
 		echo "Kdump is not supported on this kernel"
 		return 1
 	fi
+	check_crash_mem_reserved
+	return $?
 }
 
 check_fence_kdump_config()
