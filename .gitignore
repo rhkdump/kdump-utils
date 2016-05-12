@@ -1,3 +1,7 @@
+*.gz
+*.xz
+*.swp
+*.rpm
 /eppic_030413.tar.gz
 /makedumpfile-1.5.7.tar.gz
 /kexec-tools-2.0.8.tar.xz
