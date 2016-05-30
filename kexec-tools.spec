@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.12
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -316,6 +316,12 @@ done
 %doc
 
 %changelog
+* Mon May 30 2016 Dave Young <dyoung@redhat.com> - 2.0.12-4
+- update kdump anaconda addon to add mem range in tui 
+- .gitignore: Update to make it more generic
+- kdumpctl: check_rebuild improvement 
+- kdumpctl: Do not rebuild initramfs when $KDUMP_BOOTDIR is read only
+
 * Tue Mar 29 2016 Dave Young <dyoung@redhat.com> - 2.0.12-3
 - update kdump anaconda addon to adapt to blivet-2.0 API
 
