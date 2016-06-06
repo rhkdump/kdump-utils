@@ -63,10 +63,23 @@ kdump_is_vlan() {
 }
 
 # $1: netdev name
+source_ifcfg_file() {
+    local ifcfg_file
+
+    ifcfg_file=$(get_ifcfg_filename $1)
+    if [ -f "${ifcfg_file}" ]; then
+        . ${ifcfg_file}
+    else
+        dwarning "The ifcfg file of $1 is not found!"
+    fi
+}
+
+# $1: netdev name
 kdump_setup_dns() {
     local _nameserver _dns
     local _dnsfile=${initdir}/etc/cmdline.d/42dns.conf
-    . /etc/sysconfig/network-scripts/ifcfg-$1
+
+    source_ifcfg_file $1
 
     [ -n "$DNS1" ] && echo "nameserver=$DNS1" > "$_dnsfile"
     [ -n "$DNS2" ] && echo "nameserver=$DNS2" >> "$_dnsfile"
@@ -189,7 +202,9 @@ kdump_setup_bond() {
     done
     echo -n " bond=$_netdev:$(echo $_slaves | sed 's/,$//')" >> ${initdir}/etc/cmdline.d/42bond.conf
     # Get bond options specified in ifcfg
-    . /etc/sysconfig/network-scripts/ifcfg-$_netdev
+
+    source_ifcfg_file $_netdev
+
     bondoptions="$(echo :$BONDING_OPTS | sed 's/\s\+/,/')"
     echo "$bondoptions" >> ${initdir}/etc/cmdline.d/42bond.conf
 }
@@ -244,7 +259,9 @@ kdump_setup_vlan() {
 # $1: netdev name
 kdump_setup_znet() {
     local _options=""
-    . /etc/sysconfig/network-scripts/ifcfg-$1
+
+    source_ifcfg_file $1
+
     for i in $OPTIONS; do
         _options=${_options},$i
     done
