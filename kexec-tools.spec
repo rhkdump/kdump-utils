@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.12
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -316,6 +316,10 @@ done
 %doc
 
 %changelog
+* Mon Jun 6 2016 Dave Young <dyoung@redhat.com> - 2.0.12-5
+- kdump-lib: Add get_ifcfg_filename() to get the proper ifcfg file
+- module-setup: Use get_ifcfg_filename() to get the proper ifcfg file
+
 * Mon May 30 2016 Dave Young <dyoung@redhat.com> - 2.0.12-4
 - update kdump anaconda addon to add mem range in tui 
 - .gitignore: Update to make it more generic
