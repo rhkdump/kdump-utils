@@ -86,7 +86,7 @@ to_dev_name() {
     echo $dev
 }
 
-get_persistent_dev() {
+kdump_get_persistent_dev() {
     local i _tmp _dev _lookup_dirs
 
     _dev=$(udevadm info --query=name --name="$1" 2>/dev/null)

@@ -109,7 +109,7 @@ to_mount() {
     _mntopts="$_target $_fstype $_options"
     #for non-nfs _dev converting to use udev persistent name
     if [ -b "$_source" ]; then
-        _pdev="$(get_persistent_dev $_source $_fstype)"
+        _pdev="$(kdump_get_persistent_dev $_source $_fstype)"
         if [ $? -ne 0 ]; then
             return 1
         fi
@@ -522,7 +522,7 @@ do
         dd if=$config_val count=1 of=/dev/null > /dev/null 2>&1 || {
             perror_exit "Bad raw disk $config_val"
         }
-        _praw=$(get_persistent_dev $config_val "raw")
+        _praw=$(kdump_get_persistent_dev $config_val "raw")
         if [ $? -ne 0 ]; then
             exit 1
         fi
