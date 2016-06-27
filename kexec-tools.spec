@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.12
-Release: 6%{?dist}
+Release: 7%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -316,7 +316,7 @@ done
 %doc
 
 %changelog
-* Mon June 27 2016 Dave Young <dyoung@redhat.com> - 2.0.12-6
+* Mon Jun 27 2016 Dave Young <dyoung@redhat.com> - 2.0.12-6
 - get_persistent_dev(): fix name contention with dracut's similar function
 
 * Mon Jun 6 2016 Dave Young <dyoung@redhat.com> - 2.0.12-5
