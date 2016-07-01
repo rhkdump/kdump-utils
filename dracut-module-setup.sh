@@ -511,7 +511,11 @@ kdump_get_iscsi_initiator() {
     return 1
 }
 
-# No ibft handling yet.
+# Figure out iBFT session according to session type
+is_ibft() {
+    [ "$(kdump_iscsi_get_rec_val $1 "node.discovery_type")" = fw ]
+}
+
 kdump_setup_iscsi_device() {
     local path=$1
     local tgt_name; local tgt_ipaddr;
@@ -532,6 +536,10 @@ kdump_setup_iscsi_device() {
     if ! /sbin/iscsiadm -m session -r ${path} >/dev/null ; then
         derror "Unable to find iscsi record for $path"
         return 1
+    fi
+
+    if is_ibft ${path}; then
+        return
     fi
 
     tgt_name=$(kdump_iscsi_get_rec_val ${path} "node.name")
