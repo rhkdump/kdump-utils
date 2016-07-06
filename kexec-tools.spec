@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.12
-Release: 7%{?dist}
+Release: 8%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -316,6 +316,12 @@ done
 %doc
 
 %changelog
+* Wed Jul 6 2016 Dave Young <dyoung@redhat.com> - 2.0.12-8
+- Rebase makedumpfile 1.6.0
+
+* Mon Jun 27 2016 Dave Young <dyoung@redhat.com> - 2.0.12-7
+- Fix date format in spec file.
+
 * Mon Jun 27 2016 Dave Young <dyoung@redhat.com> - 2.0.12-6
 - get_persistent_dev(): fix name contention with dracut's similar function
 
