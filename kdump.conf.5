@@ -10,14 +10,14 @@ collection service.
 
 kdump.conf provides post-kexec instructions to the kdump kernel. It is
 stored in the initrd file managed by the kdump service. If you change
-this file and do not want to restart before it takes effect, restart
-the kdump service to rebuild to initrd.
+this file and do not want to reboot in order for the changes to take
+effect, restart the kdump service to rebuild the initrd.
 
 For most configurations, you can simply review the examples provided
 in the stock /etc/kdump.conf.
 
 .B NOTE: 
-For filesystem dump the dump target must be mounted before building
+For filesystem dumps the dump target must be mounted before building
 kdump initramfs.
 
 kdump.conf only affects the behavior of the initramfs.  Please read the
@@ -34,30 +34,30 @@ partition devices, such as /dev/vg/<devname>.
 
 .B nfs <nfs mount>
 .RS
-Will mount fs and copy /proc/vmcore to <mnt>/var/crash/%HOST-%DATE/,
+Will mount nfs to <mnt>, and copy /proc/vmcore to <mnt>/<path>/%HOST-%DATE/,
 supports DNS. Note that a fqdn should be used as the server name in the 
-mount point
+mount point.
 .RE
 
 .B ssh <user@server>
 .RS
-Will scp /proc/vmcore to <user@server>:/var/crash/%HOST-%DATE/,
+Will scp /proc/vmcore to <user@server>:<path>/%HOST-%DATE/,
 supports DNS. NOTE: make sure user has necessary write permissions on
-server and that a fqdn is used as the server name
+server and that a fqdn is used as the server name.
 .RE
 
 .B sshkey <path>
 .RS
-Specifies the path of the ssh key you want to use when do ssh dump,
-the default value is /root/.ssh/kdump_id_rsa.
+Specify the path of the ssh key to use when dumping via ssh.
+The default value is /root/.ssh/kdump_id_rsa.
 .RE
 
 .B <fs type> <partition>
 .RS
-Will mount -t <fs type> <partition> /mnt and copy /proc/vmcore to
-/mnt/var/crash/%DATE/.  NOTE: <partition> can be a device node, label
+Will mount -t <fs type> <partition> <mnt>, and copy /proc/vmcore to
+<mnt>/<path>/%DATE/.  NOTE: <partition> can be a device node, label
 or uuid.  It's recommended to use persistent device names such as
-/dev/vg/<devname>. Otherwise it's suggested to use label or uuid.
+/dev/vg/<devname>.  Otherwise it's suggested to use label or uuid.
 .RE
 
 .B path <path>
@@ -66,37 +66,36 @@ or uuid.  It's recommended to use persistent device names such as
 If a dump target is specified in kdump.conf, then "path" is relative to the
 specified dump target.
 .PP
-Interpretation of path changes a bit if user has not specified a dump
+Interpretation of "path" changes a bit if the user didn't specify any dump
 target explicitly in kdump.conf. In this case, "path" represents the
-absolute path from root. And dump target and adjusted path are arrived
+absolute path from root.  The dump target and adjusted path are arrived
 at automatically depending on what's mounted in the current system.
 .PP
-Ignored for raw device dumps.  If unset, will default to /var/crash.
+Ignored for raw device dumps.  If unset, will use the default "/var/crash".
 .RE
 
 .B core_collector <command> <options>
 .RS
 This allows you to specify the command to copy the vmcore.
-You could use the dump filtering program makedumpfile, the default one,
-to retrieve your core, which on some arches can drastically reduce
-core file size.  See /sbin/makedumpfile --help for a list of options.
+The default is makedumpfile, which on some architectures can drastically reduce
+core file size. See /sbin/makedumpfile --help for a list of options.
 Note that the -i and -g options are not needed here, as the initrd
 will automatically be populated with a config file appropriate
 for the running kernel.
 .PP
 Note 1: About default core collector:
-Default core_collector for raw/ssh dump is:
+The default core_collector for raw/ssh dump is:
 "makedumpfile -F -l --message-level 1 -d 31".
-Default core_collector for other targets is:
+The default core_collector for other targets is:
 "makedumpfile -l --message-level 1 -d 31".
 Even if core_collector option is commented out in kdump.conf, makedumpfile
-is default core collector and kdump uses it internally.
+is the default core collector and kdump uses it internally.
 If one does not want makedumpfile as default core_collector, then they
 need to specify one using core_collector option to change the behavior.
 .PP
 Note 2: If "makedumpfile -F" is used then you will get a flattened format
 vmcore.flat, you will need to use "makedumpfile -R" to rearrange the
-dump data from stdard input to a normal dumpfile (readable with analysis
+dump data from standard input to a normal dumpfile (readable with analysis
 tools).
 ie. "makedumpfile -R vmcore < vmcore.flat"
 
@@ -104,20 +103,19 @@ ie. "makedumpfile -R vmcore < vmcore.flat"
 
 .B kdump_post <binary | script>
 .RS
-This directive allows you to run a specified
-executable just after the memory dump process
-terminates. The exit status from the dump process
-is fed to the kdump_post executable, which can be
-used to trigger different actions for success or
-failure.
+This directive allows you to run a specified executable
+just after the vmcore dump process terminates.  The exit
+status of the current dump process is fed to the kdump_post
+executable as its first argument($1).  Executable can modify
+it to indicate the new exit status of succeeding dump process,
 .PP
-Note that scripts written for use with this
-directive must use the /bin/bash interpreter
+Note that scripts written for use with this directive must use
+the /bin/bash interpreter.
 .RE
 
 .B kdump_pre <binary | script>
 .RS
-Works just like the kdump_post directive, but instead
+Works just like the "kdump_post" directive, but instead
 of running after the dump process, runs immediately
 before.  Exit status of this binary is interpreted
 as follows:
@@ -127,7 +125,7 @@ as follows:
 non 0 - reboot the system
 .PP
 Note that scripts written for this directive must use
-the /bin/bash interpreter
+the /bin/bash interpreter.
 .RE
 
 .B extra_bins <binaries | shell scripts>
@@ -146,36 +144,33 @@ modules that you want to be loaded in the kdump
 initrd, typically used to set up access to
 non-boot-path dump targets that might otherwise
 not be accessible in the kdump environment. Multiple
-modules can be listed, separated by a space, and any
+modules can be listed, separated by spaces, and any
 dependent modules will automatically be included.
 .RE
 
 .B default <reboot | halt | poweroff | shell | dump_to_rootfs>
 .RS
-Action to preform in case dumping to intended target fails. If no default
-action is specified, "reboot" is assumed default.
-reboot: If the default action is reboot simply reboot the system (this is what
-most people will want, as it returns the system to a nominal state).  shell: If the default
-action is shell, then drop to an shell session inside the initramfs from
-where you can manually preform additional recovery actions.  Exiting this shell
-reboots the system.  halt: bring the system to a halt, requiring manual reset
-poweroff: The system will be powered down. dump_to_rootfs:If the default action
-is dump_to_rootfs, specified root will be mounted and dump will be saved in "path"
-directory.
-Note: kdump uses bash as the default shell.
+Action to perform in case dumping to the intended target fails. The default is "reboot".
+reboot: Reboot the system (this is what most people will want, as it returns the system
+to a normal state).  halt: Halt the system and lose the vmcore.  poweroff: The system
+will be powered down.  shell: Drop to a shell session inside the initramfs, from which
+you can manually perform additional recovery actions.  Exiting this shell reboots the
+system.  Note: kdump uses bash as the default shell.  dump_to_rootfs: If non-root dump
+target is specified, the default action can be set as dump_to_rootfs.  That means when
+dumping to target fails, dump vmcore to rootfs from initramfs context and reboot.
 .RE
 
 .B force_rebuild <0 | 1>
 .RS
-By default, kdump initrd only will be rebuilt when necessary.
+By default, kdump initrd will only be rebuilt when necessary.
 Specify 1 to force rebuilding kdump initrd every time when kdump service starts.
 .RE
 
 .B override_resettable <0 | 1>
 .RS
-Usually a unresettable block device can't be dump target. Specifying 1 means
-though block target is unresettable, user understand this situation and want
-to try dumping. By default, it's set to 0, means not to try a destined failure.
+Usually an unresettable block device can't be a dump target. Specifying 1 means
+that even though the block target is unresettable, the user wants to try dumping anyway.
+By default, it's set to 0, which will not try something destined to fail.
 .RE
 
 
@@ -195,7 +190,7 @@ arguments except hosts to send notification to).
 
 .B fence_kdump_nodes <node(s)>
 .RS
-List of cluster node(s) separated by space to send fence_kdump notification
+List of cluster node(s), separated by spaces, to send fence_kdump notification
 to (this option is mandatory to enable fence_kdump).
 .RE
 
@@ -210,26 +205,26 @@ directly.
 
 .B options <module> <option list>
 .RS
-Use KDUMP_COMMANDLINE_APPEND in /etc/sysconfig/kdump to add proper
-module option as kernel command line params. Such as append loop.max_loop=1
-to limit maximum loop devices to 1.
+Use KDUMP_COMMANDLINE_APPEND in /etc/sysconfig/kdump to add module options as
+kernel command line parameters. For example, specify 'loop.max_loop=1' to limit
+maximum loop devices to 1.
 .RE
 
 .B link_delay <seconds>
 .RS
-link_delay was used to wait a network device to initialize before using it.
-Now dracut network module take care of this issue automaticlly.
+link_delay was used to wait for a network device to initialize before using it.
+Now dracut network module takes care of this issue automatically.
 .RE
 
 .B disk_timeout <seconds>
 .RS
-Similar to link_delay, dracut ensures disks being ready before kdump uses them.
+Similar to link_delay, dracut ensures disks are ready before kdump uses them.
 .RE
 
 .B debug_mem_level <0-3>
 .RS
-This was used to turns on debug/verbose output of kdump scripts regarding
-free/used memory at various points of execution.  This feature has been
+Turn on verbose debug output of kdump scripts regarding free/used memory at
+various points of execution.  This feature has been
 moved to dracut now.
 Use KDUMP_COMMANDLINE_APPEND in /etc/sysconfig/kdump and
 append dracut cmdline param rd.memdebug=[0-3] to enable the debug output.
@@ -253,7 +248,7 @@ present in initramfs but it is not actually loaded in kernel. Hence
 retaining blacklist option creates more confusing behavior. It has been
 deprecated.
 .PP
-Instead use rd.driver.blacklist option on second kernel to blacklist
+Instead, use rd.driver.blacklist option on second kernel to blacklist
 a certain module. One can edit /etc/sysconfig/kdump.conf and edit
 KDUMP_COMMANDLINE_APPEND to pass kernel command line options. Refer
 to dracut.cmdline man page for more details on module blacklist option.
@@ -262,7 +257,7 @@ to dracut.cmdline man page for more details on module blacklist option.
 .RE
 
 .SH EXAMPLES
-Here is some examples for core_collector option:
+Here are some examples for core_collector option:
 .PP
 Core collector command format depends on dump target type. Typically for
 filesystem (local/remote), core_collector should accept two arguments.
