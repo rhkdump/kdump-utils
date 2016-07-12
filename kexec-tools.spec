@@ -85,6 +85,7 @@ Patch503: kexec-tools-2.0.12-Properly-align-powerpc64-.toc.patch
 # Patches 601 onward are generic patches
 #
 Patch601: kexec-tools-2.0.3-disable-kexec-test.patch
+Patch602: kexec-tools-2.0.12-makedumpfile-Support-_count-_refcount-rename-in-struct-p.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -112,6 +113,7 @@ tar -z -x -v -f %{SOURCE23}
 %patch502 -p1
 %patch503 -p1
 %patch601 -p1
+%patch602 -p1
 
 %ifarch ppc
 %define archdef ARCH=ppc
