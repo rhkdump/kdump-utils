@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.12
-Release: 8%{?dist}
+Release: 9%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -318,6 +318,11 @@ done
 %doc
 
 %changelog
+* Wed Jul 13 2016 Dave Young <dyoung@redhat.com> - 2.0.12-9
+- Update kdump anaconda addon
+- makedumpfile: Support _count -> _refcount rename in struct page
+- module-setup: Don't handle iBFT in kdump
+
 * Wed Jul 6 2016 Dave Young <dyoung@redhat.com> - 2.0.12-8
 - Rebase makedumpfile 1.6.0
 
