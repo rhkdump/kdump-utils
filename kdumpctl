@@ -427,6 +427,40 @@ check_dump_fs_modified()
 	return 1
 }
 
+check_wdt_modified()
+{
+	is_wdt_mod_omitted
+	[[ $? -eq 0 ]] && return 0
+	[[ -d /sys/class/watchdog/ ]] || return 0
+
+	for dir in /sys/class/watchdog/*; do
+		[[ -d "$dir" ]] || continue
+		[[ -f "$dir/state" ]] || continue
+		wdtdrv=$(< "$dir/device/modalias")
+		wdtdrv=$(modinfo $wdtdrv | grep filename | awk -F"kernel/" '{print $2}')
+		active=$(< "$dir/state")
+		# rebuild when:
+		# module for this watchdog is not found and watchdog is active
+		# module for this watchdog is found and watchdog is inactive
+		lsinitrd $TARGET_INITRD | grep $wdtdrv &> /dev/null
+		if [ $? -ne 0 ]; then
+			[[ "$active" =  "active" ]] && return 1
+		else
+			[[ "$active" =  "inactive" ]] && return 1
+		fi
+	done
+
+	# check if watchdog kernel module unloaded.
+	loaded_mods=$(lsinitrd $TARGET_INITRD -f etc/cmdline.d/00-watchdog.conf)
+	[[ -n $loaded_mods ]] && loaded_mods=$(echo $loaded_mods | awk -F"rd.driver.pre=" '{print $2}' | sed "s/,/ /g")
+	for mod in $loaded_mods ; do
+	       lsmod | grep $mod &> /dev/null
+	       [[ $? != 0 ]] && return 1
+        done
+
+	return 0
+}
+
 # returns 0 if system is not modified
 # returns 1 if system is modified
 # returns 2 if system modification is invalid
@@ -446,6 +480,12 @@ check_system_modified()
 	ret=$?
 	if [ $ret -ne 0 ]; then
 		return $ret
+	fi
+
+	check_wdt_modified
+	if [ $? -ne 0 ]; then
+		echo "Detected change in watchdog state"
+		return 1
 	fi
 
 	return 0
