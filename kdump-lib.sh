@@ -382,3 +382,27 @@ get_ifcfg_filename() {
 
     echo -n "${ifcfg_file}"
 }
+
+# returns 0 when omission of watchdog module is desired in dracut_args
+# returns 1 otherwise
+is_wdt_mod_omitted() {
+	local dracut_args
+	local ret=1
+
+	dracut_args=$(grep  "^dracut_args" /etc/kdump.conf)
+	[[ -z $dracut_args ]] && return $ret
+
+	eval set -- $dracut_args
+	while :; do
+		[[ -z $1 ]] && break
+		case $1 in
+			-o|--omit)
+				echo $2 | grep -qw "watchdog"
+				[[ $? == 0 ]] && ret=0
+				break
+		esac
+		shift
+	done
+
+	return $ret
+}

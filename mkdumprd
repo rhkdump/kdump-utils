@@ -16,8 +16,26 @@ SAVE_PATH=$(grep ^path $conf_file| cut -d' '  -f2)
 # strip the duplicated "/"
 SAVE_PATH=$(echo $SAVE_PATH | tr -s /)
 
+is_wdt_addition_needed() {
+	local active
+
+	is_wdt_mod_omitted
+	[[ $? -eq 0 ]] && return 1
+	[[ -d /sys/class/watchdog/ ]] || return 1
+	for dir in /sys/class/watchdog/*; do
+		[[ -f "$dir/state" ]] || continue
+		active=$(< "$dir/state")
+		[[ "$active" =  "active" ]] && return 0
+	done
+	return 1
+}
+
+WDTCFG=""
+is_wdt_addition_needed
+[[ $? -eq 0 ]] && WDTCFG="-a watchdog"
+
 extra_modules=""
-dracut_args=("--hostonly" "-o" "plymouth dash resume ifcfg")
+dracut_args=("--hostonly" "-o" "plymouth dash resume ifcfg" $WDTCFG)
 OVERRIDE_RESETTABLE=0
 
 add_dracut_arg() {
