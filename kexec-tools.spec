@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.12
-Release: 9%{?dist}
+Release: 10%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -319,6 +319,10 @@ done
 %doc
 
 %changelog
+* Thu Jul 21 2016 Dave Young <dyoung@redhat.com> - 2.0.12-10
+- kdump.conf manpage and kdump.conf comments fixes.
+- kdump watchdog support.
+
 * Wed Jul 13 2016 Dave Young <dyoung@redhat.com> - 2.0.12-9
 - Update kdump anaconda addon
 - makedumpfile: Support _count -> _refcount rename in struct page
