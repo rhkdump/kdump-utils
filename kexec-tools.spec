@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.13
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -313,6 +313,9 @@ done
 %doc
 
 %changelog
+* Tue Aug 9 2016 Dave Young <dyoung@redhat.com> - 2.0.13-2
+- Drop old patches for 2.0.12
+
 * Tue Aug 9 2016 Dave Young <dyoung@redhat.com> - 2.0.13-1
 - Rebase kexec-tools 2.0.13
 
