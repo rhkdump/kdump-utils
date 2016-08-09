@@ -1,6 +1,6 @@
 Name: kexec-tools
-Version: 2.0.12
-Release: 10%{?dist}
+Version: 2.0.13
+Release: 1%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -319,6 +319,9 @@ done
 %doc
 
 %changelog
+* Tue Aug 9 2016 Dave Young <dyoung@redhat.com> - 2.0.13-1
+- Rebase kexec-tools 2.0.13
+
 * Thu Jul 21 2016 Dave Young <dyoung@redhat.com> - 2.0.12-10
 - kdump.conf manpage and kdump.conf comments fixes.
 - kdump watchdog support.
