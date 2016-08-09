@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.13
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -315,6 +315,9 @@ done
 %doc
 
 %changelog
+* Tue Aug 9 2016 Dave Young <dyoung@redhat.com> - 2.0.13-3
+- Fix armv7 build failure
+
 * Tue Aug 9 2016 Dave Young <dyoung@redhat.com> - 2.0.13-2
 - Drop old patches for 2.0.12
 
