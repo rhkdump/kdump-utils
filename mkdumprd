@@ -355,10 +355,6 @@ handle_default_dump_target()
         SAVE_PATH=${SAVE_PATH##"$_mntpoint"}
         _fstype=$(get_fs_type_from_target $_target)
 
-        if $(is_fs_type_nfs $_fstype); then
-            add_dracut_module "nfs"
-        fi
-
         add_mount "$_target"
         check_size fs $_target
     fi
@@ -517,10 +513,6 @@ do
     ext[234]|xfs|btrfs|minix|nfs)
         if ! findmnt $config_val >/dev/null; then
             perror_exit "Dump target $config_val is probably not mounted."
-        fi
-
-        if [ "$config_opt" = "nfs" ]; then
-            add_dracut_module "nfs"
         fi
 
         _absolute_save_path=$(make_absolute_save_path $config_val)
