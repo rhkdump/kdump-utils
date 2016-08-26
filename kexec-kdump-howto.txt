@@ -345,6 +345,24 @@ mount the NFS mount and copy out the vmcore to your NFS server. Restart the
 kdump service via '/sbin/systemctl restart kdump.service' to commit this change
 to your kdump initrd.
 
+Special mount via "dracut_args"
+
+You can utilize "dracut_args" to pass "--mount" to kdump, see dracut manpage
+about the format of "--mount" for details. If there is any "--mount" specified
+via "dracut_args", kdump will build it as the mount target without doing any
+validation (mounting or checking like mount options, fs size, save path, etc),
+so you must test it to ensure all the correctness. You cannot use other targets
+in /etc/kdump.conf if you use "--mount" in "dracut_args". You also cannot specify
+mutliple "--mount" targets via "dracut_args".
+
+One use case of "--mount" in "dracut_args" is you do not want to mount dump target
+before kdump service startup, for example, to reduce the burden of the shared nfs
+server. Such as the example below:
+dracut_args --mount "192.168.1.1:/share /mnt/test nfs4 defaults"
+
+NOTE:
+- <mountpoint> must be specified as an absolute path.
+
 Remote system via ssh/scp
 
 Dumping over ssh/scp requires setting up passwordless ssh keys for every
