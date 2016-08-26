@@ -450,6 +450,11 @@ kdump_install_conf() {
         ssh|nfs)
             kdump_install_net "$config_val"
             ;;
+        dracut_args)
+            if [[ $(get_dracut_args_fstype "$config_val") = nfs* ]] ; then
+                kdump_install_net "$(get_dracut_args_target "$config_val")"
+            fi
+            ;;
         kdump_pre|kdump_post|extra_bins)
             dracut_install $config_val
             ;;

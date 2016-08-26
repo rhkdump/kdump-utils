@@ -146,6 +146,10 @@ read_kdump_conf()
         # remove inline comments after the end of a directive.
         config_val=$(strip_comments $config_val)
         case "$config_opt" in
+        dracut_args)
+            config_val=$(get_dracut_args_target "$config_val")
+            [[ -n "$config_val" ]] && add_dump_code "dump_fs $config_val"
+            ;;
         ext[234]|xfs|btrfs|minix|nfs)
             add_dump_code "dump_fs $config_val"
             ;;

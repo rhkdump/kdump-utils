@@ -236,9 +236,15 @@ check_config()
 {
 	local nr
 
-	nr=$(awk 'BEGIN{cnt=0} /^raw|^ssh[[:blank:]]|^nfs|^ext[234]|^xfs|^btrfs|^minix/{cnt++} END{print cnt}' $KDUMP_CONFIG_FILE)
+	nr=$(awk 'BEGIN{cnt=0} /^raw|^ssh[[:blank:]]|^nfs|^ext[234]|^xfs|^btrfs|^minix|^dracut_args .*\-\-mount/{cnt++} END{print cnt}' $KDUMP_CONFIG_FILE)
 	[ $nr -gt 1 ] && {
 		echo "More than one dump targets specified."
+		return 1
+	}
+
+	nr=$(grep "^dracut_args .*\-\-mount" $KDUMP_CONFIG_FILE | grep -o "\-\-mount" | wc -l)
+	[ $nr -gt 1 ] && {
+		echo "Multiple mount targets specified in one \"dracut_args\"."
 		return 1
 	}
 
@@ -364,6 +370,11 @@ check_dump_fs_modified()
 	local _old_dev _old_mntpoint _old_fstype
 	local _new_dev _new_mntpoint _new_fstype
 	local _target _path _dracut_args
+
+	# No need to check in case of mount target specified via "dracut_args".
+	if is_mount_in_dracut_args; then
+		return 0
+	fi
 
 	# No need to check in case of raw target.
 	# Currently we do not check also if ssh/nfs target is specified
