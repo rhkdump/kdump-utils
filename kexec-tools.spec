@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.13
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -316,6 +316,9 @@ done
 %doc
 
 %changelog
+* Fri Aug 26 2016 Dave Young <dyoung@redhat.com> - 2.0.13-4
+- Add special dump target "--mount" in dracut_args
+
 * Tue Aug 9 2016 Dave Young <dyoung@redhat.com> - 2.0.13-3
 - Fix armv7 build failure
 
