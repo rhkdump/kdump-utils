@@ -390,9 +390,9 @@ check_dump_fs_modified()
 		_new_fstype=$(blkid $_target | awk -F"TYPE=" '{print $2}' | cut -d '"' -f 2)
 	else
 		_path=$(get_save_path)
-		set -- $(df -T $_path 2>/dev/null | tail -1 | awk '{ print $1, $2}')
-		_target=$(to_dev_name $1)
-		_new_fstype=$2
+		_target=$(get_target_from_path $_path)
+		_target=$(to_dev_name $_target)
+		_new_fstype=$(get_fs_type_from_target $_target)
 		if [[ -z "$_target" || -z "$_new_fstype" ]];then
 			echo "Dump path $_path does not exist"
 			return 2

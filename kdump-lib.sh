@@ -176,7 +176,11 @@ get_mntpoint_from_path()
 
 get_target_from_path()
 {
-    echo $(df $1 | tail -1 |  awk '{print $1}')
+    local _target
+
+    _target=$(df $1 2>/dev/null | tail -1 |  awk '{print $1}')
+    [[ "$_target" == "/dev/root" ]] && [[ ! -e /dev/root ]] && _target=$(get_root_fs_device)
+    echo $_target
 }
 
 get_fs_type_from_target() 
