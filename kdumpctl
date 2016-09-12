@@ -403,10 +403,6 @@ check_dump_fs_modified()
 		_new_dev=$_target
 	else
 		_new_dev=$(kdump_get_persistent_dev $_target $_new_fstype)
-		if ! findmnt $_target >/dev/null; then
-			echo "Dump target $_target is probably not mounted."
-			return 2
-		fi
 	fi
 
         if ! findmnt $_target >/dev/null; then
