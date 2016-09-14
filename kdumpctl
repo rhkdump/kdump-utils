@@ -542,26 +542,6 @@ check_rebuild()
 		image_time=`stat -c "%Y" $TARGET_INITRD 2>/dev/null`
 	fi
 
-	#also rebuild when Pacemaker cluster conf is changed and fence kdump is enabled.
-	modified_files=$(get_pcs_cluster_modified_files $image_time)
-
-	EXTRA_BINS=`grep ^kdump_post $KDUMP_CONFIG_FILE | cut -d\  -f2`
-	CHECK_FILES=`grep ^kdump_pre $KDUMP_CONFIG_FILE | cut -d\  -f2`
-	EXTRA_BINS="$EXTRA_BINS $CHECK_FILES"
-	CHECK_FILES=`grep ^extra_bins $KDUMP_CONFIG_FILE | cut -d\  -f2-`
-	EXTRA_BINS="$EXTRA_BINS $CHECK_FILES"
-	files="$KDUMP_CONFIG_FILE $kdump_kernel $EXTRA_BINS /etc/fstab"
-
-	check_exist "$files" && check_executable "$EXTRA_BINS"
-	[ $? -ne 0 ] && return 1
-
-	for file in $files; do
-		time_stamp=`stat -c "%Y" $file`
-		if [ "$time_stamp" -gt "$image_time" ]; then
-			modified_files="$modified_files $file"
-		fi
-	done
-
 	check_system_modified
 	ret=$?
 	if [ $ret -eq 2 ]; then
