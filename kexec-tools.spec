@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.13
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -316,6 +316,10 @@ done
 %doc
 
 %changelog
+* Fri Sep 16 2016 Dave Young <dyoung@redhat.com> - 2.0.13-5
+- Fix bug 1373958 for system boot without initrd
+- Do not depend on /etc/fstab in kdumpctl in case it does not exist
+
 * Fri Aug 26 2016 Dave Young <dyoung@redhat.com> - 2.0.13-4
 - Add special dump target "--mount" in dracut_args
 
