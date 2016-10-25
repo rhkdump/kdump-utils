@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.13
-Release: 5%{?dist}
+Release: 6%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -335,6 +335,10 @@ done
 %doc
 
 %changelog
+* Wed Oct 26 2016 Dave Young <dyoung@redhat.com> - 2.0.13-6
+- add kexec support for arm64
+- support x86 kaslr which is enabled by default in F25 kernel
+
 * Fri Sep 16 2016 Dave Young <dyoung@redhat.com> - 2.0.13-5
 - Fix bug 1373958 for system boot without initrd
 - Do not depend on /etc/fstab in kdumpctl in case it does not exist
