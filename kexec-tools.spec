@@ -29,6 +29,7 @@ Source23: kdump-anaconda-addon-005-19-g6577df4.tar.gz
 Source24: kdump-lib-initramfs.sh
 Source25: kdump.sysconfig.ppc64le
 Source26: kdumpctl.8
+Source27: live-image-kdump-howto.txt
 
 #######################################
 # These are sources for mkdumpramfs
@@ -154,6 +155,7 @@ rm -f kexec-tools.spec.in
 # setup the docs
 cp %{SOURCE10} .
 cp %{SOURCE21} .
+cp %{SOURCE27} .
 
 make
 %ifarch %{ix86} x86_64 ppc64 s390x ppc64le
@@ -326,6 +328,7 @@ done
 %doc TODO
 %doc kexec-kdump-howto.txt
 %doc kdump-in-cluster-environment.txt
+%doc live-image-kdump-howto.txt
 %ifarch %{ix86} x86_64 ppc64 s390x ppc64le
 %{_libdir}/eppic_makedumpfile.so
 /usr/share/makedumpfile/eppic_scripts/
