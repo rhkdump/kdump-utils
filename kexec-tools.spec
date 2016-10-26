@@ -4,6 +4,7 @@ Release: 5%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
+
 Source0: http://kernel.org/pub/linux/utils/kernel/kexec/%{name}-%{version}.tar.xz
 Source1: kdumpctl
 Source2: kdump.sysconfig
@@ -51,13 +52,12 @@ Requires: ethtool
 BuildRequires: zlib-devel zlib zlib-static elfutils-devel-static glib2-devel bzip2-devel ncurses-devel bison flex lzo-devel snappy-devel
 BuildRequires: pkgconfig intltool gettext 
 BuildRequires: systemd-units
+BuildRequires: automake autoconf libtool
 %ifarch %{ix86} x86_64 ppc64 ppc s390x ppc64le
 Obsoletes: diskdumputils netdump kexec-tools-eppic
 %endif
 
 %undefine _hardened_build
-
-ExcludeArch: aarch64
 
 #START INSERT
 
@@ -77,8 +77,13 @@ ExcludeArch: aarch64
 # Patches 401 through 500 are meant for s390 kexec-tools enablement
 #
 #
-# Patches 501 through 600 are meant for ppc kexec-tools enablement
+# Patches 501 through 600 are meant for ARM kexec-tools enablement
 #
+Patch500:  kexec-tools-2.0.13-kexec-Add-common-device-tree-routines.patch
+Patch501:  kexec-tools-2.0.13-arm64-Add-arm64-kexec-support.patch
+Patch502:  kexec-tools-2.0.13-arm64-Add-support-for-binary-image-files.patch
+Patch503:  kexec-tools-2.0.13-arm64-Add-support-for-additional-relocations-in-the-kexec-purgatory-code.patch
+Patch504:  kexec-tools-2.0.13-arm64-Add-support-of-R_AARCH64_PREL32-relocation-in-.patch
 
 #
 # Patches 601 onward are generic patches
@@ -113,6 +118,11 @@ tar -z -x -v -f %{SOURCE9}
 tar -z -x -v -f %{SOURCE19}
 tar -z -x -v -f %{SOURCE23}
 
+%patch500 -p1
+%patch501 -p1
+%patch502 -p1
+%patch503 -p1
+%patch504 -p1
 
 %patch601 -p1
 %patch602 -p1
@@ -127,7 +137,7 @@ tar -z -x -v -f %{SOURCE23}
 %endif
 
 %build
-
+autoreconf
 %configure \
 %ifarch ppc64
     --host=powerpc64-redhat-linux-gnu \

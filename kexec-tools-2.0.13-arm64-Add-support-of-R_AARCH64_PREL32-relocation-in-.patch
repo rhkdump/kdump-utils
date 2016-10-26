@@ -1,0 +1,42 @@
+From 3a3c61cb7f129936e5752d1ccc304c183575a8b0 Mon Sep 17 00:00:00 2001
+Message-Id: <3a3c61cb7f129936e5752d1ccc304c183575a8b0.1477402102.git.panand@redhat.com>
+From: Pratyush Anand <panand@redhat.com>
+Date: Tue, 25 Oct 2016 18:55:49 +0530
+Subject: [PATCH] arm64: Add support of R_AARCH64_PREL32 relocation in
+ purgatory
+
+Signed-off-by: Pratyush Anand <panand@redhat.com>
+---
+ kexec/arch/arm64/kexec-arm64.c | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/kexec/arch/arm64/kexec-arm64.c b/kexec/arch/arm64/kexec-arm64.c
+index 218f0bc832cd..b12de4772412 100644
+--- a/kexec/arch/arm64/kexec-arm64.c
++++ b/kexec/arch/arm64/kexec-arm64.c
+@@ -720,6 +720,10 @@ void machine_apply_elf_rel(struct mem_ehdr *ehdr, struct mem_sym *UNUSED(sym),
+ # define R_AARCH64_ABS64 257
+ #endif
+ 
++#if !defined(R_AARCH64_PREL32)
++# define R_AARCH64_PREL32 261
++#endif
++
+ #if !defined(R_AARCH64_LD_PREL_LO19)
+ # define R_AARCH64_LD_PREL_LO19 273
+ #endif
+@@ -761,6 +765,11 @@ void machine_apply_elf_rel(struct mem_ehdr *ehdr, struct mem_sym *UNUSED(sym),
+ 		loc64 = ptr;
+ 		*loc64 = cpu_to_elf64(ehdr, elf64_to_cpu(ehdr, *loc64) + value);
+ 		break;
++	case R_AARCH64_PREL32:
++		type = "PREL32";
++		loc32 = ptr;
++		*loc32 = cpu_to_elf32(ehdr, elf32_to_cpu(ehdr, *loc32) + value - address);
++		break;
+ 	case R_AARCH64_LD_PREL_LO19:
+ 		type = "LD_PREL_LO19";
+ 		loc32 = ptr;
+-- 
+2.7.4
+
