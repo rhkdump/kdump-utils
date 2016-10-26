@@ -87,6 +87,11 @@ Patch601: kexec-tools-2.0.3-disable-kexec-test.patch
 Patch602: kexec-tools-2.0.12-makedumpfile-Support-_count-_refcount-rename-in-struct-p.patch
 Patch603: kexec-tools-2.0.13-fix-armv7-build-failure.patch
 
+Patch604: kexec-tools-2.0.13-makedumpfile-x86-64-calculate-page-offset-from-pt-load.patch
+Patch605: kexec-tools-2.0.13-makedumpfile-x86-64-translate-all-VA-to-PA-using-page-table-values.patch
+Patch606: kexec-tools-2.0.13-makedumpfile-x86-64-kill-is-vmalloc-addr-x86-64.patch
+Patch607: kexec-tools-2.0.13-makedumpfile-x86-64-kill-some-unused-initialization.patch
+
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
 kernel to boot using the kernel's kexec feature either on a
@@ -112,6 +117,10 @@ tar -z -x -v -f %{SOURCE23}
 %patch601 -p1
 %patch602 -p1
 %patch603 -p1
+%patch604 -p1
+%patch605 -p1
+%patch606 -p1
+%patch607 -p1
 
 %ifarch ppc
 %define archdef ARCH=ppc
