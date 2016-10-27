@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.13
-Release: 6%{?dist}
+Release: 7%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -337,6 +337,9 @@ done
 %doc
 
 %changelog
+* Thu Oct 27 2016 Dave Young <dyoung@redhat.com> - 2.0.13-7
+- fix wrong page_offset added in 2.0.13-6
+
 * Wed Oct 26 2016 Dave Young <dyoung@redhat.com> - 2.0.13-6
 - add kexec support for arm64
 - support x86 kaslr which is enabled by default in F25 kernel
