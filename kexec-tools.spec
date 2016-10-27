@@ -96,6 +96,7 @@ Patch604: kexec-tools-2.0.13-makedumpfile-x86-64-calculate-page-offset-from-pt-l
 Patch605: kexec-tools-2.0.13-makedumpfile-x86-64-translate-all-VA-to-PA-using-page-table-values.patch
 Patch606: kexec-tools-2.0.13-makedumpfile-x86-64-kill-is-vmalloc-addr-x86-64.patch
 Patch607: kexec-tools-2.0.13-makedumpfile-x86-64-kill-some-unused-initialization.patch
+Patch608: kexec-tools-2.0.13-makedumpfile-x86_64-fix-page_offset-calculation.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -131,6 +132,7 @@ tar -z -x -v -f %{SOURCE23}
 %patch605 -p1
 %patch606 -p1
 %patch607 -p1
+%patch608 -p1
 
 %ifarch ppc
 %define archdef ARCH=ppc

@@ -1,0 +1,32 @@
+From 0ebcd6f3570dd66bff0930872b8bf859bdcf302a Mon Sep 17 00:00:00 2001
+Message-Id: <0ebcd6f3570dd66bff0930872b8bf859bdcf302a.1477548646.git.panand@redhat.com>
+From: Pratyush Anand <panand@redhat.com>
+Date: Thu, 27 Oct 2016 11:34:33 +0530
+Subject: [PATCH] x86_64: fix page_offset calculation
+
+Kernel text region lies above __START_KERNEL_map, which is linearly mapped
+however not a direct mapping. Direct mapping region lies below it instead.
+So, page_offset can only be calculated with a region which is below
+__START_KERNEL_map.
+
+Signed-off-by: Pratyush Anand <panand@redhat.com>
+---
+ arch/x86_64.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/x86_64.c b/arch/x86_64.c
+index 13990cef839b..3ef33ae4ef2d 100644
+--- a/makedumpfile-1.6.0/arch/x86_64.c
++++ b/makedumpfile-1.6.0/arch/x86_64.c
+@@ -41,7 +41,7 @@ get_page_offset_x86_64(void)
+ 	unsigned long long virt_start;
+ 
+ 	for (i = 0; get_pt_load(i, &phys_start, NULL, &virt_start, NULL); i++) {
+-		if (virt_start >= __START_KERNEL_map) {
++		if (virt_start < __START_KERNEL_map) {
+ 			info->page_offset = virt_start - phys_start;
+ 			return TRUE;
+ 		}
+-- 
+2.7.4
+
