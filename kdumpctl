@@ -8,7 +8,10 @@ KDUMP_CONFIG_FILE="/etc/kdump.conf"
 MKDUMPRD="/sbin/mkdumprd -f"
 SAVE_PATH=/var/crash
 SSH_KEY_LOCATION="/root/.ssh/kdump_id_rsa"
+INITRD_CHECKSUM_LOCATION="/boot/.fadump_initrd_checksum"
 DUMP_TARGET=""
+DEFAULT_INITRD=""
+DEFAULT_INITRD_BAK=""
 TARGET_INITRD=""
 FADUMP_ENABLED_SYS_NODE="/sys/kernel/fadump_enabled"
 FADUMP_REGISTER_SYS_NODE="/sys/kernel/fadump_registered"
@@ -158,9 +161,6 @@ rebuild_fadump_initrd()
 {
 	local target_initrd_tmp
 
-	# backup fadump initrd for reference before replacing it
-	backup_initrd
-
 	# this file tells the initrd is fadump enabled
 	touch /tmp/fadump.initramfs
 	target_initrd_tmp="$TARGET_INITRD.tmp"
@@ -224,15 +224,39 @@ check_executable()
 	done
 }
 
-backup_initrd()
+backup_default_initrd()
 {
-	local target_initrd_bak
+	if [ ! -e $DEFAULT_INITRD_BAK ]; then
+		echo "Backing up $DEFAULT_INITRD before rebuild."
+		# save checksum to verify before restoring
+		sha1sum $DEFAULT_INITRD > $INITRD_CHECKSUM_LOCATION
+		cp $DEFAULT_INITRD $DEFAULT_INITRD_BAK
+		if [ $? -ne 0 ]; then
+			echo "WARNING: failed to backup $DEFAULT_INITRD."
+			rm -f $DEFAULT_INITRD_BAK
+		fi
+	fi
+}
 
-	# Check if backup initrd is already present.
-	target_initrd_bak="$TARGET_INITRD.bak"
-	if [ ! -e $target_initrd_bak ];then
-		echo "Backing up $TARGET_INITRD"
-		cp $TARGET_INITRD $target_initrd_bak
+restore_default_initrd()
+{
+	# If a backup initrd exists, we must be switching back from
+	# fadump to kdump. Restore the original default initrd.
+	if [ -f $DEFAULT_INITRD_BAK ] && [ -f $INITRD_CHECKSUM_LOCATION ]; then
+		# verify checksum before restoring
+		backup_checksum=`sha1sum $DEFAULT_INITRD_BAK | awk '{ print $1 }'`
+		default_checksum=`cat $INITRD_CHECKSUM_LOCATION | awk '{ print $1 }'`
+		if [ "$default_checksum" != "$backup_checksum" ]; then
+			echo "WARNING: checksum mismatch! Can't restore original initrd.."
+		else
+			rm -f $INITRD_CHECKSUM_LOCATION
+			mv $DEFAULT_INITRD_BAK $DEFAULT_INITRD
+			if [[ $? -eq 0 ]]; then
+				echo -n "Restoring original initrd as fadump mode "
+				echo "is disabled."
+				sync
+			fi
+		fi
 	fi
 }
 
@@ -324,10 +348,12 @@ check_boot_dir()
 	fi
 }
 
-setup_target_initrd()
+setup_initrd()
 {
+	DEFAULT_INITRD="${KDUMP_BOOTDIR}/initramfs-`uname -r`.img"
+	DEFAULT_INITRD_BAK="${KDUMP_BOOTDIR}/.initramfs-`uname -r`.img.default"
 	if [ $DEFAULT_DUMP_MODE == "fadump" ]; then
-		TARGET_INITRD="${KDUMP_BOOTDIR}/initramfs-${kdump_kver}.img"
+		TARGET_INITRD="$DEFAULT_INITRD"
 		if [ ! -s "$TARGET_INITRD" ]; then
 			echo "Error: No initrd found to rebuild!"
 			return 1
@@ -508,7 +534,6 @@ check_rebuild()
 	local extra_modules
 	local _force_rebuild force_rebuild="0"
 	local ret system_modified="0"
-	local initramfs_has_fadump
 
 	check_boot_dir
 
@@ -519,7 +544,7 @@ check_rebuild()
 	fi
 
 	kdump_kernel="${KDUMP_BOOTDIR}/${KDUMP_IMG}-${kdump_kver}${KDUMP_IMG_EXT}"
-	setup_target_initrd
+	setup_initrd
 	if [ $? -ne 0 ]; then
 		return 1
 	fi
@@ -551,15 +576,11 @@ check_rebuild()
 		system_modified="1"
 	fi
 
-	#check if target initrd has fadump support
-	if [ "$DEFAULT_DUMP_MODE" = "fadump" ] && [ -f "$TARGET_INITRD" ]; then
-		initramfs_has_fadump=`lsinitrd -m $TARGET_INITRD | grep ^kdumpbase$ | wc -l`
-	fi
-
-	if [ $image_time -eq 0 ]; then
+	if is_mode_switched; then
+		echo -n "Dump mode changed from last boot."; echo
+		handle_mode_switch
+	elif [ $image_time -eq 0 ]; then
 		echo  -n "No kdump initial ramdisk found."; echo
-	elif [ $DEFAULT_DUMP_MODE == "fadump" ] && [ "$initramfs_has_fadump" -eq "0" ]; then
-		echo "$TARGET_INITRD has no fadump support"
 	elif [ "$force_rebuild" != "0" ]; then
 		echo -n "Force rebuild $TARGET_INITRD"; echo
 	elif [ "$system_modified" != "0" ]; then
@@ -715,6 +736,46 @@ propagate_ssh_key()
 	else
 		echo $errmsg, $KEYFILE failed in transfer to $SSH_SERVER  >&2
 		exit 1
+	fi
+}
+
+is_mode_switched()
+{
+	local _mod_included
+
+	if [ ! -f $DEFAULT_INITRD ]; then
+		return 1
+	fi
+
+	# find if default initrd has kdumpbase module included.
+	_mod_included=`lsinitrd -m $DEFAULT_INITRD | grep ^kdumpbase$ | wc -l`
+
+	if [ "$DEFAULT_DUMP_MODE" != "fadump" ]; then
+		# If kdumpbase module is included in default initrd,
+		# we must have just switched from fadump mode.
+		if [ "$_mod_included" -eq "1" ]; then
+			return 0
+		fi
+	elif [ "$_mod_included" -eq "0" ]; then
+		# If kdumpbase module is missing in default initrd,
+		# we must have just switched from kdump mode.
+		return 0
+	fi
+
+	return 1
+}
+
+handle_mode_switch()
+{
+	if [ "$DEFAULT_DUMP_MODE" == "fadump" ]; then
+		# backup initrd for reference before replacing it
+		# with fadump aware initrd
+		backup_default_initrd
+	else
+		# check if a backup of default initrd exists. If yes,
+		# it signifies a switch from fadump mode. So, restore
+		# the backed up default initrd.
+		restore_default_initrd
 	fi
 }
 
