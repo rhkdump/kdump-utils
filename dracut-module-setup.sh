@@ -161,7 +161,11 @@ kdump_get_perm_addr() {
 kdump_setup_ifname() {
     local _ifname
 
-    if [[ $1 =~ eth* ]]; then
+    # If ifname already has 'kdump-' prefix, we must be switching from
+    # fadump to kdump. Skip prefixing 'kdump-' in this case as adding
+    # another prefix may truncate the ifname. Since an ifname with
+    # 'kdump-' is already persistent, this should be fine.
+    if [[ $1 =~ eth* ]] && [[ ! $1 =~ ^kdump-* ]]; then
         _ifname="kdump-$1"
     else
         _ifname="$1"
