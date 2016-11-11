@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.13
-Release: 7%{?dist}
+Release: 8%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -342,6 +342,14 @@ done
 %doc
 
 %changelog
+* Fri Nov 11 2016 Dave Young <dyoung@redhat.com> - 2.0.13-8
+- kexec/arch/i386: Add support for KASLR memory randomization
+- Update kdump anaconda addon
+- fadump: restore default initrd when fadump mode is disabled
+- kdump/fadump: fix network interface name when switching from fadump to kdump
+- kdumpctl: filter 'root' kernel parameter when running in live images
+- Documentation: step by step guide on confiuring kdump in live images
+
 * Thu Oct 27 2016 Dave Young <dyoung@redhat.com> - 2.0.13-7
 - fix wrong page_offset added in 2.0.13-6
 
