@@ -65,6 +65,7 @@ Obsoletes: diskdumputils netdump kexec-tools-eppic
 #
 # Patches 0 through 100 are meant for x86 kexec-tools enablement
 #
+Patch1:  kexec-tools-2.0.13-kexec-arch-i386-Add-support-for-KASLR-memory-randomi.patch
 
 #
 # Patches 101 through 200 are meant for x86_64 kexec-tools enablement
@@ -120,6 +121,7 @@ tar -z -x -v -f %{SOURCE9}
 tar -z -x -v -f %{SOURCE19}
 tar -z -x -v -f %{SOURCE23}
 
+%patch1 -p1
 %patch500 -p1
 %patch501 -p1
 %patch502 -p1
