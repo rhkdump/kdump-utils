@@ -607,7 +607,7 @@ need_64bit_headers()
 	print (strtonum("0x" r[2]) > strtonum("0xffffffff")); }'`
 }
 
-# Load the kdump kerel specified in /etc/sysconfig/kdump
+# Load the kdump kernel specified in /etc/sysconfig/kdump
 # If none is specified, try to load a kdump kernel with the same version
 # as the currently running kernel.
 load_kdump()
