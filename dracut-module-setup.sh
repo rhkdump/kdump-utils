@@ -438,32 +438,38 @@ adjust_bind_mount_path()
 
 #install kdump.conf and what user specifies in kdump.conf
 kdump_install_conf() {
+    local _opt _val _pdev
     sed -ne '/^#/!p' /etc/kdump.conf > ${initdir}/tmp/$$-kdump.conf
 
-    while read config_opt config_val;
+    while read _opt _val;
     do
         # remove inline comments after the end of a directive.
-        config_val=$(strip_comments $config_val)
-        case "$config_opt" in
-        ext[234]|xfs|btrfs|minix|raw)
-            sed -i -e "s#^$config_opt[[:space:]]\+$config_val#$config_opt $(kdump_to_udev_name $config_val)#" ${initdir}/tmp/$$-kdump.conf
+        _val=$(strip_comments $_val)
+        case "$_opt" in
+        raw)
+            _pdev=$(persistent_policy="by-id" kdump_to_udev_name $_val)
+            sed -i -e "s#^$_opt[[:space:]]\+$_val#$_opt $_pdev#" ${initdir}/tmp/$$-kdump.conf
+            ;;
+        ext[234]|xfs|btrfs|minix)
+            _pdev=$(kdump_to_udev_name $_val)
+            sed -i -e "s#^$_opt[[:space:]]\+$_val#$_opt $_pdev#" ${initdir}/tmp/$$-kdump.conf
             if is_atomic; then
-                adjust_bind_mount_path "$config_val"
+                adjust_bind_mount_path "$_val"
             fi
             ;;
         ssh|nfs)
-            kdump_install_net "$config_val"
+            kdump_install_net "$_val"
             ;;
         dracut_args)
-            if [[ $(get_dracut_args_fstype "$config_val") = nfs* ]] ; then
-                kdump_install_net "$(get_dracut_args_target "$config_val")"
+            if [[ $(get_dracut_args_fstype "$_val") = nfs* ]] ; then
+                kdump_install_net "$(get_dracut_args_target "$_val")"
             fi
             ;;
         kdump_pre|kdump_post|extra_bins)
-            dracut_install $config_val
+            dracut_install $_val
             ;;
         core_collector)
-            dracut_install "${config_val%%[[:blank:]]*}"
+            dracut_install "${_val%%[[:blank:]]*}"
             ;;
         esac
     done < /etc/kdump.conf
