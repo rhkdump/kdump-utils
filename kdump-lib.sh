@@ -88,32 +88,6 @@ to_dev_name() {
     echo $dev
 }
 
-kdump_get_persistent_dev() {
-    local i _tmp _dev _lookup_dirs
-
-    _dev=$(udevadm info --query=name --name="$1" 2>/dev/null)
-    [ -z "$_dev" ] && {
-        perror_exit "Kernel dev name of $1 is not found."
-    }
-
-    if [[ $2 = "raw" ]];then
-	_lookup_dirs="/dev/mapper/* /dev/disk/by-id/*"
-    else
-	_lookup_dirs="/dev/mapper/* /dev/disk/by-uuid/* /dev/disk/by-id/*"
-    fi
-
-    for i in $_lookup_dirs; do
-        _tmp=$(udevadm info --query=name --name="$i" 2>/dev/null)
-        if [ "$_tmp" = "$_dev" ]; then
-            echo $i
-            return
-        fi
-    done
-
-    perror "WARNING: Persistent device name of $1 not found. Using $1 as dump target name"
-    echo $1
-}
-
 get_user_configured_dump_disk()
 {
     local _target
