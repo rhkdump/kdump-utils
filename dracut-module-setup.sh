@@ -32,7 +32,7 @@ depends() {
     return 0
 }
 
-kdump_to_udev_name() {
+kdump_get_persistent_dev() {
     local dev="${1//\"/}"
 
     case "$dev" in
@@ -397,7 +397,7 @@ default_dump_target_install_conf()
             kdump_install_net "$_target"
             _fstype="nfs"
         else
-            _target=$(kdump_to_udev_name $_target)
+            _target=$(kdump_get_persistent_dev $_target)
         fi
 
         echo "$_fstype $_target" >> ${initdir}/tmp/$$-kdump.conf
@@ -447,11 +447,11 @@ kdump_install_conf() {
         _val=$(strip_comments $_val)
         case "$_opt" in
         raw)
-            _pdev=$(persistent_policy="by-id" kdump_to_udev_name $_val)
+            _pdev=$(persistent_policy="by-id" kdump_get_persistent_dev $_val)
             sed -i -e "s#^$_opt[[:space:]]\+$_val#$_opt $_pdev#" ${initdir}/tmp/$$-kdump.conf
             ;;
         ext[234]|xfs|btrfs|minix)
-            _pdev=$(kdump_to_udev_name $_val)
+            _pdev=$(kdump_get_persistent_dev $_val)
             sed -i -e "s#^$_opt[[:space:]]\+$_val#$_opt $_pdev#" ${initdir}/tmp/$$-kdump.conf
             if is_atomic; then
                 adjust_bind_mount_path "$_val"
