@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.13
-Release: 8%{?dist}
+Release: 9%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -342,6 +342,13 @@ done
 %doc
 
 %changelog
+* Mon Nov 28 2016 Dave Young <dyoung@redhat.com> - 2.0.13-9
+- rename function kdump_to_udev_name
+- Raw dump: use by-id as persistent policy in 2nd kernel
+- drop dracut duplicate functions
+- dracut-kdump: use POSIX shell syntax
+- Correct two typos in kdumpctl and kdump.conf
+
 * Fri Nov 11 2016 Dave Young <dyoung@redhat.com> - 2.0.13-8
 - kexec/arch/i386: Add support for KASLR memory randomization
 - Update kdump anaconda addon
