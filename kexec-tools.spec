@@ -1,6 +1,6 @@
 Name: kexec-tools
-Version: 2.0.13
-Release: 9%{?dist}
+Version: 2.0.14
+Release: 1%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -65,7 +65,6 @@ Obsoletes: diskdumputils netdump kexec-tools-eppic
 #
 # Patches 0 through 100 are meant for x86 kexec-tools enablement
 #
-Patch1:  kexec-tools-2.0.13-kexec-arch-i386-Add-support-for-KASLR-memory-randomi.patch
 
 #
 # Patches 101 through 200 are meant for x86_64 kexec-tools enablement
@@ -81,18 +80,12 @@ Patch1:  kexec-tools-2.0.13-kexec-arch-i386-Add-support-for-KASLR-memory-randomi
 #
 # Patches 501 through 600 are meant for ARM kexec-tools enablement
 #
-Patch500:  kexec-tools-2.0.13-kexec-Add-common-device-tree-routines.patch
-Patch501:  kexec-tools-2.0.13-arm64-Add-arm64-kexec-support.patch
-Patch502:  kexec-tools-2.0.13-arm64-Add-support-for-binary-image-files.patch
-Patch503:  kexec-tools-2.0.13-arm64-Add-support-for-additional-relocations-in-the-kexec-purgatory-code.patch
-Patch504:  kexec-tools-2.0.13-arm64-Add-support-of-R_AARCH64_PREL32-relocation-in-.patch
 
 #
 # Patches 601 onward are generic patches
 #
 Patch601: kexec-tools-2.0.3-disable-kexec-test.patch
 Patch602: kexec-tools-2.0.12-makedumpfile-Support-_count-_refcount-rename-in-struct-p.patch
-Patch603: kexec-tools-2.0.13-fix-armv7-build-failure.patch
 
 Patch604: kexec-tools-2.0.13-makedumpfile-x86-64-calculate-page-offset-from-pt-load.patch
 Patch605: kexec-tools-2.0.13-makedumpfile-x86-64-translate-all-VA-to-PA-using-page-table-values.patch
@@ -121,16 +114,8 @@ tar -z -x -v -f %{SOURCE9}
 tar -z -x -v -f %{SOURCE19}
 tar -z -x -v -f %{SOURCE23}
 
-%patch1 -p1
-%patch500 -p1
-%patch501 -p1
-%patch502 -p1
-%patch503 -p1
-%patch504 -p1
-
 %patch601 -p1
 %patch602 -p1
-%patch603 -p1
 %patch604 -p1
 %patch605 -p1
 %patch606 -p1
@@ -342,6 +327,9 @@ done
 %doc
 
 %changelog
+* Mon Nov 28 2016 Dave Young <dyoung@redhat.com> - 2.0.14-1
+- kexec-tools 2.0.14-1
+
 * Mon Nov 28 2016 Dave Young <dyoung@redhat.com> - 2.0.13-9
 - rename function kdump_to_udev_name
 - Raw dump: use by-id as persistent policy in 2nd kernel
