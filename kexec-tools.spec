@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.14
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -327,6 +327,11 @@ done
 %doc
 
 %changelog
+* Tue Dec 20 2016 Dave Young <dyoung@redhat.com> - 2.0.14-2
+- rebase upstream kexec-tools 2.0.14
+- update kdump anaconda addon
+- cleanup sources file
+
 * Mon Nov 28 2016 Dave Young <dyoung@redhat.com> - 2.0.14-1
 - kexec-tools 2.0.14-1
 
