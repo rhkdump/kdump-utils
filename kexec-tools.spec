@@ -19,7 +19,6 @@ Source12: mkdumprd.8
 Source14: 98-kexec.rules
 Source15: kdump.conf.5
 Source16: kdump.service
-Source17: rhcrashkernel-param
 Source18: kdump.sysconfig.s390x
 Source19: eppic_050615.tar.gz
 Source20: kdump-lib.sh
@@ -174,8 +173,6 @@ install -m 644 %{SOURCE14} $RPM_BUILD_ROOT%{_udevrulesdir}/98-kexec.rules
 install -m 644 %{SOURCE15} $RPM_BUILD_ROOT%{_mandir}/man5/kdump.conf.5
 install -m 644 %{SOURCE16} $RPM_BUILD_ROOT%{_unitdir}/kdump.service
 install -m 755 -D %{SOURCE22} $RPM_BUILD_ROOT%{_prefix}/lib/systemd/system-generators/kdump-dep-generator.sh
-mkdir -p $RPM_BUILD_ROOT/usr/sbin
-install -m 755 %{SOURCE17} $RPM_BUILD_ROOT/usr/sbin/rhcrashkernel-param
 
 %ifarch %{ix86} x86_64 ppc64 s390x ppc64le
 install -m 755 makedumpfile-1.6.1/makedumpfile $RPM_BUILD_ROOT/sbin/makedumpfile
@@ -279,7 +276,6 @@ done
 
 %files
 /sbin/*
-/usr/sbin/*
 %{_bindir}/*
 %{_datadir}/kdump
 %{_prefix}/lib/kdump

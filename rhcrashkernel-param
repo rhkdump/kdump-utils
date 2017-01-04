@@ -1,6 +1,0 @@
-#!/bin/sh
-if grep -q Fedora /etc/redhat-release; then
-    echo -n
-else
-    echo crashkernel=auto
-fi
