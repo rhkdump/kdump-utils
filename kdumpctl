@@ -105,10 +105,12 @@ append_cmdline()
 	echo $cmdline
 }
 
-# This function performs a series of edits on the command line
+# This function performs a series of edits on the command line.
+# Store the final result in global $KDUMP_COMMANDLINE.
 prepare_cmdline()
 {
-	local cmdline;
+	local cmdline id
+
 	if [ -z "$KDUMP_COMMANDLINE" ]; then
 		cmdline=`cat /proc/cmdline`
 		# 'root' parameter will cause kdump failure in live images
@@ -118,6 +120,7 @@ prepare_cmdline()
 	else
 		cmdline=${KDUMP_COMMANDLINE}
 	fi
+
 	# These params should always be removed
 	cmdline=`remove_cmdline_param "$cmdline" crashkernel panic_on_warn`
 	# These params can be removed configurably
@@ -125,12 +128,12 @@ prepare_cmdline()
 
 	cmdline="${cmdline} ${KDUMP_COMMANDLINE_APPEND}"
 
-	local id=`get_bootcpu_initial_apicid`
+	id=`get_bootcpu_initial_apicid`
 	if [ ! -z ${id} ] ; then
 		cmdline=`append_cmdline "${cmdline}" disable_cpu_apicid ${id}`
 	fi
 
-	echo $cmdline
+	KDUMP_COMMANDLINE=$cmdline
 }
 
 
@@ -642,7 +645,7 @@ load_kdump()
 		fi
 	fi
 
-	KDUMP_COMMANDLINE=`prepare_cmdline`
+	prepare_cmdline
 
 	# For secureboot enabled machines, use new kexec file based syscall.
 	# Old syscall will always fail as it does not have capability to
