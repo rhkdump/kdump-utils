@@ -105,6 +105,71 @@ append_cmdline()
 	echo $cmdline
 }
 
+# Check the number of cpus for kdump kernel to boot with.
+# We met an issue on x86_64: kdump runs out of vectors with
+# "nr_cpus=1" when requesting tons of irqs, so here we check
+# "nr_cpus=1" and warn users if kdump probably can't work.
+check_kdump_cpus()
+{
+	local nr_origin nr_min nr_max
+	local arch=$(uname -m) cmdline=$KDUMP_COMMANDLINE_APPEND
+
+	if [ $arch != "x86_64" ]; then
+		return
+	fi
+
+	# We only care about the default "nr_cpus=1".
+	echo $cmdline | grep -E -q "nr_cpus=1[[:space:]]*|nr_cpus=1$"
+	if [ $? -ne 0 ]; then
+		return
+	fi
+
+	nr_origin=1
+
+	# Online cpus in first kernel.
+	nr_max=$(grep -c '^processor' /proc/cpuinfo)
+
+	# To calculate the estimated minimal cpus required.
+	nr_min=$(ls -ld /proc/irq/*/ | wc -l)
+
+	# Vectors for io device start from FIRST_EXTERNAL_VECTOR(32),
+	# some high-numbered ones starting from FIRST_EXTERNAL_VECTOR
+	# are reserved for system internal uses.
+	#
+	# We use a flexible variance and assume there are 32 reserved
+	# from FIRST_EXTERNAL_VECTOR. Then the total vectors for device
+	# interrupts percpu is: (256-32)-32=192.
+	#
+	# For "nr_cpus=1", irq and vector have the 1:1 mapping.
+	nr_min=$(($nr_min + 192 - 1))
+	nr_min=$(($nr_min / 192))
+	if [ $nr_min -gt 1 ]; then
+		# The system seems to have tons of interrupts. We need
+		# some further calculation of the number of cpus(>1).
+		# For "nr_cpus>1", irq and vector have the 1:M mapping,
+		# multiple-cpu affinity can consume multiple vectors.
+		# Luckily for x2apic which is commonly deployed on large
+		# modern machines, default case of boot, device bringup
+		# etc will use a single cpu to minimize vector pressure.
+		#
+		# For further safety, we add one more cpu and round it
+		# up to an even number.
+		nr_min=$(($nr_min + 1))
+		nr_min=$(($nr_min + $nr_min % 2))
+	fi
+
+	if [ $nr_min -gt $nr_max ]; then
+		nr_min=$nr_max
+	fi
+
+	if [ $nr_origin -ge $nr_min ]; then
+		return
+	fi
+
+	echo -n "Warning: nr_cpus=1 may not be enough for kdump boot,"
+	echo " try nr_cpus=$nr_min or larger instead"
+}
+
 # This function performs a series of edits on the command line.
 # Store the final result in global $KDUMP_COMMANDLINE.
 prepare_cmdline()
@@ -134,6 +199,8 @@ prepare_cmdline()
 	fi
 
 	KDUMP_COMMANDLINE=$cmdline
+
+	check_kdump_cpus
 }
 
 
