@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.14
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -310,6 +310,12 @@ done
 %doc
 
 %changelog
+* Mon Jan 23 2017 Dave Young <dyoung@redhat.com> - 2.0.14-4
+- drop kdump script rhcrashkernel-param in kexec-tools repo
+- kdumpctl: sanity check of nr_cpus for x86_64 in case running out of vectors
+- kdumpctl: change prepare_cmdline() to operate KDUMP_COMMANDLINE directly
+- use --hostonly-i18n for dracut
+
 * Wed Jan 4 2017 Dave Young <dyoung@redhat.com> - 2.0.14-3
 - Rebase makedumpfile 1.6.1
 - Delete unused patches
