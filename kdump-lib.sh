@@ -63,7 +63,7 @@ is_pcs_fence_kdump()
     [ -x $FENCE_KDUMP_SEND ] || return 1
 
     # fence kdump not configured?
-    (pcs cluster cib | grep -q 'type="fence_kdump"') &> /dev/null || return 1
+    (pcs cluster cib | grep 'type="fence_kdump"') &> /dev/null || return 1
 }
 
 # Check if fence_kdump is configured using kdump options
