@@ -163,7 +163,7 @@ on your system, with the scripts enabled as described in the section above.
 FAdump can be triggered with the combination of the 'Alt','SysRq' and 'C'
 keyboard keys. Please refer to the following link for more details:
 
-http://kbase.redhat.com/faq/FAQ_43_5559.shtm
+https://fedoraproject.org/wiki/QA/Sysrq
 
 In addition, on PowerPC boxes, fadump can also be triggered via Hardware
 Management Console(HMC) using 'Ctrl', 'O' and 'C' keyboard keys.
