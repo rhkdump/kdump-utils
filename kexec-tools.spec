@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.14
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -310,6 +310,10 @@ done
 %doc
 
 %changelog
+* Thu Mar 9 2017 Dave Young <dyoung@redhat.com> - 2.0.14-5
+- kdump-lib.sh: fix incorrect usage with pipe as input for grep -q in is_pcs_fence_kdump()
+- Document: fix incorrect link in fadump-how.txt
+
 * Mon Jan 23 2017 Dave Young <dyoung@redhat.com> - 2.0.14-4
 - drop kdump script rhcrashkernel-param in kexec-tools repo
 - kdumpctl: sanity check of nr_cpus for x86_64 in case running out of vectors
