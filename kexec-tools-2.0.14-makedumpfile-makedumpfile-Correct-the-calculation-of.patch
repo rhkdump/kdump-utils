@@ -1,0 +1,45 @@
+From 4c53423b995463067fbbd394e724b4d1d6ea3d62 Mon Sep 17 00:00:00 2001
+Message-Id: <4c53423b995463067fbbd394e724b4d1d6ea3d62.1489471500.git.panand@redhat.com>
+In-Reply-To: <4b0bed3523a5f6c2c428d9dab3d27d4572207d52.1489471500.git.panand@redhat.com>
+References: <4b0bed3523a5f6c2c428d9dab3d27d4572207d52.1489471500.git.panand@redhat.com>
+From: Baoquan He <bhe@redhat.com>
+Date: Thu, 2 Mar 2017 17:37:19 +0900
+Subject: [PATCH 5/7] [PATCH v3 5/7] makedumpfile: Correct the calculation of
+ kvaddr in set_kcore_vmcoreinfo
+
+In set_kcore_vmcoreinfo, we calculate the virtual address of vmcoreinfo
+by OR operation as below:
+
+	kvaddr = (ulong)vmcoreinfo_addr | PAGE_OFFSET;
+
+When mm sections kaslr is not enabled, this is correct since the
+starting address of direct mapping section is 0xffff880000000000 which
+is 1T aligned.  Usually system with memory below 1T won't cause problem.
+
+However with mm section kaslr enabled, the starting address of direct
+mapping is 1G aligned. The above code makes kvaddr unsure.
+
+So change it to adding operation:
+	kvaddr = (ulong)vmcoreinfo_addr + PAGE_OFFSET;
+
+Signed-off-by: Baoquan He <bhe@redhat.com>
+---
+ elf_info.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/makedumpfile-1.6.1/elf_info.c b/makedumpfile-1.6.1/elf_info.c
+index c5743b3cab28..100272f83c48 100644
+--- a/makedumpfile-1.6.1/elf_info.c
++++ b/makedumpfile-1.6.1/elf_info.c
+@@ -372,7 +372,7 @@ int set_kcore_vmcoreinfo(uint64_t vmcoreinfo_addr, uint64_t vmcoreinfo_len)
+ 	off_t offset_desc;
+ 
+ 	offset = UNINITIALIZED;
+-	kvaddr = (ulong)vmcoreinfo_addr | PAGE_OFFSET;
++	kvaddr = (ulong)vmcoreinfo_addr + PAGE_OFFSET;
+ 
+ 	for (i = 0; i < num_pt_loads; ++i) {
+ 		struct pt_load_segment *p = &pt_loads[i];
+-- 
+2.9.3
+

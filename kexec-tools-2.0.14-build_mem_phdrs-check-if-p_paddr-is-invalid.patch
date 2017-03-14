@@ -1,0 +1,43 @@
+From 5520739f1e6e31c7731d34d384bbaf4904282931 Mon Sep 17 00:00:00 2001
+Message-Id: <5520739f1e6e31c7731d34d384bbaf4904282931.1489470510.git.panand@redhat.com>
+From: Pratyush Anand <panand@redhat.com>
+Date: Wed, 1 Mar 2017 11:19:42 +0530
+Subject: [PATCH] build_mem_phdrs(): check if p_paddr is invalid
+
+Currently, all the p_paddr of PT_LOAD headers are assigned to 0, which
+is not correct and could be misleading, since 0 is a valid physical
+address.
+
+Upstream kernel commit "464920104bf7 /proc/kcore: update physical
+address for kcore ram and text" fixed it and now invalid PT_LOAD is
+assigned as -1.
+
+kexec/arch/i386/crashdump-x86.c:get_kernel_vaddr_and_size() uses kcore
+interface and so calls build_mem_phdrs() for kcore PT_LOAD headers.
+
+This patch fixes build_mem_phdrs() to check if p_paddr is invalid.
+
+Signed-off-by: Pratyush Anand <panand@redhat.com>
+Acked-by: Dave Young <dyoung@redhat.com>
+Signed-off-by: Simon Horman <horms@verge.net.au>
+---
+ kexec/kexec-elf.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/kexec/kexec-elf.c b/kexec/kexec-elf.c
+index 1d6320a2f0e6..be60bbd48486 100644
+--- a/kexec/kexec-elf.c
++++ b/kexec/kexec-elf.c
+@@ -432,7 +432,8 @@ static int build_mem_phdrs(const char *buf, off_t len, struct mem_ehdr *ehdr,
+ 			}
+ 			return -1;
+ 		}
+-		if ((phdr->p_paddr + phdr->p_memsz) < phdr->p_paddr) {
++		if (phdr->p_paddr != (unsigned long long)-1 &&
++			(phdr->p_paddr + phdr->p_memsz) < phdr->p_paddr) {
+ 			/* The memory address wraps */
+ 			if (probe_debug) {
+ 				fprintf(stderr, "ELF address wrap around\n");
+-- 
+2.9.3
+

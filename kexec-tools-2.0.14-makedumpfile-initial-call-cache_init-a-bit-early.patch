@@ -1,0 +1,47 @@
+From 8e2834bac4f62da3894da297f083068431be6d80 Mon Sep 17 00:00:00 2001
+Message-Id: <8e2834bac4f62da3894da297f083068431be6d80.1489471500.git.panand@redhat.com>
+In-Reply-To: <4b0bed3523a5f6c2c428d9dab3d27d4572207d52.1489471500.git.panand@redhat.com>
+References: <4b0bed3523a5f6c2c428d9dab3d27d4572207d52.1489471500.git.panand@redhat.com>
+From: Pratyush Anand <panand@redhat.com>
+Date: Thu, 2 Mar 2017 17:37:11 +0900
+Subject: [PATCH 2/7] [PATCH v3 2/7] initial(): call cache_init() a bit early
+
+Call cache_init() before get_kcore_dump_loads(), because latter uses
+cache_search().
+
+Call path is like this :
+get_kcore_dump_loads() -> process_dump_load() -> vaddr_to_paddr() ->
+vtop4_x86_64() -> readmem() -> cache_search()
+
+Signed-off-by: Pratyush Anand <panand@redhat.com>
+---
+ makedumpfile.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/makedumpfile-1.6.1/makedumpfile.c b/makedumpfile-1.6.1/makedumpfile.c
+index 6942047199de..3b8e9810468d 100644
+--- a/makedumpfile-1.6.1/makedumpfile.c
++++ b/makedumpfile-1.6.1/makedumpfile.c
+@@ -3878,6 +3878,9 @@ initial(void)
+ 	if (!get_value_for_old_linux())
+ 		return FALSE;
+ 
++	if (!is_xen_memory() && !cache_init())
++		return FALSE;
++
+ 	if (info->flag_mem_usage && !get_kcore_dump_loads())
+ 		return FALSE;
+ 
+@@ -4000,9 +4003,6 @@ out:
+ 		}
+ 	}
+ 
+-	if (!is_xen_memory() && !cache_init())
+-		return FALSE;
+-
+ 	if (debug_info && !get_machdep_info())
+ 		return FALSE;
+ 
+-- 
+2.9.3
+

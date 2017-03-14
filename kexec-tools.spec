@@ -84,6 +84,16 @@ Obsoletes: diskdumputils netdump kexec-tools-eppic
 # Patches 601 onward are generic patches
 #
 Patch601: kexec-tools-2.0.3-disable-kexec-test.patch
+Patch602: kexec-tools-2.0.14-build_mem_phdrs-check-if-p_paddr-is-invalid.patch
+Patch603: kexec-tools-2.0.14-makedumpfile-show_mem_usage-calculate-page-offset-af.patch
+Patch604: kexec-tools-2.0.14-makedumpfile-initial-call-cache_init-a-bit-early.patch
+Patch605: kexec-tools-2.0.14-makedumpfile-x86_64-check-physical-address-in-PT_LOA.patch
+Patch606: kexec-tools-2.0.14-makedumpfile-elf_info-kcore-check-for-invalid-physic.patch
+Patch607: kexec-tools-2.0.14-makedumpfile-makedumpfile-Correct-the-calculation-of.patch
+Patch608: kexec-tools-2.0.14-makedumpfile-makedumpfile-Discard-process_dump_load.patch
+Patch609: kexec-tools-2.0.14-makedumpfile-mem-usage-allow-to-work-only-with-f-for.patch
+Patch610: kexec-tools-2.0.14-x86-x86_64-Fix-format-warning-with-die.patch
+
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -107,6 +117,15 @@ tar -z -x -v -f %{SOURCE19}
 tar -z -x -v -f %{SOURCE23}
 
 %patch601 -p1
+%patch602 -p1
+%patch603 -p1
+%patch604 -p1
+%patch605 -p1
+%patch606 -p1
+%patch607 -p1
+%patch608 -p1
+%patch609 -p1
+%patch610 -p1
 
 %ifarch ppc
 %define archdef ARCH=ppc

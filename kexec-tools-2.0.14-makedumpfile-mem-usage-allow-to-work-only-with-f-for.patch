@@ -1,0 +1,84 @@
+From 78cbb4035209add81563c00ba46d237f86b8c427 Mon Sep 17 00:00:00 2001
+Message-Id: <78cbb4035209add81563c00ba46d237f86b8c427.1489471500.git.panand@redhat.com>
+In-Reply-To: <4b0bed3523a5f6c2c428d9dab3d27d4572207d52.1489471500.git.panand@redhat.com>
+References: <4b0bed3523a5f6c2c428d9dab3d27d4572207d52.1489471500.git.panand@redhat.com>
+From: Pratyush Anand <panand@redhat.com>
+Date: Thu, 2 Mar 2017 17:37:25 +0900
+Subject: [PATCH 7/7] [PATCH v3 7/7] mem-usage: allow to work only with -f for
+ kernel version < 4.11
+
+PT_LOAD of kcore does not have valid p_paddr values for kernel version
+less that v4.11. Therefore, older kernel will no long work for mem-usage
+with current makedumpfile code. They can only work when they are patched
+with fix to "update physical address for kcore ram and text".
+
+This patch fixes the makedumpfile so that it does not allow to work
+older kernel for --mem-usage until someone is sure that kernel is
+rightly patched and so uses -f in command line. It also updates man page
+and usage info accordingly.
+
+Signed-off-by: Pratyush Anand <panand@redhat.com>
+---
+ makedumpfile.8 | 9 ++++++++-
+ makedumpfile.c | 6 ++++++
+ print_info.c   | 1 +
+ 3 files changed, 15 insertions(+), 1 deletion(-)
+
+diff --git a/makedumpfile-1.6.1/makedumpfile.8 b/makedumpfile-1.6.1/makedumpfile.8
+index 9069fb18cdb6..993236486e77 100644
+--- a/makedumpfile-1.6.1/makedumpfile.8
++++ b/makedumpfile-1.6.1/makedumpfile.8
+@@ -235,13 +235,20 @@ the ELF format does not support compressed data.
+ 
+ .TP
+ \fB\-f\fR
+-Force existing DUMPFILE to be overwritten.
++Force existing DUMPFILE to be overwritten and mem-usage to work with older
++kernel as well.
+ .br
+ .B Example:
+ .br
+ # makedumpfile \-f \-d 31 \-x vmlinux /proc/vmcore dumpfile
+ .br
+ This command overwrites \fIDUMPFILE\fR even if it already exists.
++.br
++# makedumpfile \-f \-\-mem\-usage /proc/kcore
++.br
++Kernel version lesser than v4.11 will not work with \-\-mem\-usage
++functionality until it has been patched with upstream commit 464920104bf7.
++Therefore if you have patched your older kernel then use \-f.
+ 
+ .TP
+ \fB\-x\fR \fIVMLINUX\fR
+diff --git a/makedumpfile-1.6.1/makedumpfile.c b/makedumpfile-1.6.1/makedumpfile.c
+index 3b8e9810468d..e3be1ab0a9ec 100644
+--- a/makedumpfile-1.6.1/makedumpfile.c
++++ b/makedumpfile-1.6.1/makedumpfile.c
+@@ -11269,6 +11269,12 @@ main(int argc, char *argv[])
+ 			MSG("Try `makedumpfile --help' for more information.\n");
+ 			goto out;
+ 		}
++		if (info->kernel_version < KERNEL_VERSION(4, 11, 0) &&
++				!info->flag_force) {
++			MSG("mem-usage not supported for this kernel.\n");
++			MSG("You can try with -f if your kernel's kcore has valid p_paddr\n");
++			goto out;
++		}
+ 
+ 		if (!show_mem_usage())
+ 			goto out;
+diff --git a/makedumpfile-1.6.1/print_info.c b/makedumpfile-1.6.1/print_info.c
+index 392d863a4227..3c577d83cebb 100644
+--- a/makedumpfile-1.6.1/print_info.c
++++ b/makedumpfile-1.6.1/print_info.c
+@@ -310,6 +310,7 @@ print_usage(void)
+ 	MSG("\n");
+ 	MSG("  [-f]:\n");
+ 	MSG("      Overwrite DUMPFILE even if it already exists.\n");
++	MSG("      Force mem-usage to work with older kernel as well.\n");
+ 	MSG("\n");
+ 	MSG("  [-h, --help]:\n");
+ 	MSG("      Show help message and LZO/snappy support status (enabled/disabled).\n");
+-- 
+2.9.3
+

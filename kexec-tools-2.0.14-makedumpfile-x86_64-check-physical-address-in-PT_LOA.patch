@@ -1,0 +1,47 @@
+From f1363023b909df886eca5efcb64b78be9b8e6086 Mon Sep 17 00:00:00 2001
+Message-Id: <f1363023b909df886eca5efcb64b78be9b8e6086.1489471500.git.panand@redhat.com>
+In-Reply-To: <4b0bed3523a5f6c2c428d9dab3d27d4572207d52.1489471500.git.panand@redhat.com>
+References: <4b0bed3523a5f6c2c428d9dab3d27d4572207d52.1489471500.git.panand@redhat.com>
+From: Pratyush Anand <panand@redhat.com>
+Date: Thu, 2 Mar 2017 17:37:13 +0900
+Subject: [PATCH 3/7] [PATCH v3 3/7] x86_64: check physical address in PT_LOAD
+ for none direct mapped regions
+
+A kcore PT_LOAD can have a section from vmalloc region. However,
+physical address in that header would be invalid (-1) after kernel
+commit 464920104bf7 (/proc/kcore: update physical address for kcore ram
+and text). Therefore, check for valid physical address while calculating
+page_offset or phys_offset.
+
+Signed-off-by: Pratyush Anand <panand@redhat.com>
+---
+ arch/x86_64.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/makedumpfile-1.6.1/arch/x86_64.c b/makedumpfile-1.6.1/arch/x86_64.c
+index 893cd516fc8b..e978a36f8878 100644
+--- a/makedumpfile-1.6.1/arch/x86_64.c
++++ b/makedumpfile-1.6.1/arch/x86_64.c
+@@ -41,7 +41,8 @@ get_page_offset_x86_64(void)
+ 	unsigned long long virt_start;
+ 
+ 	for (i = 0; get_pt_load(i, &phys_start, NULL, &virt_start, NULL); i++) {
+-		if (virt_start < __START_KERNEL_map) {
++		if (virt_start < __START_KERNEL_map
++				&& phys_start != NOT_PADDR) {
+ 			info->page_offset = virt_start - phys_start;
+ 			return TRUE;
+ 		}
+@@ -76,7 +77,8 @@ get_phys_base_x86_64(void)
+ 	}
+ 
+ 	for (i = 0; get_pt_load(i, &phys_start, NULL, &virt_start, NULL); i++) {
+-		if (virt_start >= __START_KERNEL_map) {
++		if (virt_start >= __START_KERNEL_map
++				&& phys_start != NOT_PADDR) {
+ 
+ 			info->phys_base = phys_start -
+ 			    (virt_start & ~(__START_KERNEL_map));
+-- 
+2.9.3
+

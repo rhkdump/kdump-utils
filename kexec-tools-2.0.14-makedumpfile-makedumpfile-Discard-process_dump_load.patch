@@ -1,0 +1,57 @@
+From f3ff8c6232de43fa2cc60f5ca0f233cf8eb8d2ad Mon Sep 17 00:00:00 2001
+Message-Id: <f3ff8c6232de43fa2cc60f5ca0f233cf8eb8d2ad.1489471500.git.panand@redhat.com>
+In-Reply-To: <4b0bed3523a5f6c2c428d9dab3d27d4572207d52.1489471500.git.panand@redhat.com>
+References: <4b0bed3523a5f6c2c428d9dab3d27d4572207d52.1489471500.git.panand@redhat.com>
+From: Baoquan He <bhe@redhat.com>
+Date: Thu, 2 Mar 2017 17:37:23 +0900
+Subject: [PATCH 6/7] [PATCH v3 6/7] makedumpfile: Discard process_dump_load
+
+Kernel commit 464920104bf7 (/proc/kcore: update physical address for
+kcore ram and text) provides physical address of direct mapping kcore
+program segments. So no need to calculate it specifically now. And the
+old code is not correct since it calls vaddr_to_paddr() which has not
+been ready at that time.
+
+Signed-off-by: Baoquan He <bhe@redhat.com>
+---
+ elf_info.c | 17 -----------------
+ 1 file changed, 17 deletions(-)
+
+diff --git a/makedumpfile-1.6.1/elf_info.c b/makedumpfile-1.6.1/elf_info.c
+index 100272f83c48..8e2437622141 100644
+--- a/makedumpfile-1.6.1/elf_info.c
++++ b/makedumpfile-1.6.1/elf_info.c
+@@ -857,22 +857,6 @@ static int exclude_segment(struct pt_load_segment **pt_loads,
+ 	return 0;
+ }
+ 
+-static int
+-process_dump_load(struct pt_load_segment	*pls)
+-{
+-	unsigned long long paddr;
+-
+-	paddr = vaddr_to_paddr(pls->virt_start);
+-	pls->phys_start  = paddr;
+-	pls->phys_end    = paddr + (pls->virt_end - pls->virt_start);
+-	DEBUG_MSG("process_dump_load\n");
+-	DEBUG_MSG("  phys_start : %llx\n", pls->phys_start);
+-	DEBUG_MSG("  phys_end   : %llx\n", pls->phys_end);
+-	DEBUG_MSG("  virt_start : %llx\n", pls->virt_start);
+-	DEBUG_MSG("  virt_end   : %llx\n", pls->virt_end);
+-
+-	return TRUE;
+-}
+ 
+ int get_kcore_dump_loads(void)
+ {
+@@ -917,7 +901,6 @@ int get_kcore_dump_loads(void)
+ 		}
+ 
+ 		pls[j] = *p;
+-		process_dump_load(&pls[j]);
+ 		j++;
+ 	}
+ 
+-- 
+2.9.3
+

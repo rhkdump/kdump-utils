@@ -1,0 +1,47 @@
+From f4ab6897a716d3f3959f6cb8cab27744eaecb5a6 Mon Sep 17 00:00:00 2001
+Message-Id: <f4ab6897a716d3f3959f6cb8cab27744eaecb5a6.1489471500.git.panand@redhat.com>
+In-Reply-To: <4b0bed3523a5f6c2c428d9dab3d27d4572207d52.1489471500.git.panand@redhat.com>
+References: <4b0bed3523a5f6c2c428d9dab3d27d4572207d52.1489471500.git.panand@redhat.com>
+From: Pratyush Anand <panand@redhat.com>
+Date: Thu, 2 Mar 2017 17:37:16 +0900
+Subject: [PATCH 4/7] [PATCH v3 4/7] elf_info: kcore: check for invalid
+ physical address
+
+kcore passes correct phys_start for direct mapped region and an invalid
+value (-1) for all other regions after the kernel commit
+464920104bf7(/proc/kcore: update physical address for kcore ram and
+text). arch specific function is_phys_addr() accepts only virt_start.
+Therefore, check for valid phys_start in get_kcore_dump_loads().
+
+Signed-off-by: Pratyush Anand <panand@redhat.com>
+---
+ elf_info.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/makedumpfile-1.6.1/elf_info.c b/makedumpfile-1.6.1/elf_info.c
+index 65ff333cf33a..c5743b3cab28 100644
+--- a/makedumpfile-1.6.1/elf_info.c
++++ b/makedumpfile-1.6.1/elf_info.c
+@@ -881,7 +881,8 @@ int get_kcore_dump_loads(void)
+ 
+ 	for (i = 0; i < num_pt_loads; ++i) {
+ 		struct pt_load_segment *p = &pt_loads[i];
+-		if (!is_phys_addr(p->virt_start))
++		if (p->phys_start == NOT_PADDR
++				|| !is_phys_addr(p->virt_start))
+ 			continue;
+ 		loads++;
+ 	}
+@@ -901,7 +902,8 @@ int get_kcore_dump_loads(void)
+ 
+ 	for (i = 0, j = 0; i < num_pt_loads; ++i) {
+ 		struct pt_load_segment *p = &pt_loads[i];
+-		if (!is_phys_addr(p->virt_start))
++		if (p->phys_start == NOT_PADDR
++				|| !is_phys_addr(p->virt_start))
+ 			continue;
+ 		if (j >= loads)
+ 			return FALSE;
+-- 
+2.9.3
+
