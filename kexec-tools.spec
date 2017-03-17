@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.14
-Release: 5%{?dist}
+Release: 6%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -329,6 +329,9 @@ done
 %doc
 
 %changelog
+* Fri Mar 17 2017 Dave Young <dyoung@redhat.com> - 2.0.14-6
+- Fix kernel kaslr caused regressions (kexec -p and makedumpfile --mem-usage)
+
 * Thu Mar 9 2017 Dave Young <dyoung@redhat.com> - 2.0.14-5
 - kdump-lib.sh: fix incorrect usage with pipe as input for grep -q in is_pcs_fence_kdump()
 - Document: fix incorrect link in fadump-how.txt
