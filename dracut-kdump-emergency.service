@@ -12,6 +12,7 @@
 [Unit]
 Description=Kdump Emergency
 DefaultDependencies=no
+IgnoreOnIsolate=yes
 
 [Service]
 ExecStart=/usr/bin/systemctl --no-block isolate kdump-error-handler.service
