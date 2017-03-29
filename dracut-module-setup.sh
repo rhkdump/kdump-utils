@@ -743,4 +743,13 @@ install() {
     # target. Ideally all this should be pushed into dracut iscsi module
     # at some point of time.
     kdump_check_iscsi_targets
+
+    # For the lvm type target under kdump, in /etc/lvm/lvm.conf we can
+    # safely replace "reserved_memory=XXXX"(default value is 8192) with
+    # "reserved_memory=1024" to lower memory pressure under kdump. We do
+    # it unconditionally here, if "/etc/lvm/lvm.conf" doesn't exist, it
+    # actually does nothing.
+    sed -i -e \
+      's/\(^[[:space:]]*reserved_memory[[:space:]]*=\)[[:space:]]*[[:digit:]]*/\1 1024/' \
+      ${initdir}/etc/lvm/lvm.conf &>/dev/null
 }
