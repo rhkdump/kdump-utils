@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.14
-Release: 6%{?dist}
+Release: 7%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -331,6 +331,10 @@ done
 %doc
 
 %changelog
+* Fri Mar 31 2017 Dave Young <dyoung@redhat.com> - 2.0.14-7
+- kdump-emergency: fix "Transaction is destructive" emergency failure
+- mkdumprd: reduce lvm2 memory under kdump
+
 * Fri Mar 17 2017 Dave Young <dyoung@redhat.com> - 2.0.14-6
 - Fix kernel kaslr caused regressions (kexec -p and makedumpfile --mem-usage)
 
