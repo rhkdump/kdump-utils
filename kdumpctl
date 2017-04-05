@@ -184,10 +184,6 @@ prepare_cmdline()
 
 	if [ -z "$KDUMP_COMMANDLINE" ]; then
 		cmdline=`cat /proc/cmdline`
-		# 'root' parameter will cause kdump failure in live images
-		if [[ ${cmdline} == *"root=live:"* ]]; then
-		    KDUMP_COMMANDLINE_REMOVE="${KDUMP_COMMANDLINE_REMOVE} root"
-		fi
 	else
 		cmdline=${KDUMP_COMMANDLINE}
 	fi

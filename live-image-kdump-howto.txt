@@ -13,6 +13,8 @@ When kdump kernel boots in a live environment, the default target /var/crash is
 in RAM so you need to change the dump target to an external disk or a network
 dump target.
 
+Besides, make sure that "default dump_to_rootfs" is not specified.
+
 3. Start kdump service
 
     $ kdumpctl start
