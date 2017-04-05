@@ -171,6 +171,11 @@ check_kdump_cpus()
 	echo " try nr_cpus=$nr_min or larger instead"
 }
 
+is_dump_to_rootfs()
+{
+	grep "^default[[:space:]]dump_to_rootfs" /etc/kdump.conf >/dev/null
+}
+
 # This function performs a series of edits on the command line.
 # Store the final result in global $KDUMP_COMMANDLINE.
 prepare_cmdline()
@@ -191,6 +196,17 @@ prepare_cmdline()
 	cmdline=`remove_cmdline_param "$cmdline" crashkernel panic_on_warn`
 	# These params can be removed configurably
 	cmdline=`remove_cmdline_param "$cmdline" ${KDUMP_COMMANDLINE_REMOVE}`
+
+	# Always remove "root=X", as we now explicitly generate all kinds
+	# of dump target mount information including root fs. But we can
+	# not remove it in case of fadump or "default dump_to_rootfs".
+	#
+	# We do this before KDUMP_COMMANDLINE_APPEND, if one really cares
+	# about it(e.g. for debug purpose), then can pass "root=X" using
+	# KDUMP_COMMANDLINE_APPEND.
+	if [ $DEFAULT_DUMP_MODE != "fadump" ] && ! is_dump_to_rootfs; then
+		cmdline=`remove_cmdline_param "$cmdline" root`
+	fi
 
 	cmdline="${cmdline} ${KDUMP_COMMANDLINE_APPEND}"
 
@@ -512,11 +528,16 @@ check_dump_fs_modified()
 		fi
 	fi
 
-        if ! findmnt $_target >/dev/null; then
-            echo "Dump target $_target is probably not mounted."
-	    return 2
-        fi
-	_new_mntpoint="/kdumproot/$(get_mntpoint_from_target $_target)"
+	if ! findmnt $_target >/dev/null; then
+		echo "Dump target $_target is probably not mounted."
+		return 2
+	fi
+
+	if [[ "$_target" = "$(get_root_fs_device)" ]]; then
+		_new_mntpoint="/sysroot"
+	else
+		_new_mntpoint="/kdumproot/$(get_mntpoint_from_target $_target)"
+	fi
 
 	_dracut_args=$(lsinitrd $TARGET_INITRD | grep "^Arguments:" | head -1)
 	if [[ -z "$_dracut_args" ]];then

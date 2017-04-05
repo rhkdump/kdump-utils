@@ -390,20 +390,20 @@ default_dump_target_install_conf()
         _save_path=$_mntpoint/$_save_path
     fi
 
+    _fstype=$(get_fs_type_from_target $_target)
+    if is_fs_type_nfs $_fstype; then
+        kdump_install_net "$_target"
+        _fstype="nfs"
+    else
+        _target=$(kdump_get_persistent_dev $_target)
+    fi
+
+    echo "$_fstype $_target" >> ${initdir}/tmp/$$-kdump.conf
+
+    # strip the duplicated "/"
+    _save_path=$(echo $_save_path | tr -s /)
+    # don't touch the path under root mount
     if [ "$_mntpoint" != "/" ]; then
-        _fstype=$(get_fs_type_from_target $_target)
-
-        if $(is_fs_type_nfs $_fstype); then
-            kdump_install_net "$_target"
-            _fstype="nfs"
-        else
-            _target=$(kdump_get_persistent_dev $_target)
-        fi
-
-        echo "$_fstype $_target" >> ${initdir}/tmp/$$-kdump.conf
-
-        # strip the duplicated "/"
-        _save_path=$(echo $_save_path | tr -s /)
         _save_path=${_save_path##"$_mntpoint"}
     fi
 

@@ -80,12 +80,6 @@ add_dracut_sshkey() {
     add_dracut_arg "--sshkey" "$1"
 }
 
-target_is_root() {
-    local _t
-    _t=$(findmnt -k -n -r -o TARGET $1|sort|head -1)
-    [ "$_t" = "/" ]
-}
-
 # caller should ensure $1 is valid and mounted in 1st kernel
 to_mount() {
     local _dev=$1 _source _target _fstype _options _mntopts _pdev
@@ -247,13 +241,13 @@ verify_core_collector() {
 }
 
 add_mount() {
-    if ! target_is_root "$1"; then
-        local _mnt=$(to_mount "$1")
-        if [ $? -ne 0 ]; then
-            exit 1
-        fi
-        add_dracut_mount "$_mnt"
+    local _mnt=$(to_mount "$1")
+
+    if [ $? -ne 0 ]; then
+        exit 1
     fi
+
+    add_dracut_mount "$_mnt"
 }
 
 get_block_dump_target()
@@ -274,7 +268,6 @@ handle_default_dump_target()
 {
     local _target
     local _mntpoint
-    local _fstype
 
     is_user_configured_dump_target && return
 
@@ -293,13 +286,9 @@ handle_default_dump_target()
         SAVE_PATH=$_mntpoint/$SAVE_PATH
     fi
 
-    if [ "$_mntpoint" != "/" ]; then
-        SAVE_PATH=${SAVE_PATH##"$_mntpoint"}
-        _fstype=$(get_fs_type_from_target $_target)
-
-        add_mount "$_target"
-        check_size fs $_target
-    fi
+    SAVE_PATH=${SAVE_PATH##"$_mntpoint"}
+    add_mount "$_target"
+    check_size fs $_target
 }
 
 get_default_action_target()
