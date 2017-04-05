@@ -68,8 +68,9 @@ remove_cmdline_param()
 
 	for arg in $@; do
 		cmdline=`echo $cmdline | \
-			 sed -e "s/\b$arg=[^ ]*\b//g" \
-			     -e "s/\b$arg\b//g" \
+			 sed -e "s/\b$arg=[^ ]*//g" \
+			     -e "s/^$arg\b//g" \
+			     -e "s/[[:space:]]$arg\b//g" \
 			     -e "s/\s\+/ /g"`
 	done
 	echo $cmdline
