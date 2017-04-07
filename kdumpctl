@@ -876,6 +876,11 @@ check_current_fadump_status()
 
 check_current_kdump_status()
 {
+	if [ ! -f /sys/kernel/kexec_crash_loaded ];then
+		echo "Perhaps CONFIG_CRASH_DUMP is not enabled in kernel"
+		return 1
+	fi
+
 	rc=`cat /sys/kernel/kexec_crash_loaded`
 	if [ $rc == 1 ]; then
 		return 0
