@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.14
-Release: 7%{?dist}
+Release: 8%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -331,6 +331,12 @@ done
 %doc
 
 %changelog
+* Tue Apr 11 2017 Dave Young <dyoung@redhat.com> - 2.0.14-8
+- kdumpctl: fix status check when CONFIG_CRASH_DUMP is not enabled in kernel
+- kdumpctl: fix a bug in remove_cmdline_param()
+- kdumpctl: remove "root=X" for kdump boot
+- Revert "kdumpctl: filter 'root' kernel parameter when running in live images"
+
 * Fri Mar 31 2017 Dave Young <dyoung@redhat.com> - 2.0.14-7
 - kdump-emergency: fix "Transaction is destructive" emergency failure
 - mkdumprd: reduce lvm2 memory under kdump
