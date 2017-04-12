@@ -166,6 +166,16 @@ By default, kdump initrd will only be rebuilt when necessary.
 Specify 1 to force rebuilding kdump initrd every time when kdump service starts.
 .RE
 
+.B force_no_rebuild <0 | 1>
+.RS
+By default, kdump initrd will be rebuilt when necessary.
+Specify 1 to bypass rebuilding of kdump initrd.
+
+.PP
+force_no_rebuild and force_rebuild options are mutually exclusive and
+they should not be set to 1 simultaneously.
+.RE
+
 .B override_resettable <0 | 1>
 .RS
 Usually an unresettable block device can't be a dump target. Specifying 1 means

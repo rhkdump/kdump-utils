@@ -367,7 +367,7 @@ check_config()
 		case "$config_opt" in
 		\#* | "")
 			;;
-		raw|ext2|ext3|ext4|minix|btrfs|xfs|nfs|ssh|sshkey|path|core_collector|kdump_post|kdump_pre|extra_bins|extra_modules|default|force_rebuild|dracut_args|fence_kdump_args|fence_kdump_nodes)
+		raw|ext2|ext3|ext4|minix|btrfs|xfs|nfs|ssh|sshkey|path|core_collector|kdump_post|kdump_pre|extra_bins|extra_modules|default|force_rebuild|force_no_rebuild|dracut_args|fence_kdump_args|fence_kdump_nodes)
 			[ -z "$config_val" ] && {
 				echo "Invalid kdump config value for option $config_opt."
 				return 1;
@@ -627,6 +627,7 @@ check_rebuild()
 {
 	local extra_modules
 	local _force_rebuild force_rebuild="0"
+	local _force_no_rebuild force_no_rebuild="0"
 	local ret system_modified="0"
 
 	check_boot_dir
@@ -643,6 +644,15 @@ check_rebuild()
 		return 1
 	fi
 
+	_force_no_rebuild=`grep ^force_no_rebuild $KDUMP_CONFIG_FILE 2>/dev/null`
+	if [ $? -eq 0 ]; then
+		force_no_rebuild=`echo $_force_no_rebuild | cut -d' '  -f2`
+		if [ "$force_no_rebuild" != "0" ] && [ "$force_no_rebuild" != "1" ];then
+			echo "Error: force_no_rebuild value is invalid"
+			return 1
+		fi
+	fi
+
 	_force_rebuild=`grep ^force_rebuild $KDUMP_CONFIG_FILE 2>/dev/null`
 	if [ $? -eq 0 ]; then
 		force_rebuild=`echo $_force_rebuild | cut -d' '  -f2`
@@ -650,6 +660,16 @@ check_rebuild()
 			echo "Error: force_rebuild value is invalid"
 			return 1
 		fi
+	fi
+
+	if [[ "$force_no_rebuild" == "1" && "$force_rebuild" == "1" ]]; then
+		echo "Error: force_rebuild and force_no_rebuild are enabled simultaneously in kdump.conf"
+		return 1
+	fi
+
+	# Will not rebuild kdump initrd
+	if [ "$force_no_rebuild" == "1" ]; then
+		return 0
 	fi
 
 	#will rebuild every time if extra_modules are specified
