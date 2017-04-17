@@ -111,6 +111,8 @@ dump_fs()
     sync
 
     echo "kdump: saving vmcore complete"
+    # improper kernel cmdline can cause the failure of echo, we can ignore this kind of failure
+    return 0
 }
 
 save_vmcore_dmesg_fs() {
