@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.14
-Release: 8%{?dist}
+Release: 9%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -331,6 +331,11 @@ done
 %doc
 
 %changelog
+* Thu Apr 27 2017 Dave Young <dyoung@redhat.com> - 2.0.14-9
+- kdump: Introduce 'force_no_rebuild' option
+- kdump-lib-initramfs.sh: ignore the failure of echo
+- kdump.sysconfig/x86_64: Add nokaslr to kdump kernel cmdline
+
 * Tue Apr 11 2017 Dave Young <dyoung@redhat.com> - 2.0.14-8
 - kdumpctl: fix status check when CONFIG_CRASH_DUMP is not enabled in kernel
 - kdumpctl: fix a bug in remove_cmdline_param()
