@@ -1074,10 +1074,11 @@ is_secure_boot_enforced()
 
 check_crash_mem_reserved()
 {
-	MEM_RESERVED=$(cat /sys/kernel/kexec_crash_size)
-	if [ $MEM_RESERVED -eq 0 ]
-	then
-		echo "No memory reserved for crash kernel." >&2
+	local mem_reserved
+
+	mem_reserved=$(cat /sys/kernel/kexec_crash_size)
+	if [ $mem_reserved -eq 0 ]; then
+		echo "No memory reserved for crash kernel"
 		return 1
 	fi
 
@@ -1163,6 +1164,12 @@ check_default_config()
 
 start()
 {
+	check_dump_feasibility
+	if [ $? -ne 0 ]; then
+		echo "Starting kdump: [FAILED]"
+		return 1
+	fi
+
 	check_config
 	if [ $? -ne 0 ]; then
 		echo "Starting kdump: [FAILED]"
@@ -1172,13 +1179,8 @@ start()
 	if sestatus 2>/dev/null | grep -q "SELinux status.*enabled"; then
 		selinux_relabel
 	fi
-	save_raw
-	if [ $? -ne 0 ]; then
-		echo "Starting kdump: [FAILED]"
-		return 1
-	fi
 
-	check_dump_feasibility
+	save_raw
 	if [ $? -ne 0 ]; then
 		echo "Starting kdump: [FAILED]"
 		return 1
