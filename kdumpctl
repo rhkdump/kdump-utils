@@ -565,36 +565,58 @@ check_dump_fs_modified()
 
 check_wdt_modified()
 {
+	local -A _drivers
+	local _alldrivers _active _wdtdrv _wdtppath _dir
+	local wd_old wd_new
+
 	is_wdt_mod_omitted
 	[[ $? -eq 0 ]] && return 0
 	[[ -d /sys/class/watchdog/ ]] || return 0
 
-	for dir in /sys/class/watchdog/*; do
-		[[ -d "$dir" ]] || continue
-		[[ -f "$dir/state" ]] || continue
-		wdtdrv=$(< "$dir/device/modalias")
-		wdtdrv=$(modinfo $wdtdrv | grep filename | awk -F"kernel/" '{print $2}')
-		active=$(< "$dir/state")
-		# rebuild when:
-		# module for this watchdog is not found and watchdog is active
-		# module for this watchdog is found and watchdog is inactive
-		lsinitrd $TARGET_INITRD | grep $wdtdrv &> /dev/null
-		if [ $? -ne 0 ]; then
-			[[ "$active" =  "active" ]] && return 1
-		else
-			[[ "$active" =  "inactive" ]] && return 1
+	# Copied logic from dracut 04watchdog/module-setup.sh::installkernel()
+	for _dir in /sys/class/watchdog/*; do
+		[[ -d "$_dir" ]] || continue
+		[[ -f "$_dir/state" ]] || continue
+		_active=$(< "$_dir/state")
+		[[ "$_active" =  "active" ]] || continue
+		# device/modalias will return driver of this device
+		_wdtdrv=$(< "$_dir/device/modalias")
+		# There can be more than one module represented by same
+		# modalias. Currently load all of them.
+		# TODO: Need to find a way to avoid any unwanted module
+		# represented by modalias
+		_wdtdrv=$(modprobe --set-version "$kdump_kver" -R $_wdtdrv 2>/dev/null)
+		if [[ $_wdtdrv ]]; then
+			for i in $_wdtdrv; do
+				_drivers[$i]=1
+			done
 		fi
+		# however in some cases, we also need to check that if there is
+		# a specific driver for the parent bus/device.  In such cases
+		# we also need to enable driver for parent bus/device.
+		_wdtppath=$(readlink -f "$_dir/device")
+		while [[ -d "$_wdtppath" ]] && [[ "$_wdtppath" != "/sys" ]]; do
+			_wdtppath=$(readlink -f "$_wdtppath/..")
+			[[ -f "$_wdtppath/modalias" ]] || continue
+
+			_wdtdrv=$(< "$_wdtppath/modalias")
+			_wdtdrv=$(modprobe --set-version "$kdump_kver" -R $_wdtdrv 2>/dev/null)
+			if [[ $_wdtdrv ]]; then
+				for i in $_wdtdrv; do
+					_drivers[$i]=1
+				done
+			fi
+		done
 	done
 
-	# check if watchdog kernel module unloaded.
-	loaded_mods=$(lsinitrd $TARGET_INITRD -f etc/cmdline.d/00-watchdog.conf)
-	[[ -n $loaded_mods ]] && loaded_mods=$(echo $loaded_mods | awk -F"rd.driver.pre=" '{print $2}' | sed "s/,/ /g")
-	for mod in $loaded_mods ; do
-	       lsmod | grep $mod &> /dev/null
-	       [[ $? != 0 ]] && return 1
-        done
+	# ensure that watchdog module is loaded as early as possible
+	_alldrivers="${!_drivers[*]}"
+	[[ $_alldrivers ]] && wd_new="rd.driver.pre=${_alldrivers// /,}"
+	wd_old=$(lsinitrd $TARGET_INITRD -f etc/cmdline.d/00-watchdog.conf)
 
-	return 0
+	[[ "$wd_old" = "$wd_new" ]] && return 0
+
+	return 1
 }
 
 # returns 0 if system is not modified
