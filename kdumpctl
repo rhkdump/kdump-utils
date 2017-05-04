@@ -311,6 +311,10 @@ check_executable()
 
 backup_default_initrd()
 {
+	if [ ! -f "$DEFAULT_INITRD" ]; then
+		return
+	fi
+
 	if [ ! -e $DEFAULT_INITRD_BAK ]; then
 		echo "Backing up $DEFAULT_INITRD before rebuild."
 		# save checksum to verify before restoring
@@ -690,10 +694,9 @@ check_rebuild()
 		system_modified="1"
 	fi
 
-	if is_mode_switched; then
-		echo -n "Dump mode changed from last boot."; echo
-		handle_mode_switch
-	elif [ $image_time -eq 0 ]; then
+	handle_mode_switch
+
+	if [ $image_time -eq 0 ]; then
 		echo  -n "No kdump initial ramdisk found."; echo
 	elif [ "$force_rebuild" != "0" ]; then
 		echo -n "Force rebuild $TARGET_INITRD"; echo
@@ -851,32 +854,6 @@ propagate_ssh_key()
 		echo $errmsg, $KEYFILE failed in transfer to $SSH_SERVER  >&2
 		exit 1
 	fi
-}
-
-is_mode_switched()
-{
-	local _mod_included
-
-	if [ ! -f $DEFAULT_INITRD ]; then
-		return 1
-	fi
-
-	# find if default initrd has kdumpbase module included.
-	_mod_included=`lsinitrd -m $DEFAULT_INITRD | grep ^kdumpbase$ | wc -l`
-
-	if [ "$DEFAULT_DUMP_MODE" != "fadump" ]; then
-		# If kdumpbase module is included in default initrd,
-		# we must have just switched from fadump mode.
-		if [ "$_mod_included" -eq "1" ]; then
-			return 0
-		fi
-	elif [ "$_mod_included" -eq "0" ]; then
-		# If kdumpbase module is missing in default initrd,
-		# we must have just switched from kdump mode.
-		return 0
-	fi
-
-	return 1
 }
 
 handle_mode_switch()
