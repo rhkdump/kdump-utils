@@ -365,11 +365,11 @@ check_config()
 		return 1
 	}
 
-	while read config_opt config_val; do
+	cat $KDUMP_CONFIG_FILE | grep -v "^#" | while read config_opt config_val; do
 		# remove inline comments after the end of a directive.
 		config_val=$(strip_comments $config_val)
 		case "$config_opt" in
-		\#* | "")
+		"")
 			;;
 		raw|ext2|ext3|ext4|minix|btrfs|xfs|nfs|ssh|sshkey|path|core_collector|kdump_post|kdump_pre|extra_bins|extra_modules|default|force_rebuild|force_no_rebuild|dracut_args|fence_kdump_args|fence_kdump_nodes)
 			[ -z "$config_val" ] && {
@@ -386,7 +386,7 @@ check_config()
 			return 1;
 			;;
 		esac
-	done < $KDUMP_CONFIG_FILE
+	done
 
 	check_default_config || return 1
 
@@ -799,7 +799,7 @@ load_kdump()
 
 check_ssh_config()
 {
-	while read config_opt config_val; do
+	cat $KDUMP_CONFIG_FILE | grep -v "^#" | while read config_opt config_val; do
 		# remove inline comments after the end of a directive.
 		config_val=$(strip_comments $config_val)
 		case "$config_opt" in
@@ -820,7 +820,7 @@ check_ssh_config()
 		*)
 			;;
 		esac
-	done < $KDUMP_CONFIG_FILE
+	done
 
 	#make sure they've configured kdump.conf for ssh dumps
 	local SSH_TARGET=`echo -n $DUMP_TARGET | sed -n '/.*@/p'`
