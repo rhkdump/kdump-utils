@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.14
-Release: 9%{?dist}
+Release: 10%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -331,6 +331,13 @@ done
 %doc
 
 %changelog
+* Fri May 5 2017 Dave Young <dyoung@redhat.com> - 2.0.14-10
+- kdumpctl: improve "while read" time for /etc/kdump.conf
+- kdumpctl: update check_dump_fs_modified() to use "lsinitrd -f"
+- kdumpctl: improve check_wdt_modified()
+- kdumpctl: remove is_mode_switched()
+- kdumpctl: bail out earlier in case of no reserved memory
+
 * Thu Apr 27 2017 Dave Young <dyoung@redhat.com> - 2.0.14-9
 - kdump: Introduce 'force_no_rebuild' option
 - kdump-lib-initramfs.sh: ignore the failure of echo
