@@ -80,15 +80,15 @@ remove_cmdline_param()
 }
 
 #
-# This function returns the "initial apicid" of the
-# boot cpu (cpu 0) if present.
+# This function returns the "apicid" of the boot
+# cpu (cpu 0) if present.
 #
-get_bootcpu_initial_apicid()
+get_bootcpu_apicid()
 {
     awk '							\
 	BEGIN { CPU = "-1"; }					\
 	$1=="processor" && $2==":"	{ CPU = $NF; }		\
-	CPU=="0" && /initial apicid/	{ print $NF; }		\
+	CPU=="0" && /^apicid/		{ print $NF; }		\
 	'							\
 	/proc/cpuinfo
 }
@@ -247,7 +247,7 @@ prepare_cmdline()
 
 	cmdline="${cmdline} ${KDUMP_COMMANDLINE_APPEND}"
 
-	id=`get_bootcpu_initial_apicid`
+	id=`get_bootcpu_apicid`
 	if [ ! -z ${id} ] ; then
 		cmdline=`append_cmdline "${cmdline}" disable_cpu_apicid ${id}`
 	fi
