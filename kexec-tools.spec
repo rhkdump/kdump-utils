@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.14
-Release: 10%{?dist}
+Release: 11%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -331,6 +331,11 @@ done
 %doc
 
 %changelog
+* Fri May 12 2017 Dave Young <dyoung@redhat.com> - 2.0.14-11
+- kdumpctl: change the shebang header to use /bin/bash
+- kdumpctl: call strip_comments only when necessary to speedup
+- Revert "kdumpctl: improve "while read" time for /etc/kdump.conf" (rhbz1449801)
+
 * Fri May 5 2017 Dave Young <dyoung@redhat.com> - 2.0.14-10
 - kdumpctl: improve "while read" time for /etc/kdump.conf
 - kdumpctl: update check_dump_fs_modified() to use "lsinitrd -f"
