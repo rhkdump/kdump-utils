@@ -20,7 +20,7 @@ check() {
 depends() {
     local _dep="base shutdown"
 
-    if [ -d /sys/module/drm/drivers ]; then
+    if [ -n "$( find /sys/devices -name drm )" ]; then
         _dep="$_dep drm"
     fi
 
