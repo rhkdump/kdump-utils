@@ -1099,11 +1099,18 @@ check_kdump_feasibility()
 check_fence_kdump_config()
 {
 	local hostname=`hostname`
+	local ipaddrs=`hostname -I`
 	local nodes=$(get_option_value "fence_kdump_nodes")
 
 	for node in $nodes; do
 		if [ "$node" = "$hostname" ]; then
 			echo "Option fence_kdump_nodes cannot contain $hostname"
+			return 1
+		fi
+		# node can be ipaddr
+		echo $ipaddrs | grep $node > /dev/null
+		if [ $? -eq 0 ]; then
+			echo "Option fence_kdump_nodes cannot contain $node"
 			return 1
 		fi
 	done
