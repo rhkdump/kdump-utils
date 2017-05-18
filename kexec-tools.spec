@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.14
-Release: 11%{?dist}
+Release: 12%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -331,6 +331,9 @@ done
 %doc
 
 %changelog
+* Thu May 18 2017 Dave Young <dyoung@redhat.com> - 2.0.14-12
+- kdumpctl: for fence_kdump, the ipaddr of this node should be excluded
+
 * Fri May 12 2017 Dave Young <dyoung@redhat.com> - 2.0.14-11
 - kdumpctl: change the shebang header to use /bin/bash
 - kdumpctl: call strip_comments only when necessary to speedup
