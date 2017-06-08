@@ -104,8 +104,8 @@ binary and ancillary utilities that together form the userspace
 component of the kernel's kexec feature.
 
 %package anaconda-addon
-Summary:        Kdump configuration anaconda addon
-Requires:       anaconda >= 21.33
+Summary: Kdump configuration anaconda addon
+Requires: anaconda >= 21.33
 %description anaconda-addon
 Kdump anaconda addon
 
