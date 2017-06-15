@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.14
-Release: 12%{?dist}
+Release: 13%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -331,6 +331,11 @@ done
 %doc
 
 %changelog
+* Thu Jun 15 2017 Dave Young <dyoung@redhat.com> - 2.0.14-13
+- kexec-tools.spec: Fix whitespace errors
+- dracut-module-setup: Fix test for inclusion of DRM modules
+- kdump.conf.5: clarify the fence_kdump_nodes option
+
 * Thu May 18 2017 Dave Young <dyoung@redhat.com> - 2.0.14-12
 - kdumpctl: for fence_kdump, the ipaddr of this node should be excluded
 
