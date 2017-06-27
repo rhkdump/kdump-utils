@@ -147,7 +147,7 @@ cp %{SOURCE21} .
 cp %{SOURCE27} .
 
 make
-%ifarch %{ix86} x86_64 ppc64 s390x ppc64le
+%ifarch %{ix86} x86_64 ppc64 s390x ppc64le aarch64
 make -C eppic/libeppic
 make -C makedumpfile-1.6.1 LINKTYPE=dynamic USELZO=on USESNAPPY=on
 make -C makedumpfile-1.6.1 LDFLAGS="-I../eppic/libeppic -L../eppic/libeppic" eppic_makedumpfile.so
@@ -190,7 +190,7 @@ install -m 644 %{SOURCE15} $RPM_BUILD_ROOT%{_mandir}/man5/kdump.conf.5
 install -m 644 %{SOURCE16} $RPM_BUILD_ROOT%{_unitdir}/kdump.service
 install -m 755 -D %{SOURCE22} $RPM_BUILD_ROOT%{_prefix}/lib/systemd/system-generators/kdump-dep-generator.sh
 
-%ifarch %{ix86} x86_64 ppc64 s390x ppc64le
+%ifarch %{ix86} x86_64 ppc64 s390x ppc64le aarch64
 install -m 755 makedumpfile-1.6.1/makedumpfile $RPM_BUILD_ROOT/sbin/makedumpfile
 install -m 644 makedumpfile-1.6.1/makedumpfile.8.gz $RPM_BUILD_ROOT/%{_mandir}/man8/makedumpfile.8.gz
 install -m 644 makedumpfile-1.6.1/makedumpfile.conf.5.gz $RPM_BUILD_ROOT/%{_mandir}/man5/makedumpfile.conf.5.gz
@@ -296,7 +296,7 @@ done
 %{_bindir}/*
 %{_datadir}/kdump
 %{_prefix}/lib/kdump
-%ifarch %{ix86} x86_64 ppc64 s390x ppc64le
+%ifarch %{ix86} x86_64 ppc64 s390x ppc64le aarch64
 %{_sysconfdir}/makedumpfile.conf.sample
 %endif
 %config(noreplace,missingok) %{_sysconfdir}/sysconfig/kdump
@@ -316,7 +316,7 @@ done
 %doc kexec-kdump-howto.txt
 %doc kdump-in-cluster-environment.txt
 %doc live-image-kdump-howto.txt
-%ifarch %{ix86} x86_64 ppc64 s390x ppc64le
+%ifarch %{ix86} x86_64 ppc64 s390x ppc64le aarch64
 %{_libdir}/eppic_makedumpfile.so
 /usr/share/makedumpfile/eppic_scripts/
 %endif
