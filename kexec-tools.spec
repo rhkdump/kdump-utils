@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.15
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -327,6 +327,9 @@ done
 %doc
 
 %changelog
+* Wed Jun 28 2017 Dave Young <dyoung@redhat.com> - 2.0.15-2
+- enable makedumpfile for arm64
+
 * Thu Jun 23 2017 Dave Young <dyoung@redhat.com> - 2.0.15-1
 - rebase kexec-tools-2.0.15
 
