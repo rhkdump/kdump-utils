@@ -135,6 +135,57 @@ get_block_dump_target()
     [ -b "$_target" ] && echo $(to_dev_name $_target)
 }
 
+is_dump_to_rootfs()
+{
+    grep "^default[[:space:]]dump_to_rootfs" /etc/kdump.conf >/dev/null
+}
+
+get_default_action_target()
+{
+    local _target
+
+    if is_dump_to_rootfs; then
+        # Get rootfs device name
+        _target=$(get_root_fs_device)
+        [ -b "$_target" ] && echo $(to_dev_name $_target) && return
+        # Then, must be nfs root
+        echo "nfs"
+    fi
+}
+
+# Get kdump targets(including root in case of dump_to_rootfs).
+get_kdump_targets()
+{
+    local _target _root
+    local kdump_targets
+
+    _target=$(get_block_dump_target)
+    if [ -n "$_target" ]; then
+        kdump_targets=$_target
+    elif is_ssh_dump_target; then
+        kdump_targets="ssh"
+    else
+        kdump_targets="nfs"
+    fi
+
+    # Add the root device if dump_to_rootfs is specified.
+    _root=$(get_default_action_target)
+    if [ -n "$_root" -a "$kdump_targets" != "$_root" ]; then
+        kdump_targets="$kdump_targets $_root"
+    fi
+
+    # NOTE:
+    # dracut parses devices from "/etc/fstab" with the "x-initrd.mount" option,
+    # which will be added as host_devs, it also includes usually simple devices
+    # (say mounted to /boot, /boot/efi/, etc) plus the root device. Then kdump
+    # must wait for these devices if initramfs is built with "--hostonly-cmdline".
+    #
+    # We don't pass "--hostonly-cmdline" to dracut, so there's no problem.
+
+    echo "$kdump_targets"
+}
+
+
 # findmnt uses the option "-v, --nofsroot" to exclusive the [/dir]
 # in the SOURCE column for bind-mounts, then if $_mntpoint equals to
 # $_mntpoint_nofsroot, the mountpoint is not bind mounted directory.

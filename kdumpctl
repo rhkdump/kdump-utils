@@ -175,11 +175,6 @@ check_kdump_cpus()
 	echo " try nr_cpus=$nr_min or larger instead"
 }
 
-is_dump_to_rootfs()
-{
-	grep "^default[[:space:]]dump_to_rootfs" /etc/kdump.conf >/dev/null
-}
-
 # This function performs a series of edits on the command line.
 # Store the final result in global $KDUMP_COMMANDLINE.
 prepare_cmdline()

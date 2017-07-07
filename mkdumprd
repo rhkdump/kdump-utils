@@ -278,18 +278,6 @@ handle_default_dump_target()
     check_size fs $_target
 }
 
-get_default_action_target()
-{
-    local _target
-    local _action=$(grep "^default" /etc/kdump.conf 2>/dev/null | awk '{print $2}')
-    if [ -n "$_action" ] && [ "$_action" = "dump_to_rootfs" ]; then
-        #get rootfs device name
-        _target=$(findmnt -k -f -n -o SOURCE /)
-        [ -b "$_target" ] && echo $(to_dev_name $_target)
-    fi
-    return
-}
-
 get_override_resettable()
 {
     local override_resettable
