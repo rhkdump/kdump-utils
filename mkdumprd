@@ -297,20 +297,11 @@ for_each_block_target()
 {
     local dev majmin
 
-    #check dump target
-    dev=$(get_block_dump_target)
-
-    if [ -n "$dev" ]; then
+    for dev in $(get_kdump_targets); do
+        [ -b "$dev" ] || continue
         majmin=$(get_maj_min $dev)
         check_block_and_slaves $1 $majmin && return 1
-    fi
-
-    #check rootfs when default action dump_to_rootfs is set
-    dev=$(get_default_action_target)
-    if [ -n "$dev" ]; then
-        majmin=$(get_maj_min $dev)
-        check_block_and_slaves $1 $majmin && return 2
-    fi
+    done
 
     return 0
 }
@@ -329,7 +320,7 @@ is_unresettable()
         resettable="$(cat $path)"
         [ $resettable -eq 0 -a "$OVERRIDE_RESETTABLE" -eq 0 ] && {
             local device=$(udevadm info --query=all --path=/sys/dev/block/$1 | awk -F= '/DEVNAME/{print $2}')
-            echo "Device $device is unresettable"
+            echo "Error: Can not save vmcore because device $device is unresettable"
             return 0
         }
     fi
@@ -349,14 +340,6 @@ check_resettable()
     _ret=$?
 
     [ $_ret -eq 0 ] && return
-
-    if [ $_ret -eq 1 ]; then
-        _target=$(get_block_dump_target)
-        perror "Can not save vmcore to target device $_target . This device can not be initialized in kdump kernel as it is not resettable"
-    elif [ $_ret -eq 2 ]; then
-        _target=$(get_default_action_target)
-        perror "Rootfs device $_target is not resettable, can not be used as the default target, please specify a default action"
-    fi
 
     return 1
 }
