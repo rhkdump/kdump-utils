@@ -13,7 +13,6 @@ DUMP_TARGET=""
 DEFAULT_INITRD=""
 DEFAULT_INITRD_BAK=""
 TARGET_INITRD=""
-FADUMP_ENABLED_SYS_NODE="/sys/kernel/fadump_enabled"
 FADUMP_REGISTER_SYS_NODE="/sys/kernel/fadump_registered"
 #kdump shall be the default dump mode
 DEFAULT_DUMP_MODE="kdump"
@@ -934,17 +933,6 @@ handle_mode_switch()
 		# the backed up default initrd.
 		restore_default_initrd
 	fi
-}
-
-is_fadump_capable()
-{
-	# Check if firmware-assisted dump is enabled
-	# if no, fallback to kdump check
-	if [ -f $FADUMP_ENABLED_SYS_NODE ]; then
-		rc=`cat $FADUMP_ENABLED_SYS_NODE`
-		[ $rc -eq 1 ] && return 0
-	fi
-	return 1
 }
 
 check_current_fadump_status()
