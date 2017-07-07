@@ -250,19 +250,6 @@ add_mount() {
     add_dracut_mount "$_mnt"
 }
 
-get_block_dump_target()
-{
-    local _target
-
-
-    _target=$(get_user_configured_dump_disk)
-    [ -n "$_target" ] && echo $(to_dev_name $_target) && return
-
-    #get rootfs device name
-    _target=$(get_root_fs_device)
-    [ -b "$_target" ] && echo $(to_dev_name $_target)
-}
-
 #handle the case user does not specify the dump target explicitly
 handle_default_dump_target()
 {

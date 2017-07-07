@@ -44,12 +44,6 @@ is_fs_dump_target()
     egrep -q "^ext[234]|^xfs|^btrfs|^minix" /etc/kdump.conf
 }
 
-is_user_configured_dump_target()
-{
-    return $(is_mount_in_dracut_args || is_ssh_dump_target || is_nfs_dump_target || \
-             is_raw_dump_target || is_fs_dump_target)
-}
-
 strip_comments()
 {
     echo $@ | sed -e 's/\(.*\)#.*/\1/'
@@ -88,18 +82,21 @@ to_dev_name() {
     echo $dev
 }
 
+is_user_configured_dump_target()
+{
+    return $(is_mount_in_dracut_args || is_ssh_dump_target || is_nfs_dump_target || \
+             is_raw_dump_target || is_fs_dump_target)
+}
+
 get_user_configured_dump_disk()
 {
     local _target
 
-    if is_ssh_dump_target || is_nfs_dump_target; then
-        return
-    fi
-
     _target=$(egrep "^ext[234]|^xfs|^btrfs|^minix|^raw" /etc/kdump.conf 2>/dev/null |awk '{print $2}')
-    [ -n "$_target" ] && echo $_target
+    [ -n "$_target" ] && echo $_target && return
 
-    return
+    _target=$(get_dracut_args_target "$(grep "^dracut_args .*\-\-mount" /etc/kdump.conf)")
+    [ -b "$_target" ] && echo $_target
 }
 
 get_root_fs_device()
@@ -109,6 +106,33 @@ get_root_fs_device()
     [ -n "$_target" ] && echo $_target
 
     return
+}
+
+get_save_path()
+{
+	local _save_path=$(grep "^path" /etc/kdump.conf|awk '{print $2}')
+	if [ -z "$_save_path" ]; then
+		_save_path=$DEFAULT_PATH
+	fi
+
+	echo $_save_path
+}
+
+get_block_dump_target()
+{
+    local _target _path
+
+    if is_ssh_dump_target || is_nfs_dump_target; then
+        return
+    fi
+
+    _target=$(get_user_configured_dump_disk)
+    [ -n "$_target" ] && echo $(to_dev_name $_target) && return
+
+    # Get block device name from local save path
+    _path=$(get_save_path)
+    _target=$(get_target_from_path $_path)
+    [ -b "$_target" ] && echo $(to_dev_name $_target)
 }
 
 # findmnt uses the option "-v, --nofsroot" to exclusive the [/dir]
