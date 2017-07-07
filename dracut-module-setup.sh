@@ -24,7 +24,7 @@ depends() {
         _dep="$_dep drm"
     fi
 
-    if [ is_generic_fence_kdump -o is_pcs_fence_kdump ]; then
+    if is_generic_fence_kdump -o is_pcs_fence_kdump; then
         _dep="$_dep network"
     fi
 
