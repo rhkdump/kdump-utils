@@ -385,12 +385,13 @@ crypt_exists=0
 omit_dracut_modules()
 {
     local target majmin
-    local dm_exists
+    local dm_exists network_only
 
     # Skip fadump case
     is_fadump_capable && return
 
     dm_exists=0
+    network_only=1
 
     for target in $(get_kdump_targets); do
         if [ -b "$target" ]; then
@@ -398,6 +399,9 @@ omit_dracut_modules()
             # Check "dm"
             check_block_and_slaves is_dm $majmin && dm_exists=1
         fi
+
+        # Check nfs/ssh dumping
+        [[ "$target" != "nfs" && "$target" != "ssh" ]] && network_only=0
     done
 
     # Omit "crypt", BZ1451717
@@ -409,6 +413,12 @@ omit_dracut_modules()
     if [ "$dm_exists" == "0" ]; then
         # "dm_exists=0" implies "crypt_exists=0"
         add_dracut_arg "--omit" "lvm dm multipath dmraid"
+    fi
+
+    # Further omit more modules in case of nfs/ssh dumping
+    if [ "$network_only" == "1" ]; then
+        # "network_only=1" implies "dm_exists=0"
+        add_dracut_arg "--omit" "iscsi fcoe fcoe-uefi"
     fi
 }
 
