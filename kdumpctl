@@ -175,6 +175,45 @@ check_kdump_cpus()
 	echo " try nr_cpus=$nr_min or larger instead"
 }
 
+# Generate rd.lvm.lv=X for the kdump targets if any.
+generate_lvm_cmdlines()
+{
+	local lvm_cmdlines=""
+
+	generate_lvm_cmdline() {
+		local majmin=$1 dev
+
+		[ -d "/sys/dev/block/$majmin/dm" ] || return 0
+		dev=/dev/mapper/$(< "/sys/dev/block/$majmin/dm/name")
+
+		vg=$(lvm lvs --rows $dev -o vg_name --separator=* 2>/dev/null | cut -d "*" -f 2)
+		lv=$(lvm lvs --rows $dev -o lv_name --separator=* 2>/dev/null | cut -d "*" -f 2)
+		if [ -n "$vg" -a -n "$lv" ]; then
+			lvm_cmdlines="rd.lvm.lv=$vg/$lv $lvm_cmdlines"
+		fi
+
+		return 0
+	}
+
+	for_each_block_target_all generate_lvm_cmdline
+
+	echo "$lvm_cmdlines"
+}
+
+# $1: function name
+for_each_block_target_all()
+{
+    local dev majmin
+
+    for dev in $(get_kdump_targets); do
+        [ -b "$dev" ] || continue
+        majmin=$(get_maj_min $dev)
+        check_block_and_slaves_all $1 $majmin
+    done
+
+    return 0
+}
+
 # This function performs a series of edits on the command line.
 # Store the final result in global $KDUMP_COMMANDLINE.
 prepare_cmdline()
@@ -194,14 +233,18 @@ prepare_cmdline()
 
 	# Always remove "root=X", as we now explicitly generate all kinds
 	# of dump target mount information including root fs. But we can
-	# not remove it in case of fadump or "default dump_to_rootfs".
+	# not remove it in case of "default dump_to_rootfs".
 	#
 	# We do this before KDUMP_COMMANDLINE_APPEND, if one really cares
 	# about it(e.g. for debug purpose), then can pass "root=X" using
 	# KDUMP_COMMANDLINE_APPEND.
-	if [ $DEFAULT_DUMP_MODE != "fadump" ] && ! is_dump_to_rootfs; then
+	if ! is_dump_to_rootfs; then
 		cmdline=`remove_cmdline_param "$cmdline" root`
 	fi
+
+	# Remove all the inherited rd.lvm.lv=X and generate those as needed.
+	cmdline=`remove_cmdline_param "$cmdline" rd.lvm.lv`
+	cmdline="${cmdline} $(generate_lvm_cmdlines)"
 
 	cmdline="${cmdline} ${KDUMP_COMMANDLINE_APPEND}"
 
