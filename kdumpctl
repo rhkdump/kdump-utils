@@ -37,6 +37,10 @@ single_instance_lock()
 	local rc timeout=5
 
 	exec 9>/var/lock/kdump
+	if [ $? -ne 0 ]; then
+		echo "Create file lock failed"
+		exit 1
+	fi
 
 	flock -n 9
 	rc=$?
