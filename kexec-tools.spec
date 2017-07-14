@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.15
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -327,6 +327,17 @@ done
 %doc
 
 %changelog
+* Fri Jul 14 2017 Dave Young <dyoung@redhat.com> - 2.0.15-3
+- module-setup: fix 99kdumpbase network dependency
+- mkdumprd: omit dracut modules in case of network dumping
+- mkdumprd: omit dracut modules in case of no dm target
+- mkdumprd: omit crypt when there is no crypt kdump target
+- kdumpctl: use generated rd.lvm.lv=X
+- mkdumprd: change for_each_block_target() to use get_kdump_targets()
+- kdump-lib.sh: introduce get_kdump_targets()
+- kdump-lib.sh: fix improper get_block_dump_target()
+- kdumpctl: fix infinite loop caused by running under bash
+
 * Wed Jun 28 2017 Dave Young <dyoung@redhat.com> - 2.0.15-2
 - enable makedumpfile for arm64
 
