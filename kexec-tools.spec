@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.15
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -327,6 +327,10 @@ done
 %doc
 
 %changelog
+* Thu Jul 19 2017 Dave Young <dyoung@redhat.com> - 2.0.15-4
+- mkdumprd: remove useless "x-initrd.mount"
+- kdumpctl: use "apicid" other than "initial apicid"
+
 * Fri Jul 14 2017 Dave Young <dyoung@redhat.com> - 2.0.15-3
 - module-setup: fix 99kdumpbase network dependency
 - mkdumprd: omit dracut modules in case of network dumping
