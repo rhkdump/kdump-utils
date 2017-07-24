@@ -545,11 +545,9 @@ kdump_setup_iscsi_device() {
 
     dinfo "Found iscsi component $1"
 
-    # Check once before getting explicit values, so we can output a decent
-    # error message.
-
-    if ! /sbin/iscsiadm -m session -r ${path} >/dev/null ; then
-        derror "Unable to find iscsi record for $path"
+    # Check once before getting explicit values, so we can bail out early,
+    # e.g. in case of pure-hardware(all-offload) iscsi.
+    if ! /sbin/iscsiadm -m session -r ${path} &>/dev/null ; then
         return 1
     fi
 
