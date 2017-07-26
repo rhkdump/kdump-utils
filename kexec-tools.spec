@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.15
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -327,6 +327,9 @@ done
 %doc
 
 %changelog
+* Wed Jul 26 2017 Fedora Release Engineering <releng@fedoraproject.org> - 2.0.15-5
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_27_Mass_Rebuild
+
 * Thu Jul 19 2017 Dave Young <dyoung@redhat.com> - 2.0.15-4
 - mkdumprd: remove useless "x-initrd.mount"
 - kdumpctl: use "apicid" other than "initial apicid"
