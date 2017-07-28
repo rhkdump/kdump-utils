@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.15
-Release: 5%{?dist}
+Release: 6%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -13,7 +13,7 @@ Source4: kdump.sysconfig.i386
 Source5: kdump.sysconfig.ppc64
 Source7: mkdumprd
 Source8: kdump.conf
-Source9: http://downloads.sourceforge.net/project/makedumpfile/makedumpfile/1.6.1/makedumpfile-1.6.1.tar.gz
+Source9: http://downloads.sourceforge.net/project/makedumpfile/makedumpfile/1.6.2/makedumpfile-1.6.2.tar.gz
 Source10: kexec-kdump-howto.txt
 Source12: mkdumprd.8
 Source14: 98-kexec.rules
@@ -85,13 +85,6 @@ Obsoletes: diskdumputils netdump kexec-tools-eppic
 # Patches 601 onward are generic patches
 #
 Patch601: kexec-tools-2.0.3-disable-kexec-test.patch
-Patch603: kexec-tools-2.0.14-makedumpfile-show_mem_usage-calculate-page-offset-af.patch
-Patch604: kexec-tools-2.0.14-makedumpfile-initial-call-cache_init-a-bit-early.patch
-Patch605: kexec-tools-2.0.14-makedumpfile-x86_64-check-physical-address-in-PT_LOA.patch
-Patch606: kexec-tools-2.0.14-makedumpfile-elf_info-kcore-check-for-invalid-physic.patch
-Patch607: kexec-tools-2.0.14-makedumpfile-makedumpfile-Correct-the-calculation-of.patch
-Patch608: kexec-tools-2.0.14-makedumpfile-makedumpfile-Discard-process_dump_load.patch
-Patch609: kexec-tools-2.0.14-makedumpfile-mem-usage-allow-to-work-only-with-f-for.patch
 
 
 %description
@@ -116,13 +109,6 @@ tar -z -x -v -f %{SOURCE19}
 tar -z -x -v -f %{SOURCE23}
 
 %patch601 -p1
-%patch603 -p1
-%patch604 -p1
-%patch605 -p1
-%patch606 -p1
-%patch607 -p1
-%patch608 -p1
-%patch609 -p1
 
 %ifarch ppc
 %define archdef ARCH=ppc
@@ -149,8 +135,8 @@ cp %{SOURCE27} .
 make
 %ifarch %{ix86} x86_64 ppc64 s390x ppc64le aarch64
 make -C eppic/libeppic
-make -C makedumpfile-1.6.1 LINKTYPE=dynamic USELZO=on USESNAPPY=on
-make -C makedumpfile-1.6.1 LDFLAGS="-I../eppic/libeppic -L../eppic/libeppic" eppic_makedumpfile.so
+make -C makedumpfile-1.6.2 LINKTYPE=dynamic USELZO=on USESNAPPY=on
+make -C makedumpfile-1.6.2 LDFLAGS="-I../eppic/libeppic -L../eppic/libeppic" eppic_makedumpfile.so
 %endif
 make -C kdump-anaconda-addon/po
 
@@ -191,13 +177,13 @@ install -m 644 %{SOURCE16} $RPM_BUILD_ROOT%{_unitdir}/kdump.service
 install -m 755 -D %{SOURCE22} $RPM_BUILD_ROOT%{_prefix}/lib/systemd/system-generators/kdump-dep-generator.sh
 
 %ifarch %{ix86} x86_64 ppc64 s390x ppc64le aarch64
-install -m 755 makedumpfile-1.6.1/makedumpfile $RPM_BUILD_ROOT/sbin/makedumpfile
-install -m 644 makedumpfile-1.6.1/makedumpfile.8.gz $RPM_BUILD_ROOT/%{_mandir}/man8/makedumpfile.8.gz
-install -m 644 makedumpfile-1.6.1/makedumpfile.conf.5.gz $RPM_BUILD_ROOT/%{_mandir}/man5/makedumpfile.conf.5.gz
-install -m 644 makedumpfile-1.6.1/makedumpfile.conf $RPM_BUILD_ROOT/%{_sysconfdir}/makedumpfile.conf.sample
-install -m 755 makedumpfile-1.6.1/eppic_makedumpfile.so $RPM_BUILD_ROOT/%{_libdir}/eppic_makedumpfile.so
+install -m 755 makedumpfile-1.6.2/makedumpfile $RPM_BUILD_ROOT/sbin/makedumpfile
+install -m 644 makedumpfile-1.6.2/makedumpfile.8.gz $RPM_BUILD_ROOT/%{_mandir}/man8/makedumpfile.8.gz
+install -m 644 makedumpfile-1.6.2/makedumpfile.conf.5.gz $RPM_BUILD_ROOT/%{_mandir}/man5/makedumpfile.conf.5.gz
+install -m 644 makedumpfile-1.6.2/makedumpfile.conf $RPM_BUILD_ROOT/%{_sysconfdir}/makedumpfile.conf.sample
+install -m 755 makedumpfile-1.6.2/eppic_makedumpfile.so $RPM_BUILD_ROOT/%{_libdir}/eppic_makedumpfile.so
 mkdir -p $RPM_BUILD_ROOT/usr/share/makedumpfile/eppic_scripts/
-install -m 644 makedumpfile-1.6.1/eppic_scripts/* $RPM_BUILD_ROOT/usr/share/makedumpfile/eppic_scripts/
+install -m 644 makedumpfile-1.6.2/eppic_scripts/* $RPM_BUILD_ROOT/usr/share/makedumpfile/eppic_scripts/
 %endif
 make -C kdump-anaconda-addon install DESTDIR=$RPM_BUILD_ROOT
 %find_lang kdump-anaconda-addon
@@ -327,6 +313,9 @@ done
 %doc
 
 %changelog
+* Fri Jul 28 2017 Dave Young <dyoung@redhat.com> - 2.0.15-6
+- update upstream makedumpfile 1.6.2
+
 * Wed Jul 26 2017 Fedora Release Engineering <releng@fedoraproject.org> - 2.0.15-5
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_27_Mass_Rebuild
 
