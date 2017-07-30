@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.15
-Release: 6%{?dist}
+Release: 7%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -313,6 +313,9 @@ done
 %doc
 
 %changelog
+* Sun Jul 30 2017 Florian Weimer <fweimer@redhat.com> - 2.0.15-7
+- Rebuild with binutils fix for ppc64le (#1475636)
+
 * Fri Jul 28 2017 Dave Young <dyoung@redhat.com> - 2.0.15-6
 - update upstream makedumpfile 1.6.2
 
