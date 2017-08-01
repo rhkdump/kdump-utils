@@ -753,4 +753,13 @@ install() {
     sed -i -e \
       's/\(^[[:space:]]*reserved_memory[[:space:]]*=\)[[:space:]]*[[:digit:]]*/\1 1024/' \
       ${initdir}/etc/lvm/lvm.conf &>/dev/null
+
+    # Kdump turns out to require longer default systemd mount timeout
+    # than 1st kernel(90s by default), we use default 300s for kdump.
+    grep -r "^[[:space:]]*DefaultTimeoutStartSec=" ${initdir}/etc/systemd/system.conf* &>/dev/null
+    if [ $? -ne 0 ]; then
+        mkdir -p ${initdir}/etc/systemd/system.conf.d
+        echo "[Manager]" > ${initdir}/etc/systemd/system.conf.d/kdump.conf
+        echo "DefaultTimeoutStartSec=300s" >> ${initdir}/etc/systemd/system.conf.d/kdump.conf
+    fi
 }
