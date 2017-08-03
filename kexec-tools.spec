@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.15
-Release: 7%{?dist}
+Release: 8%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -313,6 +313,9 @@ done
 %doc
 
 %changelog
+* Thu Aug 03 2017 Fedora Release Engineering <releng@fedoraproject.org> - 2.0.15-8
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_27_Binutils_Mass_Rebuild
+
 * Sun Jul 30 2017 Florian Weimer <fweimer@redhat.com> - 2.0.15-7
 - Rebuild with binutils fix for ppc64le (#1475636)
 
