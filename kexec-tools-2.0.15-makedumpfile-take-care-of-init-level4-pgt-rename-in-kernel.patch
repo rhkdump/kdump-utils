@@ -1,0 +1,43 @@
+Following commit renamed init_level4_pgt to init_top_pgt in kernel.
+
+commit 65ade2f872b474fa8a04c2d397783350326634e6
+Author: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
+Date:   Tue Jun 6 14:31:27 2017 +0300
+
+    x86/boot/64: Rename init_level4_pgt and early_level4_pgt
+
+This patch takes care of above kernel modification in makedumpfile.
+
+Signed-off-by: Pratyush Anand <panand@redhat.com>
+---
+v2 -> v1
+Removed redundant 'if condition' for WRITE_SYMBOL().
+
+ makedumpfile.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git kexec-tools-2.0.15/makedumpfile-1.6.2/makedumpfile.c kexec-tools-2.0.15.new/makedumpfile-1.6.2/makedumpfile.c
+index f85003a33551..30230a15a2e7 100644
+--- kexec-tools-2.0.15/makedumpfile-1.6.2/makedumpfile.c
++++ kexec-tools-2.0.15.new/makedumpfile-1.6.2/makedumpfile.c
+@@ -1486,6 +1486,8 @@ get_symbol_info(void)
+ 	SYMBOL_INIT(_stext, "_stext");
+ 	SYMBOL_INIT(swapper_pg_dir, "swapper_pg_dir");
+ 	SYMBOL_INIT(init_level4_pgt, "init_level4_pgt");
++	if (SYMBOL(init_level4_pgt) == NOT_FOUND_SYMBOL)
++		SYMBOL_INIT(init_level4_pgt, "init_top_pgt");
+ 	SYMBOL_INIT(vmlist, "vmlist");
+ 	SYMBOL_INIT(vmap_area_list, "vmap_area_list");
+ 	SYMBOL_INIT(node_online_map, "node_online_map");
+@@ -2500,6 +2502,8 @@ read_vmcoreinfo(void)
+ 	READ_SYMBOL("_stext", _stext);
+ 	READ_SYMBOL("swapper_pg_dir", swapper_pg_dir);
+ 	READ_SYMBOL("init_level4_pgt", init_level4_pgt);
++	if (SYMBOL(init_level4_pgt) == NOT_FOUND_SYMBOL)
++		READ_SYMBOL("init_top_pgt", init_level4_pgt);
+ 	READ_SYMBOL("vmlist", vmlist);
+ 	READ_SYMBOL("vmap_area_list", vmap_area_list);
+ 	READ_SYMBOL("node_online_map", node_online_map);
+-- 
+2.9.4
+

@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.15
-Release: 8%{?dist}
+Release: 9%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -85,6 +85,7 @@ Obsoletes: diskdumputils netdump kexec-tools-eppic
 # Patches 601 onward are generic patches
 #
 Patch601: kexec-tools-2.0.3-disable-kexec-test.patch
+Patch602: kexec-tools-2.0.15-makedumpfile-take-care-of-init-level4-pgt-rename-in-kernel.patch
 
 
 %description
@@ -109,6 +110,7 @@ tar -z -x -v -f %{SOURCE19}
 tar -z -x -v -f %{SOURCE23}
 
 %patch601 -p1
+%patch602 -p1
 
 %ifarch ppc
 %define archdef ARCH=ppc
@@ -313,6 +315,9 @@ done
 %doc
 
 %changelog
+* Mon Aug 7 2017 Dave Young <dyoung@redhat.com> - 2.0.15-9
+- fix makedumpfile bug 1474706 
+
 * Thu Aug 03 2017 Fedora Release Engineering <releng@fedoraproject.org> - 2.0.15-8
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_27_Binutils_Mass_Rebuild
 
