@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.15
-Release: 9%{?dist}
+Release: 10%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -315,6 +315,11 @@ done
 %doc
 
 %changelog
+* Tue Aug 8 2017 Dave Young <dyoung@redhat.com> - 2.0.15-10
+- Improve 'cpu add' udev rules
+- module-setup: suppress the early iscsi error messages
+- mkdumprd: use 300s as the default systemd unit timeout for kdump mount 
+
 * Mon Aug 7 2017 Dave Young <dyoung@redhat.com> - 2.0.15-9
 - fix makedumpfile bug 1474706 
 
