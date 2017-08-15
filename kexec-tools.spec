@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.15
-Release: 10%{?dist}
+Release: 11%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -299,14 +299,14 @@ done
 %{_unitdir}/kdump.service
 %{_prefix}/lib/systemd/system-generators/kdump-dep-generator.sh
 %doc News
-%doc COPYING
+%license COPYING
 %doc TODO
 %doc kexec-kdump-howto.txt
 %doc kdump-in-cluster-environment.txt
 %doc live-image-kdump-howto.txt
 %ifarch %{ix86} x86_64 ppc64 s390x ppc64le aarch64
 %{_libdir}/eppic_makedumpfile.so
-/usr/share/makedumpfile/eppic_scripts/
+/usr/share/makedumpfile/
 %endif
 
 %files anaconda-addon -f kdump-anaconda-addon.lang
@@ -315,6 +315,10 @@ done
 %doc
 
 %changelog
+* Tue Aug 15 2017 Dave Young <dyoung@redhat.com> - 2.0.15-11
+- Own the /usr/share/makedumpfile dir
+- Mark COPYING as %%license
+
 * Tue Aug 8 2017 Dave Young <dyoung@redhat.com> - 2.0.15-10
 - Improve 'cpu add' udev rules
 - module-setup: suppress the early iscsi error messages
