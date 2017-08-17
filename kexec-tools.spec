@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.15
-Release: 11%{?dist}
+Release: 12%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -317,6 +317,10 @@ done
 %doc
 
 %changelog
+* Thu Aug 17 2017 Dave Young <dyoung@redhat.com> - 2.0.15-12
+- makedumpfile: fix 4.13 kernel larget vmcore bug
+- Revert "Improve 'cpu add' udev rules"
+
 * Tue Aug 15 2017 Dave Young <dyoung@redhat.com> - 2.0.15-11
 - Own the /usr/share/makedumpfile dir
 - Mark COPYING as %%license
