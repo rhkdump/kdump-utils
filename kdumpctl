@@ -181,32 +181,29 @@ prepare_cmdline()
 	local cmdline id
 
 	if [ -z "$KDUMP_COMMANDLINE" ]; then
-		cmdline=`cat /proc/cmdline`
+		cmdline=$(cat /proc/cmdline)
 	else
 		cmdline=${KDUMP_COMMANDLINE}
 	fi
 
 	# These params should always be removed
-	cmdline=`remove_cmdline_param "$cmdline" crashkernel panic_on_warn`
+	cmdline=$(remove_cmdline_param "$cmdline" crashkernel panic_on_warn)
 	# These params can be removed configurably
-	cmdline=`remove_cmdline_param "$cmdline" ${KDUMP_COMMANDLINE_REMOVE}`
+	cmdline=$(remove_cmdline_param "$cmdline" ${KDUMP_COMMANDLINE_REMOVE})
 
 	# Always remove "root=X", as we now explicitly generate all kinds
-	# of dump target mount information including root fs. But we can
-	# not remove it in case of fadump or "default dump_to_rootfs".
+	# of dump target mount information including root fs.
 	#
 	# We do this before KDUMP_COMMANDLINE_APPEND, if one really cares
 	# about it(e.g. for debug purpose), then can pass "root=X" using
 	# KDUMP_COMMANDLINE_APPEND.
-	if [ $DEFAULT_DUMP_MODE != "fadump" ] && ! is_dump_to_rootfs; then
-		cmdline=`remove_cmdline_param "$cmdline" root`
-	fi
+	cmdline=$(remove_cmdline_param "$cmdline" root)
 
 	cmdline="${cmdline} ${KDUMP_COMMANDLINE_APPEND}"
 
-	id=`get_bootcpu_apicid`
+	id=$(get_bootcpu_apicid)
 	if [ ! -z ${id} ] ; then
-		cmdline=`append_cmdline "${cmdline}" disable_cpu_apicid ${id}`
+		cmdline=$(append_cmdline "${cmdline}" disable_cpu_apicid ${id})
 	fi
 
 	KDUMP_COMMANDLINE=$cmdline

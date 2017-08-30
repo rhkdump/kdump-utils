@@ -448,6 +448,12 @@ then
     add_dracut_arg "--add-drivers" "$extra_modules"
 fi
 
+if ! is_fadump_capable; then
+    # The 2nd rootfs mount stays behind the normal dump target mount,
+    # so it doesn't affect the logic of check_dump_fs_modified().
+    is_dump_to_rootfs && add_mount "$(to_dev_name $(get_root_fs_device))"
+fi
+
 dracut "${dracut_args[@]}" "$@"
 _rc=$?
 sync
