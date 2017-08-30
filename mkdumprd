@@ -359,43 +359,15 @@ check_crypt()
     return 1
 }
 
-is_dm()
-{
-    if [ -d "/sys/dev/block/$1/dm" ]; then
-        return 0
-    fi
-
-    return 1
-}
-
 crypt_exists=0
 omit_dracut_modules()
 {
-    local target majmin
-    local dm_exists
-
     # Skip fadump case
     is_fadump_capable && return
-
-    dm_exists=0
-
-    for target in $(get_kdump_targets); do
-        if [ -b "$target" ]; then
-            majmin=$(get_maj_min $target)
-            # Check "dm"
-            check_block_and_slaves is_dm $majmin && dm_exists=1
-        fi
-    done
 
     # Omit "crypt", BZ1451717
     if [ "$crypt_exists" == "0" ]; then
         add_dracut_arg "--omit" "crypt"
-    fi
-
-    # Further omit more modules in case of no dm related target
-    if [ "$dm_exists" == "0" ]; then
-        # "dm_exists=0" implies "crypt_exists=0"
-        add_dracut_arg "--omit" "lvm dm multipath dmraid"
     fi
 }
 
