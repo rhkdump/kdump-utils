@@ -199,6 +199,9 @@ prepare_cmdline()
 	# KDUMP_COMMANDLINE_APPEND.
 	cmdline=$(remove_cmdline_param "$cmdline" root)
 
+	# With the help of "--hostonly-cmdline", we can avoid some interitage.
+	cmdline=$(remove_cmdline_param "$cmdline" rd.lvm.lv rd.luks.uuid rd.dm.uuid rd.md.uuid fcoe)
+
 	cmdline="${cmdline} ${KDUMP_COMMANDLINE_APPEND}"
 
 	id=$(get_bootcpu_apicid)
