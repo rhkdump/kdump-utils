@@ -37,7 +37,7 @@ is_wdt_addition_needed
 [[ $? -eq 0 ]] && WDTCFG="-a watchdog"
 
 extra_modules=""
-dracut_args=("--hostonly" "--hostonly-i18n" "-o" "plymouth dash resume ifcfg" $WDTCFG)
+dracut_args=("--hostonly" "--hostonly-cmdline" "--hostonly-i18n" "-o" "plymouth dash resume ifcfg" $WDTCFG)
 OVERRIDE_RESETTABLE=0
 
 add_dracut_arg() {
@@ -452,6 +452,8 @@ if ! is_fadump_capable; then
     # The 2nd rootfs mount stays behind the normal dump target mount,
     # so it doesn't affect the logic of check_dump_fs_modified().
     is_dump_to_rootfs && add_mount "$(to_dev_name $(get_root_fs_device))"
+
+    add_dracut_arg "--no-hostonly-default-device"
 fi
 
 dracut "${dracut_args[@]}" "$@"

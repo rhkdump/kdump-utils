@@ -186,14 +186,6 @@ get_kdump_targets()
         kdump_targets="$kdump_targets $_root"
     fi
 
-    # NOTE:
-    # dracut parses devices from "/etc/fstab" with the "x-initrd.mount" option,
-    # which will be added as host_devs, it also includes usually simple devices
-    # (say mounted to /boot, /boot/efi/, etc) plus the root device. Then kdump
-    # must wait for these devices if initramfs is built with "--hostonly-cmdline".
-    #
-    # We don't pass "--hostonly-cmdline" to dracut, so there's no problem.
-
     echo "$kdump_targets"
 }
 
