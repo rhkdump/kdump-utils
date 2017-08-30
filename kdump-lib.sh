@@ -6,6 +6,18 @@
 DEFAULT_PATH="/var/crash/"
 FENCE_KDUMP_CONFIG_FILE="/etc/sysconfig/fence_kdump"
 FENCE_KDUMP_SEND="/usr/libexec/fence_kdump_send"
+FADUMP_ENABLED_SYS_NODE="/sys/kernel/fadump_enabled"
+
+is_fadump_capable()
+{
+    # Check if firmware-assisted dump is enabled
+    # if no, fallback to kdump check
+    if [ -f $FADUMP_ENABLED_SYS_NODE ]; then
+        rc=`cat $FADUMP_ENABLED_SYS_NODE`
+        [ $rc -eq 1 ] && return 0
+    fi
+    return 1
+}
 
 perror_exit() {
     echo $@ >&2
