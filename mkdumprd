@@ -359,24 +359,11 @@ check_crypt()
     return 1
 }
 
-crypt_exists=0
-omit_dracut_modules()
-{
-    # Skip fadump case
-    is_fadump_capable && return
-
-    # Omit "crypt", BZ1451717
-    if [ "$crypt_exists" == "0" ]; then
-        add_dracut_arg "--omit" "crypt"
-    fi
-}
-
 if ! check_resettable; then
     exit 1
 fi
 
 if ! check_crypt; then
-    crypt_exists=1
     echo "Warning: Encrypted device is in dump path. User will prompted for password during second kernel boot." 
 fi
 
@@ -460,8 +447,6 @@ if [ -n "$extra_modules" ]
 then
     add_dracut_arg "--add-drivers" "$extra_modules"
 fi
-
-omit_dracut_modules
 
 dracut "${dracut_args[@]}" "$@"
 _rc=$?
