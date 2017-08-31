@@ -6,6 +6,7 @@ KDUMP_COMMANDLINE=""
 KEXEC_ARGS=""
 KDUMP_CONFIG_FILE="/etc/kdump.conf"
 MKDUMPRD="/sbin/mkdumprd -f"
+DRACUT_MODULES_FILE="/usr/lib/dracut/modules.txt"
 SAVE_PATH=/var/crash
 SSH_KEY_LOCATION="/root/.ssh/kdump_id_rsa"
 INITRD_CHECKSUM_LOCATION="/boot/.fadump_initrd_checksum"
@@ -650,6 +651,7 @@ check_system_modified()
 check_rebuild()
 {
 	local extra_modules
+	local capture_capable_initrd="1"
 	local _force_rebuild force_rebuild="0"
 	local _force_no_rebuild force_no_rebuild="0"
 	local ret system_modified="0"
@@ -704,6 +706,12 @@ check_rebuild()
 	#since last build of the image file
 	if [ -f $TARGET_INITRD ]; then
 		image_time=`stat -c "%Y" $TARGET_INITRD 2>/dev/null`
+
+		#in case of fadump mode, check whether the default/target
+		#initrd is already built with dump capture capability
+		if [ "$DEFAULT_DUMP_MODE" == "fadump" ]; then
+			capture_capable_initrd=$(lsinitrd -f $DRACUT_MODULES_FILE $TARGET_INITRD | grep ^kdumpbase$ | wc -l)
+		fi
 	fi
 
 	check_system_modified
@@ -718,6 +726,8 @@ check_rebuild()
 
 	if [ $image_time -eq 0 ]; then
 		echo  -n "No kdump initial ramdisk found."; echo
+	elif [ "$capture_capable_initrd" == "0" ]; then
+		echo -n "Rebuild $TARGET_INITRD with dump capture support"; echo
 	elif [ "$force_rebuild" != "0" ]; then
 		echo -n "Force rebuild $TARGET_INITRD"; echo
 	elif [ "$system_modified" != "0" ]; then
