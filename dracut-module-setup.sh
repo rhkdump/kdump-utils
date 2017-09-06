@@ -276,12 +276,12 @@ kdump_setup_znet() {
 kdump_setup_netdev() {
     local _netdev=$1 _srcaddr=$2
     local _static _proto _ip_conf _ip_opts _ifname_opts
+    local _netmac=$(kdump_get_mac_addr $_netdev)
 
     if [ "$(uname -m)" = "s390x" ]; then
         kdump_setup_znet $_netdev
     fi
 
-    _netmac=$(kdump_get_mac_addr $_netdev)
     _static=$(kdump_static_ip $_netdev $_srcaddr)
     if [ -n "$_static" ]; then
         _proto=none
@@ -310,7 +310,7 @@ kdump_setup_netdev() {
     elif kdump_is_vlan "$_netdev"; then
         kdump_setup_vlan "$_netdev"
     else
-        _ifname_opts=" ifname=$(kdump_setup_ifname $_netdev):$(kdump_get_mac_addr $_netdev)"
+        _ifname_opts=" ifname=$(kdump_setup_ifname $_netdev):$_netmac"
         echo "$_ifname_opts" >> $_ip_conf
     fi
 
