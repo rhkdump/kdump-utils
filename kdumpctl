@@ -364,6 +364,13 @@ check_config()
 		return 1
 	}
 
+	# Check if we have any leading spaces (or tabs) before the
+	# variable name in the kdump conf file
+	if grep -E -q '^[[:blank:]]+[a-z]' $KDUMP_CONFIG_FILE; then
+		echo "No whitespaces are allowed before a kdump option name in $KDUMP_CONFIG_FILE"
+		return 1
+	fi
+
 	while read config_opt config_val; do
 		case "$config_opt" in
 		\#* | "")
