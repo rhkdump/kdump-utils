@@ -17,6 +17,7 @@ SAVE_PATH=$(grep ^path $conf_file| cut -d' '  -f2)
 [ -z "$SAVE_PATH" ] && SAVE_PATH=$DEFAULT_PATH
 # strip the duplicated "/"
 SAVE_PATH=$(echo $SAVE_PATH | tr -s /)
+DRACUT_PATH=/usr/bin
 
 is_wdt_addition_needed() {
 	local active
@@ -457,7 +458,7 @@ if ! is_fadump_capable; then
     add_dracut_arg "--no-hostonly-default-device"
 fi
 
-dracut "${dracut_args[@]}" "$@"
+${DRACUT_PATH}/dracut "${dracut_args[@]}" "$@"
 _rc=$?
 sync
 exit $_rc
