@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.15
-Release: 14%{?dist}
+Release: 15%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -317,6 +317,9 @@ done
 %doc
 
 %changelog
+* Thu Nov 9 2017 Dave Young <dyoung@redhat.com> - 2.0.15-15
+- Use absolute path /usr/bin/dracut in mkdumprd
+
 * Wed Oct 11 2017 Dave Young <dyoung@redhat.com> - 2.0.15-14
 - kdumpctl: Error out in case there are white spaces before an option name
 
