@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.16
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -317,6 +317,11 @@ done
 %doc
 
 %changelog
+* Mon Dec 4 2017 Dave Young <dyoung@redhat.com> - 2.0.16-2
+- dracut-module-setup.sh: check whether to include multipath-hostonly or not
+- Revert "kdumpctl: sanity check of nr_cpus for x86_64 in case running out of vectors"
+- kdumpctl: skip selinux-relabel for dracut_args --mount dump target
+
 * Tue Nov 21 2017 Dave Young <dyoung@redhat.com> - 2.0.16-1
 - update to kexec-tools 2.0.16
 
