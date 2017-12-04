@@ -946,6 +946,9 @@ path_to_be_relabeled()
 		fi
 	fi
 
+	if is_mount_in_dracut_args; then
+		return;
+	fi
 	_path=$(get_save_path)
 	# if $_path is masked by other mount, we will not relabel it.
 	_rmnt=$(df $_mnt/$_path 2>/dev/null | tail -1 | awk '{ print $NF }')
