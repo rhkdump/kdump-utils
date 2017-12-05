@@ -28,7 +28,7 @@ KDUMP_COMMANDLINE_APPEND="irqpoll maxcpus=1 noirqdistrib reset_devices cgroup_di
 #
 # Example:
 #   KEXEC_ARGS="--elf32-core-headers"
-KEXEC_ARGS=""
+KEXEC_ARGS="--dt-no-old-root"
 
 #Where to find the boot image
 #KDUMP_BOOTDIR="/boot"
