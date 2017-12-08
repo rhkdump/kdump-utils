@@ -1,0 +1,13 @@
+diff --git a/purgatory/Makefile b/purgatory/Makefile
+index 49ce80a..97b7a03 100644
+--- a/purgatory/Makefile
++++ b/purgatory/Makefile
+@@ -67,7 +67,7 @@ $(PURGATORY): $(PURGATORY_OBJS)
+ 	$(MKDIR) -p $(@D)
+ 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@.sym $^
+ #	$(LD) $(LDFLAGS) $(EXTRA_LDFLAGS) --no-undefined -e purgatory_start -r -o $@ $(PURGATORY_OBJS) $(UTIL_LIB)
+-	$(STRIP) --strip-debug -o $@ $@.sym
++	$(STRIP) --strip-debug --no-merge-notes -o $@ $@.sym
+ 
+ echo::
+ 	@echo "PURGATORY_SRCS $(PURGATORY_SRCS)"

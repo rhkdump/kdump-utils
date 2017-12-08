@@ -87,7 +87,7 @@ Obsoletes: diskdumputils netdump kexec-tools-eppic
 Patch601: kexec-tools-2.0.3-disable-kexec-test.patch
 Patch602: kexec-tools-2.0.15-makedumpfile-take-care-of-init-level4-pgt-rename-in-kernel.patch
 Patch603: kexec-tools-2.0.15-makedumpfile-fix-SECTION_MAP_MASK-for-kernel-bigger-than-4.13.patch
-
+Patch604: kexec-tools-2.0.16-koji-build-fail-workaround.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -113,6 +113,7 @@ tar -z -x -v -f %{SOURCE23}
 %patch601 -p1
 %patch602 -p1
 %patch603 -p1
+%patch604 -p1
 
 %ifarch ppc
 %define archdef ARCH=ppc
