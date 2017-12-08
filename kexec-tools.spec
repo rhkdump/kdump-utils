@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.16
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -318,6 +318,9 @@ done
 %doc
 
 %changelog
+* Fri Dec 8 2017 Dave Young <dyoung@redhat.com> - 2.0.16-3
+- workaround koji build failure (rhbz1520805)
+
 * Mon Dec 4 2017 Dave Young <dyoung@redhat.com> - 2.0.16-2
 - dracut-module-setup.sh: check whether to include multipath-hostonly or not
 - Revert "kdumpctl: sanity check of nr_cpus for x86_64 in case running out of vectors"
