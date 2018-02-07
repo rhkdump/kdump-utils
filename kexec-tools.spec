@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.16
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -24,7 +24,7 @@ Source19: eppic_050615.tar.gz
 Source20: kdump-lib.sh
 Source21: kdump-in-cluster-environment.txt
 Source22: kdump-dep-generator.sh
-Source23: kdump-anaconda-addon-005-25-g2a4398f.tar.gz
+Source23: kdump-anaconda-addon-005-31-g31ab4b7.tar.gz
 Source24: kdump-lib-initramfs.sh
 Source25: kdump.sysconfig.ppc64le
 Source26: kdumpctl.8
@@ -318,6 +318,9 @@ done
 %doc
 
 %changelog
+* Wed Feb 7 2017 Dave Young <dyoung@redhat.com> - 2.0.16-4
+- update anaconda addon migrate with Anaconda changes.
+
 * Fri Dec 8 2017 Dave Young <dyoung@redhat.com> - 2.0.16-3
 - workaround koji build failure (rhbz1520805)
 
