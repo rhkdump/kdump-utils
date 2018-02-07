@@ -318,7 +318,7 @@ done
 %doc
 
 %changelog
-* Wed Feb 7 2017 Dave Young <dyoung@redhat.com> - 2.0.16-4
+* Wed Feb 7 2018 Dave Young <dyoung@redhat.com> - 2.0.16-4
 - update anaconda addon migrate with Anaconda changes.
 
 * Fri Dec 8 2017 Dave Young <dyoung@redhat.com> - 2.0.16-3
