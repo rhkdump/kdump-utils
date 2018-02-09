@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.16
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -318,6 +318,9 @@ done
 %doc
 
 %changelog
+* Fri Feb 09 2018 Igor Gnatenko <ignatenkobrain@fedoraproject.org> - 2.0.16-5
+- Escape macros in %%changelog
+
 * Wed Feb 7 2018 Dave Young <dyoung@redhat.com> - 2.0.16-4
 - update anaconda addon migrate with Anaconda changes.
 
@@ -1593,7 +1596,7 @@ done
 - Misc spec cleanups and macro-ifications
 
 * Wed Aug 09 2006 Jarod Wilson <jwilson@redhat.com> - 1.101-42
-- Add %dir /var/crash, so default kdump setup works
+- Add %%dir /var/crash, so default kdump setup works
 
 * Thu Aug 03 2006 Neil Horman <nhorman@redhat.com> - 1.101-41
 - fix another silly makefile error for makedumpfile 
