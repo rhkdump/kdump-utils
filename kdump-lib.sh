@@ -310,6 +310,18 @@ is_atomic()
     grep -q "ostree" /proc/cmdline
 }
 
+# fixme, try the best to decide whether the ipv6 addr is allocated by slaac or dhcp6
+is_ipv6_auto()
+{
+    local _netdev=$1
+    local _auto=$(cat /proc/sys/net/ipv6/conf/$_netdev/autoconf)
+    if [ $_auto -eq 1 ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
 is_ipv6_address()
 {
     echo $1 | grep -q ":"
