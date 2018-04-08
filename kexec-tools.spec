@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.16
-Release: 5%{?dist}
+Release: 6%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -318,6 +318,11 @@ done
 %doc
 
 %changelog
+* Sun Apr 08 2018 Dave Young <dyoung@redhat.com> - 2.0.16-6
+- kdump.sysconfig.ppc64(le): remove "root=" param from ppc64(le) 2nd kernel
+- kdumpctl: Check the modification time of core_collector
+- dracut-module-setup.sh: pass correct ip= param for ipv6
+
 * Fri Feb 09 2018 Igor Gnatenko <ignatenkobrain@fedoraproject.org> - 2.0.16-5
 - Escape macros in %%changelog
 
