@@ -318,6 +318,9 @@ done
 %doc
 
 %changelog
+* Sat Apr 28 2018 Dave Young <dyoung@redhat.com> - 2.0.17-1
+- pull in 2.0.17
+
 * Sun Apr 08 2018 Dave Young <dyoung@redhat.com> - 2.0.16-6
 - kdump.sysconfig.ppc64(le): remove "root=" param from ppc64(le) 2nd kernel
 - kdumpctl: Check the modification time of core_collector
