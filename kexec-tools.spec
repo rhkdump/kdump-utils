@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.17
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -13,7 +13,7 @@ Source4: kdump.sysconfig.i386
 Source5: kdump.sysconfig.ppc64
 Source7: mkdumprd
 Source8: kdump.conf
-Source9: http://downloads.sourceforge.net/project/makedumpfile/makedumpfile/1.6.2/makedumpfile-1.6.2.tar.gz
+Source9: http://downloads.sourceforge.net/project/makedumpfile/makedumpfile/1.6.3/makedumpfile-1.6.3.tar.gz
 Source10: kexec-kdump-howto.txt
 Source12: mkdumprd.8
 Source14: 98-kexec.rules
@@ -85,8 +85,6 @@ Obsoletes: diskdumputils netdump kexec-tools-eppic
 # Patches 601 onward are generic patches
 #
 Patch601: kexec-tools-2.0.3-disable-kexec-test.patch
-Patch602: kexec-tools-2.0.15-makedumpfile-take-care-of-init-level4-pgt-rename-in-kernel.patch
-Patch603: kexec-tools-2.0.15-makedumpfile-fix-SECTION_MAP_MASK-for-kernel-bigger-than-4.13.patch
 Patch604: kexec-tools-2.0.16-koji-build-fail-workaround.patch
 
 %description
@@ -111,8 +109,6 @@ tar -z -x -v -f %{SOURCE19}
 tar -z -x -v -f %{SOURCE23}
 
 %patch601 -p1
-%patch602 -p1
-%patch603 -p1
 %patch604 -p1
 
 %ifarch ppc
@@ -140,8 +136,8 @@ cp %{SOURCE27} .
 make
 %ifarch %{ix86} x86_64 ppc64 s390x ppc64le aarch64
 make -C eppic/libeppic
-make -C makedumpfile-1.6.2 LINKTYPE=dynamic USELZO=on USESNAPPY=on
-make -C makedumpfile-1.6.2 LDFLAGS="-I../eppic/libeppic -L../eppic/libeppic" eppic_makedumpfile.so
+make -C makedumpfile-1.6.3 LINKTYPE=dynamic USELZO=on USESNAPPY=on
+make -C makedumpfile-1.6.3 LDFLAGS="-I../eppic/libeppic -L../eppic/libeppic" eppic_makedumpfile.so
 %endif
 make -C kdump-anaconda-addon/po
 
@@ -182,13 +178,13 @@ install -m 644 %{SOURCE16} $RPM_BUILD_ROOT%{_unitdir}/kdump.service
 install -m 755 -D %{SOURCE22} $RPM_BUILD_ROOT%{_prefix}/lib/systemd/system-generators/kdump-dep-generator.sh
 
 %ifarch %{ix86} x86_64 ppc64 s390x ppc64le aarch64
-install -m 755 makedumpfile-1.6.2/makedumpfile $RPM_BUILD_ROOT/sbin/makedumpfile
-install -m 644 makedumpfile-1.6.2/makedumpfile.8.gz $RPM_BUILD_ROOT/%{_mandir}/man8/makedumpfile.8.gz
-install -m 644 makedumpfile-1.6.2/makedumpfile.conf.5.gz $RPM_BUILD_ROOT/%{_mandir}/man5/makedumpfile.conf.5.gz
-install -m 644 makedumpfile-1.6.2/makedumpfile.conf $RPM_BUILD_ROOT/%{_sysconfdir}/makedumpfile.conf.sample
-install -m 755 makedumpfile-1.6.2/eppic_makedumpfile.so $RPM_BUILD_ROOT/%{_libdir}/eppic_makedumpfile.so
+install -m 755 makedumpfile-1.6.3/makedumpfile $RPM_BUILD_ROOT/sbin/makedumpfile
+install -m 644 makedumpfile-1.6.3/makedumpfile.8.gz $RPM_BUILD_ROOT/%{_mandir}/man8/makedumpfile.8.gz
+install -m 644 makedumpfile-1.6.3/makedumpfile.conf.5.gz $RPM_BUILD_ROOT/%{_mandir}/man5/makedumpfile.conf.5.gz
+install -m 644 makedumpfile-1.6.3/makedumpfile.conf $RPM_BUILD_ROOT/%{_sysconfdir}/makedumpfile.conf.sample
+install -m 755 makedumpfile-1.6.3/eppic_makedumpfile.so $RPM_BUILD_ROOT/%{_libdir}/eppic_makedumpfile.so
 mkdir -p $RPM_BUILD_ROOT/usr/share/makedumpfile/eppic_scripts/
-install -m 644 makedumpfile-1.6.2/eppic_scripts/* $RPM_BUILD_ROOT/usr/share/makedumpfile/eppic_scripts/
+install -m 644 makedumpfile-1.6.3/eppic_scripts/* $RPM_BUILD_ROOT/usr/share/makedumpfile/eppic_scripts/
 %endif
 make -C kdump-anaconda-addon install DESTDIR=$RPM_BUILD_ROOT
 %find_lang kdump-anaconda-addon
@@ -318,6 +314,9 @@ done
 %doc
 
 %changelog
+* Sat Apr 28 2018 Dave Young <dyoung@redhat.com> - 2.0.17-1
+- pull in makedumpfile 1.6.3 
+
 * Sat Apr 28 2018 Dave Young <dyoung@redhat.com> - 2.0.17-1
 - pull in 2.0.17
 
