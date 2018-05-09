@@ -293,12 +293,6 @@ kdump_setup_netdev() {
     _static=$(kdump_static_ip $_netdev $_srcaddr)
     if [ -n "$_static" ]; then
         _proto=none
-    elif is_ipv6_address $_srcaddr; then
-        if is_ipv6_auto $_netdev; then
-            _proto=auto6
-        else
-            _proto=dhcp6
-        fi
     else
         _proto=dhcp
     fi
