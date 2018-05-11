@@ -830,6 +830,14 @@ propagate_ssh_key()
 	fi
 }
 
+show_reserved_mem()
+{
+    local mem=3D$(cat /sys/kernel/kexec_crash_size)
+    local mem_mb=3D$(expr $mem / 1024 / 1024)
+
+    echo "Reserved "$mem_mb"MB memory for crash kernel"
+}
+
 handle_mode_switch()
 {
 	if [ "$DEFAULT_DUMP_MODE" == "fadump" ]; then
@@ -1246,8 +1254,11 @@ main ()
 	  propagate)
 		propagate_ssh_key
 		;;
+	  showmem)
+		show_reserved_mem
+		;;
 	  *)
-		echo $"Usage: $0 {start|stop|status|restart|propagate}"
+		echo $"Usage: $0 {start|stop|status|restart|propagate|showmem}"
 		exit 1
 	esac
 }
