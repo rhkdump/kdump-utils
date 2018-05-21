@@ -138,6 +138,11 @@ prepare_cmdline()
 	# With the help of "--hostonly-cmdline", we can avoid some interitage.
 	cmdline=$(remove_cmdline_param "$cmdline" rd.lvm.lv rd.luks.uuid rd.dm.uuid rd.md.uuid fcoe)
 
+	# Remove netroot, rd.iscsi.initiator and iscsi_initiator since
+	# we get duplicate entries for the same in case iscsi code adds
+	# it as well.
+	cmdline=$(remove_cmdline_param "$cmdline" netroot rd.iscsi.initiator iscsi_initiator)
+
 	cmdline="${cmdline} ${KDUMP_COMMANDLINE_APPEND}"
 
 	id=$(get_bootcpu_apicid)
