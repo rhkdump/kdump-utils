@@ -485,3 +485,225 @@ get_dracut_args_target()
 {
     echo $1 | grep "\-\-mount" | sed "s/.*--mount .\(.*\)/\1/" | cut -d' ' -f1
 }
+
+check_crash_mem_reserved()
+{
+    local mem_reserved
+
+    mem_reserved=$(cat /sys/kernel/kexec_crash_size)
+    if [ $mem_reserved -eq 0 ]; then
+        echo "No memory reserved for crash kernel"
+        return 1
+    fi
+
+    return 0
+}
+
+check_kdump_feasibility()
+{
+    if [ ! -e /sys/kernel/kexec_crash_loaded ]; then
+        echo "Kdump is not supported on this kernel"
+        return 1
+    fi
+    check_crash_mem_reserved
+    return $?
+}
+
+check_current_kdump_status()
+{
+    if [ ! -f /sys/kernel/kexec_crash_loaded ];then
+        echo "Perhaps CONFIG_CRASH_DUMP is not enabled in kernel"
+        return 1
+    fi
+
+    rc=`cat /sys/kernel/kexec_crash_loaded`
+    if [ $rc == 1 ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# remove_cmdline_param <kernel cmdline> <param1> [<param2>] ... [<paramN>]
+# Remove a list of kernel parameters from a given kernel cmdline and print the result.
+# For each "arg" in the removing params list, "arg" and "arg=xxx" will be removed if exists.
+remove_cmdline_param()
+{
+    local cmdline=$1
+    shift
+
+    for arg in $@; do
+        cmdline=`echo $cmdline | \
+                 sed -e "s/\b$arg=[^ ]*//g" \
+                 -e "s/^$arg\b//g" \
+                 -e "s/[[:space:]]$arg\b//g" \
+                 -e "s/\s\+/ /g"`
+    done
+    echo $cmdline
+}
+
+#
+# This function returns the "apicid" of the boot
+# cpu (cpu 0) if present.
+#
+get_bootcpu_apicid()
+{
+    awk '                                                       \
+        BEGIN { CPU = "-1"; }                                   \
+        $1=="processor" && $2==":"      { CPU = $NF; }          \
+        CPU=="0" && /^apicid/           { print $NF; }          \
+        '                                                       \
+        /proc/cpuinfo
+}
+
+#
+# append_cmdline <kernel cmdline> <parameter name> <parameter value>
+# This function appends argument "$2=$3" to string ($1) if not already present.
+#
+append_cmdline()
+{
+    local cmdline=$1
+    local newstr=${cmdline/$2/""}
+
+    # unchanged str implies argument wasn't there
+    if [ "$cmdline" == "$newstr" ]; then
+        cmdline="${cmdline} ${2}=${3}"
+    fi
+
+    echo $cmdline
+}
+
+# This function check iomem and determines if we have more than
+# 4GB of ram available. Returns 1 if we do, 0 if we dont
+need_64bit_headers()
+{
+    return `tail -n 1 /proc/iomem | awk '{ split ($1, r, "-"); \
+    print (strtonum("0x" r[2]) > strtonum("0xffffffff")); }'`
+}
+
+# Check if secure boot is being enforced.
+#
+# Per Peter Jones, we need check efivar SecureBoot-$(the UUID) and
+# SetupMode-$(the UUID), they are both 5 bytes binary data. The first four
+# bytes are the attributes associated with the variable and can safely be
+# ignored, the last bytes are one-byte true-or-false variables. If SecureBoot
+# is 1 and SetupMode is 0, then secure boot is being enforced.
+#
+# Assume efivars is mounted at /sys/firmware/efi/efivars.
+is_secure_boot_enforced()
+{
+    local secure_boot_file setup_mode_file
+    local secure_boot_byte setup_mode_byte
+
+    secure_boot_file=$(find /sys/firmware/efi/efivars -name SecureBoot-* 2>/dev/null)
+    setup_mode_file=$(find /sys/firmware/efi/efivars -name SetupMode-* 2>/dev/null)
+
+    if [ -f "$secure_boot_file" ] && [ -f "$setup_mode_file" ]; then
+        secure_boot_byte=$(hexdump -v -e '/1 "%d\ "' $secure_boot_file|cut -d' ' -f 5)
+        setup_mode_byte=$(hexdump -v -e '/1 "%d\ "' $setup_mode_file|cut -d' ' -f 5)
+
+        if [ "$secure_boot_byte" = "1" ] && [ "$setup_mode_byte" = "0" ]; then
+            return 0
+        fi
+    fi
+
+    return 1
+}
+
+#
+# prepare_kexec_args <kexec args>
+# This function prepares kexec argument.
+#
+prepare_kexec_args()
+{
+    local kexec_args=$1
+    local found_elf_args
+
+    ARCH=`uname -m`
+    if [ "$ARCH" == "i686" -o "$ARCH" == "i386" ]
+    then
+        need_64bit_headers
+        if [ $? == 1 ]
+        then
+            found_elf_args=`echo $kexec_args | grep elf32-core-headers`
+            if [ -n "$found_elf_args" ]
+            then
+                echo -n "Warning: elf32-core-headers overrides correct elf64 setting"
+                echo
+            else
+                kexec_args="$kexec_args --elf64-core-headers"
+            fi
+        else
+            found_elf_args=`echo $kexec_args | grep elf64-core-headers`
+            if [ -z "$found_elf_args" ]
+            then
+                kexec_args="$kexec_args --elf32-core-headers"
+            fi
+        fi
+    fi
+    echo $kexec_args
+}
+
+check_boot_dir()
+{
+    local kdump_bootdir=$1
+    #If user specify a boot dir for kdump kernel, let's use it. Otherwise
+    #check whether it's a atomic host. If yes parse the subdirectory under
+    #/boot; If not just find it under /boot.
+    if [ -n "$kdump_bootdir" ]; then
+        echo "$kdump_bootdir"
+        return
+    fi
+
+    if ! is_atomic || [ "$(uname -m)" = "s390x" ]; then
+        kdump_bootdir="/boot"
+    else
+        eval $(cat /proc/cmdline| grep "BOOT_IMAGE" | cut -d' ' -f1)
+        kdump_bootdir="/boot"$(dirname $BOOT_IMAGE)
+    fi
+    echo $kdump_bootdir
+}
+
+#
+# prepare_cmdline <commandline> <commandline remove> <commandline append>
+# This function performs a series of edits on the command line.
+# Store the final result in global $KDUMP_COMMANDLINE.
+prepare_cmdline()
+{
+    local cmdline id
+
+    if [ -z "$1" ]; then
+        cmdline=$(cat /proc/cmdline)
+    else
+        cmdline="$1"
+    fi
+
+    # These params should always be removed
+    cmdline=$(remove_cmdline_param "$cmdline" crashkernel panic_on_warn)
+    # These params can be removed configurably
+    cmdline=$(remove_cmdline_param "$cmdline" "$2")
+
+    # Always remove "root=X", as we now explicitly generate all kinds
+    # of dump target mount information including root fs.
+    #
+    # We do this before KDUMP_COMMANDLINE_APPEND, if one really cares
+    # about it(e.g. for debug purpose), then can pass "root=X" using
+    # KDUMP_COMMANDLINE_APPEND.
+    cmdline=$(remove_cmdline_param "$cmdline" root)
+
+    # With the help of "--hostonly-cmdline", we can avoid some interitage.
+    cmdline=$(remove_cmdline_param "$cmdline" rd.lvm.lv rd.luks.uuid rd.dm.uuid rd.md.uuid fcoe)
+
+    # Remove netroot, rd.iscsi.initiator and iscsi_initiator since
+    # we get duplicate entries for the same in case iscsi code adds
+    # it as well.
+    cmdline=$(remove_cmdline_param "$cmdline" netroot rd.iscsi.initiator iscsi_initiator)
+
+    cmdline="${cmdline} $3"
+
+    id=$(get_bootcpu_apicid)
+    if [ ! -z ${id} ] ; then
+        cmdline=$(append_cmdline "${cmdline}" disable_cpu_apicid ${id})
+    fi
+    echo ${cmdline}
+}
