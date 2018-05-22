@@ -1,0 +1,54 @@
+Early Kdump HOWTO
+
+Introduction
+
+Kdump service starts too late, so early crashes will have no chance to get
+kdump kernel booting, this will cause crash information to be lost. It is
+necessary to add a dracut module in order to load crash kernel and initramfs
+as early as possible. You can provide "rd.earlykdump" in grub commandline
+to enable, then the early kdump will load those files like the normal kdump,
+which is disabled by default.
+
+For the normal kdump service, it can check whether the early kdump has loaded
+the crash kernel and initramfs. It has no conflict with the early kdump.
+
+How to configure early kdump:
+
+We assume if you're reading this document, you should already have kexec-tools
+installed.
+
+You can rebuild the initramfs with earlykdump support with below steps:
+1. start kdump service to make sure kdump initramfs is created.
+    # systemctl start kdump
+
+2. rebuild system initramfs with earlykdump support.
+    # dracut --add earlykdump
+
+3. add rd.earlykdump in grub kernel command line.
+
+Note: earlykdump initramfs size will be large because it includes vmlinuz and
+kdump initramfs. And for step 2 if you are sure to overwrite system initramfs
+you can backup the original initramfs and use "--force" option.
+
+After making said changes, reboot your system to take effect. Of course, if you
+want to disable early kdump, you can simply remove "rd.earlykdump" from kernel
+boot parameters in grub, and reboot system like above.
+
+Once the boot is completed, you can check the status of the early kdump support
+on the command prompt:
+
+    # journalctl -x|grep early-kdump
+
+Then, you will see some useful logs, for exapmle:
+
+1. if early kdump is successful.
+Mar 09 09:57:56 localhost.localdomain dracut-cmdline[190]: early-kdump is enabled.
+Mar 09 09:57:56 localhost.localdomain dracut-cmdline[190]: kexec: loaded early-
+kdump kernel
+
+2. if early kdump is disabled.
+Mar 09 10:02:47 localhost.localdomain dracut-cmdline[189]: early-kdump is disabled.
+
+Limitation
+
+At present, early kdump doesn't support fadump.

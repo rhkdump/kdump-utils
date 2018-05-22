@@ -29,6 +29,7 @@ Source24: kdump-lib-initramfs.sh
 Source25: kdump.sysconfig.ppc64le
 Source26: kdumpctl.8
 Source27: live-image-kdump-howto.txt
+Source28: early-kdump-howto.txt
 
 #######################################
 # These are sources for mkdumpramfs
@@ -42,6 +43,8 @@ Source104: dracut-kdump-emergency.service
 Source105: dracut-kdump-error-handler.service
 Source106: dracut-kdump-capture.service
 Source107: dracut-kdump-emergency.target
+Source108: dracut-early-kdump.sh
+Source109: dracut-early-kdump-module-setup.sh
 
 Requires(post): systemd-units
 Requires(preun): systemd-units
@@ -132,6 +135,7 @@ rm -f kexec-tools.spec.in
 cp %{SOURCE10} .
 cp %{SOURCE21} .
 cp %{SOURCE27} .
+cp %{SOURCE28} .
 
 make
 %ifarch %{ix86} x86_64 ppc64 s390x ppc64le aarch64
@@ -190,6 +194,7 @@ make -C kdump-anaconda-addon install DESTDIR=$RPM_BUILD_ROOT
 %find_lang kdump-anaconda-addon
 
 %define remove_dracut_prefix() %(echo -n %1|sed 's/.*dracut-//g')
+%define remove_dracut_early_kdump_prefix() %(echo -n %1|sed 's/.*dracut-early-kdump-//g')
 
 # deal with dracut modules
 mkdir -p -m755 $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99kdumpbase
@@ -203,6 +208,11 @@ cp %{SOURCE106} $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99kdumpb
 cp %{SOURCE107} $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99kdumpbase/%{remove_dracut_prefix %{SOURCE107}}
 chmod 755 $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99kdumpbase/%{remove_dracut_prefix %{SOURCE100}}
 chmod 755 $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99kdumpbase/%{remove_dracut_prefix %{SOURCE101}}
+mkdir -p -m755 $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99earlykdump
+cp %{SOURCE108} $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99earlykdump/%{remove_dracut_prefix %{SOURCE108}}
+cp %{SOURCE109} $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99earlykdump/%{remove_dracut_early_kdump_prefix %{SOURCE109}}
+chmod 755 $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99earlykdump/%{remove_dracut_prefix %{SOURCE108}}
+chmod 755 $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99earlykdump/%{remove_dracut_early_kdump_prefix %{SOURCE109}}
 
 
 %define dracutlibdir %{_prefix}/lib/dracut
@@ -301,6 +311,7 @@ done
 %license COPYING
 %doc TODO
 %doc kexec-kdump-howto.txt
+%doc early-kdump-howto.txt
 %doc kdump-in-cluster-environment.txt
 %doc live-image-kdump-howto.txt
 %ifarch %{ix86} x86_64 ppc64 s390x ppc64le aarch64
