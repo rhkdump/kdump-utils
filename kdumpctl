@@ -837,8 +837,8 @@ propagate_ssh_key()
 
 show_reserved_mem()
 {
-    local mem=3D$(cat /sys/kernel/kexec_crash_size)
-    local mem_mb=3D$(expr $mem / 1024 / 1024)
+    local mem=$(cat /sys/kernel/kexec_crash_size)
+    local mem_mb=$(expr $mem / 1024 / 1024)
 
     echo "Reserved "$mem_mb"MB memory for crash kernel"
 }
