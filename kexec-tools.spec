@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.17
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -325,7 +325,15 @@ done
 %doc
 
 %changelog
-* Sat Apr 28 2018 Dave Young <dyoung@redhat.com> - 2.0.17-1
+* Wed May 30 2018 Dave Young <dyoung@redhat.com> - 2.0.17-3
+- Add early kdump support in initramfs.
+- move some common functions from kdumpctl to kdump-lib.sh
+- Fix kdumpctl showmem
+- kdumpctl: Remove 'netroot' and 'iscsi initiator' entries from kdump
+- kdumpctl: add showmem cmd
+- Revert "dracut-module-setup.sh: pass correct ip= param for ipv6"
+
+* Sat Apr 28 2018 Dave Young <dyoung@redhat.com> - 2.0.17-2
 - pull in makedumpfile 1.6.3 
 
 * Sat Apr 28 2018 Dave Young <dyoung@redhat.com> - 2.0.17-1
