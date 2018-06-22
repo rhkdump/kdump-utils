@@ -50,7 +50,7 @@ Requires(post): systemd-units
 Requires(preun): systemd-units
 Requires(postun): systemd-units
 Requires(pre): coreutils sed zlib 
-Requires: dracut >= 046-7
+Requires: dracut >= 047-34.git20180604
 Requires: dracut-network >= 044-117
 Requires: ethtool
 BuildRequires: zlib-devel zlib zlib-static elfutils-devel-static glib2-devel bzip2-devel ncurses-devel bison flex lzo-devel snappy-devel
