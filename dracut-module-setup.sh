@@ -703,6 +703,8 @@ kdump_configure_fence_kdump () {
         kdump_install_net $node
     done
 
+    dracut_install /etc/hosts
+    dracut_install /etc/nsswitch.conf
     dracut_install $FENCE_KDUMP_SEND
 }
 
