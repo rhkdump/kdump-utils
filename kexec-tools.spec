@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.17
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -24,7 +24,7 @@ Source19: eppic_050615.tar.gz
 Source20: kdump-lib.sh
 Source21: kdump-in-cluster-environment.txt
 Source22: kdump-dep-generator.sh
-Source23: kdump-anaconda-addon-005-31-g31ab4b7.tar.gz
+Source23: kdump-anaconda-addon-005-33-g8b243e3.tar.gz
 Source24: kdump-lib-initramfs.sh
 Source25: kdump.sysconfig.ppc64le
 Source26: kdumpctl.8
@@ -325,6 +325,9 @@ done
 %doc
 
 %changelog
+* Wed Jun 27 2018 Dave Young <dyoung@redhat.com> - 2.0.17-4
+- kdump anaconda addon fix for rhbz1594827
+
 * Wed May 30 2018 Dave Young <dyoung@redhat.com> - 2.0.17-3
 - Add early kdump support in initramfs.
 - move some common functions from kdumpctl to kdump-lib.sh
