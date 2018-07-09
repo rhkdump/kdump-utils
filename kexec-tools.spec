@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.17
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -325,6 +325,11 @@ done
 %doc
 
 %changelog
+* Mon Jul 9 2018 Dave Young <dyoung@redhat.com> - 2.0.17-5
+- Update makedumpfile 1.6.4
+- dracut-module-setup.sh: pass ip=either6 param for ipv6
+- dracut-module-setup.sh: install /etc/hosts when using fence_kdump
+
 * Wed Jun 27 2018 Dave Young <dyoung@redhat.com> - 2.0.17-4
 - kdump anaconda addon fix for rhbz1594827
 
