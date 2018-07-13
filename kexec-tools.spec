@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.17
-Release: 5%{?dist}
+Release: 6%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -325,6 +325,9 @@ done
 %doc
 
 %changelog
+* Fri Jul 13 2018 Fedora Release Engineering <releng@fedoraproject.org> - 2.0.17-6
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_29_Mass_Rebuild
+
 * Mon Jul 9 2018 Dave Young <dyoung@redhat.com> - 2.0.17-5
 - Update makedumpfile 1.6.4
 - dracut-module-setup.sh: pass ip=either6 param for ipv6
