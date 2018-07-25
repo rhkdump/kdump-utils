@@ -458,6 +458,31 @@ check_wdt_modified()
 	return 1
 }
 
+check_kmodules_modified()
+{
+	# always sort again to avoid LANG/LC inconsistent problem
+	local _old_modules="$(lsinitrd $TARGET_INITRD -f /usr/lib/dracut/loaded-kernel-modules.txt | sort)"
+	local _new_modules="$(get_loaded_kernel_modules | sort)"
+
+	[[ -z $_old_modules ]] && echo "Warning: Previous loaded kernel module list is absent or empty"
+
+	local _added_modules=$(comm -13 <(echo "$_old_modules") <(echo "$_new_modules"))
+	local _dropped_modules=$(comm -23 <(echo "$_old_modules") <(echo "$_new_modules"))
+
+	if [ "$_old_modules" != "$_new_modules" ]; then
+		echo "Detected change(s) of loaded kernel modules list:"
+		[[ -n $_added_modules ]] && for _module in $_added_modules; do
+			echo "	+$_module"
+		done
+		[[ -n $_dropped_modules ]] && for _module in $_dropped_modules; do
+			echo "	-$_module"
+		done
+		return 1
+	fi
+
+	return 0
+}
+
 # returns 0 if system is not modified
 # returns 1 if system is modified
 # returns 2 if system modification is invalid
@@ -482,6 +507,11 @@ check_system_modified()
 	check_wdt_modified
 	if [ $? -ne 0 ]; then
 		echo "Detected change in watchdog state"
+		return 1
+	fi
+
+	check_kmodules_modified
+	if [ $? -ne 0 ]; then
 		return 1
 	fi
 
