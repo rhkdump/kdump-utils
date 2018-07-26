@@ -290,7 +290,9 @@ done
 
 %files
 /sbin/kexec
+%ifarch %{ix86} x86_64 ppc64 s390x ppc64le aarch64
 /sbin/makedumpfile
+%endif
 /sbin/mkdumprd
 /sbin/vmcore-dmesg
 %{_bindir}/*
@@ -308,7 +310,9 @@ done
 %dir %{_localstatedir}/crash
 %{_mandir}/man8/kdumpctl.8.gz
 %{_mandir}/man8/kexec.8.gz
+%ifarch %{ix86} x86_64 ppc64 s390x ppc64le aarch64
 %{_mandir}/man8/makedumpfile.8.gz
+%endif
 %{_mandir}/man8/mkdumprd.8.gz
 %{_mandir}/man8/vmcore-dmesg.8.gz
 %{_mandir}/man5/*
