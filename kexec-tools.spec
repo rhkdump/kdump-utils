@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.17
-Release: 6%{?dist}
+Release: 7%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -332,6 +332,13 @@ done
 %doc
 
 %changelog
+* Thu Jul 26 2018 Dave Young <dyoung@redhat.com> - 2.0.17-7
+- Remove koji build workaround patch
+- kexec-tools.spec: Drop kexec-tools-2.0.3-disable-kexec-test.patch
+- Remove obsolete kdump tool
+- dracut-module-setup.sh: don't include multipath-hostonly
+- kdumpctl: Rebuild initramfs if loaded kernel modules changed
+
 * Fri Jul 13 2018 Fedora Release Engineering <releng@fedoraproject.org> - 2.0.17-6
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_29_Mass_Rebuild
 
