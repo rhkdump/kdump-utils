@@ -87,7 +87,6 @@ Obsoletes: diskdumputils netdump kexec-tools-eppic
 #
 # Patches 601 onward are generic patches
 #
-Patch601: kexec-tools-2.0.3-disable-kexec-test.patch
 Patch604: kexec-tools-2.0.16-koji-build-fail-workaround.patch
 
 %description
@@ -111,7 +110,6 @@ tar -z -x -v -f %{SOURCE9}
 tar -z -x -v -f %{SOURCE19}
 tar -z -x -v -f %{SOURCE23}
 
-%patch601 -p1
 %patch604 -p1
 
 %ifarch ppc
