@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.17
-Release: 7%{?dist}
+Release: 8%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -336,6 +336,9 @@ done
 %doc
 
 %changelog
+* Thu Jul 26 2018 Dave Young <dyoung@redhat.com> - 2.0.17-8
+- Fix armv7hl build failure
+
 * Thu Jul 26 2018 Dave Young <dyoung@redhat.com> - 2.0.17-7
 - Remove koji build workaround patch
 - kexec-tools.spec: Drop kexec-tools-2.0.3-disable-kexec-test.patch
