@@ -7,13 +7,6 @@ if ! [[ -d "${initdir}/tmp" ]]; then
     mkdir -p "${initdir}/tmp"
 fi
 
-is_mpath() {
-    local _dev=$1
-    [ -e /sys/dev/block/$_dev/dm/uuid ] || return 1
-    [[ $(cat /sys/dev/block/$_dev/dm/uuid) =~ mpath- ]] && return 0
-    return 1
-}
-
 check() {
     [[ $debug ]] && set -x
     #kdumpctl sets this explicitly
@@ -35,7 +28,6 @@ depends() {
         _dep="$_dep network"
     fi
 
-    for_each_host_dev_and_slaves is_mpath && _dep="$_dep multipath-hostonly"
     echo $_dep
     return 0
 }
