@@ -87,7 +87,6 @@ Obsoletes: diskdumputils netdump kexec-tools-eppic
 #
 # Patches 601 onward are generic patches
 #
-Patch604: kexec-tools-2.0.16-koji-build-fail-workaround.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -109,8 +108,6 @@ mkdir -p -m755 kcp
 tar -z -x -v -f %{SOURCE9}
 tar -z -x -v -f %{SOURCE19}
 tar -z -x -v -f %{SOURCE23}
-
-%patch604 -p1
 
 %ifarch ppc
 %define archdef ARCH=ppc
