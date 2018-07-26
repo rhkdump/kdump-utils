@@ -146,7 +146,7 @@ make -C makedumpfile-1.6.4 LDFLAGS="-I../eppic/libeppic -L../eppic/libeppic" epp
 make -C kdump-anaconda-addon/po
 
 %install
-make install DESTDIR=$RPM_BUILD_ROOT
+mkdir -p -m755 $RPM_BUILD_ROOT/sbin
 mkdir -p -m755 $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
 mkdir -p -m755 $RPM_BUILD_ROOT%{_localstatedir}/crash
 mkdir -p -m755 $RPM_BUILD_ROOT%{_mandir}/man8/
@@ -159,6 +159,11 @@ mkdir -p -m755 $RPM_BUILD_ROOT%{_bindir}
 mkdir -p -m755 $RPM_BUILD_ROOT%{_libdir}
 mkdir -p -m755 $RPM_BUILD_ROOT%{_prefix}/lib/kdump
 install -m 755 %{SOURCE1} $RPM_BUILD_ROOT%{_bindir}/kdumpctl
+
+install -m 755 build/sbin/kexec $RPM_BUILD_ROOT/sbin/kexec
+install -m 755 build/sbin/vmcore-dmesg $RPM_BUILD_ROOT/sbin/vmcore-dmesg
+install -m 644 build/man/man8/kexec.8  $RPM_BUILD_ROOT%{_mandir}/man8/
+install -m 644 build/man/man8/vmcore-dmesg.8  $RPM_BUILD_ROOT%{_mandir}/man8/
 
 SYSCONFIG=$RPM_SOURCE_DIR/kdump.sysconfig.%{_target_cpu}
 [ -f $SYSCONFIG ] || SYSCONFIG=$RPM_SOURCE_DIR/kdump.sysconfig.%{_arch}
@@ -289,7 +294,10 @@ do
 done
 
 %files
-/sbin/*
+/sbin/kexec
+/sbin/makedumpfile
+/sbin/mkdumprd
+/sbin/vmcore-dmesg
 %{_bindir}/*
 %{_datadir}/kdump
 %{_prefix}/lib/kdump
@@ -303,7 +311,11 @@ done
 %endif
 %{dracutlibdir}/modules.d/*
 %dir %{_localstatedir}/crash
-%{_mandir}/man8/*
+%{_mandir}/man8/kdumpctl.8.gz
+%{_mandir}/man8/kexec.8.gz
+%{_mandir}/man8/makedumpfile.8.gz
+%{_mandir}/man8/mkdumprd.8.gz
+%{_mandir}/man8/vmcore-dmesg.8.gz
 %{_mandir}/man5/*
 %{_unitdir}/kdump.service
 %{_prefix}/lib/systemd/system-generators/kdump-dep-generator.sh
