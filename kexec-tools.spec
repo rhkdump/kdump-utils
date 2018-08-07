@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.17
-Release: 8%{?dist}
+Release: 9%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -320,6 +320,11 @@ done
 %endif
 
 %changelog
+* Tue Aug 07 2018 Kairui Song <kasong@redhat.com> - 2.0.17-9
+- Remove redundant kdump-anaconda-addon source codes
+- dracut-module-setup: Fix DRM module inclusion test for hyper-v
+- Remove kdump-anaconda subpackage
+
 * Thu Jul 26 2018 Dave Young <dyoung@redhat.com> - 2.0.17-8
 - Fix armv7hl build failure
 
