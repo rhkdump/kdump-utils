@@ -24,12 +24,11 @@ Source19: eppic_050615.tar.gz
 Source20: kdump-lib.sh
 Source21: kdump-in-cluster-environment.txt
 Source22: kdump-dep-generator.sh
-Source23: kdump-anaconda-addon-005-33-g8b243e3.tar.gz
-Source24: kdump-lib-initramfs.sh
-Source25: kdump.sysconfig.ppc64le
-Source26: kdumpctl.8
-Source27: live-image-kdump-howto.txt
-Source28: early-kdump-howto.txt
+Source23: kdump-lib-initramfs.sh
+Source24: kdump.sysconfig.ppc64le
+Source25: kdumpctl.8
+Source26: live-image-kdump-howto.txt
+Source27: early-kdump-howto.txt
 
 #######################################
 # These are sources for mkdumpramfs
@@ -95,19 +94,12 @@ normal or a panic reboot. This package contains the /sbin/kexec
 binary and ancillary utilities that together form the userspace
 component of the kernel's kexec feature.
 
-%package anaconda-addon
-Summary: Kdump configuration anaconda addon
-Requires: anaconda >= 21.33
-%description anaconda-addon
-Kdump anaconda addon
-
 %prep
 %setup -q 
 
 mkdir -p -m755 kcp
 tar -z -x -v -f %{SOURCE9}
 tar -z -x -v -f %{SOURCE19}
-tar -z -x -v -f %{SOURCE23}
 
 %ifarch ppc
 %define archdef ARCH=ppc
@@ -129,8 +121,8 @@ rm -f kexec-tools.spec.in
 # setup the docs
 cp %{SOURCE10} .
 cp %{SOURCE21} .
+cp %{SOURCE26} .
 cp %{SOURCE27} .
-cp %{SOURCE28} .
 
 make
 %ifarch %{ix86} x86_64 ppc64 s390x ppc64le aarch64
@@ -138,7 +130,6 @@ make -C eppic/libeppic
 make -C makedumpfile-1.6.4 LINKTYPE=dynamic USELZO=on USESNAPPY=on
 make -C makedumpfile-1.6.4 LDFLAGS="-I../eppic/libeppic -L../eppic/libeppic" eppic_makedumpfile.so
 %endif
-make -C kdump-anaconda-addon/po
 
 %install
 mkdir -p -m755 $RPM_BUILD_ROOT/sbin
@@ -169,9 +160,9 @@ install -m 755 %{SOURCE7} $RPM_BUILD_ROOT/sbin/mkdumprd
 install -m 644 %{SOURCE8} $RPM_BUILD_ROOT%{_sysconfdir}/kdump.conf
 install -m 644 kexec/kexec.8 $RPM_BUILD_ROOT%{_mandir}/man8/kexec.8
 install -m 644 %{SOURCE12} $RPM_BUILD_ROOT%{_mandir}/man8/mkdumprd.8
-install -m 644 %{SOURCE26} $RPM_BUILD_ROOT%{_mandir}/man8/kdumpctl.8
+install -m 644 %{SOURCE25} $RPM_BUILD_ROOT%{_mandir}/man8/kdumpctl.8
 install -m 755 %{SOURCE20} $RPM_BUILD_ROOT%{_prefix}/lib/kdump/kdump-lib.sh
-install -m 755 %{SOURCE24} $RPM_BUILD_ROOT%{_prefix}/lib/kdump/kdump-lib-initramfs.sh
+install -m 755 %{SOURCE23} $RPM_BUILD_ROOT%{_prefix}/lib/kdump/kdump-lib-initramfs.sh
 %ifnarch s390x
 # For s390x the ELF header is created in the kdump kernel and therefore kexec
 # udev rules are not required
@@ -190,8 +181,6 @@ install -m 755 makedumpfile-1.6.4/eppic_makedumpfile.so $RPM_BUILD_ROOT/%{_libdi
 mkdir -p $RPM_BUILD_ROOT/usr/share/makedumpfile/eppic_scripts/
 install -m 644 makedumpfile-1.6.4/eppic_scripts/* $RPM_BUILD_ROOT/usr/share/makedumpfile/eppic_scripts/
 %endif
-make -C kdump-anaconda-addon install DESTDIR=$RPM_BUILD_ROOT
-%find_lang kdump-anaconda-addon
 
 %define remove_dracut_prefix() %(echo -n %1|sed 's/.*dracut-//g')
 %define remove_dracut_early_kdump_prefix() %(echo -n %1|sed 's/.*dracut-early-kdump-//g')
@@ -329,11 +318,6 @@ done
 %{_libdir}/eppic_makedumpfile.so
 /usr/share/makedumpfile/
 %endif
-
-%files anaconda-addon -f kdump-anaconda-addon.lang
-%{_datadir}/anaconda/addons/com_redhat_kdump
-%{_datadir}/icons/hicolor/scalable/apps/kdump.svg
-%doc
 
 %changelog
 * Thu Jul 26 2018 Dave Young <dyoung@redhat.com> - 2.0.17-8
