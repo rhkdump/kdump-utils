@@ -104,6 +104,9 @@ to_mount() {
     _options=$(echo $_options | sed 's/\bnoauto\b//')
     #mount fs target as rw in 2nd kernel
     _options=$(echo $_options | sed 's/\bro\b/rw/')
+    # drop nofail or nobootwait
+    _options=$(echo $_options | sed 's/\bnofail\b//')
+    _options=$(echo $_options | sed 's/\bnobootwait\b//')
 
     _mntopts="$_target $_fstype $_options"
     #for non-nfs _dev converting to use udev persistent name
