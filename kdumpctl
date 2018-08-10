@@ -204,6 +204,13 @@ check_config()
 		return 1
 	}
 
+	# Check if path option is set more than once.
+        nr=$(awk 'BEGIN{cnt=0} /^path /{cnt++} END{print cnt}' $KDUMP_CONFIG_FILE)
+        [ $nr -gt 1 ] && {
+                echo "Mutiple paths specifed in $KDUMP_CONFIG_FILE"
+                return 1
+        }
+
 	nr=$(grep "^dracut_args .*\-\-mount" $KDUMP_CONFIG_FILE | grep -o "\-\-mount" | wc -l)
 	[ $nr -gt 1 ] && {
 		echo "Multiple mount targets specified in one \"dracut_args\"."
