@@ -786,6 +786,11 @@ save_raw()
 		echo "raw partition $raw_target not found"
 		return 1
 	}
+	check_fs=$(lsblk --nodeps -npo FSTYPE $raw_target)
+	if [[ $(echo $check_fs | wc -w) -ne 0 ]]; then
+		echo "Warning: Detected '$check_fs' signature on $raw_target, data loss is expected."
+		return 0
+	fi
 	kdump_dir=`grep ^path $KDUMP_CONFIG_FILE | cut -d' '  -f2-`
 	if [ -z "${kdump_dir}" ]; then
 		coredir="/var/crash/`date +"%Y-%m-%d-%H:%M"`"
