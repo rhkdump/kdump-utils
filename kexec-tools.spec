@@ -71,6 +71,7 @@ Obsoletes: diskdumputils netdump kexec-tools-eppic
 #
 # Patches 101 through 200 are meant for x86_64 kexec-tools enablement
 #
+Patch101: kexec-tools-2.0.17-kexec-fix-for-Unhandled-rela-relocation-R_X86_64_PLT.patch
 
 #
 # Patches 301 through 400 are meant for ppc64 kexec-tools enablement
@@ -100,6 +101,8 @@ component of the kernel's kexec feature.
 mkdir -p -m755 kcp
 tar -z -x -v -f %{SOURCE9}
 tar -z -x -v -f %{SOURCE19}
+
+%patch101 -p1
 
 %ifarch ppc
 %define archdef ARCH=ppc
