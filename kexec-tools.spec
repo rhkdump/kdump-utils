@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.17
-Release: 9%{?dist}
+Release: 10%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -323,6 +323,11 @@ done
 %endif
 
 %changelog
+* Wed Aug 22 2018 Kairui Song <kasong@redhat.com> - 2.0.17-10
+- kexec: fix for "Unhandled rela relocation: R_X86_64_PLT32" error
+- kdumpctl: Error out if path is set more than once
+- Always drop nofail or nobootwait options
+
 * Tue Aug 07 2018 Kairui Song <kasong@redhat.com> - 2.0.17-9
 - Remove redundant kdump-anaconda-addon source codes
 - dracut-module-setup: Fix DRM module inclusion test for hyper-v
