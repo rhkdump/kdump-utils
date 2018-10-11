@@ -87,6 +87,7 @@ dump_fs()
 
     local _dev=$(findmnt -k -f -n -r -o SOURCE $1)
     local _mp=$(findmnt -k -f -n -r -o TARGET $1)
+    local _op=$(findmnt -k -f -n -r -o OPTIONS $1)
 
     echo "kdump: dump target is $_dev"
 
@@ -100,7 +101,12 @@ dump_fs()
 
     echo "kdump: saving to $_mp/$KDUMP_PATH/$HOST_IP-$DATEDIR/"
 
-    mount -o remount,rw $_mp || return 1
+    # Only remount to read-write mode if the dump target is mounted read-only.
+    if [[ "$_op" = "ro"* ]]; then
+       echo "kdump: Mounting Dump target $_dev in rw mode."
+       mount -o remount,rw $_dev $_mp || return 1
+    fi
+
     mkdir -p $_mp/$KDUMP_PATH/$HOST_IP-$DATEDIR || return 1
 
     save_vmcore_dmesg_fs ${DMESG_COLLECTOR} "$_mp/$KDUMP_PATH/$HOST_IP-$DATEDIR/"
