@@ -18,7 +18,7 @@ check() {
 }
 
 depends() {
-    local _dep="base shutdown"
+    local _dep="base shutdown squash"
 
     if [ -n "$( find /sys/devices -name drm )" ] || [ -d /sys/module/hyperv_fb ]; then
         _dep="$_dep drm"
