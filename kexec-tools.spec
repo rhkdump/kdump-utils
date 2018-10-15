@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.17
-Release: 10%{?dist}
+Release: 11%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -324,6 +324,11 @@ done
 %endif
 
 %changelog
+* Mon Oct 15 2018 Kairui Song <kasong@redhat.com> - 2.0.17-11
+- Enable dracut squash module
+- kdumpctl: Print warning in case the raw device is formatted and contains filesystem
+- kdump-lib-initramfs.sh: Add check to remount to rw mode only if dump target is ro
+
 * Wed Aug 22 2018 Kairui Song <kasong@redhat.com> - 2.0.17-10
 - kexec: fix for "Unhandled rela relocation: R_X86_64_PLT32" error
 - kdumpctl: Error out if path is set more than once
