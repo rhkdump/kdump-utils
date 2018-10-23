@@ -7,6 +7,7 @@ DefaultDependencies=no
 Type=oneshot
 ExecStart=/usr/bin/kdumpctl start
 ExecStop=/usr/bin/kdumpctl stop
+ExecReload=/usr/bin/kdumpctl reload
 RemainAfterExit=yes
 StartLimitInterval=0
 
