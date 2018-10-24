@@ -1,4 +1,12 @@
-SUBSYSTEM=="cpu", ACTION=="add", PROGRAM="/bin/systemctl try-restart kdump.service"
-SUBSYSTEM=="cpu", ACTION=="remove", PROGRAM="/bin/systemctl try-restart kdump.service"
-SUBSYSTEM=="memory", ACTION=="online", PROGRAM="/bin/systemctl try-restart kdump.service"
-SUBSYSTEM=="memory", ACTION=="offline", PROGRAM="/bin/systemctl try-restart kdump.service"
+SUBSYSTEM=="cpu", ACTION=="add", GOTO="kdump_reload"
+SUBSYSTEM=="cpu", ACTION=="remove", GOTO="kdump_reload"
+SUBSYSTEM=="memory", ACTION=="online", GOTO="kdump_reload"
+SUBSYSTEM=="memory", ACTION=="offline", GOTO="kdump_reload"
+
+GOTO="kdump_reload_end"
+
+LABEL="kdump_reload"
+
+RUN+="/usr/bin/systemd-run --no-block /usr/bin/kdumpctl reload"
+
+LABEL="kdump_reload_end"
