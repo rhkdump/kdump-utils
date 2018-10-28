@@ -294,7 +294,7 @@ done
 %{_sysconfdir}/makedumpfile.conf.sample
 %endif
 %config(noreplace,missingok) %{_sysconfdir}/sysconfig/kdump
-%config(noreplace,missingok) %{_sysconfdir}/kdump.conf
+%config(noreplace,missingok) %verify(not mtime) %{_sysconfdir}/kdump.conf
 %ifnarch s390x
 %config %{_udevrulesdir}
 %{_udevrulesdir}/../kdump-udev-throttler
