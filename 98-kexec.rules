@@ -7,6 +7,6 @@ GOTO="kdump_reload_end"
 
 LABEL="kdump_reload"
 
-RUN+="/usr/bin/systemd-run --no-block /usr/bin/kdumpctl reload"
+RUN+="/usr/bin/systemd-run --no-block /usr/lib/udev/kdump-udev-throttler"
 
 LABEL="kdump_reload_end"

@@ -29,6 +29,7 @@ Source24: kdump.sysconfig.ppc64le
 Source25: kdumpctl.8
 Source26: live-image-kdump-howto.txt
 Source27: early-kdump-howto.txt
+Source28: kdump-udev-throttler
 
 #######################################
 # These are sources for mkdumpramfs
@@ -171,6 +172,7 @@ install -m 755 %{SOURCE23} $RPM_BUILD_ROOT%{_prefix}/lib/kdump/kdump-lib-initram
 # For s390x the ELF header is created in the kdump kernel and therefore kexec
 # udev rules are not required
 install -m 644 %{SOURCE14} $RPM_BUILD_ROOT%{_udevrulesdir}/98-kexec.rules
+install -m 755 %{SOURCE28} $RPM_BUILD_ROOT%{_udevrulesdir}/../kdump-udev-throttler
 %endif
 install -m 644 %{SOURCE15} $RPM_BUILD_ROOT%{_mandir}/man5/kdump.conf.5
 install -m 644 %{SOURCE16} $RPM_BUILD_ROOT%{_unitdir}/kdump.service
@@ -298,6 +300,7 @@ done
 %config(noreplace,missingok) %{_sysconfdir}/kdump.conf
 %ifnarch s390x
 %config %{_udevrulesdir}
+%{_udevrulesdir}/../kdump-udev-throttler
 %endif
 %{dracutlibdir}/modules.d/*
 %dir %{_localstatedir}/crash
