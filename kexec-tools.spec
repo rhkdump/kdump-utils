@@ -1,6 +1,6 @@
 Name: kexec-tools
-Version: 2.0.17
-Release: 12%{?dist}
+Version: 2.0.18
+Release: 1%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -73,7 +73,6 @@ Obsoletes: diskdumputils netdump kexec-tools-eppic
 #
 # Patches 101 through 200 are meant for x86_64 kexec-tools enablement
 #
-Patch101: kexec-tools-2.0.17-kexec-fix-for-Unhandled-rela-relocation-R_X86_64_PLT.patch
 
 #
 # Patches 301 through 400 are meant for ppc64 kexec-tools enablement
@@ -103,8 +102,6 @@ component of the kernel's kexec feature.
 mkdir -p -m755 kcp
 tar -z -x -v -f %{SOURCE9}
 tar -z -x -v -f %{SOURCE19}
-
-%patch101 -p1
 
 %ifarch ppc
 %define archdef ARCH=ppc
@@ -327,6 +324,14 @@ done
 %endif
 
 %changelog
+* Mon Nov 5 2018 Kairui Song <kasong@redhat.com> - 2.0.18-1
+- Update to kexec-tools 2.0.18
+
+* Thu Nov 1 2018 Kairui Song <kasong@redhat.com> - 2.0.17-12
+- Throttle kdump reload request triggered by udev event
+- Rewrite kdump's udev rules
+- kdumpctl: Add reload support
+
 * Mon Oct 15 2018 Kairui Song <kasong@redhat.com> - 2.0.17-11
 - Enable dracut squash module
 - kdumpctl: Print warning in case the raw device is formatted and contains filesystem
