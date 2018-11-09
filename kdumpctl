@@ -1141,7 +1141,7 @@ main ()
 		show_reserved_mem
 		;;
 	  *)
-		echo $"Usage: $0 {start|stop|status|restart|propagate|showmem}"
+		echo $"Usage: $0 {start|stop|status|restart|reload|propagate|showmem}"
 		exit 1
 	esac
 }
