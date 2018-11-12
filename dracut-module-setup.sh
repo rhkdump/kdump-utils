@@ -126,7 +126,8 @@ kdump_static_ip() {
         echo -n "${_srcaddr}::${_gateway}:${_netmask}::"
     fi
 
-    /sbin/ip $_ipv6_flag route show | grep -v default | grep ".*via.* $_netdev " |\
+    /sbin/ip $_ipv6_flag route show | grep -v default |\
+    grep ".*via.* $_netdev " | grep -v "^[[:space:]]*nexthop" |\
     while read _route; do
         _target=`echo $_route | cut -d ' ' -f1`
         _nexthop=`echo $_route | cut -d ' ' -f3`
@@ -136,6 +137,44 @@ kdump_static_ip() {
         fi
         echo "rd.route=$_target:$_nexthop:$_netdev"
     done >> ${initdir}/etc/cmdline.d/45route-static.conf
+
+    kdump_handle_mulitpath_route $_netdev $_srcaddr
+}
+
+kdump_handle_mulitpath_route() {
+    local _netdev="$1" _srcaddr="$2" _ipv6_flag
+    local _target _nexthop _route _weight _max_weight _rule
+
+    if is_ipv6_address $_srcaddr; then
+        _ipv6_flag="-6"
+    fi
+
+    while IFS="" read _route; do
+        if [[ "$_route" =~ [[:space:]]+nexthop ]]; then
+            _route=$(echo "$_route" | sed -e 's/^[[:space:]]*//')
+            # Parse multipath route, using previous _target
+            [[ "$_target" == 'default' ]] && continue
+            [[ "$_route" =~ .*via.*\ $_netdev ]] || continue
+
+            _weight=`echo "$_route" | cut -d ' ' -f7`
+            if [[ "$_weight" -gt "$_max_weight" ]]; then
+                _nexthop=`echo "$_route" | cut -d ' ' -f3`
+                _max_weight=$_weight
+                if [ "x" !=  "x"$_ipv6_flag ]; then
+                    _rule="rd.route=[$_target]:[$_nexthop]:$_netdev"
+                else
+                    _rule="rd.route=$_target:$_nexthop:$_netdev"
+                fi
+            fi
+        else
+            [[ -n "$_rule" ]] && echo "$_rule"
+            _target=`echo "$_route" | cut -d ' ' -f1`
+            _rule="" _max_weight=0 _weight=0
+        fi
+    done >> ${initdir}/etc/cmdline.d/45route-static.conf\
+        < <(/sbin/ip $_ipv6_flag route show)
+
+    [[ -n $_rule ]] && echo $_rule >> ${initdir}/etc/cmdline.d/45route-static.conf
 }
 
 kdump_get_mac_addr() {
