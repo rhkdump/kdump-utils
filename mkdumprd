@@ -98,7 +98,14 @@ to_mount() {
 
     _fstype=$(findmnt -k -f -n -r -o FSTYPE $_dev)
     [[ -e /etc/fstab ]] && _options=$(findmnt --fstab -f -n -r -o OPTIONS $_dev)
-    [ -z "$_options" ] && _options=$(findmnt -k -f -n -r -o OPTIONS $_dev)
+    if [ -z "$_options" ]; then
+        _options=$(findmnt -k -f -n -r -o OPTIONS $_dev)
+        if [[ $_fstype == "nfs"* ]]; then
+            _options=$(echo $_options | sed 's/,addr=[^,]*//')
+            _options=$(echo $_options | sed 's/,proto=[^,]*//')
+            _options=$(echo $_options | sed 's/,clientaddr=[^,]*//')
+        fi
+    fi
     # with 'noauto' in fstab nfs and non-root disk mount will fail in 2nd
     # kernel, filter it out here.
     _options=$(echo $_options | sed 's/\bnoauto\b//')
