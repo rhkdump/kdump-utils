@@ -13,12 +13,7 @@
 # In this way, we can make sure kdump service is restarted immediately
 # and for exactly once after udev events are settled.
 
-
 throttle_lock="/var/lock/kdump-udev-throttle"
-interval=2
-
-# Don't reload kdump service if kdump service is not started by systemd
-systemctl is-active kdump.service &>/dev/null || exit 0
 
 exec 9>$throttle_lock
 if [ $? -ne 0 ]; then
