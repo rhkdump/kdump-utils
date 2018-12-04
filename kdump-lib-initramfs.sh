@@ -63,7 +63,7 @@ get_kdump_confs()
                         DEFAULT_ACTION="halt"
                     ;;
                     poweroff)
-                        DEFAULT_ACTION="poweroff"
+                        DEFAULT_ACTION="systemctl poweroff -f"
                     ;;
                     dump_to_rootfs)
                         DEFAULT_ACTION="dump_to_rootfs"
