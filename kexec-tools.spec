@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.18
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -324,6 +324,15 @@ done
 %endif
 
 %changelog
+* Fri Dec 7 2018 Kairui Song <kasong@redhat.com> - 2.0.18-2
+- Update makedumpfile 1.6.5
+- Make udev reload rules quiet during bootup
+- dracut-module-setup: Fix routing failure on multipath route
+- mkdumprd: drop some nfs mount options when reading from kernel
+- doc/kdump.conf: Local dump path should be <mnt>/<path>/%HOST_IP-%DATE
+- As /etc/kdump.conf timestamp is updated do not compare it when doing rpm --verify
+- Add missing usage info
+
 * Mon Nov 5 2018 Kairui Song <kasong@redhat.com> - 2.0.18-1
 - Update to kexec-tools 2.0.18
 
