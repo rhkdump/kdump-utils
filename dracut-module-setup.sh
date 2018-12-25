@@ -18,7 +18,23 @@ check() {
 }
 
 depends() {
-    local _dep="base shutdown squash"
+    local _dep="base shutdown"
+
+    is_squash_available() {
+        for kmodule in squashfs overlay loop; do
+            if [ -z "$KDUMP_KERNELVER" ]; then
+                modprobe --dry-run $kmodule &>/dev/null || return 1
+            else
+                modprobe -S $KDUMP_KERNELVER --dry-run $kmodule &>/dev/null || return 1
+            fi
+        done
+    }
+
+    if is_squash_available; then
+        _dep="$_dep squash"
+    else
+        dwarning "Required modules to build a squashed kdump image is missing!"
+    fi
 
     if [ -n "$( find /sys/devices -name drm )" ] || [ -d /sys/module/hyperv_fb ]; then
         _dep="$_dep drm"
