@@ -41,4 +41,5 @@ install() {
     prepare_kernel_initrd
     inst_binary "$KDUMP_KERNEL"
     inst_binary "$KDUMP_INITRD"
+    chmod -x "${initdir}/$KDUMP_KERNEL"
 }
