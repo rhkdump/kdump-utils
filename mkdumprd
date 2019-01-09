@@ -37,7 +37,7 @@ is_wdt_addition_needed
 [[ $? -eq 0 ]] && WDTCFG="-a watchdog"
 
 extra_modules=""
-dracut_args=("--quiet" "--hostonly" "--hostonly-cmdline" "--hostonly-i18n" "--hostonly-mode" "strict" "-o" "plymouth dash resume ifcfg" $WDTCFG)
+dracut_args=("--quiet" "--hostonly" "--hostonly-cmdline" "--hostonly-i18n" "--hostonly-mode" "strict" "-o" "plymouth dash resume ifcfg earlykdump" $WDTCFG)
 OVERRIDE_RESETTABLE=0
 
 add_dracut_arg() {
