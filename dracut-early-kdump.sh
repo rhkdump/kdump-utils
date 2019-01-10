@@ -18,17 +18,8 @@ prepare_parameters()
     EARLY_KDUMP_CMDLINE=$(prepare_cmdline "${KDUMP_COMMANDLINE}" "${KDUMP_COMMANDLINE_REMOVE}" "${KDUMP_COMMANDLINE_APPEND}")
     KDUMP_BOOTDIR=$(check_boot_dir "${KDUMP_BOOTDIR}")
 
-    #make early-kdump kernel string
-    if [ -z "$KDUMP_KERNELVER" ]; then
-        EARLY_KDUMP_KERNELVER=`uname -r`
-    else
-        EARLY_KDUMP_KERNELVER=$KDUMP_KERNELVER
-    fi
-
-    EARLY_KDUMP_KERNEL="${KDUMP_BOOTDIR}/${KDUMP_IMG}-${EARLY_KDUMP_KERNELVER}${KDUMP_IMG_EXT}"
-
-    #make early-kdump initrd string
-    EARLY_KDUMP_INITRD="${KDUMP_BOOTDIR}/initramfs-${EARLY_KDUMP_KERNELVER}kdump.img"
+    EARLY_KDUMP_KERNEL="${KDUMP_BOOTDIR}/${KDUMP_IMG}-earlykdump${KDUMP_IMG_EXT}"
+    EARLY_KDUMP_INITRD="${KDUMP_BOOTDIR}/initramfs-earlykdump.img"
 }
 
 early_kdump_load()
