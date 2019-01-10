@@ -24,6 +24,10 @@ prepare_kernel_initrd() {
     KDUMP_BOOTDIR=$(check_boot_dir "${KDUMP_BOOTDIR}")
     if [ -z "$KDUMP_KERNELVER" ]; then
         kdump_kver=`uname -r`
+        if [ "$kernel" != "$kdump_kver" ]; then
+            dwarn "Using current kernel version '$kdump_kver' for early kdump," \
+                "but the initramfs is generated for kernel version '$kernel'"
+        fi
     else
         kdump_kver=$KDUMP_KERNELVER
     fi
