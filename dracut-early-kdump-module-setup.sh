@@ -32,13 +32,25 @@ prepare_kernel_initrd() {
 }
 
 install() {
+    prepare_kernel_initrd
+    if [ ! -f "$KDUMP_KERNEL" ]; then
+        derror "Could not find required kernel for earlykdump," \
+            "earlykdump will not work!"
+        return 1
+    fi
+    if [ ! -f "$KDUMP_INITRD" ]; then
+        derror "Could not find required kdump initramfs for earlykdump," \
+            "please ensure kdump initramfs is generated first," \
+            "earlykdump will not work!"
+        return 1
+    fi
+
     inst_multiple tail find cut dirname hexdump
     inst_simple "/etc/sysconfig/kdump"
     inst_binary "/usr/sbin/kexec"
     inst_binary "/usr/bin/gawk" "/usr/bin/awk"
     inst_script "/lib/kdump/kdump-lib.sh" "/lib/kdump-lib.sh"
     inst_hook cmdline 00 "$moddir/early-kdump.sh"
-    prepare_kernel_initrd
     inst_binary "$KDUMP_KERNEL"
     inst_binary "$KDUMP_INITRD"
 
