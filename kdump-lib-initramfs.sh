@@ -6,7 +6,7 @@ KDUMP_PATH="/var/crash"
 CORE_COLLECTOR=""
 DEFAULT_CORE_COLLECTOR="makedumpfile -l --message-level 1 -d 31"
 DMESG_COLLECTOR="/sbin/vmcore-dmesg"
-DEFAULT_ACTION="systemctl reboot -f"
+FAILURE_ACTION="systemctl reboot -f"
 DATEDIR=`date +%Y-%m-%d-%T`
 HOST_IP='127.0.0.1'
 DUMP_INSTRUCTION=""
@@ -51,22 +51,22 @@ get_kdump_confs()
             fence_kdump_nodes)
                 FENCE_KDUMP_NODES="$config_val"
             ;;
-            default)
+            failure_action|default)
                 case $config_val in
                     shell)
-                        DEFAULT_ACTION="kdump_emergency_shell"
+                        FAILURE_ACTION="kdump_emergency_shell"
                     ;;
                     reboot)
-                        DEFAULT_ACTION="systemctl reboot -f"
+                        FAILURE_ACTION="systemctl reboot -f"
                     ;;
                     halt)
-                        DEFAULT_ACTION="halt"
+                        FAILURE_ACTION="halt"
                     ;;
                     poweroff)
-                        DEFAULT_ACTION="systemctl poweroff -f"
+                        FAILURE_ACTION="systemctl poweroff -f"
                     ;;
                     dump_to_rootfs)
-                        DEFAULT_ACTION="dump_to_rootfs"
+                        FAILURE_ACTION="dump_to_rootfs"
                     ;;
                 esac
             ;;
@@ -159,10 +159,10 @@ kdump_emergency_shell()
     rm -f /etc/profile
 }
 
-do_default_action()
+do_failure_action()
 {
-    echo "Kdump: Executing default action $DEFAULT_ACTION"
-    eval $DEFAULT_ACTION
+    echo "Kdump: Executing failure action $FAILURE_ACTION"
+    eval $FAILURE_ACTION
 }
 
 do_final_action()

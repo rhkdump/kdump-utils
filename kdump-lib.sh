@@ -149,10 +149,10 @@ get_block_dump_target()
 
 is_dump_to_rootfs()
 {
-    grep "^default[[:space:]]dump_to_rootfs" /etc/kdump.conf >/dev/null
+    grep -E "^(failure_action|default)[[:space:]]dump_to_rootfs" /etc/kdump.conf >/dev/null
 }
 
-get_default_action_target()
+get_failure_action_target()
 {
     local _target
 
@@ -181,7 +181,7 @@ get_kdump_targets()
     fi
 
     # Add the root device if dump_to_rootfs is specified.
-    _root=$(get_default_action_target)
+    _root=$(get_failure_action_target)
     if [ -n "$_root" -a "$kdump_targets" != "$_root" ]; then
         kdump_targets="$kdump_targets $_root"
     fi

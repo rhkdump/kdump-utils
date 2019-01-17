@@ -71,8 +71,8 @@ The control flow of fadump works as follows:
      process.)
 09. Captures dump according to /etc/kdump.conf
 10. Is dump capture successful (yes goto 12, no goto 11)
-11. Perfom the default action specified in /etc/kdump.conf (Default action
-    is reboot, if unspecified)
+11. Perform the failure action specified in /etc/kdump.conf
+    (The default failure action is reboot, if unspecified)
 12. Reboot
 
 
@@ -227,12 +227,12 @@ to initate the dump and then click "Restart blade with NMI". This issues a
 system reset and invokes xmon debugger.
 
 
-Advanced Setups & Default action:
+Advanced Setups & Failure action:
 
-Kdump and fadump exhibit similar behavior in terms of setup & default action.
+Kdump and fadump exhibit similar behavior in terms of setup & failure action.
 For fadump advanced setup related information see section "Advanced Setups" in
-"kexec-kdump-howto.txt" document. Refer to "Default action" section in "kexec-
-kdump-howto.txt" document for fadump default action related information.
+"kexec-kdump-howto.txt" document. Refer to "Failure action" section in "kexec-
+kdump-howto.txt" document for fadump failure action related information.
 
 Compression and filtering
 

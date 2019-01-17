@@ -6,7 +6,7 @@
 #  (at your option) any later version.
 
 # This service will run the real kdump error handler code. Executing the
-# default action configured in kdump.conf
+# failure action configured in kdump.conf
 
 [Unit]
 Description=Kdump Error Handler

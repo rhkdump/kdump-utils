@@ -228,7 +228,7 @@ check_config()
 		case "$config_opt" in
 		\#* | "")
 			;;
-		raw|ext2|ext3|ext4|minix|btrfs|xfs|nfs|ssh|sshkey|path|core_collector|kdump_post|kdump_pre|extra_bins|extra_modules|default|force_rebuild|force_no_rebuild|dracut_args|fence_kdump_args|fence_kdump_nodes)
+		raw|ext2|ext3|ext4|minix|btrfs|xfs|nfs|ssh|sshkey|path|core_collector|kdump_post|kdump_pre|extra_bins|extra_modules|failure_action|default|force_rebuild|force_no_rebuild|dracut_args|fence_kdump_args|fence_kdump_nodes)
 			# remove inline comments after the end of a directive.
 			config_val=$(strip_comments $config_val)
 			[ -z "$config_val" ] && {
@@ -247,7 +247,7 @@ check_config()
 		esac
 	done < $KDUMP_CONFIG_FILE
 
-	check_default_config || return 1
+	check_failure_action_config || return 1
 
 	check_fence_kdump_config || return 1
 
@@ -935,23 +935,35 @@ start_dump()
 	return $?
 }
 
-check_default_config()
+check_failure_action_config()
 {
 	local default_option
+	local failure_action
+	local option="failure_action"
 
 	default_option=$(awk '$1 ~ /^default$/ {print $2;}' $KDUMP_CONFIG_FILE)
-	if [ -z "$default_option" ]; then
+	failure_action=$(awk '$1 ~ /^failure_action$/ {print $2;}' $KDUMP_CONFIG_FILE)
+
+	if [ -z "$failure_action" -a -z "$default_option" ]; then
 		return 0
-	else
-		case "$default_option" in
-		  reboot|halt|poweroff|shell|dump_to_rootfs)
-			return 0
-		  ;;
-		  *)
-			echo $"Usage kdump.conf: default {reboot|halt|poweroff|shell|dump_to_rootfs}"
-			return 1
-		esac
+	elif [ -n "$failure_action" -a -n "$default_option" ]; then
+		echo "Cannot specify 'failure_action' and 'default' option together"
+		return 1
 	fi
+
+	if [ -n "$default_option" ]; then
+		option="default"
+		failure_action="$default_option"
+	fi
+
+	case "$failure_action" in
+	  reboot|halt|poweroff|shell|dump_to_rootfs)
+		return 0
+	  ;;
+	  *)
+		echo $"Usage kdump.conf: $option {reboot|halt|poweroff|shell|dump_to_rootfs}"
+		return 1
+	esac
 }
 
 start()

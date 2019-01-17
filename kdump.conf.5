@@ -148,7 +148,7 @@ modules can be listed, separated by spaces, and any
 dependent modules will automatically be included.
 .RE
 
-.B default <reboot | halt | poweroff | shell | dump_to_rootfs>
+.B failure_action <reboot | halt | poweroff | shell | dump_to_rootfs>
 .RS
 Action to perform in case dumping to the intended target fails. The default is "reboot".
 reboot: Reboot the system (this is what most people will want, as it returns the system
@@ -156,8 +156,14 @@ to a normal state).  halt: Halt the system and lose the vmcore.  poweroff: The s
 will be powered down.  shell: Drop to a shell session inside the initramfs, from which
 you can manually perform additional recovery actions.  Exiting this shell reboots the
 system.  Note: kdump uses bash as the default shell.  dump_to_rootfs: If non-root dump
-target is specified, the default action can be set as dump_to_rootfs.  That means when
+target is specified, the failure action can be set as dump_to_rootfs.  That means when
 dumping to target fails, dump vmcore to rootfs from initramfs context and reboot.
+.RE
+
+.B default <reboot | halt | poweroff | shell | dump_to_rootfs>
+.RS
+Same as the "failure_action" directive above, but this directive is obsolete
+and will be removed in the future.
 .RE
 
 .B force_rebuild <0 | 1>

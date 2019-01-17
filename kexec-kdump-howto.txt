@@ -463,21 +463,21 @@ storage device, such as an iscsi target disk or clustered file system, you may
 need to manually specify additional kernel modules to load into your kdump
 initrd.
 
-Default action
+Failure action
 ==============
-Default action specifies what to do when dump to configured dump target
-fails. By default, default action is "reboot" and that is system reboots
+Failure action specifies what to do when dump to configured dump target
+fails. By default, failure action is "reboot" and that is system reboots
 if attempt to save dump to dump target fails.
 
-There are other default actions available though.
+There are other failure actions available though.
 
 - dump_to_rootfs
 	This option tries to mount root and save dump on root filesystem
 	in a path specified by "path". This option will generally make
 	sense when dump target is not root filesystem. For example, if
 	dump is being saved over network using "ssh" then one can specify
-	default to "dump_to_rootfs" to try saving dump to root filesystem
-	if dump over network fails.
+	failure action to "dump_to_rootfs" to try saving dump to root
+	filesystem if dump over network fails.
 
 - shell
 	Drop into a shell session inside initramfs.
