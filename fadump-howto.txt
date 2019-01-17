@@ -73,7 +73,8 @@ The control flow of fadump works as follows:
 10. Is dump capture successful (yes goto 12, no goto 11)
 11. Perform the failure action specified in /etc/kdump.conf
     (The default failure action is reboot, if unspecified)
-12. Reboot
+12. Perform the final action specified in /etc/kdump.conf
+    (The default final action is reboot, if unspecified)
 
 
 How to configure fadump:

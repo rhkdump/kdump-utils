@@ -70,6 +70,19 @@ get_kdump_confs()
                     ;;
                 esac
             ;;
+            final_action)
+                case $config_val in
+                    reboot)
+                        FINAL_ACTION="systemctl reboot -f"
+                    ;;
+                    halt)
+                        FINAL_ACTION="halt"
+                    ;;
+                    poweroff)
+                        FINAL_ACTION="systemctl poweroff -f"
+                    ;;
+                esac
+            ;;
         esac
     done < $KDUMP_CONF
 

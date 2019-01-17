@@ -228,7 +228,7 @@ check_config()
 		case "$config_opt" in
 		\#* | "")
 			;;
-		raw|ext2|ext3|ext4|minix|btrfs|xfs|nfs|ssh|sshkey|path|core_collector|kdump_post|kdump_pre|extra_bins|extra_modules|failure_action|default|force_rebuild|force_no_rebuild|dracut_args|fence_kdump_args|fence_kdump_nodes)
+		raw|ext2|ext3|ext4|minix|btrfs|xfs|nfs|ssh|sshkey|path|core_collector|kdump_post|kdump_pre|extra_bins|extra_modules|failure_action|default|final_action|force_rebuild|force_no_rebuild|dracut_args|fence_kdump_args|fence_kdump_nodes)
 			# remove inline comments after the end of a directive.
 			config_val=$(strip_comments $config_val)
 			[ -z "$config_val" ] && {
@@ -248,6 +248,7 @@ check_config()
 	done < $KDUMP_CONFIG_FILE
 
 	check_failure_action_config || return 1
+	check_final_action_config || return 1
 
 	check_fence_kdump_config || return 1
 
@@ -964,6 +965,25 @@ check_failure_action_config()
 		echo $"Usage kdump.conf: $option {reboot|halt|poweroff|shell|dump_to_rootfs}"
 		return 1
 	esac
+}
+
+check_final_action_config()
+{
+	local final_action
+
+	final_action=$(awk '$1 ~ /^final_action$/ {print $2;}' $KDUMP_CONFIG_FILE)
+	if [ -z "$final_action" ]; then
+		return 0
+	else
+		case "$final_action" in
+		  reboot|halt|poweroff)
+			return 0
+		  ;;
+		  *)
+			echo $"Usage kdump.conf: final_action {reboot|halt|poweroff}"
+			return 1
+		esac
+	fi
 }
 
 start()
