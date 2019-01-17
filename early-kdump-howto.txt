@@ -1,6 +1,7 @@
 Early Kdump HOWTO
 
 Introduction
+------------
 
 Kdump service starts too late, so early crashes will have no chance to get
 kdump kernel booting, this will cause crash information to be lost. It is
@@ -12,7 +13,8 @@ which is disabled by default.
 For the normal kdump service, it can check whether the early kdump has loaded
 the crash kernel and initramfs. It has no conflict with the early kdump.
 
-How to configure early kdump:
+How to configure early kdump
+----------------------------
 
 We assume if you're reading this document, you should already have kexec-tools
 installed.
@@ -20,6 +22,16 @@ installed.
 You can rebuild the initramfs with earlykdump support with below steps:
 1. start kdump service to make sure kdump initramfs is created.
     # systemctl start kdump
+
+    NOTE: If a crash occurs during boot process, early kdump captures a vmcore
+    and reboot the system by default, so the system might go into crash loop.
+    You can avoid such a crash loop by adding the following settings, which
+    power off the system after dump capturing, to kdump.conf in advance:
+
+        final_action poweroff
+        failure_action poweroff
+
+    For the failure_action, you can choose anything other than "reboot".
 
 2. rebuild system initramfs with earlykdump support.
     # dracut --add earlykdump
@@ -50,5 +62,6 @@ kdump kernel
 Mar 09 10:02:47 localhost.localdomain dracut-cmdline[189]: early-kdump is disabled.
 
 Limitation
+----------
 
 At present, early kdump doesn't support fadump.
