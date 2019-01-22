@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.18
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -324,6 +324,19 @@ done
 %endif
 
 %changelog
+* Tue Jan 22 2019 Kairui Song <kasong@redhat.com> - 2.0.18-3
+- earlykdump: Add a note of final_action option to avoid crash loop
+- Add final_action option to kdump.conf
+- Add failure_action as alias of default and make default obsolete
+- mkdumprd: force drop earlykdump module
+- earlykdump: warn when installed kernel version differs from dracut target
+- earlykdump: add more sanity check when generating initramfs
+- earlykdump: generate symlink with stable name to kernel image and iniramfs
+- earlykdump: fix kexec fails to load the early kdump kernel
+- mkdumprd: allow spaces after 'path' config phrase with network dump setting
+- dracut-module-setup: Don't build squashed image if required modules are missing
+- kdump-lib-initramfs.sh: using -force option when poweroff
+
 * Fri Dec 7 2018 Kairui Song <kasong@redhat.com> - 2.0.18-2
 - Update makedumpfile 1.6.5
 - Make udev reload rules quiet during bootup
