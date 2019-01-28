@@ -106,14 +106,14 @@ to_mount() {
             _options=$(echo $_options | sed 's/,clientaddr=[^,]*//')
         fi
     fi
+    # mount fs target as rw in 2nd kernel
+    _options=$(echo $_options | sed 's/\(^\|,\)ro\($\|,\)/\1rw\2/g')
     # with 'noauto' in fstab nfs and non-root disk mount will fail in 2nd
     # kernel, filter it out here.
-    _options=$(echo $_options | sed 's/\bnoauto\b//')
-    #mount fs target as rw in 2nd kernel
-    _options=$(echo $_options | sed 's/\bro\b/rw/')
+    _options=$(echo $_options | sed 's/\(^\|,\)noauto\($\|,\)/\1/g')
     # drop nofail or nobootwait
-    _options=$(echo $_options | sed 's/\bnofail\b//')
-    _options=$(echo $_options | sed 's/\bnobootwait\b//')
+    _options=$(echo $_options | sed 's/\(^\|,\)nofail\($\|,\)/\1/g')
+    _options=$(echo $_options | sed 's/\(^\|,\)nobootwait\($\|,\)/\1/g')
 
     _mntopts="$_target $_fstype $_options"
     #for non-nfs _dev converting to use udev persistent name
