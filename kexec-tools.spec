@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.18
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -323,6 +323,9 @@ done
 %endif
 
 %changelog
+* Fri Feb 01 2019 Fedora Release Engineering <releng@fedoraproject.org> - 2.0.18-4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_30_Mass_Rebuild
+
 * Tue Jan 22 2019 Kairui Song <kasong@redhat.com> - 2.0.18-3
 - earlykdump: Add a note of final_action option to avoid crash loop
 - Add final_action option to kdump.conf
