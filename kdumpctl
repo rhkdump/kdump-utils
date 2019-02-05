@@ -94,7 +94,7 @@ rebuild_fadump_initrd()
 	# this file tells the initrd is fadump enabled
 	touch /tmp/fadump.initramfs
 	target_initrd_tmp="$TARGET_INITRD.tmp"
-	$MKDUMPRD $target_initrd_tmp --rebuild $TARGET_INITRD --kver $kdump_kver \
+	$MKDUMPRD $target_initrd_tmp --rebuild $DEFAULT_INITRD_BAK --kver $kdump_kver \
 		-i /tmp/fadump.initramfs /etc/fadump.initramfs
 	if [ $? != 0 ]; then
 		echo "mkdumprd: failed to rebuild initrd with fadump support" >&2
