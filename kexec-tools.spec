@@ -61,8 +61,6 @@ BuildRequires: automake autoconf libtool
 Obsoletes: diskdumputils netdump kexec-tools-eppic
 %endif
 
-%undefine _hardened_build
-
 #START INSERT
 
 #
@@ -87,6 +85,8 @@ Obsoletes: diskdumputils netdump kexec-tools-eppic
 #
 # Patches 601 onward are generic patches
 #
+Patch601: kexec-tools-2.0.18-purgatory-Use-standalond-CFLAGS.patch
+Patch602: kexec-tools-2.0.18-makedumpfiles-honor-the-CFLAGS-from-environment.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -101,6 +101,9 @@ component of the kernel's kexec feature.
 mkdir -p -m755 kcp
 tar -z -x -v -f %{SOURCE9}
 tar -z -x -v -f %{SOURCE19}
+
+%patch601 -p1
+%patch602 -p1
 
 %ifarch ppc
 %define archdef ARCH=ppc
