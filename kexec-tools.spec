@@ -1,3 +1,6 @@
+%global eppic_ver 0209874f4b46b8af5a2d42662ba6775cf5a1dc44
+%global eppic_shortver %(c=%{eppic_ver}; echo ${c:0:7})
+
 Name: kexec-tools
 Version: 2.0.18
 Release: 4%{?dist}
@@ -19,7 +22,7 @@ Source14: 98-kexec.rules
 Source15: kdump.conf.5
 Source16: kdump.service
 Source18: kdump.sysconfig.s390x
-Source19: eppic_050615.tar.gz
+Source19: https://github.com/lucchouina/eppic/archive/%{eppic_ver}/eppic-%{eppic_shortver}.tar.gz
 Source20: kdump-lib.sh
 Source21: kdump-in-cluster-environment.txt
 Source22: kdump-dep-generator.sh
@@ -130,9 +133,9 @@ cp %{SOURCE27} .
 
 make
 %ifarch %{ix86} x86_64 ppc64 s390x ppc64le aarch64
-make -C eppic/libeppic
+make -C eppic-%{eppic_ver}/libeppic
 make -C makedumpfile-1.6.5 LINKTYPE=dynamic USELZO=on USESNAPPY=on
-make -C makedumpfile-1.6.5 LDFLAGS="-I../eppic/libeppic -L../eppic/libeppic" eppic_makedumpfile.so
+make -C makedumpfile-1.6.5 LDFLAGS="-I../eppic-%{eppic_ver}/libeppic -L../eppic-%{eppic_ver}/libeppic" eppic_makedumpfile.so
 %endif
 
 %install
