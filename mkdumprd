@@ -444,13 +444,9 @@ do
         add_dracut_arg $config_val
         ;;
     *)
-        if [ -n $(echo $config_opt | grep "^#.*$") ]
-        then
-            continue
-        fi
         ;;
     esac
-done < $conf_file
+done <<< "$(grep -v -e "^#" -e "^$" $conf_file)"
 
 handle_default_dump_target
 
