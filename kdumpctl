@@ -1047,7 +1047,8 @@ reload()
 	fi
 
 	if [ $DEFAULT_DUMP_MODE == "fadump" ]; then
-		stop_fadump
+		reload_fadump
+		return $?
 	else
 		stop_kdump
 	fi
@@ -1101,6 +1102,26 @@ stop_kdump()
 
 	echo "kexec: unloaded kdump kernel"
 	return 0
+}
+
+reload_fadump()
+{
+	echo 1 > $FADUMP_REGISTER_SYS_NODE
+	if [ $? == 0 ]; then
+		echo "fadump: re-registered successfully"
+		return 0
+	else
+		# FADump could fail on older kernel where re-register
+		# support is not enabled. Try stop/start from userspace
+		# to handle such scenario.
+		stop_fadump
+		if [ $? == 0 ]; then
+			start_fadump
+			return $?
+		fi
+	fi
+
+	return 1
 }
 
 stop()
