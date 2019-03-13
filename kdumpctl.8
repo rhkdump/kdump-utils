@@ -32,6 +32,12 @@ It returns non-zero value if kdump is not operational.
 Is equal to
 .I start; stop
 .TP
+.I reload
+reload crash kernel image and initramfs without triggering a rebuild.
+.TP
+.I rebuild
+rebuild the crash kernel initramfs.
+.TP
 .I propagate
 Helps to setup key authentication for ssh storage since it's
 impossible to use password authentication during kdump.
