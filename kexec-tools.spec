@@ -2,8 +2,8 @@
 %global eppic_shortver %(c=%{eppic_ver}; echo ${c:0:7})
 
 Name: kexec-tools
-Version: 2.0.18
-Release: 5%{?dist}
+Version: 2.0.19
+Release: 1%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -88,8 +88,7 @@ Obsoletes: diskdumputils netdump kexec-tools-eppic
 #
 # Patches 601 onward are generic patches
 #
-Patch601: kexec-tools-2.0.18-purgatory-Use-standalond-CFLAGS.patch
-Patch602: kexec-tools-2.0.18-makedumpfiles-honor-the-CFLAGS-from-environment.patch
+Patch601: kexec-tools-2.0.18-makedumpfiles-honor-the-CFLAGS-from-environment.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -106,7 +105,6 @@ tar -z -x -v -f %{SOURCE9}
 tar -z -x -v -f %{SOURCE19}
 
 %patch601 -p1
-%patch602 -p1
 
 %ifarch ppc
 %define archdef ARCH=ppc
@@ -329,6 +327,11 @@ done
 %endif
 
 %changelog
+* Fri Mar 22 2019 Kairui Song <kasong@redhat.com> - 2.0.19-1
+- Update eppic to latest snapshot
+- fadump: leverage kernel support to re-regisgter FADump
+- fadump: use the original initrd to rebuild fadump initrdfrom
+
 * Fri Feb 22 2019 Kairui Song <kasong@redhat.com> - 2.0.18-5
 - Update eppic to latest upstream snapshot
 - Enable building with hardening flags
