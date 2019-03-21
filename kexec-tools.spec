@@ -1,4 +1,4 @@
-%global eppic_ver 0209874f4b46b8af5a2d42662ba6775cf5a1dc44
+%global eppic_ver d84c3541035d95077aa8571f5d5c3e07c6ef510b
 %global eppic_shortver %(c=%{eppic_ver}; echo ${c:0:7})
 
 Name: kexec-tools
@@ -135,7 +135,7 @@ make
 %ifarch %{ix86} x86_64 ppc64 s390x ppc64le aarch64
 make -C eppic-%{eppic_ver}/libeppic
 make -C makedumpfile-1.6.5 LINKTYPE=dynamic USELZO=on USESNAPPY=on
-make -C makedumpfile-1.6.5 LDFLAGS="-I../eppic-%{eppic_ver}/libeppic -L../eppic-%{eppic_ver}/libeppic" eppic_makedumpfile.so
+make -C makedumpfile-1.6.5 LDFLAGS="$LDFLAGS -I../eppic-%{eppic_ver}/libeppic -L../eppic-%{eppic_ver}/libeppic" eppic_makedumpfile.so
 %endif
 
 %install
