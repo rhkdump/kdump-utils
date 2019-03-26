@@ -91,6 +91,12 @@ This line tells kexec to reserve 64M of ram if the system contains between
 512M and 2G of physical memory.  If the system contains 2G or more of physical
 memory, 128M should be reserved.
 
+Besides, since kdump needs to access /proc/kallsyms during a kernel
+loading if KASLR is enabled, check /proc/sys/kernel/kptr_restrict to
+make sure that the content of /proc/kallsyms is exposed correctly.
+We recommend to set the value of kptr_restrict to '1'. Otherwise
+capture kernel loading could fail.
+
 After making said changes, reboot your system, so that the X MB of memory is
 left untouched by the normal system, reserved for the capture kernel. Take note
 that the output of 'free -m' will show X MB less memory than without this
