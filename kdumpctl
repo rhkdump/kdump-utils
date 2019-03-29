@@ -123,6 +123,11 @@ rebuild_kdump_initrd()
 
 rebuild_initrd()
 {
+	if [[ ! -w "$KDUMP_BOOTDIR" ]];then
+		echo "$KDUMP_BOOTDIR does not have write permission. Can not rebuild $TARGET_INITRD"
+		return 1
+	fi
+
 	if [ $DEFAULT_DUMP_MODE == "fadump" ]; then
 		rebuild_fadump_initrd
 	else
@@ -298,12 +303,17 @@ setup_initrd()
 	DEFAULT_INITRD_BAK="${KDUMP_BOOTDIR}/.initramfs-`uname -r`.img.default"
 	if [ $DEFAULT_DUMP_MODE == "fadump" ]; then
 		TARGET_INITRD="$DEFAULT_INITRD"
-		if [ ! -s "$TARGET_INITRD" ]; then
-			echo "Error: No initrd found to rebuild!"
-			return 1
-		fi
+
+		# backup initrd for reference before replacing it
+		# with fadump aware initrd
+		backup_default_initrd
 	else
 		TARGET_INITRD="${KDUMP_BOOTDIR}/initramfs-${kdump_kver}kdump.img"
+
+		# check if a backup of default initrd exists. If yes,
+		# it signifies a switch from fadump mode. So, restore
+		# the backed up default initrd.
+		restore_default_initrd
 	fi
 }
 
@@ -602,8 +612,6 @@ check_rebuild()
 		system_modified="1"
 	fi
 
-	handle_mode_switch
-
 	if [ $image_time -eq 0 ]; then
 		echo  -n "No kdump initial ramdisk found."; echo
 	elif [ "$capture_capable_initrd" == "0" ]; then
@@ -614,11 +622,6 @@ check_rebuild()
 		:
 	else
 		return 0
-	fi
-
-	if [[ ! -w "$KDUMP_BOOTDIR" ]];then
-		echo "$KDUMP_BOOTDIR does not have write permission. Can not rebuild $TARGET_INITRD"
-		return 1
 	fi
 
 	echo "Rebuilding $TARGET_INITRD"
@@ -743,20 +746,6 @@ show_reserved_mem()
     local mem_mb=$(expr $mem / 1024 / 1024)
 
     echo "Reserved "$mem_mb"MB memory for crash kernel"
-}
-
-handle_mode_switch()
-{
-	if [ "$DEFAULT_DUMP_MODE" == "fadump" ]; then
-		# backup initrd for reference before replacing it
-		# with fadump aware initrd
-		backup_default_initrd
-	else
-		# check if a backup of default initrd exists. If yes,
-		# it signifies a switch from fadump mode. So, restore
-		# the backed up default initrd.
-		restore_default_initrd
-	fi
 }
 
 check_current_fadump_status()
@@ -1141,6 +1130,17 @@ stop()
 	return 0
 }
 
+rebuild() {
+	setup_initrd
+	if [ $? -ne 0 ]; then
+		return 1
+	fi
+
+	echo "Rebuilding $TARGET_INITRD"
+	rebuild_initrd
+	return $?
+}
+
 if [ ! -f "$KDUMP_CONFIG_FILE" ]; then
 	echo "Error: No kdump config file found!"  >&2
 	exit 1
@@ -1185,6 +1185,9 @@ main ()
 		stop
 		start
 		;;
+	  rebuild)
+		rebuild
+		;;
 	  condrestart)
 		;;
 	  propagate)
@@ -1194,7 +1197,7 @@ main ()
 		show_reserved_mem
 		;;
 	  *)
-		echo $"Usage: $0 {start|stop|status|restart|reload|propagate|showmem}"
+		echo $"Usage: $0 {start|stop|status|restart|reload|rebuild|propagate|showmem}"
 		exit 1
 	esac
 }
