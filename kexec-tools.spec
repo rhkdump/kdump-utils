@@ -18,7 +18,8 @@ Source8: kdump.conf
 Source9: http://downloads.sourceforge.net/project/makedumpfile/makedumpfile/1.6.5/makedumpfile-1.6.5.tar.gz
 Source10: kexec-kdump-howto.txt
 Source12: mkdumprd.8
-Source14: 98-kexec.rules
+Source13: 98-kexec.rules
+Source14: 98-kexec.rules.ppc64
 Source15: kdump.conf.5
 Source16: kdump.service
 Source18: kdump.sysconfig.s390x
@@ -169,10 +170,15 @@ install -m 644 %{SOURCE25} $RPM_BUILD_ROOT%{_mandir}/man8/kdumpctl.8
 install -m 755 %{SOURCE20} $RPM_BUILD_ROOT%{_prefix}/lib/kdump/kdump-lib.sh
 install -m 755 %{SOURCE23} $RPM_BUILD_ROOT%{_prefix}/lib/kdump/kdump-lib-initramfs.sh
 %ifnarch s390x
+install -m 755 %{SOURCE28} $RPM_BUILD_ROOT%{_udevrulesdir}/../kdump-udev-throttler
+%endif
+%ifnarch s390x ppc64 ppc64le
 # For s390x the ELF header is created in the kdump kernel and therefore kexec
 # udev rules are not required
+install -m 644 %{SOURCE13} $RPM_BUILD_ROOT%{_udevrulesdir}/98-kexec.rules
+%endif
+%ifarch ppc64 ppc64le
 install -m 644 %{SOURCE14} $RPM_BUILD_ROOT%{_udevrulesdir}/98-kexec.rules
-install -m 755 %{SOURCE28} $RPM_BUILD_ROOT%{_udevrulesdir}/../kdump-udev-throttler
 %endif
 install -m 644 %{SOURCE15} $RPM_BUILD_ROOT%{_mandir}/man5/kdump.conf.5
 install -m 644 %{SOURCE16} $RPM_BUILD_ROOT%{_unitdir}/kdump.service
