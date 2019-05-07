@@ -357,6 +357,9 @@ check_dump_fs_modified()
 	local _old_dev _old_mntpoint _old_fstype
 	local _new_dev _new_mntpoint _new_fstype
 	local _target _path _dracut_args
+	local _target_drivers _module_name
+
+	local _old_drivers="$(lsinitrd $TARGET_INITRD -f /usr/lib/dracut/loaded-kernel-modules.txt | tr '\n' ' ')"
 
 	# No need to check in case of mount target specified via "dracut_args".
 	if is_mount_in_dracut_args; then
@@ -384,6 +387,36 @@ check_dump_fs_modified()
 			return 2
 		fi
 	fi
+
+	_record_block_drivers() {
+		local _drivers
+		if [[ -b /dev/block/$1 ]]; then
+			_drivers=$(udevadm info -a "/dev/block/$1" | sed -n 's/\s*DRIVERS=="\(\S\+\)"/\1/p')
+		fi
+		if [[ -b $1 ]]; then
+			_drivers=$(udevadm info -a "$1" | sed -n 's/\s*DRIVERS=="\(\S\+\)"/\1/p')
+		fi
+		for _driver in $_drivers; do
+			if ! [[ " $_target_drivers " == *" $_driver "* ]]; then
+				_target_drivers="$_target_drivers $_driver"
+			fi
+		done
+		return 1
+	}
+
+	check_block_and_slaves_all _record_block_drivers "$(get_maj_min "$_target")"
+	for _driver in $_target_drivers; do
+		# Target is mounted already, if module is not included by current kernel,
+		# could be a deprecated/invalid driver name or a built-in module
+		_module_name=$(modinfo --set-version "$kdump_kver" -F name $_driver 2>/dev/null)
+		if [ $? -ne 0 ] || [ -z "$_module_name" ]; then
+			continue
+		fi
+		if ! [[ " $_old_drivers " == *" $_module_name "* ]]; then
+			echo "Detected change in block device driver, new loaded module: $_module_name"
+			return 1
+		fi
+	done
 
 	if [[ $(expr substr $_new_fstype 1 3) = "nfs" ]];then
 		_new_dev=$_target
