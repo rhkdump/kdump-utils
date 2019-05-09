@@ -121,11 +121,7 @@ get_user_configured_dump_disk()
 
 get_root_fs_device()
 {
-    local _target
-    _target=$(findmnt -k -f -n -o SOURCE /)
-    [ -n "$_target" ] && echo $_target
-
-    return
+    findmnt -k -f -n -o SOURCE /
 }
 
 get_save_path()
@@ -230,9 +226,9 @@ get_bind_mount_directory()
     echo $_mntpoint
 }
 
-get_mntpoint_from_path() 
+get_mntpoint_from_path()
 {
-    echo $(df $1 | tail -1 |  awk '{print $NF}')
+    df $1 | tail -1 | awk '{print $NF}'
 }
 
 get_target_from_path()
@@ -244,9 +240,9 @@ get_target_from_path()
     echo $_target
 }
 
-get_fs_type_from_target() 
+get_fs_type_from_target()
 {
-    echo $(findmnt -k -f -n -r -o FSTYPE $1)
+    findmnt -k -f -n -r -o FSTYPE $1
 }
 
 # input: device path
@@ -281,7 +277,7 @@ get_mntpoint_from_target()
 # get_option_value <option_name>
 # retrieves value of option defined in kdump.conf
 get_option_value() {
-    echo $(strip_comments `grep "^$1[[:space:]]\+" /etc/kdump.conf | tail -1 | cut -d\  -f2-`)
+    strip_comments `grep "^$1[[:space:]]\+" /etc/kdump.conf | tail -1 | cut -d\  -f2-`
 }
 
 #This function compose a absolute path with the mount
