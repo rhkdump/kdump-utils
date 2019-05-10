@@ -136,6 +136,22 @@ perform postmortem analysis:
 
 and so on...
 
+Notes:
+
+When kdump starts, the kdump kernel is loaded together with the kdump
+initramfs. To save memory usage and disk space, the kdump initramfs is
+generated strictly against the system it will run on, and contains the
+minimum set of kernel modules and utilities to boot the machine to a stage
+where the dump target could be mounted.
+
+With kdump service enabled, kdumpctl will try to detect possible system
+change and rebuild the kdump initramfs if needed. But it can not guarantee
+to cover every possible case. So after a hardware change, disk migration,
+storage setup update or any similar system level changes, it's highly
+recommended to rebuild the initramfs manually with following command:
+
+    # kdumpctl rebuild
+
 Saving vmcore-dmesg.txt
 ----------------------
 Kernel log bufferes are one of the most important information available
@@ -653,6 +669,20 @@ in dracut_args of kdump.conf. If a watchdog module (such as hp_wdt) has
 not been written in watchdog-core framework then this option will not have
 any effect and module will not be added. Please note that only systemd
 watchdog daemon is supported as watchdog kick application.
+
+Notes for disk images:
+
+Kdump initramfs is a critical component for capturing the crash dump.
+But it's strictly generated for the machine it will run on, and have
+no generality. If you install a new machine with a previous disk image
+(eg. VMs created with disk image or snapshot), kdump could be broken
+easily due to hardware changes or disk ID changes. So it's strongly
+recommended to not include the kdump initramfs in the disk image in the
+first place, this helps to save space, and kdumpctl will build the
+initramfs automatically if it's missing. If you have already installed
+a machine with a disk image which have kdump initramfs embedded, you
+should rebuild the initramfs using "kdumpctl rebuild" command manually,
+or else kdump may not work as expeceted.
 
 Parallel Dumping Operation
 ==========================
