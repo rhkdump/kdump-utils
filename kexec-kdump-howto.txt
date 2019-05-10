@@ -684,6 +684,20 @@ a machine with a disk image which have kdump initramfs embedded, you
 should rebuild the initramfs using "kdumpctl rebuild" command manually,
 or else kdump may not work as expeceted.
 
+Notes on encrypted dump target:
+
+Currently, kdump is not working well with encrypted dump target.
+First, user have to give the password manually in capture kernel,
+so a working interactive terminal is required in the capture kernel.
+And another major issue is that an OOM problem will occur with certain
+encryption setup. For example, the default setup for LUKS2 will use a
+memory hard key derivation function to mitigate brute force attach,
+it's impossible to reduce the memory usage for mounting the encrypted
+target. In such case, you have to either reserved enough memory for
+crash kernel according, or update your encryption setup.
+It's recommanded to use a non-encrypted target (eg. remote target)
+instead.
+
 Parallel Dumping Operation
 ==========================
 Kexec allows kdump using multiple cpus. So parallel feature can accelerate
