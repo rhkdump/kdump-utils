@@ -347,11 +347,23 @@ check_files_modified()
 	[ $? -ne 0 ] && return 2
 
 	for file in $files; do
-		time_stamp=`stat -c "%Y" $file`
-		if [ "$time_stamp" -gt "$image_time" ]; then
-			modified_files="$modified_files $file"
+		if [ -e "$file" ]; then
+			time_stamp=`stat -c "%Y" $file`
+			if [ "$time_stamp" -gt "$image_time" ]; then
+				modified_files="$modified_files $file"
+			fi
+			if [ -L "$file" ]; then
+				file=$(readlink -m $file)
+				time_stamp=`stat -c "%Y" $file`
+				if [ "$time_stamp" -gt "$image_time" ]; then
+					modified_files="$modified_files $file"
+				fi
+			fi
+		else
+			echo "$file doesn't exist"
 		fi
 	done
+
 	if [ -n "$modified_files" ]; then
 		echo "Detected change(s) in the following file(s):"
 		echo -n "  "; echo "$modified_files" | sed 's/\s/\n  /g'
