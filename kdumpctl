@@ -343,6 +343,28 @@ check_files_modified()
 	files="$KDUMP_CONFIG_FILE $kdump_kernel $EXTRA_BINS $CORE_COLLECTOR"
 	[[ -e /etc/fstab ]] && files="$files /etc/fstab"
 
+	# Check for any updated extra module
+	EXTRA_MODULES="$(grep ^extra_modules $KDUMP_CONFIG_FILE | sed 's/^extra_modules\s*//')"
+	if [ -n "$EXTRA_MODULES" ]; then
+		if [ -e /lib/modules/$kdump_kver/modules.dep ]; then
+			files="$files /lib/modules/$kdump_kver/modules.dep"
+		fi
+		for _module in $EXTRA_MODULES; do
+			_module_file="$(modinfo --set-version "$kdump_kver" --filename "$_module" 2>/dev/null)"
+			if [[ $? -eq 0 ]]; then
+				files="$files $_module_file"
+				for _dep_modules in $(modinfo -F depends $_module | tr ',' ' '); do
+				    files="$files $(modinfo --set-version "$kdump_kver" --filename $_dep_modules 2>/dev/null)"
+				done
+			else
+				# If it's not a module nor builtin, give an error
+				if ! ( modprobe --set-version "$kdump_kver" --dry-run "$_module" &>/dev/null ); then
+					echo "Module $_module not found"
+				fi
+			fi
+		done
+	fi
+
 	check_exist "$files" && check_executable "$EXTRA_BINS"
 	[ $? -ne 0 ] && return 2
 
@@ -572,7 +594,6 @@ check_system_modified()
 
 check_rebuild()
 {
-	local extra_modules
 	local capture_capable_initrd="1"
 	local _force_rebuild force_rebuild="0"
 	local _force_no_rebuild force_no_rebuild="0"
@@ -611,10 +632,6 @@ check_rebuild()
 	if [ "$force_no_rebuild" == "1" ]; then
 		return 0
 	fi
-
-	#will rebuild every time if extra_modules are specified
-	extra_modules=`grep ^extra_modules $KDUMP_CONFIG_FILE`
-	[ -n "$extra_modules" ] && force_rebuild="1"
 
 	#check to see if dependent files has been modified
 	#since last build of the image file
