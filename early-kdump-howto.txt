@@ -38,9 +38,16 @@ You can rebuild the initramfs with earlykdump support with below steps:
 
 3. add rd.earlykdump in grub kernel command line.
 
-Note: earlykdump initramfs size will be large because it includes vmlinuz and
+Note:
+[1]. Early kdump initramfs size will be large because it includes vmlinuz and
 kdump initramfs. And for step 2 if you are sure to overwrite system initramfs
 you can backup the original initramfs and use "--force" option.
+
+[2]. Early kdump inherits the settings of normal kdump, so any changes that
+caused normal kdump rebuilding also require rebuilding the system initramfs
+to make sure that the changes take effect for early kdump. Therefore, after
+the rebuilding of kdump initramfs is completed, provide a prompt message to
+tell the fact.
 
 After making said changes, reboot your system to take effect. Of course, if you
 want to disable early kdump, you can simply remove "rd.earlykdump" from kernel
