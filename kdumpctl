@@ -245,7 +245,6 @@ check_config()
 			;;
 		raw|ext2|ext3|ext4|minix|btrfs|xfs|nfs|ssh|sshkey|path|core_collector|kdump_post|kdump_pre|extra_bins|extra_modules|failure_action|default|final_action|force_rebuild|force_no_rebuild|dracut_args|fence_kdump_args|fence_kdump_nodes)
 			# remove inline comments after the end of a directive.
-			config_val=$(strip_comments $config_val)
 			[ -z "$config_val" ] && {
 				echo "Invalid kdump config value for option $config_opt."
 				return 1;
@@ -260,7 +259,7 @@ check_config()
 			return 1;
 			;;
 		esac
-	done < $KDUMP_CONFIG_FILE
+	done <<< "$(read_strip_comments $KDUMP_CONFIG_FILE)"
 
 	check_failure_action_config || return 1
 	check_final_action_config || return 1
@@ -676,7 +675,6 @@ check_ssh_config()
 		case "$config_opt" in
 		sshkey)
 			# remove inline comments after the end of a directive.
-			config_val=$(strip_comments $config_val)
 			if [ -f "$config_val" ]; then
 				# canonicalize the path
 				SSH_KEY_LOCATION=$(/usr/bin/readlink -m $config_val)
@@ -685,17 +683,15 @@ check_ssh_config()
 			fi
 			;;
 		path)
-			config_val=$(strip_comments $config_val)
 			SAVE_PATH=$config_val
 			;;
 		ssh)
-			config_val=$(strip_comments $config_val)
 			DUMP_TARGET=$config_val
 			;;
 		*)
 			;;
 		esac
-	done < $KDUMP_CONFIG_FILE
+	done <<< "$(read_strip_comments $KDUMP_CONFIG_FILE)"
 
 	#make sure they've configured kdump.conf for ssh dumps
 	local SSH_TARGET=`echo -n $DUMP_TARGET | sed -n '/.*@/p'`

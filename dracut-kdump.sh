@@ -144,7 +144,6 @@ read_kdump_conf()
     while read config_opt config_val;
     do
         # remove inline comments after the end of a directive.
-        config_val=$(strip_comments $config_val)
         case "$config_opt" in
         dracut_args)
             config_val=$(get_dracut_args_target "$config_val")
@@ -160,7 +159,7 @@ read_kdump_conf()
             add_dump_code "dump_ssh $SSH_KEY_LOCATION $config_val"
             ;;
         esac
-    done < $KDUMP_CONF
+    done <<< "$(read_strip_comments $KDUMP_CONF)"
 }
 
 fence_kdump_notify()

@@ -26,7 +26,6 @@ get_kdump_confs()
     while read config_opt config_val;
     do
         # remove inline comments after the end of a directive.
-        config_val=$(strip_comments $config_val)
         case "$config_opt" in
             path)
                 KDUMP_PATH="$config_val"
@@ -84,7 +83,7 @@ get_kdump_confs()
                 esac
             ;;
         esac
-    done < $KDUMP_CONF
+    done <<< "$(read_strip_comments $KDUMP_CONF)"
 
     if [ -z "$CORE_COLLECTOR" ]; then
         CORE_COLLECTOR="$DEFAULT_CORE_COLLECTOR"

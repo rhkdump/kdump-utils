@@ -61,6 +61,14 @@ strip_comments()
     echo $@ | sed -e 's/\(.*\)#.*/\1/'
 }
 
+# Read from kdump config file stripping all comments
+read_strip_comments()
+{
+    # strip heading spaces, and print any content starting with
+    # neither space or #, and strip everything after #
+    sed -n -e "s/^\s*\([^# \t][^#]\+\).*/\1/gp" $1
+}
+
 # Check if fence kdump is configured in Pacemaker cluster
 is_pcs_fence_kdump()
 {

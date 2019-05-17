@@ -501,7 +501,6 @@ kdump_install_conf() {
     while read _opt _val;
     do
         # remove inline comments after the end of a directive.
-        _val=$(strip_comments $_val)
         case "$_opt" in
         raw)
             _pdev=$(persistent_policy="by-id" kdump_get_persistent_dev $_val)
@@ -529,7 +528,7 @@ kdump_install_conf() {
             dracut_install "${_val%%[[:blank:]]*}"
             ;;
         esac
-    done < /etc/kdump.conf
+    done <<< "$(read_strip_comments /etc/kdump.conf)"
 
     default_dump_target_install_conf
 
