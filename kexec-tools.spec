@@ -3,7 +3,7 @@
 
 Name: kexec-tools
 Version: 2.0.19
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -333,6 +333,21 @@ done
 %endif
 
 %changelog
+* Mon May 20 2019 Kairui Song <kasong@redhat.com> - 2.0.19-2
+- kdumpctl: don't always rebuild when extra_modules is set
+- kdumpctl: follow symlink when checking for modified files
+- Get rid of duplicated strip_comments when reading config
+- earlykdump: provide a prompt message after the rebuilding of kdump initramfs.
+- kexec-kdump-howto.txt: Add document about encrypted targets
+- kexec-kdump-howto.txt: Add document about initramfs rebiuld
+- kdumpctl: Detect block device driver change for initramfs rebuild
+- Revert "kdumpctl: Rebuild initramfs if loaded kernel modules changed"
+- kexec.rules: create dedicated udev rules for ppc64
+- kexec-kdump-howto: Add note on setting correct value of kptr_restrict
+- Update man page for new kdumpctl command: reload / rebuild
+- kdumpctl: add rebuild support
+- mkdumprd: Improve the config reading logic
+
 * Fri Mar 22 2019 Kairui Song <kasong@redhat.com> - 2.0.19-1
 - Update eppic to latest snapshot
 - fadump: leverage kernel support to re-regisgter FADump
