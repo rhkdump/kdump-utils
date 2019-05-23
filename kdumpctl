@@ -1169,6 +1169,11 @@ stop()
 }
 
 rebuild() {
+	check_config
+	if [ $? -ne 0 ]; then
+		return 1
+	fi
+
 	setup_initrd
 	if [ $? -ne 0 ]; then
 		return 1
