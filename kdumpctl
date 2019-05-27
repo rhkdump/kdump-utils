@@ -1174,6 +1174,12 @@ rebuild() {
 		return 1
 	fi
 
+	if check_ssh_config; then
+		if ! check_ssh_target; then
+			return 1
+		fi
+	fi
+
 	setup_initrd
 	if [ $? -ne 0 ]; then
 		return 1
