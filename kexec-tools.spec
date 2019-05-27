@@ -33,6 +33,7 @@ Source25: kdumpctl.8
 Source26: live-image-kdump-howto.txt
 Source27: early-kdump-howto.txt
 Source28: kdump-udev-throttler
+Source29: kdump.sysconfig.aarch64
 
 #######################################
 # These are sources for mkdumpramfs
