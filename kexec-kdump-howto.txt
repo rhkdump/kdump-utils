@@ -698,6 +698,23 @@ crash kernel according, or update your encryption setup.
 It's recommanded to use a non-encrypted target (eg. remote target)
 instead.
 
+Notes on device dump:
+
+Device dump allows drivers to append dump data to vmcore, so you can
+collect driver specified debug info. The drivers could append the
+data without any limit, and the data is stored in memory, this may
+bring a significant memory stress. So device dump is disabled by default
+by passing "novmcoredd" command line option to the kdump capture kernel.
+If you want to collect debug data with device dump, you need to modify
+"KDUMP_COMMANDLINE_APPEND=" value in /etc/sysconfig/kdump and remove the
+"novmcoredd" option. You also need to increase the "crashkernel=" value
+accordingly in case of OOM issue.
+Besides, kdump initramfs won't automatically include the device drivers
+which support device dump, only device drivers that are required for
+the dump target setup will be included. To ensure the device dump data
+will be included in the vmcore, you need to force include related
+device drivers by using "extra_modules" option in /etc/kdump.conf
+
 Parallel Dumping Operation
 ==========================
 Kexec allows kdump using multiple cpus. So parallel feature can accelerate
