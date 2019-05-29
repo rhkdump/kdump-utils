@@ -21,7 +21,7 @@ KDUMP_COMMANDLINE_REMOVE="hugepages hugepagesz slub_debug quiet"
 
 # This variable lets us append arguments to the current kdump commandline
 # after processed by KDUMP_COMMANDLINE_REMOVE
-KDUMP_COMMANDLINE_APPEND="irqpoll maxcpus=1 reset_devices"
+KDUMP_COMMANDLINE_APPEND="irqpoll maxcpus=1 reset_devices novmcoredd"
 
 # Any additional kexec arguments required.  In most situations, this should
 # be left empty
