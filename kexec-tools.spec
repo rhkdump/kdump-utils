@@ -75,6 +75,7 @@ Obsoletes: diskdumputils netdump kexec-tools-eppic
 #
 # Patches 101 through 200 are meant for x86_64 kexec-tools enablement
 #
+Patch101: kexec-tools-2.0.19-makedumpfiles-x86_64-Add-support-for-AMD-Secure-Memory-Encry.patch
 
 #
 # Patches 301 through 400 are meant for ppc64 kexec-tools enablement
@@ -107,6 +108,7 @@ tar -z -x -v -f %{SOURCE9}
 tar -z -x -v -f %{SOURCE19}
 
 %patch601 -p1
+%patch101 -p1
 
 %ifarch ppc
 %define archdef ARCH=ppc
