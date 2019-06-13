@@ -12,7 +12,7 @@ After=dracut-initqueue.service dracut-pre-mount.service dracut-mount.service dra
 Before=initrd-cleanup.service
 ConditionPathExists=/etc/initrd-release
 OnFailure=emergency.target
-OnFailureIsolate=yes
+OnFailureJobMode=isolate
 
 [Service]
 Environment=DRACUT_SYSTEMD=1
