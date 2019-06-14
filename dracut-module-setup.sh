@@ -30,7 +30,7 @@ depends() {
         done
     }
 
-    if is_squash_available; then
+    if is_squash_available && ! is_fadump_capable; then
         _dep="$_dep squash"
     else
         dwarning "Required modules to build a squashed kdump image is missing!"
