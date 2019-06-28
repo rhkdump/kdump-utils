@@ -822,4 +822,11 @@ install() {
         echo "[Manager]" > ${initdir}/etc/systemd/system.conf.d/kdump.conf
         echo "DefaultTimeoutStartSec=300s" >> ${initdir}/etc/systemd/system.conf.d/kdump.conf
     fi
+
+    # Forward logs to console directly, this avoids unneccessary memory
+    # consumption and make console output more useful
+    mkdir -p ${initdir}/etc/systemd/journald.conf.d
+    echo "[Journal]" > ${initdir}/etc/systemd/journald.conf.d/kdump.conf
+    echo "Storage=none" >> ${initdir}/etc/systemd/journald.conf.d/kdump.conf
+    echo "ForwardToConsole=yes" >> ${initdir}/etc/systemd/journald.conf.d/kdump.conf
 }
