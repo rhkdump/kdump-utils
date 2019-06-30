@@ -327,11 +327,45 @@ kdump_setup_znet() {
     echo rd.znet=${NETTYPE},${SUBCHANNELS}${_options} > ${initdir}/etc/cmdline.d/30znet.conf
 }
 
-# Setup dracut to bringup a given network interface
-kdump_setup_netdev() {
-    local _netdev=$1 _srcaddr=$2
+kdump_get_ip_route()
+{
+    local _route=$(/sbin/ip -o route get to $1 2>&1)
+    [ $? != 0 ] && die "Bad kdump network destination: $1"
+    echo $_route
+}
+
+kdump_get_ip_route_field()
+{
+    if `echo $1 | grep -q $2`; then
+        echo ${1##*$2} | cut -d ' ' -f1
+    fi
+}
+
+kdump_get_remote_ip()
+{
+    local _remote=$(get_remote_host $1) _remote_temp
+    if is_hostname $_remote; then
+        _remote_temp=`getent ahosts $_remote | grep -v : | head -n 1`
+        if [ -z "$_remote_temp" ]; then
+            _remote_temp=`getent ahosts $_remote | head -n 1`
+        fi
+        _remote=`echo $_remote_temp | cut -d' ' -f1`
+    fi
+    echo $_remote
+}
+
+# Setup dracut to bring up network interface that enable
+# initramfs accessing giving destination
+# $1: destination host
+kdump_install_net() {
+    local _destaddr _srcaddr _route _netdev
     local _static _proto _ip_conf _ip_opts _ifname_opts
-    local _netmac=$(kdump_get_mac_addr $_netdev)
+
+    _destaddr=$(kdump_get_remote_ip $1)
+    _route=$(kdump_get_ip_route $_destaddr)
+    _srcaddr=$(kdump_get_ip_route_field "$_route" "src")
+    _netdev=$(kdump_get_ip_route_field "$_route" "dev")
+    _netmac=$(kdump_get_mac_addr $_netdev)
 
     if [ "$(uname -m)" = "s390x" ]; then
         kdump_setup_znet $_netdev
@@ -372,42 +406,8 @@ kdump_setup_netdev() {
     fi
 
     kdump_setup_dns "$_netdev"
-}
 
-get_ip_route_field()
-{
-    if `echo $1 | grep -q $2`; then
-        echo ${1##*$2} | cut -d ' ' -f1
-    fi
-}
-
-#Function:kdump_install_net
-#$1: config values of net line in kdump.conf
-#$2: srcaddr of network device
-kdump_install_net() {
-    local _server _netdev _srcaddr _route _serv_tmp
-    local config_val="$1"
-
-    _server=$(get_remote_host $config_val)
-
-    if is_hostname $_server; then
-        _serv_tmp=`getent ahosts $_server | grep -v : | head -n 1`
-        if [ -z "$_serv_tmp" ]; then
-            _serv_tmp=`getent ahosts $_server | head -n 1`
-        fi
-        _server=`echo $_serv_tmp | cut -d' ' -f1`
-    fi
-
-    _route=`/sbin/ip -o route get to $_server 2>&1`
-    [ $? != 0 ] && echo "Bad kdump location: $config_val" && exit 1
-
-    #the field in the ip output changes if we go to another subnet
-    _srcaddr=$(get_ip_route_field "$_route" "src")
-    _netdev=$(get_ip_route_field "$_route" "dev")
-
-    kdump_setup_netdev "${_netdev}" "${_srcaddr}"
-
-    #save netdev used for kdump as cmdline
+    # Save netdev used for kdump as cmdline
     # Whoever calling kdump_install_net() is setting up the default gateway,
     # ie. bootdev/kdumpnic. So don't override the setting if calling
     # kdump_install_net() for another time. For example, after setting eth0 as
@@ -592,9 +592,6 @@ kdump_setup_iscsi_device() {
     local tgt_name; local tgt_ipaddr;
     local username; local password; local userpwd_str;
     local username_in; local password_in; local userpwd_in_str;
-    local netdev
-    local srcaddr
-    local idev
     local netroot_str ; local initiator_str;
     local netroot_conf="${initdir}/etc/cmdline.d/50iscsi.conf"
     local initiator_conf="/etc/iscsi/initiatorname.iscsi"
@@ -633,12 +630,7 @@ kdump_setup_iscsi_device() {
 
     [ -n "$username_in" ] && userpwd_in_str=":$username_in:$password_in"
 
-    netdev=$(/sbin/ip route get to ${tgt_ipaddr} | \
-        sed 's|.*dev \(.*\).*|\1|g')
-    srcaddr=$(echo $netdev | awk '{ print $3; exit }')
-    netdev=$(echo $netdev | awk '{ print $1; exit }')
-
-    kdump_setup_netdev $netdev $srcaddr
+    kdump_install_net "$tgt_ipaddr"
 
     # prepare netroot= command line
     # FIXME: Do we need to parse and set other parameters like protocol, port
