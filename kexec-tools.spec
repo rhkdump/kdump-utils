@@ -3,7 +3,7 @@
 
 Name: kexec-tools
 Version: 2.0.19
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -336,6 +336,9 @@ done
 %endif
 
 %changelog
+* Thu Jul 25 2019 Fedora Release Engineering <releng@fedoraproject.org> - 2.0.19-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_31_Mass_Rebuild
+
 * Mon May 20 2019 Kairui Song <kasong@redhat.com> - 2.0.19-2
 - kdumpctl: don't always rebuild when extra_modules is set
 - kdumpctl: follow symlink when checking for modified files
