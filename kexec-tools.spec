@@ -1,6 +1,6 @@
 %global eppic_ver d84c3541035d95077aa8571f5d5c3e07c6ef510b
 %global eppic_shortver %(c=%{eppic_ver}; echo ${c:0:7})
-%global mkdf_ver 1.6.5
+%global mkdf_ver 1.6.6
 
 Name: kexec-tools
 Version: 2.0.19
@@ -76,7 +76,6 @@ Obsoletes: diskdumputils netdump kexec-tools-eppic
 #
 # Patches 101 through 200 are meant for x86_64 kexec-tools enablement
 #
-Patch101: kexec-tools-2.0.19-makedumpfiles-x86_64-Add-support-for-AMD-Secure-Memory-Encry.patch
 
 #
 # Patches 301 through 400 are meant for ppc64 kexec-tools enablement
@@ -92,7 +91,6 @@ Patch101: kexec-tools-2.0.19-makedumpfiles-x86_64-Add-support-for-AMD-Secure-Mem
 #
 # Patches 601 onward are generic patches
 #
-Patch601: kexec-tools-2.0.18-makedumpfiles-honor-the-CFLAGS-from-environment.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -107,9 +105,6 @@ component of the kernel's kexec feature.
 mkdir -p -m755 kcp
 tar -z -x -v -f %{SOURCE9}
 tar -z -x -v -f %{SOURCE19}
-
-%patch601 -p1
-%patch101 -p1
 
 %ifarch ppc
 %define archdef ARCH=ppc
