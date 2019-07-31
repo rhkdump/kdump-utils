@@ -3,8 +3,8 @@
 %global mkdf_ver 1.6.6
 
 Name: kexec-tools
-Version: 2.0.19
-Release: 3%{?dist}
+Version: 2.0.20
+Release: 1%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -332,6 +332,18 @@ done
 %endif
 
 %changelog
+* Wed Jul 31 2019 Kairui Song <kasong@redhat.com> - 2.0.20-1
+- Update makedumpfile to 1.6.6
+- dracut-module-setup.sh: Don't use squash module for fadump
+- Forward logs in kdump kernel to console directly
+- kdump.sysconfig/x86_64: Disable HEST by default
+- dracut-kdump-capture.service: Use OnFailureJobMode instead of deprecated OnFailureIsolate
+- makedumpfile: x86_64: Add support for AMD Secure Memory Encryption
+- aarch64/kdump.sysconfig: Make config options similar to x86_64
+- Add aarch64 specific kdump.sysconfig and use 'nr_cpus' instead of 'maxcpus'
+- kdumpctl: check for ssh path availability when rebuild
+- kdumpctl: Check kdump.conf for error when rebuild is called
+
 * Thu Jul 25 2019 Fedora Release Engineering <releng@fedoraproject.org> - 2.0.19-3
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_31_Mass_Rebuild
 
