@@ -689,6 +689,21 @@ kdump_check_iscsi_targets () {
     }
 }
 
+is_localhost() {
+    local hostnames=$(hostname -A)
+    local shortnames=$(hostname -A -s)
+    local nodename=$1
+
+    hostnames="$hostnames $shortnames"
+
+    for name in ${hostnames}; do
+        if [ "$name" == "$nodename" ]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
 # retrieves fence_kdump nodes from Pacemaker cluster configuration
 get_pcs_fence_kdump_nodes() {
     local nodes
@@ -703,7 +718,7 @@ get_pcs_fence_kdump_nodes() {
         eval $node
         nodename=$uname
         # Skip its own node name
-        if [ "$nodename" = `hostname` -o "$nodename" = `hostname -s` ]; then
+        if is_localhost $nodename; then
             continue
         fi
         nodes="$nodes $nodename"
