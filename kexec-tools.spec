@@ -72,6 +72,7 @@ Obsoletes: diskdumputils netdump kexec-tools-eppic
 #
 # Patches 0 through 100 are meant for x86 kexec-tools enablement
 #
+Patch0: kexec-tools-2.0.20-fix-broken-multiboot2-buliding-for-i386.patch
 
 #
 # Patches 101 through 200 are meant for x86_64 kexec-tools enablement
@@ -100,11 +101,13 @@ binary and ancillary utilities that together form the userspace
 component of the kernel's kexec feature.
 
 %prep
-%setup -q 
+%setup -q
 
 mkdir -p -m755 kcp
 tar -z -x -v -f %{SOURCE9}
 tar -z -x -v -f %{SOURCE19}
+
+%patch0 -p1
 
 %ifarch ppc
 %define archdef ARCH=ppc
