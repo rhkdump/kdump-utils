@@ -4,7 +4,7 @@
 
 Name: kexec-tools
 Version: 2.0.20
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -335,6 +335,10 @@ done
 %endif
 
 %changelog
+* Fri Aug 02 2019 Kairui Song <kasong@redhat.com> - 2.0.20-2
+- x86: Fix broken multiboot2 buliding for i386
+- dracut-module-setup.sh: skip alias of localhost in get_pcs_fence_kdump_nodes()
+
 * Wed Jul 31 2019 Kairui Song <kasong@redhat.com> - 2.0.20-1
 - Update makedumpfile to 1.6.6
 - dracut-module-setup.sh: Don't use squash module for fadump
