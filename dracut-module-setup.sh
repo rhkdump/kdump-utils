@@ -839,9 +839,12 @@ install() {
     fi
 
     # Forward logs to console directly, this avoids unneccessary memory
-    # consumption and make console output more useful
-    mkdir -p ${initdir}/etc/systemd/journald.conf.d
-    echo "[Journal]" > ${initdir}/etc/systemd/journald.conf.d/kdump.conf
-    echo "Storage=none" >> ${initdir}/etc/systemd/journald.conf.d/kdump.conf
-    echo "ForwardToConsole=yes" >> ${initdir}/etc/systemd/journald.conf.d/kdump.conf
+    # consumption and make console output more useful.
+    # Only do so for non fadump image.
+    if ! is_fadump_capable; then
+        mkdir -p ${initdir}/etc/systemd/journald.conf.d
+        echo "[Journal]" > ${initdir}/etc/systemd/journald.conf.d/kdump.conf
+        echo "Storage=none" >> ${initdir}/etc/systemd/journald.conf.d/kdump.conf
+        echo "ForwardToConsole=yes" >> ${initdir}/etc/systemd/journald.conf.d/kdump.conf
+    fi
 }
