@@ -730,12 +730,39 @@ check_ssh_config()
 	return 0
 }
 
+# ipv6 host address may takes a long time to be ready.
+# Instead of checking against ipv6 address, we just check the network reachable
+# by the return val of 'ssh'
+check_and_wait_network_ready()
+{
+	local start_time=$(date +%s)
+	local cur
+	local diff
+
+	while true; do
+		ssh -q -i $SSH_KEY_LOCATION -o BatchMode=yes $DUMP_TARGET mkdir -p $SAVE_PATH
+		# ssh exits with the exit status of the remote command or with 255 if an error occurred
+		if [ $? -eq 0 ]; then
+			return 0
+		elif [ $? -ne 255 ]; then
+			return 1
+		fi
+		cur=$(date +%s)
+		diff=$( $cur - $start_time )
+		# 60s time out
+		if [ $diff -gt 60 ]; then
+			break;
+		fi
+		sleep 1
+	done
+
+	return 1
+}
+
 check_ssh_target()
 {
-	local _ret
-	ssh -q -i $SSH_KEY_LOCATION -o BatchMode=yes $DUMP_TARGET mkdir -p $SAVE_PATH
-	_ret=$?
-	if [ $_ret -ne 0 ]; then
+	check_and_wait_network_ready
+	if [ $? -ne 0 ]; then
 		echo "Could not create $DUMP_TARGET:$SAVE_PATH, you probably need to run \"kdumpctl propagate\""  >&2
 		return 1
 	fi
