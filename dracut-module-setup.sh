@@ -264,7 +264,7 @@ kdump_setup_bond() {
 
     source_ifcfg_file $_netdev
 
-    bondoptions="$(echo :$BONDING_OPTS | sed 's/\s\+/,/')"
+    bondoptions=":$(echo $BONDING_OPTS | xargs echo | tr " " ",")"
     echo "$bondoptions" >> ${initdir}/etc/cmdline.d/42bond.conf
 }
 
