@@ -689,12 +689,31 @@ kdump_check_iscsi_targets () {
     }
 }
 
+# hostname -a is deprecated, do it by ourself
+get_alias() {
+    local ips
+    local entries
+    local alias_set
+
+    ips=$(hostname -I)
+    for ip in $ips
+    do
+            entries=$(grep $ip /etc/hosts | awk '{ $1=$2=""; print $0 }')
+            if [ $? -eq 0 ]; then
+                    alias_set="$alias_set $entries"
+            fi
+    done
+
+    echo $alias_set
+}
+
 is_localhost() {
     local hostnames=$(hostname -A)
     local shortnames=$(hostname -A -s)
+    local aliasname=$(get_alias)
     local nodename=$1
 
-    hostnames="$hostnames $shortnames"
+    hostnames="$hostnames $shortnames $aliasname"
 
     for name in ${hostnames}; do
         if [ "$name" == "$nodename" ]; then
