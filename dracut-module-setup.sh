@@ -754,6 +754,21 @@ get_pcs_fence_kdump_args() {
     fi
 }
 
+get_generic_fence_kdump_nodes() {
+    local filtered
+    local nodes
+
+    nodes=$(get_option_value "fence_kdump_nodes")
+    for node in ${nodes}; do
+        # Skip its own node name
+        if is_localhost $node; then
+            continue
+        fi
+        filtered="$filtered $node"
+    done
+    echo $filtered
+}
+
 # setup fence_kdump in cluster
 # setup proper network and install needed files
 kdump_configure_fence_kdump () {
@@ -762,7 +777,7 @@ kdump_configure_fence_kdump () {
     local args
 
     if is_generic_fence_kdump; then
-        nodes=$(get_option_value "fence_kdump_nodes")
+        nodes=$(get_generic_fence_kdump_nodes)
 
     elif is_pcs_fence_kdump; then
         nodes=$(get_pcs_fence_kdump_nodes)
