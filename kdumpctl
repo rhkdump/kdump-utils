@@ -738,24 +738,38 @@ check_and_wait_network_ready()
 	local start_time=$(date +%s)
 	local cur
 	local diff
+	local retval
+	local errmsg
 
 	while true; do
-		ssh -q -i $SSH_KEY_LOCATION -o BatchMode=yes $DUMP_TARGET mkdir -p $SAVE_PATH
+		errmsg=$(ssh -i $SSH_KEY_LOCATION -o BatchMode=yes $DUMP_TARGET mkdir -p $SAVE_PATH 2>&1)
+		retval=$?
+
 		# ssh exits with the exit status of the remote command or with 255 if an error occurred
-		if [ $? -eq 0 ]; then
+		if [ $retval -eq 0 ]; then
 			return 0
-		elif [ $? -ne 255 ]; then
+		elif [ $retval -ne 255 ]; then
+			echo "Could not create $DUMP_TARGET:$SAVE_PATH, you should check the privilege on server side"  >&2
 			return 1
 		fi
+
+		# if server removes the authorized_keys or, no /root/.ssh/kdump_id_rsa
+		echo $errmsg | grep -q "Permission denied\|No such file or directory"
+		if [ $? -eq 0 ]; then
+			echo "Could not create $DUMP_TARGET:$SAVE_PATH, you probably need to run \"kdumpctl propagate\""  >&2
+			return 1
+		fi
+
 		cur=$(date +%s)
-		diff=$( $cur - $start_time )
+		let "diff = $cur - $start_time"
 		# 60s time out
-		if [ $diff -gt 60 ]; then
+		if [ $diff -gt 180 ]; then
 			break;
 		fi
 		sleep 1
 	done
 
+	echo "Could not create $DUMP_TARGET:$SAVE_PATH, ipaddr is not ready yet. You should check network connection"  >&2
 	return 1
 }
 
@@ -763,7 +777,6 @@ check_ssh_target()
 {
 	check_and_wait_network_ready
 	if [ $? -ne 0 ]; then
-		echo "Could not create $DUMP_TARGET:$SAVE_PATH, you probably need to run \"kdumpctl propagate\""  >&2
 		return 1
 	fi
 	return 0
