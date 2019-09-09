@@ -1,0 +1,37 @@
+From b461971bfac0f193a0c274c3b657d158e07d4995 Mon Sep 17 00:00:00 2001
+From: Kazuhito Hagio <k-hagio@ab.jp.nec.com>
+Date: Thu, 29 Aug 2019 14:51:56 -0400
+Subject: [PATCH] Fix exclusion range in find_vmemmap_pages()
+
+In the function, since pfn ranges are literally start and end, not start
+and end+1, if the struct page of endpfn is at the last in a vmemmap page,
+the vmemmap page is dropped by the following code, and not excluded.
+
+    npfns_offset = endpfn - vmapp->rep_pfn_start;
+    vmemmap_offset = npfns_offset * size_table.page;
+    // round down to page boundary
+    vmemmap_offset -= (vmemmap_offset % pagesize);
+
+We can use (endpfn+1) here to fix.
+
+Signed-off-by: Kazuhito Hagio <k-hagio@ab.jp.nec.com>
+---
+ makedumpfile.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/makedumpfile-1.6.6/makedumpfile.c b/makedumpfile-1.6.6/makedumpfile.c
+index 88df788..37df77d 100644
+--- a/makedumpfile-1.6.6/makedumpfile.c
++++ b/makedumpfile-1.6.6/makedumpfile.c
+@@ -6315,7 +6315,7 @@ find_vmemmap_pages(unsigned long startpfn, unsigned long endpfn, unsigned long *
+ 			start_vmemmap_pfn = vmapp->vmap_pfn_start + vmemmap_pfns;
+ 			*vmappfn = start_vmemmap_pfn;
+ 
+-			npfns_offset = endpfn - vmapp->rep_pfn_start;
++			npfns_offset = (endpfn+1) - vmapp->rep_pfn_start;
+ 			vmemmap_offset = npfns_offset * size_table.page;
+ 			// round down to page boundary
+ 			vmemmap_offset -= (vmemmap_offset % pagesize);
+-- 
+2.20.1
+

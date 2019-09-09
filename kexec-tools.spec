@@ -78,6 +78,7 @@ Patch0: kexec-tools-2.0.20-fix-broken-multiboot2-buliding-for-i386.patch
 # Patches 101 through 200 are meant for x86_64 kexec-tools enablement
 #
 Patch101: kexec-tools-2.0.20-makedumpfile-x86_64-Fix-incorrect-exclusion-by-e-option.patch
+Patch102: kexec-tools-2.0.20-makedumpfile-Fix-exclusion-range-in-find_vmemmap_pages.patch
 
 #
 # Patches 301 through 400 are meant for ppc64 kexec-tools enablement
@@ -114,6 +115,7 @@ tar -z -x -v -f %{SOURCE19}
 %patch601 -p1
 %patch602 -p1
 %patch101 -p1
+%patch102 -p1
 
 %ifarch ppc
 %define archdef ARCH=ppc
