@@ -4,7 +4,7 @@
 
 Name: kexec-tools
 Version: 2.0.20
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -345,6 +345,18 @@ done
 %endif
 
 %changelog
+* Tue Sep 24 2019 Kairui Song <kasong@redhat.com> - 2.0.20-4
+- kdumpctl: echo msg when waiting for connection
+- makedumpfile: Fix inconsistent return value from find_vmemmap()
+- makedumpfile: Fix exclusion range in find_vmemmap_pages()
+- makedumpfile: x86_64: Fix incorrect exclusion by -e option with KASLR
+- kdumpctl: distinguish the failed reason of ssh
+- kexec-kdump-howto.txt: Add notes about device dump
+- Disable device dump by default
+- dracut-module-setup: fix bond ifcfg processing
+- dracut-module-setup: filter out localhost for generic_fence_kdump
+- dracut-module-setup: get localhost alias by manual
+
 * Mon Aug 12 2019 Kairui Song <kasong@redhat.com> - 2.0.20-3
 - kdumpctl: wait a while for network ready if dump target is ssh
 - makedumpfile: Increase SECTION_MAP_LAST_BIT to 4
