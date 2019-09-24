@@ -736,6 +736,7 @@ check_ssh_config()
 check_and_wait_network_ready()
 {
 	local start_time=$(date +%s)
+	local warn_once=1
 	local cur
 	local diff
 	local retval
@@ -759,6 +760,12 @@ check_and_wait_network_ready()
 			echo "Could not create $DUMP_TARGET:$SAVE_PATH, you probably need to run \"kdumpctl propagate\""  >&2
 			return 1
 		fi
+
+		if [ $warn_once -eq 1 ]; then
+			echo "Network dump target is not usable, waiting for it to be ready"
+			warn_once=0
+		fi
+		echo -n .
 
 		cur=$(date +%s)
 		let "diff = $cur - $start_time"
