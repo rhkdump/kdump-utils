@@ -67,6 +67,10 @@ BuildRequires: automake autoconf libtool
 Obsoletes: diskdumputils netdump kexec-tools-eppic
 %endif
 
+%ifnarch s390x
+Requires:       systemd-udev%{?_isa}
+%endif
+
 #START INSERT
 
 #
