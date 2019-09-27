@@ -96,16 +96,31 @@ get_kdump_confs()
 # dump_fs <mount point| device>
 dump_fs()
 {
-
+    local _do_umount=""
     local _dev=$(findmnt -k -f -n -r -o SOURCE $1)
     local _mp=$(findmnt -k -f -n -r -o TARGET $1)
     local _op=$(findmnt -k -f -n -r -o OPTIONS $1)
 
-    echo "kdump: dump target is $_dev"
-
     if [ -z "$_mp" ]; then
-        echo "kdump: error: Dump target $_dev is not mounted."
-        return 1
+        _dev=$(findmnt -s -f -n -r -o SOURCE $1)
+        _mp=$(findmnt -s -f -n -r -o TARGET $1)
+        _op=$(findmnt -s -f -n -r -o OPTIONS $1)
+
+        if [ -n "$_dev" ] && [ -n "$_mp" ]; then
+            echo "kdump: dump target $_dev is not mounted, trying to mount..."
+            mkdir -p $_mp
+            mount -o $_op $_dev $_mp
+
+            if [ $? -ne 0 ]; then
+                echo "kdump: mounting failed (mount point: $_mp, option: $_op)"
+                return 1
+            fi
+            _do_umount=1
+        else
+            echo "kdump: error: Dump target $_dev is not usable"
+        fi
+    else
+        echo "kdump: dump target is $_dev"
     fi
 
     # Remove -F in makedumpfile case. We don't want a flat format dump here.
@@ -129,6 +144,11 @@ dump_fs()
     sync
 
     echo "kdump: saving vmcore complete"
+
+    if [ $_do_umount ]; then
+        umount $_mp || echo "kdump: warn: failed to umount target"
+    fi
+
     # improper kernel cmdline can cause the failure of echo, we can ignore this kind of failure
     return 0
 }
