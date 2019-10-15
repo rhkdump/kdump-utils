@@ -4,7 +4,7 @@
 
 Name: kexec-tools
 Version: 2.0.20
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -349,6 +349,11 @@ done
 %endif
 
 %changelog
+* Tue Oct 15 2019 Kairui Song <kasong@redhat.com> - 2.0.20-5
+- Don't mount the dump target unless needed
+- kdump-lib: strip grub device from kdump_bootdir
+- Add systemd-udev require.
+
 * Tue Sep 24 2019 Kairui Song <kasong@redhat.com> - 2.0.20-4
 - kdumpctl: echo msg when waiting for connection
 - makedumpfile: Fix inconsistent return value from find_vmemmap()
