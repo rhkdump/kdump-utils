@@ -755,7 +755,7 @@ check_and_wait_network_ready()
 		fi
 
 		# if server removes the authorized_keys or, no /root/.ssh/kdump_id_rsa
-		echo $errmsg | grep -q "Permission denied\|No such file or directory"
+		echo $errmsg | grep -q "Permission denied\|No such file or directory\|Host key verification failed"
 		if [ $? -eq 0 ]; then
 			echo "Could not create $DUMP_TARGET:$SAVE_PATH, you probably need to run \"kdumpctl propagate\""  >&2
 			return 1
