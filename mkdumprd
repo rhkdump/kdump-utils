@@ -429,10 +429,10 @@ do
     ssh)
         if strstr "$config_val" "@";
         then
-            check_size ssh $config_val
             mkdir_save_path_ssh $config_val
+            check_size ssh $config_val
             add_dracut_module "ssh-client"
-		add_dracut_sshkey "$SSH_KEY_LOCATION"
+            add_dracut_sshkey "$SSH_KEY_LOCATION"
         else
             perror_exit "Bad ssh dump target $config_val"
         fi
