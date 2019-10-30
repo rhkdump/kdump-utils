@@ -1116,8 +1116,7 @@ reload()
 {
 	check_current_status
 	if [ $? -ne 0 ]; then
-		echo "Kdump is not running: [WARNING]"
-		return 0
+		echo "Kdump was not running: [WARNING]"
 	fi
 
 	if [ $DEFAULT_DUMP_MODE == "fadump" ]; then
