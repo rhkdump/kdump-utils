@@ -56,13 +56,13 @@ get_kdump_confs()
                         FAILURE_ACTION="kdump_emergency_shell"
                     ;;
                     reboot)
-                        FAILURE_ACTION="systemctl reboot -f"
+                        FAILURE_ACTION="systemctl reboot -f && exit"
                     ;;
                     halt)
-                        FAILURE_ACTION="halt"
+                        FAILURE_ACTION="halt && exit"
                     ;;
                     poweroff)
-                        FAILURE_ACTION="systemctl poweroff -f"
+                        FAILURE_ACTION="systemctl poweroff -f && exit"
                     ;;
                     dump_to_rootfs)
                         FAILURE_ACTION="dump_to_rootfs"
