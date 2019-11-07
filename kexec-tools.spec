@@ -138,7 +138,7 @@ autoreconf
     --host=powerpc64le-redhat-linux-gnu \
     --build=powerpc64le-redhat-linux-gnu \
 %endif
-    --sbindir=/sbin
+    --sbindir=/usr/sbin
 rm -f kexec-tools.spec.in
 # setup the docs
 cp %{SOURCE10} .
@@ -154,7 +154,7 @@ make -C makedumpfile-%{mkdf_ver} LDFLAGS="$LDFLAGS -I../eppic-%{eppic_ver}/libep
 %endif
 
 %install
-mkdir -p -m755 $RPM_BUILD_ROOT/sbin
+mkdir -p -m755 $RPM_BUILD_ROOT/usr/sbin
 mkdir -p -m755 $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
 mkdir -p -m755 $RPM_BUILD_ROOT%{_localstatedir}/crash
 mkdir -p -m755 $RPM_BUILD_ROOT%{_mandir}/man8/
@@ -168,8 +168,8 @@ mkdir -p -m755 $RPM_BUILD_ROOT%{_libdir}
 mkdir -p -m755 $RPM_BUILD_ROOT%{_prefix}/lib/kdump
 install -m 755 %{SOURCE1} $RPM_BUILD_ROOT%{_bindir}/kdumpctl
 
-install -m 755 build/sbin/kexec $RPM_BUILD_ROOT/sbin/kexec
-install -m 755 build/sbin/vmcore-dmesg $RPM_BUILD_ROOT/sbin/vmcore-dmesg
+install -m 755 build/sbin/kexec $RPM_BUILD_ROOT/usr/sbin/kexec
+install -m 755 build/sbin/vmcore-dmesg $RPM_BUILD_ROOT/usr/sbin/vmcore-dmesg
 install -m 644 build/man/man8/kexec.8  $RPM_BUILD_ROOT%{_mandir}/man8/
 install -m 644 build/man/man8/vmcore-dmesg.8  $RPM_BUILD_ROOT%{_mandir}/man8/
 
@@ -178,7 +178,7 @@ SYSCONFIG=$RPM_SOURCE_DIR/kdump.sysconfig.%{_target_cpu}
 [ -f $SYSCONFIG ] || SYSCONFIG=$RPM_SOURCE_DIR/kdump.sysconfig
 install -m 644 $SYSCONFIG $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/kdump
 
-install -m 755 %{SOURCE7} $RPM_BUILD_ROOT/sbin/mkdumprd
+install -m 755 %{SOURCE7} $RPM_BUILD_ROOT/usr/sbin/mkdumprd
 install -m 644 %{SOURCE8} $RPM_BUILD_ROOT%{_sysconfdir}/kdump.conf
 install -m 644 kexec/kexec.8 $RPM_BUILD_ROOT%{_mandir}/man8/kexec.8
 install -m 644 %{SOURCE12} $RPM_BUILD_ROOT%{_mandir}/man8/mkdumprd.8
@@ -201,7 +201,7 @@ install -m 644 %{SOURCE16} $RPM_BUILD_ROOT%{_unitdir}/kdump.service
 install -m 755 -D %{SOURCE22} $RPM_BUILD_ROOT%{_prefix}/lib/systemd/system-generators/kdump-dep-generator.sh
 
 %ifarch %{ix86} x86_64 ppc64 s390x ppc64le aarch64
-install -m 755 makedumpfile-%{mkdf_ver}/makedumpfile $RPM_BUILD_ROOT/sbin/makedumpfile
+install -m 755 makedumpfile-%{mkdf_ver}/makedumpfile $RPM_BUILD_ROOT/usr/sbin/makedumpfile
 install -m 644 makedumpfile-%{mkdf_ver}/makedumpfile.8.gz $RPM_BUILD_ROOT/%{_mandir}/man8/makedumpfile.8.gz
 install -m 644 makedumpfile-%{mkdf_ver}/makedumpfile.conf.5.gz $RPM_BUILD_ROOT/%{_mandir}/man5/makedumpfile.conf.5.gz
 install -m 644 makedumpfile-%{mkdf_ver}/makedumpfile.conf $RPM_BUILD_ROOT/%{_sysconfdir}/makedumpfile.conf.sample
@@ -306,12 +306,12 @@ do
 done
 
 %files
-/sbin/kexec
+/usr/sbin/kexec
 %ifarch %{ix86} x86_64 ppc64 s390x ppc64le aarch64
-/sbin/makedumpfile
+/usr/sbin/makedumpfile
 %endif
-/sbin/mkdumprd
-/sbin/vmcore-dmesg
+/usr/sbin/mkdumprd
+/usr/sbin/vmcore-dmesg
 %{_bindir}/*
 %{_datadir}/kdump
 %{_prefix}/lib/kdump
