@@ -21,7 +21,6 @@ Environment=DRACUT_SYSTEMD=1
 Environment=NEWROOT=/sysroot
 WorkingDirectory=/
 ExecStart=/bin/kdump-error-handler.sh
-ExecStopPost=-/usr/bin/systemctl --fail --no-block default
 Type=oneshot
 StandardInput=tty-force
 StandardOutput=inherit
