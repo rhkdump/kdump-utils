@@ -17,6 +17,10 @@ SAVE_PATH=$(awk '/^path/ {print $2}' $conf_file)
 [ -z "$SAVE_PATH" ] && SAVE_PATH=$DEFAULT_PATH
 # strip the duplicated "/"
 SAVE_PATH=$(echo $SAVE_PATH | tr -s /)
+OVERRIDE_RESETTABLE=0
+
+extra_modules=""
+dracut_args="--quiet --hostonly --hostonly-cmdline --hostonly-i18n --hostonly-mode strict -o \"plymouth dash resume ifcfg earlykdump\""
 
 is_wdt_addition_needed() {
 	local active
@@ -32,40 +36,8 @@ is_wdt_addition_needed() {
 	return 1
 }
 
-WDTCFG=""
-is_wdt_addition_needed
-[[ $? -eq 0 ]] && WDTCFG="-a watchdog"
-
-extra_modules=""
-dracut_args=("--quiet" "--hostonly" "--hostonly-cmdline" "--hostonly-i18n" "--hostonly-mode" "strict" "-o" "plymouth dash resume ifcfg earlykdump" $WDTCFG)
-OVERRIDE_RESETTABLE=0
-
 add_dracut_arg() {
-    local arg qarg is_quoted=0
-    while [ $# -gt 0 ];
-    do
-        arg="${1//\'/\"}"
-        #Handle quoted substring properly for passing it to dracut_args array.
-        if [ $is_quoted -eq 0 ]; then
-            if [[ "$arg" == "\"" ]] || [[ $arg != ${arg#\"} ]]; then
-                is_quoted=1
-                arg=${arg#\"}
-            fi
-        fi
-        if [ $is_quoted -eq 1 ]; then
-            qarg="$qarg $arg"
-            if [[ "$arg" == "\"" ]] || [[ $arg != ${arg%\"} ]]; then
-                is_quoted=0
-                arg=${qarg%\"}
-                qarg=""
-            else
-                shift
-                continue
-            fi
-        fi
-        dracut_args+=("$arg")
-        shift
-    done
+    dracut_args="$dracut_args $@"
 }
 
 add_dracut_module() {
@@ -390,6 +362,10 @@ if [ "$(uname -m)" = "s390x" ]; then
     add_dracut_module "znet"
 fi
 
+if is_wdt_addition_needed; then
+    add_dracut_arg "-a" "watchdog"
+fi
+
 while read config_opt config_val;
 do
     # remove inline comments after the end of a directive.
@@ -463,7 +439,8 @@ if ! is_fadump_capable; then
     add_dracut_arg "--no-hostonly-default-device"
 fi
 
-dracut "${dracut_args[@]}" "$@"
+echo "$dracut_args $@" | xargs dracut
+
 _rc=$?
 sync
 exit $_rc
