@@ -4,7 +4,7 @@
 
 Name: kexec-tools
 Version: 2.0.20
-Release: 5%{?dist}
+Release: 6%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -349,6 +349,18 @@ done
 %endif
 
 %changelog
+* Thu Nov 28 2019 Kairui Song <kasong@redhat.com> - 2.0.20-6
+- kdump-error-handler.service: Remove ExecStopPost
+- mkdumprd: simplify dracut args parsing
+- Always set vm.zone_reclaim_mode = 3 in kdump kernel
+- kdumpctl: make reload fail proof
+- spec: move binaries from /sbin to /usr/sbin
+- Don't execute final_action if failure_action terminates the system
+- module-setup.sh: Simplify the network setup code
+- mkdumprd: ensure ssh path exists before check size
+- module-setup: re-fix 99kdumpbase network dependency
+- kdumpctl: bail out immediately if host key verification failed
+
 * Tue Oct 15 2019 Kairui Song <kasong@redhat.com> - 2.0.20-5
 - Don't mount the dump target unless needed
 - kdump-lib: strip grub device from kdump_bootdir
