@@ -41,15 +41,15 @@ add_dracut_arg() {
 }
 
 add_dracut_module() {
-    add_dracut_arg "--add" "$1"
+    add_dracut_arg "--add" "\"$1\""
 }
 
 add_dracut_mount() {
-    add_dracut_arg "--mount" "$1"
+    add_dracut_arg "--mount" "\"$1\""
 }
 
 add_dracut_sshkey() {
-    add_dracut_arg "--sshkey" "$1"
+    add_dracut_arg "--sshkey" "\"$1\""
 }
 
 # caller should ensure $1 is valid and mounted in 1st kernel
