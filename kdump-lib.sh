@@ -28,6 +28,11 @@ perror() {
     echo $@ >&2
 }
 
+is_fs_type_nfs()
+{
+    [ "$1" = "nfs" ] || [ "$1" = "nfs4" ]
+}
+
 is_ssh_dump_target()
 {
     grep -q "^ssh[[:blank:]].*@" /etc/kdump.conf
@@ -35,20 +40,28 @@ is_ssh_dump_target()
 
 is_nfs_dump_target()
 {
-    grep -q "^nfs" /etc/kdump.conf || \
-        [[ $(get_dracut_args_fstype "$(grep "^dracut_args .*\-\-mount" /etc/kdump.conf)") = nfs* ]]
+    if grep -q "^nfs" /etc/kdump.conf; then
+        return 0;
+    fi
+
+    if is_fs_type_nfs $(get_dracut_args_fstype "$(grep "^dracut_args .*\-\-mount" /etc/kdump.conf)"); then
+        return 0
+    fi
+
+    local _save_path=$(get_save_path)
+    local _target=$(get_target_from_path $_save_path)
+    local _fstype=$(get_fs_type_from_target $_target)
+
+    if is_fs_type_nfs $_fstype; then
+        return 0
+    fi
+
+    return 1
 }
 
 is_raw_dump_target()
 {
     grep -q "^raw" /etc/kdump.conf
-}
-
-is_fs_type_nfs()
-{
-    local _fstype=$1
-    [ $_fstype = "nfs" ] || [ $_fstype = "nfs4" ] && return 0
-    return 1
 }
 
 is_fs_dump_target()
@@ -104,8 +117,7 @@ to_dev_name() {
 
 is_user_configured_dump_target()
 {
-    return $(is_mount_in_dracut_args || is_ssh_dump_target || is_nfs_dump_target || \
-             is_raw_dump_target || is_fs_dump_target)
+    grep -q "^ext[234]|^xfs|^btrfs|^minix|^raw|^nfs|^ssh" /etc/kdump.conf || is_mount_in_dracut_args;
 }
 
 get_user_configured_dump_disk()
