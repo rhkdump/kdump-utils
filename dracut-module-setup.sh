@@ -428,12 +428,7 @@ default_dump_target_install_conf()
 
     is_user_configured_dump_target && return
 
-    _save_path=$(get_option_value "path")
-    [ -z "$_save_path" ] && _save_path=$DEFAULT_PATH
-
-    # strip the duplicated "/"
-    _save_path=$(echo $_save_path | tr -s /)
-
+    _save_path=$(get_save_path)
     _mntpoint=$(get_mntpoint_from_path $_save_path)
     _target=$(get_target_from_path $_save_path)
 
@@ -472,13 +467,9 @@ default_dump_target_install_conf()
 adjust_bind_mount_path()
 {
     local _target=$1
-    local _save_path=$(get_option_value "path")
-    [ -z "$_save_path" ] && _save_path=$DEFAULT_PATH
-
-    # strip the duplicated "/"
-    _save_path=$(echo $_save_path | tr -s /)
-
+    local _save_path=$(get_save_path)
     local _absolute_save_path=$(get_mntpoint_from_target $_target)/$_save_path
+
     _absolute_save_path=$(echo "$_absolute_save_path" | tr -s /)
     local _mntpoint=$(get_mntpoint_from_path $_absolute_save_path)
 
