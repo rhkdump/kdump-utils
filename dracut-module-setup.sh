@@ -819,6 +819,8 @@ install() {
     inst "/bin/sync" "/bin/sync"
     inst "/bin/cut" "/bin/cut"
     inst "/bin/head" "/bin/head"
+    inst "/bin/awk" "/bin/awk"
+    inst "/bin/sed" "/bin/sed"
     inst "/sbin/makedumpfile" "/sbin/makedumpfile"
     inst "/sbin/vmcore-dmesg" "/sbin/vmcore-dmesg"
     inst "/lib/kdump/kdump-lib.sh" "/lib/kdump-lib.sh"
