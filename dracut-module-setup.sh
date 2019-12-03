@@ -839,6 +839,11 @@ install() {
     # at some point of time.
     kdump_check_iscsi_targets
 
+    # nfs/ssh dump will need to get host ip in second kernel and need to call 'ip' tool, see get_host_ip for more detail
+    if is_nfs_dump_target || is_ssh_dump_target; then
+        inst "ip"
+    fi
+
     # For the lvm type target under kdump, in /etc/lvm/lvm.conf we can
     # safely replace "reserved_memory=XXXX"(default value is 8192) with
     # "reserved_memory=1024" to lower memory pressure under kdump. We do
