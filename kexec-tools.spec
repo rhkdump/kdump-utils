@@ -101,6 +101,7 @@ Patch102: kexec-tools-2.0.20-makedumpfile-Fix-exclusion-range-in-find_vmemmap_pa
 Patch601: kexec-tools-2.0.20-makedumpfile-Do-not-proceed-when-get_num_dumpable_cyclic-fails.patch
 Patch602: kexec-tools-2.0.20-makedumpfile-Increase-SECTION_MAP_LAST_BIT-to-4.patch
 Patch603: kexec-tools-2.0.20-makedumpfile-Fix-inconsistent-return-value-from-find_vmemmap.patch
+Patch604: kexec-tools-2.0.20-makedumpfile-remove-lebl.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -122,6 +123,7 @@ tar -z -x -v -f %{SOURCE19}
 %patch101 -p1
 %patch102 -p1
 %patch603 -p1
+%patch604 -p1
 
 %ifarch ppc
 %define archdef ARCH=ppc
