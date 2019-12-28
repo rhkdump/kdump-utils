@@ -4,7 +4,7 @@
 
 Name: kexec-tools
 Version: 2.0.20
-Release: 6%{?dist}
+Release: 7%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -351,6 +351,10 @@ done
 %endif
 
 %changelog
+* Sun Dec 29 2019 Kairui Song <kasong@redhat.com> - 2.0.20-7
+- Fix building failure due to makedumpfile's compile flag
+- mkdumprd: Fix dracut args parsing
+
 * Thu Nov 28 2019 Kairui Song <kasong@redhat.com> - 2.0.20-6
 - kdump-error-handler.service: Remove ExecStopPost
 - mkdumprd: simplify dracut args parsing
