@@ -842,7 +842,9 @@ install() {
     kdump_check_iscsi_targets
 
     # nfs/ssh dump will need to get host ip in second kernel and need to call 'ip' tool, see get_host_ip for more detail
+    # also need to let initqueue wait for target to become ready
     if is_nfs_dump_target || is_ssh_dump_target; then
+        inst_hook initqueue/finished 01 $moddir/kdump-wait-for-target.sh
         inst "ip"
     fi
 

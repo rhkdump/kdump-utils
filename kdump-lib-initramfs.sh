@@ -201,3 +201,51 @@ do_final_action()
 {
     eval $FINAL_ACTION
 }
+
+get_host_ip()
+{
+    local _host
+    if is_nfs_dump_target || is_ssh_dump_target
+    then
+        kdumpnic=$(getarg kdumpnic=)
+        [ -z "$kdumpnic" ] && echo "kdump: failed to get kdumpnic!" && return 1
+        _host=`ip addr show dev $kdumpnic|grep '[ ]*inet'`
+        [ $? -ne 0 ] && echo "kdump: wrong kdumpnic: $kdumpnic" && return 1
+        _host=`echo $_host | head -n 1 | cut -d' ' -f2`
+        _host="${_host%%/*}"
+        [ -z "$_host" ] && echo "kdump: wrong kdumpnic: $kdumpnic" && return 1
+        HOST_IP=$_host
+    fi
+    return 0
+}
+
+read_kdump_conf()
+{
+    if [ ! -f "$KDUMP_CONF" ]; then
+        echo "kdump: $KDUMP_CONF not found"
+        return
+    fi
+
+    get_kdump_confs
+
+    # rescan for add code for dump target
+    while read config_opt config_val;
+    do
+        # remove inline comments after the end of a directive.
+        case "$config_opt" in
+        dracut_args)
+            config_val=$(get_dracut_args_target "$config_val")
+            [ -n "$config_val" ] && add_dump_code "dump_fs $config_val"
+            ;;
+        ext[234]|xfs|btrfs|minix|nfs)
+            add_dump_code "dump_fs $config_val"
+            ;;
+        raw)
+            add_dump_code "dump_raw $config_val"
+            ;;
+        ssh)
+            add_dump_code "dump_ssh $SSH_KEY_LOCATION $config_val"
+            ;;
+        esac
+    done <<< "$(read_strip_comments $KDUMP_CONF)"
+}
