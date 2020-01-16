@@ -307,10 +307,10 @@ kdump_setup_vlan() {
         exit 1
     elif kdump_is_bond "$_phydev"; then
         kdump_setup_bond "$_phydev"
-        echo " vlan=$_netdev:$_phydev" > ${initdir}/etc/cmdline.d/43vlan.conf
+        echo " vlan=$(kdump_setup_ifname $_netdev):$_phydev" > ${initdir}/etc/cmdline.d/43vlan.conf
     else
         _kdumpdev="$(kdump_setup_ifname $_phydev)"
-        echo " vlan=$_netdev:$_kdumpdev ifname=$_kdumpdev:$_netmac" > ${initdir}/etc/cmdline.d/43vlan.conf
+        echo " vlan=$(kdump_setup_ifname $_netdev):$_kdumpdev ifname=$_kdumpdev:$_netmac" > ${initdir}/etc/cmdline.d/43vlan.conf
     fi
 }
 
