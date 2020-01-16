@@ -4,6 +4,7 @@ KEXEC=/sbin/kexec
 KDUMP_KERNELVER=""
 KDUMP_COMMANDLINE=""
 KEXEC_ARGS=""
+KDUMP_FILE_LOAD=""
 KDUMP_CONFIG_FILE="/etc/kdump.conf"
 MKDUMPRD="/sbin/mkdumprd -f"
 DRACUT_MODULES_FILE="/usr/lib/dracut/modules.txt"
@@ -678,11 +679,8 @@ load_kdump()
 	KEXEC_ARGS=$(prepare_kexec_args "${KEXEC_ARGS}")
 	KDUMP_COMMANDLINE=$(prepare_cmdline "${KDUMP_COMMANDLINE}" "${KDUMP_COMMANDLINE_REMOVE}" "${KDUMP_COMMANDLINE_APPEND}")
 
-	# For secureboot enabled machines, use new kexec file based syscall.
-	# Old syscall will always fail as it does not have capability to
-	# to kernel signature verification.
-	if is_secure_boot_enforced; then
-		echo "Secure Boot is enabled. Using kexec file based syscall."
+	if [ "$KDUMP_FILE_LOAD" == "on" ]; then
+		echo "Using kexec file based syscall."
 		KEXEC_ARGS="$KEXEC_ARGS -s"
 	fi
 
@@ -694,6 +692,9 @@ load_kdump()
 		return 0
 	else
 		echo "kexec: failed to load kdump kernel" >&2
+		if [ "$KDUMP_FILE_LOAD" == "on" ]; then
+			echo "kexec_file_load() failed, please try kexec_load()" >&2
+		fi
 		return 1
 	fi
 }
@@ -1162,7 +1163,7 @@ stop_fadump()
 
 stop_kdump()
 {
-	if is_secure_boot_enforced; then
+	if [ "$KDUMP_FILE_LOAD" == "on" ]; then
 		$KEXEC -s -p -u
 	else
 		$KEXEC -p -u

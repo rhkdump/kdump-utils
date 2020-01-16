@@ -2,6 +2,7 @@
 
 KEXEC=/sbin/kexec
 standard_kexec_args="-p"
+KDUMP_FILE_LOAD=""
 
 EARLY_KDUMP_INITRD=""
 EARLY_KDUMP_KERNEL=""
@@ -43,8 +44,8 @@ early_kdump_load()
 
     EARLY_KEXEC_ARGS=$(prepare_kexec_args "${KEXEC_ARGS}")
 
-    if is_secure_boot_enforced; then
-        echo "Secure Boot is enabled. Using kexec file based syscall."
+    if [ "$KDUMP_FILE_LOAD" == "on" ]; then
+        echo "Using kexec file based syscall."
         EARLY_KEXEC_ARGS="$EARLY_KEXEC_ARGS -s"
     fi
 
