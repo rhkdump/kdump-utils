@@ -1,8 +1,8 @@
 #!/bin/sh
 
 # continue here only if we have to save dump.
-if [ -f /etc/fadump.initramfs ] && [ ! -f /proc/device-tree/rtas/ibm,kernel-dump ]; then
-	exit 0
+if [ -f /etc/fadump.initramfs ] && [ ! -f /proc/device-tree/rtas/ibm,kernel-dump ] && [ ! -f /proc/device-tree/ibm,opal/dump/mpipl-boot ]; then
+    exit 0
 fi
 
 exec &> /dev/console
@@ -81,6 +81,7 @@ dump_ssh()
     ssh -q $_opt $_host mkdir -p $_dir || return 1
 
     save_vmcore_dmesg_ssh ${DMESG_COLLECTOR} ${_dir} "${_opt}" $_host
+    save_opalcore_ssh ${_dir} "${_opt}" $_host
 
     echo "kdump: saving vmcore"
 
@@ -93,6 +94,32 @@ dump_ssh()
     fi
 
     echo "kdump: saving vmcore complete"
+    return 0
+}
+
+save_opalcore_ssh() {
+    local _path=$1
+    local _opts="$2"
+    local _location=$3
+
+    if [ ! -f $OPALCORE ]; then
+        # Check if we are on an old kernel that uses a different path
+        if [ -f /sys/firmware/opal/core ]; then
+            OPALCORE="/sys/firmware/opal/core"
+        else
+            return 0
+        fi
+    fi
+
+    echo "kdump: saving opalcore"
+    scp $_opts $OPALCORE $_location:$_path/opalcore-incomplete
+    if [ $? -ne 0 ]; then
+        echo "kdump: saving opalcore failed"
+       return 1
+    fi
+
+    ssh $_opts $_location mv $_path/opalcore-incomplete $_path/opalcore
+    echo "kdump: saving opalcore complete"
     return 0
 }
 

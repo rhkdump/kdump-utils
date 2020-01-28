@@ -18,6 +18,7 @@ KDUMP_CONF="/etc/kdump.conf"
 KDUMP_PRE=""
 KDUMP_POST=""
 NEWROOT="/sysroot"
+OPALCORE="/sys/firmware/opal/mpipl/core"
 
 get_kdump_confs()
 {
@@ -137,6 +138,7 @@ dump_fs()
     mkdir -p $_mp/$KDUMP_PATH/$HOST_IP-$DATEDIR || return 1
 
     save_vmcore_dmesg_fs ${DMESG_COLLECTOR} "$_mp/$KDUMP_PATH/$HOST_IP-$DATEDIR/"
+    save_opalcore_fs "$_mp/$KDUMP_PATH/$HOST_IP-$DATEDIR/"
 
     echo "kdump: saving vmcore"
     $CORE_COLLECTOR /proc/vmcore $_mp/$KDUMP_PATH/$HOST_IP-$DATEDIR/vmcore-incomplete || return 1
@@ -171,6 +173,30 @@ save_vmcore_dmesg_fs() {
     else
         echo "kdump: saving vmcore-dmesg.txt failed"
     fi
+}
+
+save_opalcore_fs() {
+    local _path=$1
+
+    if [ ! -f $OPALCORE ]; then
+        # Check if we are on an old kernel that uses a different path
+        if [ -f /sys/firmware/opal/core ]; then
+            OPALCORE="/sys/firmware/opal/core"
+        else
+            return 0
+        fi
+    fi
+
+    echo "kdump: saving opalcore"
+    cp $OPALCORE ${_path}/opalcore
+    if [ $? -ne 0 ]; then
+        echo "kdump: saving opalcore failed"
+        return 1
+    fi
+
+    sync
+    echo "kdump: saving opalcore complete"
+    return 0
 }
 
 dump_to_rootfs()

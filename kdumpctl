@@ -250,6 +250,9 @@ check_config()
 				echo "Invalid kdump config value for option $config_opt."
 				return 1;
 			}
+			if [ -d "/proc/device-tree/ibm,opal/dump" ] && [ "$config_opt" == "raw" ]; then
+				echo "WARNING: Won't capture opalcore when 'raw' dump target is used."
+			fi
 			;;
 		net|options|link_delay|disk_timeout|debug_mem_level|blacklist)
 			echo "Deprecated kdump config option: $config_opt. Refer to kdump.conf manpage for alternatives."
