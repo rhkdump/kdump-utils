@@ -97,6 +97,9 @@ Patch0: kexec-tools-2.0.20-fix-broken-multiboot2-buliding-for-i386.patch
 #
 # Patches 601 onward are generic patches
 #
+Patch601: ./kexec-tools-2.0.20-eppic-Remove-duplicated-variable-declaration.patch
+Patch602: ./kexec-tools-2.0.20-makedumpfile-Remove-duplicated-variable-declarations.patch
+Patch603: ./kexec-tools-2.0.20-Remove-duplicated-variable-declarations.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -113,6 +116,10 @@ tar -z -x -v -f %{SOURCE9}
 tar -z -x -v -f %{SOURCE19}
 
 %patch0 -p1
+
+%patch601 -p1
+%patch602 -p1
+%patch603 -p1
 
 %ifarch ppc
 %define archdef ARCH=ppc
