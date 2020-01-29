@@ -4,7 +4,7 @@
 
 Name: kexec-tools
 Version: 2.0.20
-Release: 8%{?dist}
+Release: 9%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -348,6 +348,9 @@ done
 %endif
 
 %changelog
+* Wed Jan 29 2020 Kairui Song <kasong@redhat.com> - 2.0.20-9
+- Fix building failure
+
 * Wed Jan 29 2020 Kairui Song <kasong@redhat.com> - 2.0.20-8
 - Update makedumpfile to 1.6.7
 - Add a hook to wait for kdump target in initqueue
