@@ -58,7 +58,7 @@ on the command prompt:
 
     # journalctl -x|grep early-kdump
 
-Then, you will see some useful logs, for exapmle:
+Then, you will see some useful logs, for example:
 
 1. if early kdump is successful.
 Mar 09 09:57:56 localhost.localdomain dracut-cmdline[190]: early-kdump is enabled.
