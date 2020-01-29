@@ -4,7 +4,7 @@
 
 Name: kexec-tools
 Version: 2.0.20
-Release: 7%{?dist}
+Release: 8%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -341,6 +341,15 @@ done
 %endif
 
 %changelog
+* Wed Jan 29 2020 Kairui Song <kasong@redhat.com> - 2.0.20-8
+- Update makedumpfile to 1.6.7
+- Add a hook to wait for kdump target in initqueue
+- Always install sed and awk
+- Fix potential ssh/nfs kdump failure of missing "ip" command
+- kdump-lib.sh: Fix is_nfs_dump_target
+- Always use get_save_path to get the 'path' option
+- kdump-lib: Don't abuse echo, and clean up
+
 * Sun Dec 29 2019 Kairui Song <kasong@redhat.com> - 2.0.20-7
 - Fix building failure due to makedumpfile's compile flag
 - mkdumprd: Fix dracut args parsing
