@@ -1,6 +1,6 @@
 %global eppic_ver d84c3541035d95077aa8571f5d5c3e07c6ef510b
 %global eppic_shortver %(c=%{eppic_ver}; echo ${c:0:7})
-%global mkdf_ver 1.6.6
+%global mkdf_ver 1.6.7
 
 Name: kexec-tools
 Version: 2.0.20
@@ -82,8 +82,6 @@ Patch0: kexec-tools-2.0.20-fix-broken-multiboot2-buliding-for-i386.patch
 #
 # Patches 101 through 200 are meant for x86_64 kexec-tools enablement
 #
-Patch101: kexec-tools-2.0.20-makedumpfile-x86_64-Fix-incorrect-exclusion-by-e-option.patch
-Patch102: kexec-tools-2.0.20-makedumpfile-Fix-exclusion-range-in-find_vmemmap_pages.patch
 
 #
 # Patches 301 through 400 are meant for ppc64 kexec-tools enablement
@@ -99,10 +97,6 @@ Patch102: kexec-tools-2.0.20-makedumpfile-Fix-exclusion-range-in-find_vmemmap_pa
 #
 # Patches 601 onward are generic patches
 #
-Patch601: kexec-tools-2.0.20-makedumpfile-Do-not-proceed-when-get_num_dumpable_cyclic-fails.patch
-Patch602: kexec-tools-2.0.20-makedumpfile-Increase-SECTION_MAP_LAST_BIT-to-4.patch
-Patch603: kexec-tools-2.0.20-makedumpfile-Fix-inconsistent-return-value-from-find_vmemmap.patch
-Patch604: kexec-tools-2.0.20-makedumpfile-remove-lebl.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -119,12 +113,6 @@ tar -z -x -v -f %{SOURCE9}
 tar -z -x -v -f %{SOURCE19}
 
 %patch0 -p1
-%patch601 -p1
-%patch602 -p1
-%patch101 -p1
-%patch102 -p1
-%patch603 -p1
-%patch604 -p1
 
 %ifarch ppc
 %define archdef ARCH=ppc
