@@ -34,14 +34,16 @@ You can rebuild the initramfs with earlykdump support with below steps:
     For the failure_action, you can choose anything other than "reboot".
 
 2. rebuild system initramfs with earlykdump support.
-    # dracut --add earlykdump
+    # dracut --force --add earlykdump
+
+    NOTE: Recommend to backup the original system initramfs before performing
+    this step to put it back if something happens during boot-up.
 
 3. add rd.earlykdump in grub kernel command line.
 
 Note:
 [1]. Early kdump initramfs size will be large because it includes vmlinuz and
-kdump initramfs. And for step 2 if you are sure to overwrite system initramfs
-you can backup the original initramfs and use "--force" option.
+kdump initramfs.
 
 [2]. Early kdump inherits the settings of normal kdump, so any changes that
 caused normal kdump rebuilding also require rebuilding the system initramfs
