@@ -4,7 +4,7 @@
 
 Name: kexec-tools
 Version: 2.0.20
-Release: 9%{?dist}
+Release: 10%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -348,6 +348,13 @@ done
 %endif
 
 %changelog
+* Thu Feb 13 2020 Kairui Song <kasong@redhat.com> - 2.0.20-10
+- Add --force option to step 2 in early-kdump-howto.txt
+- Fix typo in early-kdump-howto.txt
+- kexec-tools/module-setup: Ensure eth devices get IP address for VLAN
+- powerpc: enable the scripts to capture dump on POWERNV platform
+- kdump-lib: switch to the kexec_file_load() syscall on x86_64 by default
+
 * Wed Jan 29 2020 Kairui Song <kasong@redhat.com> - 2.0.20-9
 - Fix building failure
 
