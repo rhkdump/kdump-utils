@@ -117,7 +117,7 @@ to_dev_name() {
 
 is_user_configured_dump_target()
 {
-    grep -q "^ext[234]|^xfs|^btrfs|^minix|^raw|^nfs|^ssh" /etc/kdump.conf || is_mount_in_dracut_args;
+    grep -E -q "^ext[234]|^xfs|^btrfs|^minix|^raw|^nfs|^ssh" /etc/kdump.conf || is_mount_in_dracut_args;
 }
 
 get_user_configured_dump_disk()
