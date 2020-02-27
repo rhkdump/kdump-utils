@@ -199,15 +199,27 @@ check_size() {
 
 # $1: core_collector config value
 verify_core_collector() {
-    if grep -q "^raw" $conf_file && [ "${1%% *}" != "makedumpfile" ]; then
-        echo "Warning: specifying a non-makedumpfile core collector, you will have to recover the vmcore manually."
-    fi
-    if is_ssh_dump_target || is_raw_dump_target; then
-        if [ "${1%% *}" = "makedumpfile" ]; then
-            ! strstr "$1" "-F" && {
-                perror_exit "The specified dump target needs makedumpfile \"-F\" option."
-            }
+    local _cmd="${1%% *}"
+    local _params="${1#* }"
+
+    if [ "$_cmd" != "makedumpfile" ]; then
+        if is_raw_dump_target; then
+            echo "Warning: specifying a non-makedumpfile core collector, you will have to recover the vmcore manually."
         fi
+        return
+    fi
+
+    if is_ssh_dump_target || is_raw_dump_target; then
+        if ! strstr "$_params" "-F"; then
+            perror_exit "The specified dump target needs makedumpfile \"-F\" option."
+        fi
+        _params="$_params vmcore"
+    else
+        _params="$_params vmcore dumpfile"
+    fi
+
+    if ! $_cmd --check-params $_params; then
+        perror_exit "makedumpfile parameter check failed."
     fi
 }
 
