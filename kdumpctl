@@ -896,15 +896,6 @@ save_raw()
 	return 0
 }
 
-is_dump_target_configured()
-{
-	local _target
-
-	_target=$(egrep "^ext[234]|^xfs|^btrfs|^minix|^raw|^ssh|^nfs" /etc/kdump.conf)
-
-	[ -n "$_target" ]
-}
-
 local_fs_dump_target()
 {
 	local _target
@@ -919,7 +910,11 @@ path_to_be_relabeled()
 {
 	local _path _target _mnt="/" _rmnt
 
-	if is_dump_target_configured; then
+	if is_user_configured_dump_target; then
+		if is_mount_in_dracut_args; then
+		    return;
+		fi
+
 		_target=$(local_fs_dump_target)
 		if [[ -n "$_target" ]]; then
 			_mnt=$(findmnt -k -f -n -r -o TARGET $_target)
@@ -931,9 +926,6 @@ path_to_be_relabeled()
 		fi
 	fi
 
-	if is_mount_in_dracut_args; then
-		return;
-	fi
 	_path=$(get_save_path)
 	# if $_path is masked by other mount, we will not relabel it.
 	_rmnt=$(df $_mnt/$_path 2>/dev/null | tail -1 | awk '{ print $NF }')
