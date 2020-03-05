@@ -51,21 +51,12 @@ add_dracut_sshkey() {
 
 # caller should ensure $1 is valid and mounted in 1st kernel
 to_mount() {
-    local _dev=$1 _source _target _fstype _options _mntopts _pdev
+    local _dev=$1 _source _new_mntpoint _fstype _options _mntopts _pdev
 
     _source=$(findmnt -k -f -n -r -o SOURCE $_dev)
-    _target=$(get_mntpoint_from_target $_dev)
-    # mount under /sysroot if dump to root disk or mount under
-    #/kdumproot/$_target in other cases in 2nd kernel. systemd
-    #will be in charge to umount it.
-
-    if [ "$_target" = "/" ];then
-        _target="/sysroot"
-    else
-        _target="/kdumproot/$_target"
-    fi
-
     _fstype=$(findmnt -k -f -n -r -o FSTYPE $_dev)
+    _new_mntpoint=$(get_kdump_mntpoint_from_target $_dev)
+
     [[ -e /etc/fstab ]] && _options=$(findmnt --fstab -f -n -r -o OPTIONS $_dev)
     if [ -z "$_options" ]; then
         _options=$(findmnt -k -f -n -r -o OPTIONS $_dev)
@@ -87,14 +78,13 @@ to_mount() {
     # mount it before kdump starts, this is an attempt to improve robustness
     _options="$_options,nofail,x-systemd.before=initrd-fs.target"
 
-    _mntopts="$_target $_fstype $_options"
-    #for non-nfs _dev converting to use udev persistent name
+    _mntopts="$_new_mntpoint $_fstype $_options"
+    # for non-nfs _dev converting to use udev persistent name
     if [ -b "$_source" ]; then
         _pdev="$(get_persistent_dev $_source)"
         if [ -z "$_pdev" ]; then
             return 1
         fi
-
     else
         _pdev=$_dev
     fi

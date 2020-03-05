@@ -258,6 +258,25 @@ get_mntpoint_from_target()
     findmnt -k -f -n -r -o TARGET --source $1
 }
 
+# Get the path where the target will be mounted in kdump kernel
+# $1: kdump target device
+get_kdump_mntpoint_from_target()
+{
+    local _mntpoint=$(get_mntpoint_from_target $1)
+
+    # mount under /sysroot if dump to root disk or mount under
+    # /kdumproot/$_mntpoint in other cases in 2nd kernel. systemd
+    # will be in charge to umount it.
+    if [ "$_mntpoint" = "/" ];then
+        _mntpoint="/sysroot"
+    else
+        _mntpoint="/kdumproot/$_mntpoint"
+    fi
+
+    # strip duplicated "/"
+    echo $_mntpoint | tr -s "/"
+}
+
 # get_option_value <option_name>
 # retrieves value of option defined in kdump.conf
 get_option_value() {

@@ -480,12 +480,7 @@ check_dump_fs_modified()
 		return 2
 	fi
 
-	if [[ "$_target" = "$(get_root_fs_device)" ]]; then
-		_new_mntpoint="/sysroot"
-	else
-		_new_mntpoint="/kdumproot/$(get_mntpoint_from_target $_target)"
-	fi
-
+	_new_mntpoint="$(get_kdump_mntpoint_from_target $_target)"
 	_dracut_args=$(lsinitrd $TARGET_INITRD -f usr/lib/dracut/build-parameter.txt)
 	if [[ -z "$_dracut_args" ]];then
 		echo "Warning: No dracut arguments found in initrd"
