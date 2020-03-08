@@ -138,11 +138,11 @@ get_root_fs_device()
 
 get_save_path()
 {
-    local _save_path=$(grep "^path" /etc/kdump.conf|awk '{print $2}')
+    local _save_path=$(awk '$1 == "path" {print $2}' /etc/kdump.conf)
     [ -z "$_save_path" ] && _save_path=$DEFAULT_PATH
 
     # strip the duplicated "/"
-    echo $(echo $_save_path | tr -s /)
+    echo $_save_path | tr -s /
 }
 
 get_block_dump_target()
