@@ -387,20 +387,13 @@ do
             perror_exit "Dump target $config_val is probably not mounted."
         fi
 
-        _absolute_save_path=$(make_absolute_save_path $config_val)
-        _mntpoint=$(get_mntpoint_from_path $_absolute_save_path)
-        if is_atomic && is_bind_mount $_mntpoint; then
-            SAVE_PATH=${_absolute_save_path##"$_mntpoint"}
-            # the real dump path in the 2nd kernel, if the mount point is bind mounted.
-            SAVE_PATH=$(get_bind_mount_directory $_mntpoint)/$SAVE_PATH
-        fi
-
+        # User configured target, use $SAVE_PATH as the dump path within the target
+        check_save_path_user_configured "$config_val" "$SAVE_PATH"
+        check_size fs "$config_val"
         add_mount "$config_val"
-        check_save_path_fs $_absolute_save_path
-        check_size fs $config_val
         ;;
     raw)
-        #checking raw disk writable
+        # checking raw disk writable
         dd if=$config_val count=1 of=/dev/null > /dev/null 2>&1 || {
             perror_exit "Bad raw disk $config_val"
         }
