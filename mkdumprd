@@ -130,7 +130,7 @@ get_ssh_size() {
 
 #mkdir if save path does not exist on ssh dump target
 #$1=ssh dump target
-#caller should ensure write permission on $DUMP_TARGET:$SAVE_PATH
+#caller should ensure write permission on $1:$SAVE_PATH
 #called from while loop and shouldn't read from stdin, so we're using "ssh -n"
 mkdir_save_path_ssh()
 {
@@ -139,14 +139,14 @@ mkdir_save_path_ssh()
     ssh -qn $_opt $1 mkdir -p $SAVE_PATH 2>&1 > /dev/null
     _ret=$?
     if [ $_ret -ne 0 ]; then
-        perror_exit "mkdir failed on $DUMP_TARGET:$SAVE_PATH"
+        perror_exit "mkdir failed on $1:$SAVE_PATH"
     fi
 
-    #check whether user has write permission on $SAVE_PATH/$DUMP_TARGET
+    #check whether user has write permission on $1:$SAVE_PATH
     _dir=$(ssh -qn $_opt $1 mktemp -dqp $SAVE_PATH 2>/dev/null)
     _ret=$?
     if [ $_ret -ne 0 ]; then
-        perror_exit "Could not create temporary directory on $DUMP_TARGET:$SAVE_PATH. Make sure user has write permission on destination"
+        perror_exit "Could not create temporary directory on $1:$SAVE_PATH. Make sure user has write permission on destination"
     fi
     ssh -qn $_opt $1 rmdir $_dir
 
