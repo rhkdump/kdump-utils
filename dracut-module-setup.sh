@@ -452,18 +452,6 @@ default_dump_target_install_conf()
     echo "path $_save_path" >> ${initdir}/tmp/$$-kdump.conf
 }
 
-adjust_bind_mount_path()
-{
-    local _save_path=$(get_save_path)
-    local _mntpoint=$(get_mntpoint_from_target $1)
-    local _absolute_save_path=$(get_bind_mount_source $_mntpoint$_save_path)
-
-    if [ $_absolute_save_path != $_save_path ]; then
-        sed -i "/^path/d" ${initdir}/tmp/$$-kdump.conf
-        echo "path $_absolute_save_path" >> ${initdir}/tmp/$$-kdump.conf
-    fi
-}
-
 #install kdump.conf and what user specifies in kdump.conf
 kdump_install_conf() {
     local _opt _val _pdev
@@ -480,7 +468,6 @@ kdump_install_conf() {
         ext[234]|xfs|btrfs|minix)
             _pdev=$(kdump_get_persistent_dev $_val)
             sed -i -e "s#^$_opt[[:space:]]\+$_val#$_opt $_pdev#" ${initdir}/tmp/$$-kdump.conf
-            adjust_bind_mount_path "$_val"
             ;;
         ssh|nfs)
             kdump_install_net "$_val"
