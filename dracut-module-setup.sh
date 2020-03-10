@@ -428,19 +428,9 @@ default_dump_target_install_conf()
 
     is_user_configured_dump_target && return
 
-    _save_path=$(get_save_path)
-    _mntpoint=$(get_mntpoint_from_path $_save_path)
+    _save_path=$(get_bind_mount_source $(get_save_path))
     _target=$(get_target_from_path $_save_path)
-
-    if is_atomic && is_bind_mount $_mntpoint; then
-        _save_path=${_save_path##"$_mntpoint"}
-        # the real dump path in the 2nd kernel, if the mount point is bind mounted.
-        _save_path=$(get_bind_mount_directory $_mntpoint)/$_save_path
-        _mntpoint=$(get_mntpoint_from_target $_target)
-
-        # the absolute path in the 1st kernel
-        _save_path=$_mntpoint/$_save_path
-    fi
+    _mntpoint=$(get_mntpoint_from_target $_target)
 
     _fstype=$(get_fs_type_from_target $_target)
     if is_fs_type_nfs $_fstype; then
@@ -452,8 +442,6 @@ default_dump_target_install_conf()
 
     echo "$_fstype $_target" >> ${initdir}/tmp/$$-kdump.conf
 
-    # strip the duplicated "/"
-    _save_path=$(echo $_save_path | tr -s /)
     # don't touch the path under root mount
     if [ "$_mntpoint" != "/" ]; then
         _save_path=${_save_path##"$_mntpoint"}
@@ -466,21 +454,13 @@ default_dump_target_install_conf()
 
 adjust_bind_mount_path()
 {
-    local _target=$1
     local _save_path=$(get_save_path)
-    local _absolute_save_path=$(get_mntpoint_from_target $_target)/$_save_path
+    local _mntpoint=$(get_mntpoint_from_target $1)
+    local _absolute_save_path=$(get_bind_mount_source $_mntpoint$_save_path)
 
-    _absolute_save_path=$(echo "$_absolute_save_path" | tr -s /)
-    local _mntpoint=$(get_mntpoint_from_path $_absolute_save_path)
-
-    if is_bind_mount $_mntpoint; then
-        _save_path=${_absolute_save_path##"$_mntpoint"}
-        # the real dump path in the 2nd kernel, if the mount point is bind mounted.
-        _save_path=$(get_bind_mount_directory $_mntpoint)/$_save_path
-
-        #erase the old path line, then insert the parsed path
+    if [ $_absolute_save_path != $_save_path ]; then
         sed -i "/^path/d" ${initdir}/tmp/$$-kdump.conf
-        echo "path $_save_path" >> ${initdir}/tmp/$$-kdump.conf
+        echo "path $_absolute_save_path" >> ${initdir}/tmp/$$-kdump.conf
     fi
 }
 
@@ -500,9 +480,7 @@ kdump_install_conf() {
         ext[234]|xfs|btrfs|minix)
             _pdev=$(kdump_get_persistent_dev $_val)
             sed -i -e "s#^$_opt[[:space:]]\+$_val#$_opt $_pdev#" ${initdir}/tmp/$$-kdump.conf
-            if is_atomic; then
-                adjust_bind_mount_path "$_val"
-            fi
+            adjust_bind_mount_path "$_val"
             ;;
         ssh|nfs)
             kdump_install_net "$_val"
