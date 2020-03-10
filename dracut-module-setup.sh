@@ -487,7 +487,7 @@ adjust_bind_mount_path()
 #install kdump.conf and what user specifies in kdump.conf
 kdump_install_conf() {
     local _opt _val _pdev
-    sed -ne '/^#/!p' /etc/kdump.conf > ${initdir}/tmp/$$-kdump.conf
+    (read_strip_comments /etc/kdump.conf) > ${initdir}/tmp/$$-kdump.conf
 
     while read _opt _val;
     do
