@@ -475,7 +475,7 @@ check_dump_fs_modified()
 		fi
 	fi
 
-	if ! findmnt $_target >/dev/null; then
+	if ! is_mounted $_target; then
 		echo "Dump target $_target is probably not mounted."
 		return 2
 	fi

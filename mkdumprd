@@ -366,7 +366,7 @@ do
         extra_modules="$extra_modules $config_val"
         ;;
     ext[234]|xfs|btrfs|minix|nfs)
-        if ! findmnt $config_val >/dev/null; then
+        if ! is_mounted $config_val; then
             perror_exit "Dump target $config_val is probably not mounted."
         fi
 

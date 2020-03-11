@@ -101,7 +101,7 @@ dump_fs()
     local _mp=$(findmnt -k -f -n -r -o TARGET $1)
     local _op=$(findmnt -k -f -n -r -o OPTIONS $1)
 
-    if [ -z "$_mp" ]; then
+    if ! is_mounted "$_mp"; then
         _dev=$(findmnt -s -f -n -r -o SOURCE $1)
         _mp=$(findmnt -s -f -n -r -o TARGET $1)
         _op=$(findmnt -s -f -n -r -o OPTIONS $1)

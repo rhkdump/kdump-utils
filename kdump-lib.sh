@@ -246,6 +246,11 @@ get_target_from_path()
     echo $_target
 }
 
+is_mounted()
+{
+    findmnt -k -n $1 &>/dev/null
+}
+
 get_fs_type_from_target()
 {
     findmnt -k -f -n -r -o FSTYPE $1
