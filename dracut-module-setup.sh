@@ -188,7 +188,7 @@ kdump_handle_mulitpath_route() {
             _rule="" _max_weight=0 _weight=0
         fi
     done >> ${initdir}/etc/cmdline.d/45route-static.conf\
-        < <(/sbin/ip $_ipv6_flag route show)
+        <<< "$(/sbin/ip $_ipv6_flag route show)"
 
     [[ -n $_rule ]] && echo $_rule >> ${initdir}/etc/cmdline.d/45route-static.conf
 }
