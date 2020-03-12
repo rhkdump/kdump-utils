@@ -125,7 +125,9 @@ dump_fs()
     # Remove -F in makedumpfile case. We don't want a flat format dump here.
     [[ $CORE_COLLECTOR = *makedumpfile* ]] && CORE_COLLECTOR=`echo $CORE_COLLECTOR | sed -e "s/-F//g"`
 
-    echo "kdump: saving to $_mp/$KDUMP_PATH/$HOST_IP-$DATEDIR/"
+    local _dump_path=$(echo "$_mp/$KDUMP_PATH/$HOST_IP-$DATEDIR/" | tr -s /)
+
+    echo "kdump: saving to $_dump_path"
 
     # Only remount to read-write mode if the dump target is mounted read-only.
     if [[ "$_op" = "ro"* ]]; then
@@ -133,14 +135,14 @@ dump_fs()
        mount -o remount,rw $_dev $_mp || return 1
     fi
 
-    mkdir -p $_mp/$KDUMP_PATH/$HOST_IP-$DATEDIR || return 1
+    mkdir -p $_dump_path || return 1
 
-    save_vmcore_dmesg_fs ${DMESG_COLLECTOR} "$_mp/$KDUMP_PATH/$HOST_IP-$DATEDIR/"
-    save_opalcore_fs "$_mp/$KDUMP_PATH/$HOST_IP-$DATEDIR/"
+    save_vmcore_dmesg_fs ${DMESG_COLLECTOR} "$_dump_path"
+    save_opalcore_fs "$_dump_path"
 
     echo "kdump: saving vmcore"
-    $CORE_COLLECTOR /proc/vmcore $_mp/$KDUMP_PATH/$HOST_IP-$DATEDIR/vmcore-incomplete || return 1
-    mv $_mp/$KDUMP_PATH/$HOST_IP-$DATEDIR/vmcore-incomplete $_mp/$KDUMP_PATH/$HOST_IP-$DATEDIR/vmcore
+    $CORE_COLLECTOR /proc/vmcore $_dump_path/vmcore-incomplete || return 1
+    mv $_dump_path/vmcore-incomplete $_dump_path/vmcore
     sync
 
     echo "kdump: saving vmcore complete"
