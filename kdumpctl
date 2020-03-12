@@ -907,8 +907,8 @@ path_to_be_relabeled()
 
 		_target=$(local_fs_dump_target)
 		if [[ -n "$_target" ]]; then
-			_mnt=$(findmnt -k -f -n -r -o TARGET $_target)
-			if [ -z "$_mnt" ]; then
+			_mnt=$(get_mntpoint_from_target $_target)
+			if ! is_mounted "$_mnt"; then
 				return
 			fi
 		else

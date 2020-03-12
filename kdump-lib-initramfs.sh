@@ -94,19 +94,16 @@ get_kdump_confs()
     fi
 }
 
-# dump_fs <mount point| device>
+# dump_fs <mount point>
 dump_fs()
 {
-    local _dev=$(findmnt -k -f -n -r -o SOURCE $1)
-    local _mp=$(findmnt -k -f -n -r -o TARGET $1)
-    local _op=$(findmnt -k -f -n -r -o OPTIONS $1)
+    local _mp=$1
+    local _dev=$(get_mount_info SOURCE target $_mp -f)
+    local _op=$(get_mount_info OPTIONS target $_mp -f)
 
-    if ! is_mounted "$_mp"; then
-        _dev=$(findmnt -s -f -n -r -o SOURCE $1)
-        _mp=$(findmnt -s -f -n -r -o TARGET $1)
-        _op=$(findmnt -s -f -n -r -o OPTIONS $1)
-
-        if [ -n "$_dev" ] && [ -n "$_mp" ]; then
+    # If dump path have a corresponding device entry but not mounted, mount it.
+    if [ -n "$_dev" ]; then
+        if ! is_mounted "$_mp"; then
             echo "kdump: dump target $_dev is not mounted, trying to mount..."
             mkdir -p $_mp
             mount -o $_op $_dev $_mp
@@ -115,11 +112,10 @@ dump_fs()
                 echo "kdump: mounting failed (mount point: $_mp, option: $_op)"
                 return 1
             fi
-        else
-            echo "kdump: error: Dump target $_dev is not usable"
         fi
     else
-        echo "kdump: dump target is $_dev"
+        echo "kdump: failed to dump to \"$_mp\", it's not a mount point!"
+        return 1
     fi
 
     # Remove -F in makedumpfile case. We don't want a flat format dump here.
@@ -260,6 +256,7 @@ read_kdump_conf()
             [ -n "$config_val" ] && add_dump_code "dump_fs $config_val"
             ;;
         ext[234]|xfs|btrfs|minix|nfs)
+            config_val=$(get_mntpoint_from_target "$config_val")
             add_dump_code "dump_fs $config_val"
             ;;
         raw)

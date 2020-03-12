@@ -51,21 +51,18 @@ add_dracut_sshkey() {
 
 # caller should ensure $1 is valid and mounted in 1st kernel
 to_mount() {
-    local _dev=$1 _source _new_mntpoint _fstype _options _mntopts _pdev
+    local _target=$1 _new_mntpoint _fstype _options _mntopts _pdev
 
-    _source=$(findmnt -k -f -n -r -o SOURCE $_dev)
-    _fstype=$(findmnt -k -f -n -r -o FSTYPE $_dev)
-    _new_mntpoint=$(get_kdump_mntpoint_from_target $_dev)
+    _fstype=$(get_fs_type_from_target $_target)
+    _options=$(get_mntopt_from_target $_target)
+    _new_mntpoint=$(get_kdump_mntpoint_from_target $_target)
 
-    [[ -e /etc/fstab ]] && _options=$(findmnt --fstab -f -n -r -o OPTIONS $_dev)
-    if [ -z "$_options" ]; then
-        _options=$(findmnt -k -f -n -r -o OPTIONS $_dev)
-        if [[ $_fstype == "nfs"* ]]; then
-            _options=$(echo $_options | sed 's/,addr=[^,]*//')
-            _options=$(echo $_options | sed 's/,proto=[^,]*//')
-            _options=$(echo $_options | sed 's/,clientaddr=[^,]*//')
-        fi
+    if [[ "$_fstype" == "nfs"* ]]; then
+        _options=$(echo $_options | sed 's/,addr=[^,]*//')
+        _options=$(echo $_options | sed 's/,proto=[^,]*//')
+        _options=$(echo $_options | sed 's/,clientaddr=[^,]*//')
     fi
+
     # mount fs target as rw in 2nd kernel
     _options=$(echo $_options | sed 's/\(^\|,\)ro\($\|,\)/\1rw\2/g')
     # with 'noauto' in fstab nfs and non-root disk mount will fail in 2nd
@@ -79,26 +76,17 @@ to_mount() {
     _options="$_options,nofail,x-systemd.before=initrd-fs.target"
 
     _mntopts="$_new_mntpoint $_fstype $_options"
-    # for non-nfs _dev converting to use udev persistent name
-    if [ -b "$_source" ]; then
-        _pdev="$(get_persistent_dev $_source)"
+    # for non-nfs _target converting to use udev persistent name
+    if [ -b "$_target" ]; then
+        _pdev="$(get_persistent_dev $_target)"
         if [ -z "$_pdev" ]; then
             return 1
         fi
     else
-        _pdev=$_dev
+        _pdev=$_target
     fi
 
     echo "$_pdev $_mntopts"
-}
-
-is_readonly_mount() {
-    local _mnt
-    _mnt=$(findmnt -k -f -n -r -o OPTIONS $1)
-
-    #fs/proc_namespace.c: show_mountinfo():
-    #seq_puts(m, mnt->mnt_flags & MNT_READONLY ? " ro" : " rw");
-    [[ "$_mnt" =~ ^ro ]]
 }
 
 #Function: get_ssh_size

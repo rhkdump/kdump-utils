@@ -270,7 +270,6 @@ get_mntopt_from_target()
 {
     get_mount_info OPTIONS source $1 -f
 }
-
 # Find the general mount point of a dump target, not the bind mount point
 get_mntpoint_from_target()
 {
