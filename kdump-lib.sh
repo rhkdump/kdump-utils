@@ -236,7 +236,7 @@ get_bind_mount_source()
     echo $_mntpoint$_path
 }
 
-# Return the real underlaying device of a path, ignore bind mounts
+# Return the current underlaying device of a path, ignore bind mounts
 get_target_from_path()
 {
     local _target
@@ -251,16 +251,31 @@ is_mounted()
     findmnt -k -n $1 &>/dev/null
 }
 
+get_mount_info()
+{
+    local _info_type=$1 _src_type=$2 _src=$3; shift 3
+    local _info=$(findmnt --real -k -n -r -o $_info_type --$_src_type $_src $@)
+
+    [ -z "$_info" ] && [ -e "/etc/fstab" ] && _info=$(findmnt --real -s -n -r -o $_info_type --$_src_type $_src $@)
+
+    echo $_info
+}
+
 get_fs_type_from_target()
 {
-    findmnt -k -f -n -r -o FSTYPE $1
+    get_mount_info FSTYPE source $1 -f
+}
+
+get_mntopt_from_target()
+{
+    get_mount_info OPTIONS source $1 -f
 }
 
 # Find the general mount point of a dump target, not the bind mount point
 get_mntpoint_from_target()
 {
     # Expcilitly specify --source to findmnt could ensure non-bind mount is returned
-    findmnt -k -f -n -r -o TARGET --source $1
+    get_mount_info TARGET source $1 -f
 }
 
 # Get the path where the target will be mounted in kdump kernel
