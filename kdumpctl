@@ -475,11 +475,6 @@ check_dump_fs_modified()
 		fi
 	fi
 
-	if ! is_mounted $_target; then
-		echo "Dump target $_target is probably not mounted."
-		return 2
-	fi
-
 	_new_mntpoint="$(get_kdump_mntpoint_from_target $_target)"
 	_dracut_args=$(lsinitrd $TARGET_INITRD -f usr/lib/dracut/build-parameter.txt)
 	if [[ -z "$_dracut_args" ]];then
