@@ -683,7 +683,8 @@ get_alias() {
     ips=$(hostname -I)
     for ip in $ips
     do
-            entries=$(grep $ip /etc/hosts | awk '{ $1=$2=""; print $0 }')
+            # in /etc/hosts, alias can come at the 2nd column
+            entries=$(grep $ip /etc/hosts | awk '{ $1=""; print $0 }')
             if [ $? -eq 0 ]; then
                     alias_set="$alias_set $entries"
             fi
