@@ -406,7 +406,7 @@ check_dump_fs_modified()
 	local _target _path _dracut_args
 	local _target_drivers _module_name
 
-	local _old_drivers="$(lsinitrd $TARGET_INITRD -f /usr/lib/dracut/loaded-kernel-modules.txt | tr '\n' ' ')"
+	local _old_drivers="$(lsinitrd $TARGET_INITRD -f /usr/lib/dracut/hostonly-kernel-modules.txt | tr '\n' ' ')"
 
 	# No need to check in case of mount target specified via "dracut_args".
 	if is_mount_in_dracut_args; then
