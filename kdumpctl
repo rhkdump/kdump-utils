@@ -404,7 +404,7 @@ check_dump_fs_modified()
 	local _old_dev _old_mntpoint _old_fstype
 	local _new_dev _new_mntpoint _new_fstype
 	local _target _path _dracut_args
-	local _target_drivers _module_name
+	local _target_drivers _module_name _module_filename
 
 	local _old_drivers="$(lsinitrd $TARGET_INITRD -f /usr/lib/dracut/hostonly-kernel-modules.txt | tr '\n' ' ')"
 
@@ -453,10 +453,10 @@ check_dump_fs_modified()
 
 	check_block_and_slaves_all _record_block_drivers "$(get_maj_min "$_target")"
 	for _driver in $_target_drivers; do
-		# Target is mounted already, if module is not included by current kernel,
-		# could be a deprecated/invalid driver name or a built-in module
+		# Skip deprecated/invalid driver name or built-in module
 		_module_name=$(modinfo --set-version "$kdump_kver" -F name $_driver 2>/dev/null)
-		if [ $? -ne 0 ] || [ -z "$_module_name" ]; then
+		_module_filename=$(modinfo --set-version "$kdump_kver" -n $_driver 2>/dev/null)
+		if [ $? -ne 0 ] || [ -z "$_module_name" ] || [[ "$_module_filename" = *"(builtin)"* ]]; then
 			continue
 		fi
 		if ! [[ " $_old_drivers " == *" $_module_name "* ]]; then
