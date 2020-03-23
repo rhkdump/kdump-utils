@@ -4,7 +4,7 @@
 
 Name: kexec-tools
 Version: 2.0.20
-Release: 10%{?dist}
+Release: 11%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -350,6 +350,18 @@ done
 %endif
 
 %changelog
+* Thu Mar 24 2020 Kairui Song <kasong@redhat.com> - 2.0.20-11
+- Fix a potential syntax error
+- Use read_strip_comments to filter the installed kdump.conf
+- kdumpctl: fix driver change detection on latest Fedora
+- kdumpctl: check hostonly-kernel-modules.txt for kernel module
+- dracut-module-setup.sh: Ensure initrd.target.wants dir exists
+- mkdumprd: Use DUMP_TARGET which printing error message during ssh
+- kdump-lib.sh: Fix is_user_configured_dump_target()
+- mkdumprd: Use makedumpfile --check-params option
+- makedumpfile: Introduce --check-params option
+- Improves the early-kdump-howto.txt document in several points:
+
 * Thu Feb 13 2020 Kairui Song <kasong@redhat.com> - 2.0.20-10
 - Add --force option to step 2 in early-kdump-howto.txt
 - Fix typo in early-kdump-howto.txt
