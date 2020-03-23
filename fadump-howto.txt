@@ -84,19 +84,25 @@ kexec-tools installed. If not, you install it via the following command:
 
     # yum install kexec-tools
 
-To be able to do much of anything interesting in the way of debug analysis,
-you'll also need to install the kernel-debuginfo package, of the same arch
-as your running kernel, and the crash utility:
+Make the kernel to be configured with FADump as the default boot entry, if
+it isn't already:
+
+   # grubby --set-default=/boot/vmlinuz-<kver>
+
+Boot into the kernel to be configured for FADump. To be able to do much of
+anything interesting in the way of debug analysis, you'll also need to install
+the kernel-debuginfo package, of the same arch as your running kernel, and the
+crash utility:
 
     # yum --enablerepo=\*debuginfo install kernel-debuginfo.$(uname -m) crash
 
 Next up, we need to modify some boot parameters to enable firmware assisted
 dump. With the help of grubby, it's very easy to append "fadump=on" to the end
-of your kernel boot parameters. Optionally, user can also append
-'fadump_reserve_mem=X' kernel cmdline to specify size of the memory to reserve
-for boot memory dump preservation.
+of your kernel boot parameters. To reserve the appropriate amount of memory
+for boot memory preservation, pass 'crashkernel=X' kernel cmdline parameter.
+For the recommended value of X, see 'FADump Memory Requirements' section.
 
-   # grubby --args="fadump=on" --update-kernel=/boot/vmlinuz-`uname -r`
+   # grubby --args="fadump=on crashkernel=6G" --update-kernel=/boot/vmlinuz-`uname -r`
 
 The term 'boot memory' means size of the low memory chunk that is required for
 a kernel to boot successfully when booted with restricted memory.  By default,
@@ -145,13 +151,64 @@ perform postmortem analysis:
 and so on...
 
 Saving vmcore-dmesg.txt
-----------------------
+-----------------------
 Kernel log bufferes are one of the most important information available
 in vmcore. Now before saving vmcore, kernel log bufferes are extracted
 from /proc/vmcore and saved into a file vmcore-dmesg.txt. After
 vmcore-dmesg.txt, vmcore is saved. Destination disk and directory for
 vmcore-dmesg.txt is same as vmcore. Note that kernel log buffers will
 not be available if dump target is raw device.
+
+FADump Memory Requirements:
+
+  System Memory          Recommended memory
+--------------------- ----------------------
+    4 GB - 16 GB     :        768 MB
+   16 GB - 64 GB     :       1024 MB
+   64 GB - 128 GB    :          2 GB
+  128 GB - 1 TB      :          4 GB
+    1 TB - 2 TB      :          6 GB
+    2 TB - 4 TB      :         12 GB
+    4 TB - 8 TB      :         20 GB
+    8 TB - 16 TB     :         36 GB
+   16 TB - 32 TB     :         64 GB
+   32 TB - 64 TB     :        128 GB
+   64 TB & above     :        180 GB
+
+Things to remember:
+
+1) The memory required to boot capture Kernel is a moving target that depends
+   on many factors like hardware attached to the system, kernel and modules in
+   use, packages installed and services enabled, there is no one-size-fits-all.
+   But the above recommendations are based on system memory. So, the above
+   recommendations for FADump come with a few assumptions, based on available
+   system memory, about the resources the system could have. So, please take
+   the recommendations with a pinch of salt and remember to try capturing dump
+   a few times to confirm that the system is configured successfully with dump
+   capturing support.
+
+2) Though the memory requirements for FADump seem high, this memory is not
+   completely set aside but made available for userspace applications to use,
+   through the CMA allocator.
+
+3) As the same initrd is used for booting production kernel as well as capture
+   kernel and with dump being captured in a restricted memory environment, few
+   optimizations (like not inclding network dracut module, disabling multipath
+   and such) are applied while building the initrd. In case, the production
+   environment needs these optimizations to be avoided, dracut_args option in
+   /etc/kdump.conf file could be leveraged. For example, if a user wishes for
+   network module to be included in the initrd, adding the below entry in
+   /etc/kdump.conf file and restarting kdump service would take care of it.
+
+   dracut_args --add "network"
+
+4) If FADump is configured to capture vmcore to a remote dump target using SSH
+   or NFS protocol, the network interface is renamed to kdump-<interface-name>
+   if <interface-name> is generic, for example, *eth#, or net#. This problem
+   occurs because the vmcore capture scripts in the initial RAM disk (initrd)
+   add the kdump- prefix to the network interface name to secure persistent
+   naming. As the same initrd is used for production kernel boot, the interface
+   name is changed for the production kernel too.
 
 Dump Triggering methods:
 
@@ -250,3 +307,16 @@ initramfs for the time being. If you need modify "KDUMP_COMMANDLINE=" in
 options are copied from /proc/cmdline. In general it is best to append
 command line options using "KDUMP_COMMANDLINE_APPEND=" instead of replacing
 the original command line completely.
+
+How to disable FADump:
+
+Remove "fadump=on" from kernel cmdline parameters:
+
+   # grubby --update-kernel=/boot/vmlinuz-`uname -r` --remove-args="fadump=on"
+
+If KDump is to be used as the dump capturing mechanism, update the crashkernel
+parameter (Else, remove "crashkernel=" parameter too, using grubby):
+
+   # grubby --update-kernel=/boot/vmlinuz-$kver --args="crashkernl=auto"
+
+Reboot the system for the settings to take effect.
