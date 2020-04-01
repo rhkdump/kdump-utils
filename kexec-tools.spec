@@ -4,7 +4,7 @@
 
 Name: kexec-tools
 Version: 2.0.20
-Release: 11%{?dist}
+Release: 12%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -350,6 +350,14 @@ done
 %endif
 
 %changelog
+* Thu Apr 2 2020 Kairui Song <kasong@redhat.com> - 2.0.20-12
+- Remove adjust_bind_mount_path call
+- No longer treat atomic/silverblue specially
+- mkdumprd: Simplify handling of user specified target
+- mkdumprd: Use get_save_path instead of parsing config
+- Remove is_dump_target_configured
+- dracut-module-setup.sh: improve get_alias()
+
 * Thu Mar 24 2020 Kairui Song <kasong@redhat.com> - 2.0.20-11
 - Fix a potential syntax error
 - Use read_strip_comments to filter the installed kdump.conf
