@@ -41,3 +41,9 @@ KDUMP_IMG="vmlinuz"
 
 #What is the images extension.  Relocatable kernels don't have one
 KDUMP_IMG_EXT=""
+
+# Using kexec file based syscall by default
+#
+# Here, the "on" is the only valid value to enable the kexec file load and
+# anything else is equal to the "off"(disable).
+KDUMP_FILE_LOAD="on"
