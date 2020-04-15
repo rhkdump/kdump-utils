@@ -318,13 +318,14 @@ kdump_setup_vlan() {
 # $1: netdev name
 kdump_setup_znet() {
     local _options=""
+    local _netdev=$1
 
-    source_ifcfg_file $1
+    source_ifcfg_file $_netdev
 
     for i in $OPTIONS; do
         _options=${_options},$i
     done
-    echo rd.znet=${NETTYPE},${SUBCHANNELS}${_options} > ${initdir}/etc/cmdline.d/30znet.conf
+    echo rd.znet=${NETTYPE},${SUBCHANNELS}${_options} rd.znet_ifname=$_netdev:${SUBCHANNELS} > ${initdir}/etc/cmdline.d/30znet.conf
 }
 
 kdump_get_ip_route()
