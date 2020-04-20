@@ -97,7 +97,6 @@ get_kdump_confs()
 # dump_fs <mount point| device>
 dump_fs()
 {
-    local _do_umount=""
     local _dev=$(findmnt -k -f -n -r -o SOURCE $1)
     local _mp=$(findmnt -k -f -n -r -o TARGET $1)
     local _op=$(findmnt -k -f -n -r -o OPTIONS $1)
@@ -116,7 +115,6 @@ dump_fs()
                 echo "kdump: mounting failed (mount point: $_mp, option: $_op)"
                 return 1
             fi
-            _do_umount=1
         else
             echo "kdump: error: Dump target $_dev is not usable"
         fi
@@ -146,10 +144,6 @@ dump_fs()
     sync
 
     echo "kdump: saving vmcore complete"
-
-    if [ $_do_umount ]; then
-        umount $_mp || echo "kdump: warn: failed to umount target"
-    fi
 
     # improper kernel cmdline can cause the failure of echo, we can ignore this kind of failure
     return 0
