@@ -678,7 +678,7 @@ is_localhost() {
 get_pcs_fence_kdump_nodes() {
     local nodes
 
-    pcs cluster sync && pcs cluster cib-upgrade
+    pcs cluster sync > /dev/null 2>&1 && pcs cluster cib-upgrade > /dev/null 2>&1
     # get cluster nodes from cluster cib, get interface and ip address
     nodelist=`pcs cluster cib | xmllint --xpath "/cib/status/node_state/@uname" -`
 
