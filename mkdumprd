@@ -83,6 +83,9 @@ to_mount() {
     # drop nofail or nobootwait
     _options=$(echo $_options | sed 's/\(^\|,\)nofail\($\|,\)/\1/g')
     _options=$(echo $_options | sed 's/\(^\|,\)nobootwait\($\|,\)/\1/g')
+    # use both nofail and x-systemd.before to ensure systemd will try best to
+    # mount it before kdump starts, this is an attempt to improve robustness
+    _options="$_options,nofail,x-systemd.before=initrd-fs.target"
 
     _mntopts="$_target $_fstype $_options"
     #for non-nfs _dev converting to use udev persistent name
