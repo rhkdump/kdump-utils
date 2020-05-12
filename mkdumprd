@@ -19,6 +19,20 @@ OVERRIDE_RESETTABLE=0
 extra_modules=""
 dracut_args="--quiet --hostonly --hostonly-cmdline --hostonly-i18n --hostonly-mode strict -o \"plymouth dash resume ifcfg earlykdump\""
 
+readonly MKDUMPRD_TMPDIR="$(mktemp -d -t mkdumprd.XXXXXX)"
+[ -d "$MKDUMPRD_TMPDIR" ] || perror_exit "dracut: mktemp -p -d -t dracut.XXXXXX failed."
+readonly MKDUMPRD_TMPMNT="$MKDUMPRD_TMPDIR/target"
+
+trap '
+    ret=$?;
+    is_mounted $MKDUMPRD_TMPMNT && umount -f $MKDUMPRD_TMPMNT;
+    [[ -d $MKDUMPRD_TMPDIR ]] && rm --one-file-system -rf -- "$MKDUMPRD_TMPDIR";
+    exit $ret;
+    ' EXIT
+
+# clean up after ourselves no matter how we die.
+trap 'exit 1;' SIGINT
+
 is_wdt_addition_needed() {
 	local active
 
@@ -51,11 +65,12 @@ add_dracut_sshkey() {
 
 # caller should ensure $1 is valid and mounted in 1st kernel
 to_mount() {
-    local _target=$1 _new_mntpoint _fstype _options _mntopts _pdev
+    local _target=$1 _fstype=$2 _options=$3 _new_mntpoint _mntopts _pdev
 
-    _fstype=$(get_fs_type_from_target $_target)
-    _options=$(get_mntopt_from_target $_target)
     _new_mntpoint=$(get_kdump_mntpoint_from_target $_target)
+    _fstype="${_fstype:-$(get_fs_type_from_target $_target)}"
+    _options="${_options:-$(get_mntopt_from_target $_options)}"
+    _options="${_options:-defaults}"
 
     if [[ "$_fstype" == "nfs"* ]]; then
         _options=$(echo $_options | sed 's/,addr=[^,]*//')
@@ -174,6 +189,67 @@ check_size() {
     fi
 }
 
+check_save_path_fs()
+{
+    local _path=$1
+
+    if [ ! -d $_path ]; then
+        perror_exit "Dump path $_path does not exist."
+    fi
+}
+
+check_user_configured_target()
+{
+    local _target=$1 _cfg_fs_type=$2 _mounted
+    local _mnt=$(get_mntpoint_from_target $_target)
+    local _opt=$(get_mntopt_from_target $_target)
+    local _fstype=$(get_fs_type_from_target $_target)
+
+    if [ -n "$_fstype" ]; then
+        # In case of nfs4, nfs should be used instead, nfs* options is deprecated in kdump.conf
+        [[ $_fstype = "nfs"* ]] && _fstype=nfs
+
+        if [ -n "$_cfg_fs_type" ] && [ "$_fstype" != "$_cfg_fs_type" ]; then
+            perror_exit "\"$_target\" have a wrong type config \"$_cfg_fs_type\", expected \"$_fstype\""
+        fi
+    else
+        _fstype="$_cfg_fs_type"
+        _fstype="$_cfg_fs_type"
+    fi
+
+    # For noauto mount, mount it inplace with default value.
+    # Else use the temporary target directory
+    if [ -n "$_mnt" ]; then
+        if ! is_mounted "$_mnt"; then
+            if [[ $_opt  = *",noauto"* ]]; then
+                mount $_mnt
+                [ $? -ne 0 ] && perror_exit "Failed to mount $_target on $_mnt for kdump preflight check."
+                _mounted=$_mnt
+            else
+                perror_exit "$_target is configured in fstab but not mounted, please check its usability."
+            fi
+        fi
+    else
+        _mnt=$MKDUMPRD_TMPMNT
+        mkdir -p $_mnt
+        mount $_target $_mnt -t $_fstype -o defaults
+        [ $? -ne 0 ] && perror_exit "Failed to mount $_target for kdump preflight check."
+        _mounted=$_mnt
+    fi
+
+    # For user configured target, use $SAVE_PATH as the dump path within the target
+    if [ ! -d "$_mnt/$SAVE_PATH" ]; then
+        perror_exit "Dump path \"$SAVE_PATH\" does not exist in dump target \"$_target\""
+    fi
+
+    check_size fs "$_target"
+
+    # Unmount it early, if function is interrupted and didn't reach here, the shell trap will clear it up anyway
+    if [ -n "$_mounted" ]; then
+        umount -f -- $_mounted
+    fi
+}
+
 # $1: core_collector config value
 verify_core_collector() {
     local _cmd="${1%% *}"
@@ -201,7 +277,7 @@ verify_core_collector() {
 }
 
 add_mount() {
-    local _mnt=$(to_mount "$1")
+    local _mnt=$(to_mount $@)
 
     if [ $? -ne 0 ]; then
         exit 1
@@ -354,14 +430,8 @@ do
         extra_modules="$extra_modules $config_val"
         ;;
     ext[234]|xfs|btrfs|minix|nfs)
-        if ! is_mounted $config_val; then
-            perror_exit "Dump target $config_val is probably not mounted."
-        fi
-
-        # User configured target, use $SAVE_PATH as the dump path within the target
-        check_save_path_user_configured "$config_val" "$SAVE_PATH"
-        check_size fs "$config_val"
-        add_mount "$config_val"
+        check_user_configured_target "$config_val" "$config_opt"
+        add_mount "$config_val" "$config_opt"
         ;;
     raw)
         # checking raw disk writable

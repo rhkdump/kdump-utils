@@ -284,12 +284,17 @@ get_kdump_mntpoint_from_target()
     local _mntpoint=$(get_mntpoint_from_target $1)
 
     # mount under /sysroot if dump to root disk or mount under
-    # /kdumproot/$_mntpoint in other cases in 2nd kernel. systemd
-    # will be in charge to umount it.
-    if [ "$_mntpoint" = "/" ];then
-        _mntpoint="/sysroot"
+    # mount under /kdumproot if dump target is not mounted in first kernel
+    # mount under /kdumproot/$_mntpoint in other cases in 2nd kernel.
+    # systemd will be in charge to umount it.
+    if [ -z "$_mntpoint" ];then
+        _mntpoint="/kdumproot"
     else
-        _mntpoint="/kdumproot/$_mntpoint"
+        if [ "$_mntpoint" = "/" ];then
+            _mntpoint="/sysroot"
+        else
+            _mntpoint="/kdumproot/$_mntpoint"
+        fi
     fi
 
     # strip duplicated "/"
@@ -300,24 +305,6 @@ get_kdump_mntpoint_from_target()
 # retrieves value of option defined in kdump.conf
 get_option_value() {
     strip_comments `grep "^$1[[:space:]]\+" /etc/kdump.conf | tail -1 | cut -d\  -f2-`
-}
-
-check_save_path_fs()
-{
-    local _path=$1
-
-    if [ ! -d $_path ]; then
-        perror_exit "Dump path $_path does not exist."
-    fi
-}
-
-# Check if path exists within dump target
-check_save_path_user_configured()
-{
-    local _target=$1 _path=$2
-    local _mnt=$(get_mntpoint_from_target $_target)
-
-    check_save_path_fs "$_mnt/$_path"
 }
 
 is_atomic()
