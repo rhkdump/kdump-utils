@@ -846,5 +846,8 @@ install() {
         echo "[Journal]" > ${initdir}/etc/systemd/journald.conf.d/kdump.conf
         echo "Storage=none" >> ${initdir}/etc/systemd/journald.conf.d/kdump.conf
         echo "ForwardToConsole=yes" >> ${initdir}/etc/systemd/journald.conf.d/kdump.conf
+
+        # Save more memory by dropping switch root capability
+        dracut_no_switch_root
     fi
 }

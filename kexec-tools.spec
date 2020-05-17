@@ -55,13 +55,13 @@ Source109: dracut-early-kdump-module-setup.sh
 Requires(post): systemd-units
 Requires(preun): systemd-units
 Requires(postun): systemd-units
-Requires(pre): coreutils sed zlib 
-Requires: dracut >= 047-34.git20180604
-Requires: dracut-network >= 044-117
-Requires: dracut-squash >= 049-4
+Requires(pre): coreutils sed zlib
+Requires: dracut >= 050
+Requires: dracut-network >= 050
+Requires: dracut-squash >= 050
 Requires: ethtool
 BuildRequires: zlib-devel zlib zlib-static elfutils-devel-static glib2-devel bzip2-devel ncurses-devel bison flex lzo-devel snappy-devel
-BuildRequires: pkgconfig intltool gettext 
+BuildRequires: pkgconfig intltool gettext
 BuildRequires: systemd-units
 BuildRequires: automake autoconf libtool
 %ifarch %{ix86} x86_64 ppc64 ppc s390x ppc64le
