@@ -4,7 +4,7 @@
 
 Name: kexec-tools
 Version: 2.0.20
-Release: 12%{?dist}
+Release: 13%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -350,6 +350,24 @@ done
 %endif
 
 %changelog
+* Fri May 22 2020 Kairui Song <kasong@redhat.com> - 2.0.20-13
+- Update docs for the new noauto dump target support
+- kexec-kdump-howto.txt: Add some format to the document
+- mkdumprd: generate usable kdump initramfs even target is not mounted
+- User get_mount_info to replace findmnt calls
+- kdump-lib.sh: add fstab failback helper for getting mount info
+- Allow calling mkdumprd from kdumpctl even if targat not mounted
+- Add a is_mounted helper
+- Introduce get_kdump_mntpoint_from_target and fix duplicated /
+- Append both nofail and x-systemd.before to kdump mount target
+- Fix the problem that kdump prints redundant /
+- Partially Revert "Don't mount the dump target unless needed"
+- fadump: update fadump-howto.txt with some troubleshooting help
+- Add a new option 'rd.znet_ifname' in order to use it in udev rules
+- Don't unmount the dump target just after saving vmcore
+- dracut-module-setup.sh: fix breakage in get_pcs_fence_kdump_nodes()
+- dracut-module-setup.sh: ensure cluster info is ready before query
+
 * Thu Apr 2 2020 Kairui Song <kasong@redhat.com> - 2.0.20-12
 - Remove adjust_bind_mount_path call
 - No longer treat atomic/silverblue specially
