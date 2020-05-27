@@ -408,6 +408,11 @@ kdump_install_net() {
 
     kdump_setup_dns "$_netdev"
 
+    if [ ! -f ${initdir}/etc/cmdline.d/50neednet.conf ]; then
+        # network-manager module needs this parameter
+        echo "rd.neednet" >> ${initdir}/etc/cmdline.d/50neednet.conf
+    fi
+
     # Save netdev used for kdump as cmdline
     # Whoever calling kdump_install_net() is setting up the default gateway,
     # ie. bootdev/kdumpnic. So don't override the setting if calling
