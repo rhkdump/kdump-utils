@@ -18,6 +18,7 @@ Source7: mkdumprd
 Source8: kdump.conf
 Source9: http://downloads.sourceforge.net/project/makedumpfile/makedumpfile/%{mkdf_ver}/makedumpfile-%{mkdf_ver}.tar.gz
 Source10: kexec-kdump-howto.txt
+Source11: fadump-howto.txt
 Source12: mkdumprd.8
 Source13: 98-kexec.rules
 Source14: 98-kexec.rules.ppc64
@@ -141,6 +142,7 @@ autoreconf
 rm -f kexec-tools.spec.in
 # setup the docs
 cp %{SOURCE10} .
+cp %{SOURCE11} .
 cp %{SOURCE21} .
 cp %{SOURCE26} .
 cp %{SOURCE27} .
@@ -340,6 +342,7 @@ done
 %doc TODO
 %doc kexec-kdump-howto.txt
 %doc early-kdump-howto.txt
+%doc fadump-howto.txt
 %doc kdump-in-cluster-environment.txt
 %doc live-image-kdump-howto.txt
 %ifarch %{ix86} x86_64 ppc64 s390x ppc64le aarch64
