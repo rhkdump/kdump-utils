@@ -30,15 +30,49 @@ do_dump()
 
 do_kdump_pre()
 {
+    local _ret
+
     if [ -n "$KDUMP_PRE" ]; then
         "$KDUMP_PRE"
+        _ret=$?
+        if [ $_ret -ne 0 ]; then
+            echo "kdump: $KDUMP_PRE exited with $_ret status"
+            return $_ret
+        fi
     fi
+
+    if [ -d /etc/kdump/pre.d ]; then
+        for file in /etc/kdump/pre.d/*; do
+            "$file"
+            _ret=$?
+            if [ $_ret -ne 0 ]; then
+                echo "kdump: $file exited with $_ret status"
+            fi
+        done
+    fi
+    return 0
 }
 
 do_kdump_post()
 {
+    local _ret
+
+    if [ -d /etc/kdump/post.d ]; then
+        for file in /etc/kdump/post.d/*; do
+            "$file" "$1"
+            _ret=$?
+            if [ $_ret -ne 0 ]; then
+                echo "kdump: $file exited with $_ret status"
+            fi
+        done
+    fi
+
     if [ -n "$KDUMP_POST" ]; then
         "$KDUMP_POST" "$1"
+        _ret=$?
+        if [ $_ret -ne 0 ]; then
+            echo "kdump: $KDUMP_POST exited with $_ret status"
+        fi
     fi
 }
 
