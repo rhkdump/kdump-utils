@@ -427,6 +427,29 @@ kdump_install_net() {
     fi
 }
 
+# install etc/kdump/pre.d and /etc/kdump/post.d
+kdump_install_pre_post_conf() {
+    if [ -d /etc/kdump/pre.d ]; then
+        for file in /etc/kdump/pre.d/*; do
+            if [ -x "$file" ]; then
+                dracut_install $file
+            else
+               echo "$file is not executable"
+            fi
+        done
+    fi
+
+    if [ -d /etc/kdump/post.d ]; then
+        for file in /etc/kdump/post.d/*; do
+            if [ -x "$file" ]; then
+                dracut_install $file
+            else
+                echo "$file is not executable"
+            fi
+        done
+    fi
+}
+
 default_dump_target_install_conf()
 {
     local _target _fstype
@@ -491,6 +514,8 @@ kdump_install_conf() {
             ;;
         esac
     done <<< "$(read_strip_comments /etc/kdump.conf)"
+
+    kdump_install_pre_post_conf
 
     default_dump_target_install_conf
 
