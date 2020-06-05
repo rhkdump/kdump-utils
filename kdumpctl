@@ -339,9 +339,23 @@ check_files_modified()
 
 	EXTRA_BINS=`grep ^kdump_post $KDUMP_CONFIG_FILE | cut -d\  -f2`
 	CHECK_FILES=`grep ^kdump_pre $KDUMP_CONFIG_FILE | cut -d\  -f2`
+	if [ -d /etc/kdump/post.d ]; then
+		for file in /etc/kdump/post.d/*; do
+			if [ -x "$file" ]; then
+				POST_FILES="$POST_FILES $file"
+			fi
+		done
+	fi
+	if [ -d /etc/kdump/pre.d ]; then
+		for file in /etc/kdump/pre.d/*; do
+			if [ -x "$file" ]; then
+				PRE_FILES="$PRE_FILES $file"
+			fi
+		done
+	fi
 	CORE_COLLECTOR=`grep ^core_collector $KDUMP_CONFIG_FILE | cut -d\  -f2`
 	CORE_COLLECTOR=`type -P $CORE_COLLECTOR`
-	EXTRA_BINS="$EXTRA_BINS $CHECK_FILES"
+	EXTRA_BINS="$EXTRA_BINS $CHECK_FILES $POST_FILES $PRE_FILES"
 	CHECK_FILES=`grep ^extra_bins $KDUMP_CONFIG_FILE | cut -d\  -f2-`
 	EXTRA_BINS="$EXTRA_BINS $CHECK_FILES"
 	files="$KDUMP_CONFIG_FILE $kdump_kernel $EXTRA_BINS $CORE_COLLECTOR"
