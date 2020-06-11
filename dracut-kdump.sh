@@ -208,7 +208,10 @@ read_kdump_conf()
         case "$config_opt" in
         dracut_args)
             config_val=$(get_dracut_args_target "$config_val")
-            [ -n "$config_val" ] && add_dump_code "dump_fs $config_val"
+            if [ -n "$config_val" ]; then
+                config_val=$(get_mntpoint_from_target "$config_val")
+                add_dump_code "dump_fs $config_val"
+            fi
             ;;
         ext[234]|xfs|btrfs|minix|nfs)
             config_val=$(get_mntpoint_from_target "$config_val")
