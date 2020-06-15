@@ -471,7 +471,7 @@ handle_default_dump_target
 
 if [ -n "$extra_modules" ]
 then
-    add_dracut_arg "--add-drivers" "$extra_modules"
+    add_dracut_arg "--add-drivers" \"$extra_modules\"
 fi
 
 if ! is_fadump_capable; then
