@@ -307,6 +307,20 @@ get_option_value() {
     strip_comments `grep "^$1[[:space:]]\+" /etc/kdump.conf | tail -1 | cut -d\  -f2-`
 }
 
+kdump_get_persistent_dev() {
+    local dev="${1//\"/}"
+
+    case "$dev" in
+    UUID=*)
+        dev=`blkid -U "${dev#UUID=}"`
+        ;;
+    LABEL=*)
+        dev=`blkid -L "${dev#LABEL=}"`
+        ;;
+    esac
+    echo $(get_persistent_dev "$dev")
+}
+
 is_atomic()
 {
     grep -q "ostree" /proc/cmdline

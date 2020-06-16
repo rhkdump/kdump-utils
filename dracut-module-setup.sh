@@ -48,20 +48,6 @@ depends() {
     return 0
 }
 
-kdump_get_persistent_dev() {
-    local dev="${1//\"/}"
-
-    case "$dev" in
-    UUID=*)
-        dev=`blkid -U "${dev#UUID=}"`
-        ;;
-    LABEL=*)
-        dev=`blkid -L "${dev#LABEL=}"`
-        ;;
-    esac
-    echo $(get_persistent_dev "$dev")
-}
-
 kdump_is_bridge() {
      [ -d /sys/class/net/"$1"/bridge ]
 }
