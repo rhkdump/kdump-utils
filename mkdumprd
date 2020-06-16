@@ -65,7 +65,7 @@ add_dracut_sshkey() {
 
 # caller should ensure $1 is valid and mounted in 1st kernel
 to_mount() {
-    local _target=$1 _fstype=$2 _options=$3 _new_mntpoint _mntopts _pdev
+    local _target=$1 _fstype=$2 _options=$3 _new_mntpoint _pdev
 
     _new_mntpoint=$(get_kdump_mntpoint_from_target $_target)
     _fstype="${_fstype:-$(get_fs_type_from_target $_target)}"
@@ -73,9 +73,16 @@ to_mount() {
     _options="${_options:-defaults}"
 
     if [[ "$_fstype" == "nfs"* ]]; then
+        _pdev=$_target
         _options=$(echo $_options | sed 's/,addr=[^,]*//')
         _options=$(echo $_options | sed 's/,proto=[^,]*//')
         _options=$(echo $_options | sed 's/,clientaddr=[^,]*//')
+    else
+        # for non-nfs _target converting to use udev persistent name
+        _pdev="$(kdump_get_persistent_dev $_target)"
+        if [ -z "$_pdev" ]; then
+            return 1
+        fi
     fi
 
     # mount fs target as rw in 2nd kernel
@@ -90,18 +97,7 @@ to_mount() {
     # mount it before kdump starts, this is an attempt to improve robustness
     _options="$_options,nofail,x-systemd.before=initrd-fs.target"
 
-    _mntopts="$_new_mntpoint $_fstype $_options"
-    # for non-nfs _target converting to use udev persistent name
-    if [ -b "$_target" ]; then
-        _pdev="$(kdump_get_persistent_dev $_target)"
-        if [ -z "$_pdev" ]; then
-            return 1
-        fi
-    else
-        _pdev=$_target
-    fi
-
-    echo "$_pdev $_mntopts"
+    echo "$_pdev $_new_mntpoint $_fstype $_options"
 }
 
 #Function: get_ssh_size
