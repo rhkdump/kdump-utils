@@ -109,6 +109,11 @@ status of the current dump process is fed to the kdump_post
 executable as its first argument($1).  Executable can modify
 it to indicate the new exit status of succeeding dump process,
 .PP
+If /etc/kdump/post.d directory exists, All files in
+the directory are collectively sorted and executed in
+lexical order, before binary or script specified
+kdump_post parameter is executed.
+.PP
 Note that scripts written for use with this directive must use
 the /bin/bash interpreter.
 .RE
@@ -123,6 +128,13 @@ as follows:
 0 - continue with dump process as usual
 .PP
 non 0 - reboot the system
+.PP
+If /etc/kdump/pre.d directory exists, all files in
+the directory are collectively sorted and executed in
+lexical order, after binary or script specified
+kdump_pre parameter is executed.
+Even if the binary or script in /etc/kdump/pre.d directory
+returns non 0 exit status, the processing is continued.
 .PP
 Note that scripts written for this directive must use
 the /bin/bash interpreter.

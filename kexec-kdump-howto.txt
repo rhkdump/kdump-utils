@@ -543,6 +543,9 @@ It is possible to specify a custom script or binary you wish to run following
 an attempt to capture a vmcore. The executable is passed an exit code from
 the capture process, which can be used to trigger different actions from
 within your post-capture executable.
+If /etc/kdump/post.d directory exist, All files in the directory are
+collectively sorted and executed in lexical order, before binary or script
+specified kdump_post parameter is executed.
 
 Kdump Pre-Capture Executable
 ----------------------------
@@ -551,6 +554,11 @@ It is possible to specify a custom script or binary you wish to run before
 capturing a vmcore. Exit status of this binary is interpreted:
 0 - continue with dump process as usual
 non 0 - reboot the system
+If /etc/kdump/pre.d directory exists, all files in the directory are collectively
+sorted and executed in lexical order, after binary or script specified
+kdump_pre parameter is executed.
+Even if the binary or script in /etc/kdump/pre.d directory returns non 0
+exit status, the processing is continued.
 
 Extra Binaries
 --------------
