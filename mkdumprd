@@ -222,7 +222,7 @@ check_user_configured_target()
                 [ $? -ne 0 ] && perror_exit "Failed to mount $_target on $_mnt for kdump preflight check."
                 _mounted=$_mnt
             else
-                perror_exit "$_target is configured in fstab but not mounted, please check its usability."
+                perror_exit "Dump target \"$_target\" is neither mounted nor configured as \"noauto\""
             fi
         fi
     else
