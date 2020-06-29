@@ -597,6 +597,35 @@ need_64bit_headers()
     print (strtonum("0x" r[2]) > strtonum("0xffffffff")); }'`
 }
 
+# Check if secure boot is being enforced.
+#
+# Per Peter Jones, we need check efivar SecureBoot-$(the UUID) and
+# SetupMode-$(the UUID), they are both 5 bytes binary data. The first four
+# bytes are the attributes associated with the variable and can safely be
+# ignored, the last bytes are one-byte true-or-false variables. If SecureBoot
+# is 1 and SetupMode is 0, then secure boot is being enforced.
+#
+# Assume efivars is mounted at /sys/firmware/efi/efivars.
+is_secure_boot_enforced()
+{
+    local secure_boot_file setup_mode_file
+    local secure_boot_byte setup_mode_byte
+
+    secure_boot_file=$(find /sys/firmware/efi/efivars -name SecureBoot-* 2>/dev/null)
+    setup_mode_file=$(find /sys/firmware/efi/efivars -name SetupMode-* 2>/dev/null)
+
+    if [ -f "$secure_boot_file" ] && [ -f "$setup_mode_file" ]; then
+        secure_boot_byte=$(hexdump -v -e '/1 "%d\ "' $secure_boot_file|cut -d' ' -f 5)
+        setup_mode_byte=$(hexdump -v -e '/1 "%d\ "' $setup_mode_file|cut -d' ' -f 5)
+
+        if [ "$secure_boot_byte" = "1" ] && [ "$setup_mode_byte" = "0" ]; then
+            return 0
+        fi
+    fi
+
+    return 1
+}
+
 #
 # prepare_kexec_args <kexec args>
 # This function prepares kexec argument.
