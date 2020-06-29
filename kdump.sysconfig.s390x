@@ -31,7 +31,7 @@ MKDUMPRD_ARGS=""
 #
 # Example:
 #   KEXEC_ARGS="--elf32-core-headers"
-KEXEC_ARGS=""
+KEXEC_ARGS="-s"
 
 #Where to find the boot image
 #KDUMP_BOOTDIR="/boot"
