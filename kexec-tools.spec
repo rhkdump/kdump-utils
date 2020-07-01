@@ -4,7 +4,7 @@
 
 Name: kexec-tools
 Version: 2.0.20
-Release: 13%{?dist}
+Release: 14%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -351,6 +351,31 @@ done
 %endif
 
 %changelog
+* Wed Jul 1 2020 Kairui Song <kasong@redhat.com> - 2.0.20-14
+- s390x: enable the kexec file load by default
+- x86_64: enable the kexec file load by default
+- Revert "s390x: add kdump sysconfig option to use the kexec_file_load() syscall"
+- Revert "kdump-lib: switch to the kexec_file_load() syscall on x86_64 by default"
+- kdump.conf: fix a grammar issue
+- man: improve description about /etc/kdump/{pre.d,post.d}interface
+- mkdumprd: Improve the error message for umounted dump target
+- mkdumprd: Fix nfs detection in to_mount
+- Always wrap up call to dracut get_persistent_dev function
+- s390x: add kdump sysconfig option to use the kexec_file_load() syscall
+- mkdumprd: Fix dracut error on multiple extra_modules
+- Fix kdump failure when mount target specified by dracut_args
+- kdump.conf: Specify /etc/kdump/{pre.d,post.d}interface
+- dracut-kdump.sh: Execute the binary and script filesin /etc/kdump/{pre.d,post.d}
+- kdumpctl: Check the update of the binary and script files in /etc/kdump/{pre.d,post.d}
+- dracut-module-setup.sh: Install files under /etc/kdump/{pre.d,post.d} into kdump initramfs
+- Drop switch root capability for non fadump initramfs
+- fadump: update fadump-howto.txt with some more troubleshooting help
+- fadump-howto.txt: source it in spec file
+- Don't inherit swiotlb parameter form 1st kernel by default
+- module-setup.sh: Add "rd.neednet" parameter if network is needed
+- Revert "Add a hook to wait for kdump target in initqueue"
+- kdump.sysconfig: Remove the option 'log_buf_len' from kdump command line
+
 * Fri May 22 2020 Kairui Song <kasong@redhat.com> - 2.0.20-13
 - Update docs for the new noauto dump target support
 - kexec-kdump-howto.txt: Add some format to the document
@@ -377,7 +402,7 @@ done
 - Remove is_dump_target_configured
 - dracut-module-setup.sh: improve get_alias()
 
-* Thu Mar 24 2020 Kairui Song <kasong@redhat.com> - 2.0.20-11
+* Tue Mar 24 2020 Kairui Song <kasong@redhat.com> - 2.0.20-11
 - Fix a potential syntax error
 - Use read_strip_comments to filter the installed kdump.conf
 - kdumpctl: fix driver change detection on latest Fedora
