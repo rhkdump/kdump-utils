@@ -251,6 +251,8 @@ do_kdump_pre
 if [ $? -ne 0 ]; then
     echo "kdump: kdump_pre script exited with non-zero status!"
     do_final_action
+    # During systemd service to reboot the machine, stop this shell script running
+    exit 1
 fi
 make_trace_mem "kdump saving vmcore" '1:shortmem' '2+:mem' '3+:slab'
 do_dump
