@@ -611,6 +611,12 @@ is_secure_boot_enforced()
     local secure_boot_file setup_mode_file
     local secure_boot_byte setup_mode_byte
 
+    # On powerpc, os-secureboot-enforcing DT property indicates whether secureboot
+    # is enforced. Return success, if it is found.
+    if [ -f /proc/device-tree/ibm,secureboot/os-secureboot-enforcing ]; then
+		return 0
+    fi
+
     secure_boot_file=$(find /sys/firmware/efi/efivars -name SecureBoot-* 2>/dev/null)
     setup_mode_file=$(find /sys/firmware/efi/efivars -name SetupMode-* 2>/dev/null)
 
