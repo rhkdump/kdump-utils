@@ -553,7 +553,7 @@ Kdump Pre-Capture Executable
 It is possible to specify a custom script or binary you wish to run before
 capturing a vmcore. Exit status of this binary is interpreted:
 0 - continue with dump process as usual
-non 0 - reboot the system
+non 0 - run the final action (reboot/poweroff/halt)
 If /etc/kdump/pre.d directory exists, all files in the directory are collectively
 sorted and executed in lexical order, after binary or script specified
 kdump_pre parameter is executed.

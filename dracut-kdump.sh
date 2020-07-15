@@ -41,6 +41,7 @@ do_kdump_pre()
         fi
     fi
 
+    # if any script fails, it just raises warning and continues
     if [ -d /etc/kdump/pre.d ]; then
         for file in /etc/kdump/pre.d/*; do
             "$file"
