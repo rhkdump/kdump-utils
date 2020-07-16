@@ -338,6 +338,7 @@ check_files_modified()
 
 	EXTRA_BINS=`grep ^kdump_post $KDUMP_CONFIG_FILE | cut -d\  -f2`
 	CHECK_FILES=`grep ^kdump_pre $KDUMP_CONFIG_FILE | cut -d\  -f2`
+	HOOKS="/etc/kdump/post.d/ /etc/kdump/pre.d/"
 	if [ -d /etc/kdump/post.d ]; then
 		for file in /etc/kdump/post.d/*; do
 			if [ -x "$file" ]; then
@@ -352,9 +353,11 @@ check_files_modified()
 			fi
 		done
 	fi
+	HOOKS="$HOOKS $POST_FILES $PRE_FILES"
 	CORE_COLLECTOR=`grep ^core_collector $KDUMP_CONFIG_FILE | cut -d\  -f2`
 	CORE_COLLECTOR=`type -P $CORE_COLLECTOR`
-	EXTRA_BINS="$EXTRA_BINS $CHECK_FILES $POST_FILES $PRE_FILES"
+	# POST_FILES and PRE_FILES are already checked against executable, need not to check again.
+	EXTRA_BINS="$EXTRA_BINS $CHECK_FILES"
 	CHECK_FILES=`grep ^extra_bins $KDUMP_CONFIG_FILE | cut -d\  -f2-`
 	EXTRA_BINS="$EXTRA_BINS $CHECK_FILES"
 	files="$KDUMP_CONFIG_FILE $kdump_kernel $EXTRA_BINS $CORE_COLLECTOR"
@@ -385,6 +388,8 @@ check_files_modified()
 	check_exist "$files" && check_executable "$EXTRA_BINS"
 	[ $? -ne 0 ] && return 2
 
+	# HOOKS only need to check the modification here
+	files="$files $HOOKS"
 	for file in $files; do
 		if [ -e "$file" ]; then
 			time_stamp=`stat -c "%Y" $file`
