@@ -419,7 +419,7 @@ kdump_install_pre_post_conf() {
         for file in /etc/kdump/pre.d/*; do
             if [ -x "$file" ]; then
                 dracut_install $file
-            else
+            elif [ $file != "/etc/kdump/pre.d/*" ]; then
                echo "$file is not executable"
             fi
         done
@@ -429,7 +429,7 @@ kdump_install_pre_post_conf() {
         for file in /etc/kdump/post.d/*; do
             if [ -x "$file" ]; then
                 dracut_install $file
-            else
+            elif [ $file != "/etc/kdump/post.d/*" ]; then
                 echo "$file is not executable"
             fi
         done
