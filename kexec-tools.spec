@@ -157,6 +157,9 @@ make -C makedumpfile-%{mkdf_ver} LDFLAGS="$LDFLAGS -I../eppic-%{eppic_ver}/libep
 %install
 mkdir -p -m755 $RPM_BUILD_ROOT/usr/sbin
 mkdir -p -m755 $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
+mkdir -p -m755 $RPM_BUILD_ROOT%{_sysconfdir}/kdump
+mkdir -p -m755 $RPM_BUILD_ROOT%{_sysconfdir}/kdump/pre.d
+mkdir -p -m755 $RPM_BUILD_ROOT%{_sysconfdir}/kdump/post.d
 mkdir -p -m755 $RPM_BUILD_ROOT%{_localstatedir}/crash
 mkdir -p -m755 $RPM_BUILD_ROOT%{_mandir}/man8/
 mkdir -p -m755 $RPM_BUILD_ROOT%{_mandir}/man5/
@@ -327,6 +330,9 @@ done
 %endif
 %{dracutlibdir}/modules.d/*
 %dir %{_localstatedir}/crash
+%dir %{_sysconfdir}/kdump
+%dir %{_sysconfdir}/kdump/pre.d
+%dir %{_sysconfdir}/kdump/post.d
 %{_mandir}/man8/kdumpctl.8.gz
 %{_mandir}/man8/kexec.8.gz
 %ifarch %{ix86} x86_64 ppc64 s390x ppc64le aarch64
