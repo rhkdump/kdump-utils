@@ -60,7 +60,7 @@ Requires: dracut >= 050
 Requires: dracut-network >= 050
 Requires: dracut-squash >= 050
 Requires: ethtool
-BuildRequires: zlib-devel zlib zlib-static elfutils-devel-static glib2-devel bzip2-devel ncurses-devel bison flex lzo-devel snappy-devel
+BuildRequires: zlib-devel elfutils-devel glib2-devel bzip2-devel ncurses-devel bison flex lzo-devel snappy-devel
 BuildRequires: pkgconfig intltool gettext
 BuildRequires: systemd-units
 BuildRequires: automake autoconf libtool
