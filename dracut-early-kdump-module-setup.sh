@@ -58,8 +58,8 @@ install() {
     inst_binary "$KDUMP_KERNEL"
     inst_binary "$KDUMP_INITRD"
 
-    ln_r "$KDUMP_KERNEL" "${KDUMP_BOOTDIR}/${KDUMP_IMG}-earlykdump${KDUMP_IMG_EXT}"
-    ln_r "$KDUMP_INITRD" "${KDUMP_BOOTDIR}/initramfs-earlykdump.img"
+    ln_r "$KDUMP_KERNEL" "/boot/kernel-earlykdump"
+    ln_r "$KDUMP_INITRD" "/boot/initramfs-earlykdump"
 
     chmod -x "${initdir}/$KDUMP_KERNEL"
 }
