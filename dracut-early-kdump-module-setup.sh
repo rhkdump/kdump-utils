@@ -21,18 +21,13 @@ depends() {
 }
 
 prepare_kernel_initrd() {
-    KDUMP_BOOTDIR=$(check_boot_dir "${KDUMP_BOOTDIR}")
-    if [ -z "$KDUMP_KERNELVER" ]; then
-        kdump_kver=`uname -r`
-        if [ "$kernel" != "$kdump_kver" ]; then
-            dwarn "Using current kernel version '$kdump_kver' for early kdump," \
-                "but the initramfs is generated for kernel version '$kernel'"
-        fi
-    else
-        kdump_kver=$KDUMP_KERNELVER
+    prepare_kdump_bootinfo
+
+    # $kernel is a variable from dracut
+    if [ "$KDUMP_KERNELVER" != $kernel ]; then
+        dwarn "Using kernel version '$KDUMP_KERNELVER' for early kdump," \
+            "but the initramfs is generated for kernel version '$kernel'"
     fi
-    KDUMP_KERNEL="${KDUMP_BOOTDIR}/${KDUMP_IMG}-${kdump_kver}${KDUMP_IMG_EXT}"
-    KDUMP_INITRD="${KDUMP_BOOTDIR}/initramfs-${kdump_kver}kdump.img"
 }
 
 install() {

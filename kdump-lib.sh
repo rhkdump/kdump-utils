@@ -666,24 +666,68 @@ prepare_kexec_args()
     echo $kexec_args
 }
 
-check_boot_dir()
+#
+# Detect initrd and kernel location, results are stored in global enviromental variables:
+# KDUMP_BOOTDIR, KDUMP_KERNELVER, KDUMP_KERNEL, DEFAULT_INITRD, and KDUMP_INITRD
+#
+# Expectes KDUMP_BOOTDIR, KDUMP_IMG, KDUMP_IMG_EXT, KDUMP_KERNELVER to be loaded from config already
+# and will prefer already set values so user can specify custom kernel/initramfs location
+#
+prepare_kdump_bootinfo()
 {
-    local kdump_bootdir=$1
-    #If user specify a boot dir for kdump kernel, let's use it. Otherwise
-    #check whether it's a atomic host. If yes parse the subdirectory under
-    #/boot; If not just find it under /boot.
-    if [ -n "$kdump_bootdir" ]; then
-        echo "$kdump_bootdir"
-        return
+    local boot_imglist boot_dirlist boot_initrdlist curr_kver="$(uname -r)"
+    local machine_id
+
+    if [ -z "$KDUMP_KERNELVER"]; then
+        KDUMP_KERNELVER="$(uname -r)"
     fi
 
-    if ! is_atomic || [ "$(uname -m)" = "s390x" ]; then
-        kdump_bootdir="/boot"
-    else
-        eval $(cat /proc/cmdline| grep "BOOT_IMAGE" | cut -d' ' -f1)
-        kdump_bootdir="/boot"$(dirname ${BOOT_IMAGE#*)})
+    read machine_id < /etc/machine-id
+    boot_dirlist=${KDUMP_BOOTDIR:-"/boot /boot/efi /efi /"}
+    boot_imglist="$KDUMP_IMG-$KDUMP_KERNELVER$KDUMP_IMG_EXT $machine_id/$KDUMP_KERNELVER/$KDUMP_IMG"
+
+    # Use BOOT_IMAGE as reference if possible, strip the GRUB root device prefix in (hd0,gpt1) format
+    local boot_img="$(cat /proc/cmdline | sed "s/^BOOT_IMAGE=\((\S*)\)\?\(\S*\) .*/\2/")"
+    if [ -n "$boot_img" ]; then
+        boot_imglist="$boot_img $boot_imglist"
     fi
-    echo $kdump_bootdir
+
+    for dir in $boot_dirlist; do
+        for img in $boot_imglist; do
+            if [ -f "$dir/$img" ]; then
+                KDUMP_KERNEL=$(echo $dir/$img | tr -s '/')
+                break 2
+            fi
+        done
+    done
+
+    if ! [ -e "$KDUMP_KERNEL" ]; then
+        echo "Failed to detect kdump kernel location"
+        return 1
+    fi
+
+    # Set KDUMP_BOOTDIR to where kernel image is stored
+    KDUMP_BOOTDIR=$(dirname $KDUMP_KERNEL)
+
+    # Default initrd should just stay aside of kernel image, try to find it in KDUMP_BOOTDIR
+    boot_initrdlist="initramfs-$KDUMP_KERNELVER.img initrd"
+    for initrd in $boot_initrdlist; do
+        if [ -f "$KDUMP_BOOTDIR/$initrd" ]; then
+            DEFAULT_INITRD="$KDUMP_BOOTDIR/$initrd"
+            break
+        fi
+    done
+
+    # Get kdump initrd from default initrd filename
+    # initramfs-5.7.9-200.fc32.x86_64.img => initramfs-5.7.9-200.fc32.x86_64kdump.img
+    # initrd => initrdkdump
+    if [[ -z "$DEFAULT_INITRD" ]]; then
+        KDUMP_INITRD=${KDUMP_BOOTDIR}/initramfs-${KDUMP_KERNELVER}kdump.img
+    elif [[ $(basename $DEFAULT_INITRD) == *.* ]]; then
+        KDUMP_INITRD=${DEFAULT_INITRD%.*}kdump.${DEFAULT_INITRD##*.}
+    else
+        KDUMP_INITRD=${DEFAULT_INITRD}kdump
+    fi
 }
 
 #

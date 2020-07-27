@@ -2,6 +2,7 @@
 KEXEC=/sbin/kexec
 
 KDUMP_KERNELVER=""
+KDUMP_KERNEL=""
 KDUMP_COMMANDLINE=""
 KEXEC_ARGS=""
 KDUMP_CONFIG_FILE="/etc/kdump.conf"
@@ -13,6 +14,7 @@ INITRD_CHECKSUM_LOCATION="/boot/.fadump_initrd_checksum"
 DUMP_TARGET=""
 DEFAULT_INITRD=""
 DEFAULT_INITRD_BAK=""
+KDUMP_INITRD=""
 TARGET_INITRD=""
 FADUMP_REGISTER_SYS_NODE="/sys/kernel/fadump_registered"
 #kdump shall be the default dump mode
@@ -94,7 +96,7 @@ rebuild_fadump_initrd()
 	# this file tells the initrd is fadump enabled
 	touch /tmp/fadump.initramfs
 	target_initrd_tmp="$TARGET_INITRD.tmp"
-	$MKDUMPRD $target_initrd_tmp --rebuild $DEFAULT_INITRD_BAK --kver $kdump_kver \
+	$MKDUMPRD $target_initrd_tmp --rebuild $DEFAULT_INITRD_BAK --kver $KDUMP_KERNELVER \
 		-i /tmp/fadump.initramfs /etc/fadump.initramfs
 	if [ $? != 0 ]; then
 		echo "mkdumprd: failed to rebuild initrd with fadump support" >&2
@@ -118,7 +120,7 @@ check_earlykdump_is_enabled()
 
 rebuild_kdump_initrd()
 {
-	$MKDUMPRD $TARGET_INITRD $kdump_kver
+	$MKDUMPRD $TARGET_INITRD $KDUMP_KERNELVER
 	if [ $? != 0 ]; then
 		echo "mkdumprd: failed to make kdump initrd" >&2
 		return 1
@@ -189,6 +191,10 @@ backup_default_initrd()
 
 restore_default_initrd()
 {
+	if [ ! -f "$DEFAULT_INITRD" ]; then
+		return
+	fi
+
 	# If a backup initrd exists, we must be switching back from
 	# fadump to kdump. Restore the original default initrd.
 	if [ -f $DEFAULT_INITRD_BAK ] && [ -f $INITRD_CHECKSUM_LOCATION ]; then
@@ -301,18 +307,12 @@ get_pcs_cluster_modified_files()
 
 setup_initrd()
 {
-	KDUMP_BOOTDIR=$(check_boot_dir "${KDUMP_BOOTDIR}")
-
-	if [ -z "$KDUMP_KERNELVER" ]; then
-		kdump_kver=`uname -r`
-	else
-		kdump_kver=$KDUMP_KERNELVER
+	prepare_kdump_bootinfo
+	if [ $? -ne 0 ]; then
+		return 1
 	fi
 
-	kdump_kernel="${KDUMP_BOOTDIR}/${KDUMP_IMG}-${kdump_kver}${KDUMP_IMG_EXT}"
-
-	DEFAULT_INITRD="${KDUMP_BOOTDIR}/initramfs-`uname -r`.img"
-	DEFAULT_INITRD_BAK="${KDUMP_BOOTDIR}/.initramfs-`uname -r`.img.default"
+	DEFAULT_INITRD_BAK="$KDUMP_BOOTDIR/.$(basename $DEFAULT_INITRD).default"
 	if [ $DEFAULT_DUMP_MODE == "fadump" ]; then
 		TARGET_INITRD="$DEFAULT_INITRD"
 
@@ -320,7 +320,7 @@ setup_initrd()
 		# with fadump aware initrd
 		backup_default_initrd
 	else
-		TARGET_INITRD="${KDUMP_BOOTDIR}/initramfs-${kdump_kver}kdump.img"
+		TARGET_INITRD="$KDUMP_INITRD"
 
 		# check if a backup of default initrd exists. If yes,
 		# it signifies a switch from fadump mode. So, restore
@@ -360,25 +360,25 @@ check_files_modified()
 	EXTRA_BINS="$EXTRA_BINS $CHECK_FILES"
 	CHECK_FILES=`grep ^extra_bins $KDUMP_CONFIG_FILE | cut -d\  -f2-`
 	EXTRA_BINS="$EXTRA_BINS $CHECK_FILES"
-	files="$KDUMP_CONFIG_FILE $kdump_kernel $EXTRA_BINS $CORE_COLLECTOR"
+	files="$KDUMP_CONFIG_FILE $KDUMP_KERNEL $EXTRA_BINS $CORE_COLLECTOR"
 	[[ -e /etc/fstab ]] && files="$files /etc/fstab"
 
 	# Check for any updated extra module
 	EXTRA_MODULES="$(grep ^extra_modules $KDUMP_CONFIG_FILE | sed 's/^extra_modules\s*//')"
 	if [ -n "$EXTRA_MODULES" ]; then
-		if [ -e /lib/modules/$kdump_kver/modules.dep ]; then
-			files="$files /lib/modules/$kdump_kver/modules.dep"
+		if [ -e /lib/modules/$KDUMP_KERNELVER/modules.dep ]; then
+			files="$files /lib/modules/$KDUMP_KERNELVER/modules.dep"
 		fi
 		for _module in $EXTRA_MODULES; do
-			_module_file="$(modinfo --set-version "$kdump_kver" --filename "$_module" 2>/dev/null)"
+			_module_file="$(modinfo --set-version "$KDUMP_KERNELVER" --filename "$_module" 2>/dev/null)"
 			if [[ $? -eq 0 ]]; then
 				files="$files $_module_file"
 				for _dep_modules in $(modinfo -F depends $_module | tr ',' ' '); do
-				    files="$files $(modinfo --set-version "$kdump_kver" --filename $_dep_modules 2>/dev/null)"
+				    files="$files $(modinfo --set-version "$KDUMP_KERNELVER" --filename $_dep_modules 2>/dev/null)"
 				done
 			else
 				# If it's not a module nor builtin, give an error
-				if ! ( modprobe --set-version "$kdump_kver" --dry-run "$_module" &>/dev/null ); then
+				if ! ( modprobe --set-version "$KDUMP_KERNELVER" --dry-run "$_module" &>/dev/null ); then
 					echo "Module $_module not found"
 				fi
 			fi
@@ -472,8 +472,8 @@ check_dump_fs_modified()
 	check_block_and_slaves_all _record_block_drivers "$(get_maj_min "$_target")"
 	for _driver in $_target_drivers; do
 		# Skip deprecated/invalid driver name or built-in module
-		_module_name=$(modinfo --set-version "$kdump_kver" -F name $_driver 2>/dev/null)
-		_module_filename=$(modinfo --set-version "$kdump_kver" -n $_driver 2>/dev/null)
+		_module_name=$(modinfo --set-version "$KDUMP_KERNELVER" -F name $_driver 2>/dev/null)
+		_module_filename=$(modinfo --set-version "$KDUMP_KERNELVER" -n $_driver 2>/dev/null)
 		if [ $? -ne 0 ] || [ -z "$_module_name" ] || [[ "$_module_filename" = *"(builtin)"* ]]; then
 			continue
 		fi
@@ -540,7 +540,7 @@ check_wdt_modified()
 		# modalias. Currently load all of them.
 		# TODO: Need to find a way to avoid any unwanted module
 		# represented by modalias
-		_wdtdrv=$(modprobe --set-version "$kdump_kver" -R $_wdtdrv 2>/dev/null)
+		_wdtdrv=$(modprobe --set-version "$KDUMP_KERNELVER" -R $_wdtdrv 2>/dev/null)
 		if [[ $_wdtdrv ]]; then
 			for i in $_wdtdrv; do
 				_drivers[$i]=1
@@ -555,7 +555,7 @@ check_wdt_modified()
 			[[ -f "$_wdtppath/modalias" ]] || continue
 
 			_wdtdrv=$(< "$_wdtppath/modalias")
-			_wdtdrv=$(modprobe --set-version "$kdump_kver" -R $_wdtdrv 2>/dev/null)
+			_wdtdrv=$(modprobe --set-version "$KDUMP_KERNELVER" -R $_wdtdrv 2>/dev/null)
 			if [[ $_wdtdrv ]]; then
 				for i in $_wdtdrv; do
 					_drivers[$i]=1
@@ -700,7 +700,7 @@ load_kdump()
 
 	$KEXEC $KEXEC_ARGS $standard_kexec_args \
 		--command-line="$KDUMP_COMMANDLINE" \
-		--initrd=$TARGET_INITRD $kdump_kernel
+		--initrd=$TARGET_INITRD $KDUMP_KERNEL
 	if [ $? == 0 ]; then
 		echo "kexec: loaded kdump kernel"
 		return 0
