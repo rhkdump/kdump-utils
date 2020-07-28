@@ -4,7 +4,7 @@
 
 Name: kexec-tools
 Version: 2.0.20
-Release: 14%{?dist}
+Release: 15%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -357,6 +357,9 @@ done
 %endif
 
 %changelog
+* Tue Jul 28 2020 Fedora Release Engineering <releng@fedoraproject.org> - 2.0.20-15
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_33_Mass_Rebuild
+
 * Wed Jul 1 2020 Kairui Song <kasong@redhat.com> - 2.0.20-14
 - s390x: enable the kexec file load by default
 - x86_64: enable the kexec file load by default
