@@ -151,7 +151,7 @@ rebuild_initrd()
 check_exist()
 {
 	for file in $1; do
-		if [ ! -f "$file" ]; then
+		if [ ! -e "$file" ]; then
 			echo -n "Error: $file not found."; echo
 			return 1
 		fi
@@ -385,11 +385,11 @@ check_files_modified()
 		done
 	fi
 
+	# HOOKS is mandatory and need to check the modification time
+	files="$files $HOOKS"
 	check_exist "$files" && check_executable "$EXTRA_BINS"
 	[ $? -ne 0 ] && return 2
 
-	# HOOKS only need to check the modification here
-	files="$files $HOOKS"
 	for file in $files; do
 		if [ -e "$file" ]; then
 			time_stamp=`stat -c "%Y" $file`
