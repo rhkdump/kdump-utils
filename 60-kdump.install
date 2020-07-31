@@ -1,0 +1,30 @@
+#!/usr/bin/bash
+
+COMMAND="$1"
+KERNEL_VERSION="$2"
+BOOT_DIR_ABS="$3"
+KERNEL_IMAGE="$4"
+
+if ! [[ ${KERNEL_INSTALL_MACHINE_ID-x} ]]; then
+    exit 0
+fi
+
+if [[ -d "$BOOT_DIR_ABS" ]]; then
+    KDUMP_INITRD="initrdkdump"
+else
+    BOOT_DIR_ABS="/boot"
+    KDUMP_INITRD="initramfs-${KERNEL_VERSION}kdump.img"
+fi
+
+ret=0
+case "$COMMAND" in
+    add)
+        # Do nothing, kdump initramfs is strictly host only
+        # and managed by kdump service
+        ;;
+    remove)
+        rm -f -- "$BOOT_DIR_ABS/$KDUMP_INITRD"
+        ret=$?
+        ;;
+esac
+exit $ret

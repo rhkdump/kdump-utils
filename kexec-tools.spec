@@ -36,6 +36,7 @@ Source26: live-image-kdump-howto.txt
 Source27: early-kdump-howto.txt
 Source28: kdump-udev-throttler
 Source29: kdump.sysconfig.aarch64
+Source30: 60-kdump.install
 
 #######################################
 # These are sources for mkdumpramfs
@@ -203,6 +204,7 @@ install -m 644 %{SOURCE14} $RPM_BUILD_ROOT%{_udevrulesdir}/98-kexec.rules
 install -m 644 %{SOURCE15} $RPM_BUILD_ROOT%{_mandir}/man5/kdump.conf.5
 install -m 644 %{SOURCE16} $RPM_BUILD_ROOT%{_unitdir}/kdump.service
 install -m 755 -D %{SOURCE22} $RPM_BUILD_ROOT%{_prefix}/lib/systemd/system-generators/kdump-dep-generator.sh
+install -m 755 -D %{SOURCE30} $RPM_BUILD_ROOT%{_prefix}/lib/kernel/install.d/60-kdump.install
 
 %ifarch %{ix86} x86_64 ppc64 s390x ppc64le aarch64
 install -m 755 makedumpfile-%{mkdf_ver}/makedumpfile $RPM_BUILD_ROOT/usr/sbin/makedumpfile
@@ -343,6 +345,7 @@ done
 %{_mandir}/man5/*
 %{_unitdir}/kdump.service
 %{_prefix}/lib/systemd/system-generators/kdump-dep-generator.sh
+%{_prefix}/lib/kernel/install.d/60-kdump.install
 %doc News
 %license COPYING
 %doc TODO
