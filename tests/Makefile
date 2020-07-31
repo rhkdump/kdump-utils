@@ -1,3 +1,4 @@
+TEST_CASE ?=
 BASE_IMAGE ?=
 
 TEST_ROOT := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
@@ -74,6 +75,13 @@ $(TEST_ROOT)/output/test-base-image: $(BUILD_ROOT)/inst-base-image $(KEXEC_TOOLS
 		$(TEST_ROOT)/output/test-base-image \
 		$(TEST_ROOT)/scripts/build-scripts/test-base-image.sh \
 		$(KEXEC_TOOLS_RPM)
+
+test-run: $(TEST_ROOT)/output/test-base-image
+ifeq ($(strip $(TEST_CASE)),)
+	$(TEST_ROOT)/scripts/run-test.sh
+else
+	$(TEST_ROOT)/scripts/run-test.sh --console $(TEST_CASE)
+endif
 
 clean:
 	rm -rf $(TEST_ROOT)/build
