@@ -88,6 +88,7 @@ for test_case in $testcases; do
 		echo "-------- Console log: $(get_test_console_file $script)"
 		echo "-------- Test log: $(get_test_output_file $script)"
 		test_outputs+="$(get_test_output_file $script) "
+
 		rm -f $(get_test_console_file $script)
 		rm -f $(get_test_output_file $script)
 
@@ -104,6 +105,7 @@ for test_case in $testcases; do
 	echo "-------- Console log: $(get_test_console_file $script)"
 	echo "-------- Test log: $(get_test_output_file $script)"
 	test_outputs+="$(get_test_output_file $script) "
+
 	rm -f $(get_test_console_file $script)
 	rm -f $(get_test_output_file $script)
 
@@ -116,10 +118,25 @@ for test_case in $testcases; do
 	fi
 
 	res="$(gather_test_result $test_outputs)"
+
 	[ $? -ne 0 ] && ret=$(expr $ret + 1)
 	results[$test_case]="$res"
 
 	echo -e "-------- Test finished: $test_case $res --------"
+	for script in $scripts; do
+		script="$testdir/$script"
+		output="$(get_test_output_file $script) "
+		image="$(get_test_image $script)"
+		vmcore="$(sed -n 's/^VMCORE: \(\S*\).*/\1/p' $output)"
+		kernel="$(sed -n 's/^KERNEL VERSION: \(\S*\).*/\1/p' $output)"
+		if [ -n "$vmcore" ]; then
+			echo "You can retrive the verify the vmcore file using following command:"
+			echo "./scripts/copy-from-image.sh \\"
+			echo "    $image \\"
+			echo "    $vmcore ./"
+			echo "Kernel package verion is: $kernel"
+		fi
+	done
 done
 
 echo "======== Test results ========"

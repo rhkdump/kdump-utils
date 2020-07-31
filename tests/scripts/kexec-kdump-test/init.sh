@@ -92,6 +92,8 @@ has_valid_vmcore_dir() {
 	fi
 
 	test_output "Found a valid vmcore in \"$vmcore_dir\""
+	test_output "VMCORE: $vmcore"
+	test_output "KERNEL VERSION: $(rpm -q kernel-core)"
 
 	return 0
 }

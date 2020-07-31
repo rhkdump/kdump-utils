@@ -164,9 +164,19 @@ mount_image() {
 	[ $? -ne 0 ] && perror_exit "failed to mount device '$mnt_dev'"
 }
 
-shell_in_image() {
-	local image=$1 && shift
+get_image_mount_root() {
+	local image=$1
 	local root=${MNTS[$image]}
+
+	echo $root
+
+	if [ -z "$root" ]; then
+		return 1
+	fi
+}
+
+shell_in_image() {
+	local root=$(get_image_mount_root $1) && shift
 
 	pushd $root
 
@@ -176,8 +186,7 @@ shell_in_image() {
 }
 
 inst_pkg_in_image() {
-	local image=$1 && shift
-	local root=${MNTS[$image]}
+	local root=$(get_image_mount_root $1) && shift
 
 	# LSB not available
 	# release_info=$($SUDO chroot $root /bin/bash -c "lsb_release -a")
@@ -193,10 +202,8 @@ inst_pkg_in_image() {
 }
 
 run_in_image() {
-	local image=$1 && shift
-	local root=${MNTS[$image]}
+	local root=$(get_image_mount_root $1) && shift
 
-	echo $SUDO chroot $root /bin/bash -c $@ > /dev/stderr
 	$SUDO chroot $root /bin/bash -c "$@"
 }
 
