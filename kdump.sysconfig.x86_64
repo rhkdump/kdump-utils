@@ -28,7 +28,7 @@ KDUMP_COMMANDLINE_APPEND="irqpoll nr_cpus=1 reset_devices cgroup_disable=memory 
 #
 # Example:
 #   KEXEC_ARGS="--elf32-core-headers"
-KEXEC_ARGS="-s"
+KEXEC_ARGS=""
 
 #Where to find the boot image
 #KDUMP_BOOTDIR="/boot"
