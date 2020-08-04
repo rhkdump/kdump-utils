@@ -4,7 +4,7 @@
 
 Name: kexec-tools
 Version: 2.0.20
-Release: 16%{?dist}
+Release: 17%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -357,6 +357,18 @@ done
 %endif
 
 %changelog
+* Tue Aug 04 2020 Kairui Song <kasong@redhat.com> - 2.0.20-16
+- Drop static lib dependencies
+- Revert "x86_64: enable the kexec file load by default"
+- Revert "s390x: enable the kexec file load by default"
+- kdumpctl: exit if either pre.d or post.d is missing
+- kdump_pre: make notes more precise
+- dracut-kdump.sh: exit shell when machine reboot
+- kdumpctl: detect modification of scripts by its directory's timestamp
+- module-setup.sh: suppress false alarm
+- kexec-tools.spec: make the existence of pre.d and post.d mandatory
+- ppc64/kdump: use kexec_file_load when secureboot is enabled
+
 * Sat Aug 01 2020 Fedora Release Engineering <releng@fedoraproject.org> - 2.0.20-16
 - Second attempt - Rebuilt for
   https://fedoraproject.org/wiki/Fedora_33_Mass_Rebuild
