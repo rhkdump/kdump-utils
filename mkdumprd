@@ -400,7 +400,7 @@ if ! check_resettable; then
 fi
 
 if ! check_crypt; then
-    echo "Warning: Encrypted device is in dump path. User will prompted for password during second kernel boot." 
+    echo "Warning: Encrypted device is in dump path, which is not recommended, see kexec-kdump-howto.txt for more details."
 fi
 
 # firstly get right SSH_KEY_LOCATION
