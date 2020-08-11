@@ -788,6 +788,8 @@ kdump_install_random_seed() {
 }
 
 kdump_install_systemd_conf() {
+    local failure_action=$(get_option_value "failure_action")
+
     # Kdump turns out to require longer default systemd mount timeout
     # than 1st kernel(90s by default), we use default 300s for kdump.
     grep -r "^[[:space:]]*DefaultTimeoutStartSec=" ${initdir}/etc/systemd/system.conf* &>/dev/null
@@ -800,7 +802,7 @@ kdump_install_systemd_conf() {
     # Forward logs to console directly, this avoids unneccessary memory
     # consumption and make console output more useful.
     # Only do so for non fadump image.
-    if ! is_fadump_capable; then
+    if ! is_fadump_capable && [ "$failure_action" != "shell" ]; then
         mkdir -p ${initdir}/etc/systemd/journald.conf.d
         echo "[Journal]" > ${initdir}/etc/systemd/journald.conf.d/kdump.conf
         echo "Storage=none" >> ${initdir}/etc/systemd/journald.conf.d/kdump.conf
