@@ -787,6 +787,27 @@ kdump_install_random_seed() {
        bs=$poolsize count=1 2> /dev/null
 }
 
+kdump_install_systemd_conf() {
+    # Kdump turns out to require longer default systemd mount timeout
+    # than 1st kernel(90s by default), we use default 300s for kdump.
+    grep -r "^[[:space:]]*DefaultTimeoutStartSec=" ${initdir}/etc/systemd/system.conf* &>/dev/null
+    if [ $? -ne 0 ]; then
+        mkdir -p ${initdir}/etc/systemd/system.conf.d
+        echo "[Manager]" > ${initdir}/etc/systemd/system.conf.d/kdump.conf
+        echo "DefaultTimeoutStartSec=300s" >> ${initdir}/etc/systemd/system.conf.d/kdump.conf
+    fi
+
+    # Forward logs to console directly, this avoids unneccessary memory
+    # consumption and make console output more useful.
+    # Only do so for non fadump image.
+    if ! is_fadump_capable; then
+        mkdir -p ${initdir}/etc/systemd/journald.conf.d
+        echo "[Journal]" > ${initdir}/etc/systemd/journald.conf.d/kdump.conf
+        echo "Storage=none" >> ${initdir}/etc/systemd/journald.conf.d/kdump.conf
+        echo "ForwardToConsole=yes" >> ${initdir}/etc/systemd/journald.conf.d/kdump.conf
+    fi
+}
+
 install() {
     kdump_install_conf
     overwrite_sysctl_conf
@@ -826,6 +847,8 @@ install() {
     # at some point of time.
     kdump_check_iscsi_targets
 
+    kdump_install_systemd_conf
+
     # nfs/ssh dump will need to get host ip in second kernel and need to call 'ip' tool, see get_host_ip for more detail
     if is_nfs_dump_target || is_ssh_dump_target; then
         inst "ip"
@@ -840,25 +863,8 @@ install() {
       's/\(^[[:space:]]*reserved_memory[[:space:]]*=\)[[:space:]]*[[:digit:]]*/\1 1024/' \
       ${initdir}/etc/lvm/lvm.conf &>/dev/null
 
-    # Kdump turns out to require longer default systemd mount timeout
-    # than 1st kernel(90s by default), we use default 300s for kdump.
-    grep -r "^[[:space:]]*DefaultTimeoutStartSec=" ${initdir}/etc/systemd/system.conf* &>/dev/null
-    if [ $? -ne 0 ]; then
-        mkdir -p ${initdir}/etc/systemd/system.conf.d
-        echo "[Manager]" > ${initdir}/etc/systemd/system.conf.d/kdump.conf
-        echo "DefaultTimeoutStartSec=300s" >> ${initdir}/etc/systemd/system.conf.d/kdump.conf
-    fi
-
-    # Forward logs to console directly, this avoids unneccessary memory
-    # consumption and make console output more useful.
-    # Only do so for non fadump image.
+    # Save more memory by dropping switch root capability
     if ! is_fadump_capable; then
-        mkdir -p ${initdir}/etc/systemd/journald.conf.d
-        echo "[Journal]" > ${initdir}/etc/systemd/journald.conf.d/kdump.conf
-        echo "Storage=none" >> ${initdir}/etc/systemd/journald.conf.d/kdump.conf
-        echo "ForwardToConsole=yes" >> ${initdir}/etc/systemd/journald.conf.d/kdump.conf
-
-        # Save more memory by dropping switch root capability
         dracut_no_switch_root
     fi
 }
