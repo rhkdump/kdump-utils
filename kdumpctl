@@ -217,47 +217,34 @@ restore_default_initrd()
 
 check_config()
 {
-	local nr
-
-	nr=$(awk 'BEGIN{cnt=0} /^raw|^ssh[[:blank:]]|^nfs|^ext[234]|^xfs|^btrfs|^minix|^dracut_args .*\-\-mount/{cnt++} END{print cnt}' $KDUMP_CONFIG_FILE)
-	[ $nr -gt 1 ] && {
-		echo "More than one dump targets specified."
-		return 1
-	}
-
-	# Check if path option is set more than once.
-        nr=$(awk 'BEGIN{cnt=0} /^path /{cnt++} END{print cnt}' $KDUMP_CONFIG_FILE)
-        [ $nr -gt 1 ] && {
-                echo "Mutiple paths specifed in $KDUMP_CONFIG_FILE"
-                return 1
-        }
-
-	nr=$(grep "^dracut_args .*\-\-mount" $KDUMP_CONFIG_FILE | grep -o "\-\-mount" | wc -l)
-	[ $nr -gt 1 ] && {
-		echo "Multiple mount targets specified in one \"dracut_args\"."
-		return 1
-	}
-
-	# Check if we have any leading spaces (or tabs) before the
-	# variable name in the kdump conf file
-	if grep -E -q '^[[:blank:]]+[a-z]' $KDUMP_CONFIG_FILE; then
-		echo "No whitespaces are allowed before a kdump option name in $KDUMP_CONFIG_FILE"
-		return 1
-	fi
-
+	local -A _opt_rec
 	while read config_opt config_val; do
+		if [ -z "$config_val" ]; then
+			echo "Invalid kdump config value for option $config_opt"
+			return 1
+		fi
+
 		case "$config_opt" in
-		\#* | "")
-			;;
-		raw|ext2|ext3|ext4|minix|btrfs|xfs|nfs|ssh|sshkey|path|core_collector|kdump_post|kdump_pre|extra_bins|extra_modules|failure_action|default|final_action|force_rebuild|force_no_rebuild|dracut_args|fence_kdump_args|fence_kdump_nodes)
-			# remove inline comments after the end of a directive.
-			[ -z "$config_val" ] && {
-				echo "Invalid kdump config value for option $config_opt."
-				return 1;
-			}
-			if [ -d "/proc/device-tree/ibm,opal/dump" ] && [ "$config_opt" == "raw" ]; then
-				echo "WARNING: Won't capture opalcore when 'raw' dump target is used."
+		dracut_args)
+			if [[ $config_val == *--mount* ]]; then
+				if [ $(echo $config_val | grep -o "\-\-mount" | wc -l) -ne 1 ]; then
+					echo "Multiple mount targets specified in one \"dracut_args\"."
+					return 1
+				fi
+				config_opt=_target
 			fi
+			;;
+		raw)
+			if [ -d "/proc/device-tree/ibm,opal/dump" ]; then
+				echo "WARNING: Won't capture opalcore when 'raw' dump target is used."
+				return 1
+			fi
+			config_opt=_target
+			;;
+		ext[234]|minix|btrfs|xfs|nfs|ssh)
+			config_opt=_target
+			;;
+		sshkey|path|core_collector|kdump_post|kdump_pre|extra_bins|extra_modules|failure_action|default|final_action|force_rebuild|force_no_rebuild|fence_kdump_args|fence_kdump_nodes)
 			;;
 		net|options|link_delay|disk_timeout|debug_mem_level|blacklist)
 			echo "Deprecated kdump config option: $config_opt. Refer to kdump.conf manpage for alternatives."
@@ -265,14 +252,23 @@ check_config()
 			;;
 		*)
 			echo "Invalid kdump config option $config_opt"
-			return 1;
+			return 1
 			;;
 		esac
+
+		if [ -n "${_opt_rec[$config_opt]}" ]; then
+			if [ $config_opt == _target ]; then
+				echo "More than one dump targets specified"
+			else
+				echo "Duplicated kdump config value of option $config_opt"
+			fi
+			return 1
+		fi
+		_opt_rec[$config_opt]="$config_val"
 	done <<< "$(read_strip_comments $KDUMP_CONFIG_FILE)"
 
 	check_failure_action_config || return 1
 	check_final_action_config || return 1
-
 	check_fence_kdump_config || return 1
 
 	return 0
