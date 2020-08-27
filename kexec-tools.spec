@@ -4,7 +4,7 @@
 
 Name: kexec-tools
 Version: 2.0.20
-Release: 17%{?dist}
+Release: 18%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -360,7 +360,14 @@ done
 %endif
 
 %changelog
-* Tue Aug 04 2020 Kairui Song <kasong@redhat.com> - 2.0.20-16
+* Thu Aug 27 2020 Kairui Song <kasong@redhat.com> - 2.0.20-18
+- mkdumprd: Improve the warning message when using encrypted target
+- kdump-lib.sh: Remove is_atomic
+- Refactor kernel image and initrd detection code
+- early-kdump: Use consistent symbol link for kernel and initramfs
+- Add a kernel install hook to clean up kdump initramfs
+
+* Tue Aug 04 2020 Kairui Song <kasong@redhat.com> - 2.0.20-17
 - Drop static lib dependencies
 - Revert "x86_64: enable the kexec file load by default"
 - Revert "s390x: enable the kexec file load by default"
