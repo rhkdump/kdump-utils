@@ -612,6 +612,7 @@ is_secure_boot_enforced()
 		return 0
     fi
 
+    # Detect secure boot on x86 and arm64
     secure_boot_file=$(find /sys/firmware/efi/efivars -name SecureBoot-* 2>/dev/null)
     setup_mode_file=$(find /sys/firmware/efi/efivars -name SetupMode-* 2>/dev/null)
 
@@ -622,6 +623,11 @@ is_secure_boot_enforced()
         if [ "$secure_boot_byte" = "1" ] && [ "$setup_mode_byte" = "0" ]; then
             return 0
         fi
+    fi
+
+    # Detect secure boot on s390x
+    if [[ -e "/sys/firmware/ipl/secure" && "$(cat /sys/firmware/ipl/secure)" == "1" ]]; then
+        return 0
     fi
 
     return 1
