@@ -232,7 +232,7 @@ create_image_from_base_image() {
 		image=$decompressed_image
 	fi
 
-	local image_fmt=$(qemu-img info $image | sed -n "s/file format:\s*\(.*\)/\1/p")
+	local image_fmt=$(get_image_fmt $image)
 	if [ "$image_fmt" != "raw" ]; then
 		if [ "$image_fmt" == "qcow2" ]; then
 			echo "Source image is qcow2, using snapshot..."
