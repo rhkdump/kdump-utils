@@ -61,6 +61,10 @@ get_image_fmt() {
 	return 1
 }
 
+fmt_is_qcow2() {
+	[ "$1" == "qcow2" ] || [ "$1" == "qcow2 backing qcow2" ]
+}
+
 # If it's partitioned, return the mountable partition, else return the dev
 get_mountable_dev() {
 	local dev=$1 parts
@@ -143,7 +147,7 @@ mount_image() {
 		dev="$($SUDO losetup --show -f $image)"
 		[ $? -ne 0 ] || [ -z "$dev" ] && perror_exit "failed to setup loop device"
 
-	elif [ "$fmt" == "qcow2" ]; then
+	elif fmt_is_qcow2 "$fmt"; then
 		prepare_nbd
 
 		dev=$(mount_nbd $image)
@@ -234,11 +238,11 @@ create_image_from_base_image() {
 
 	local image_fmt=$(get_image_fmt $image)
 	if [ "$image_fmt" != "raw" ]; then
-		if [ "$image_fmt" == "qcow2" ]; then
+		if fmt_is_qcow2 "$image_fmt"; then
 			echo "Source image is qcow2, using snapshot..."
 			qemu-img create -f qcow2 -b $image $output
 		else
-			perror_exit "Unrecognized base image format $image_mnt"
+			perror_exit "Unrecognized base image format '$image_mnt'"
 		fi
 	else
 		echo "Source image is raw, converting to qcow2..."
