@@ -41,7 +41,7 @@ mount point.
 
 .B ssh <user@server>
 .RS
-Will scp /proc/vmcore to <user@server>:<path>/%HOST-%DATE/,
+Will save /proc/vmcore through ssh pipe to <user@server>:<path>/%HOST-%DATE/,
 supports DNS. NOTE: make sure user has necessary write permissions on
 server and that a fqdn is used as the server name.
 .RE
