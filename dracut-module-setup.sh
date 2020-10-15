@@ -40,6 +40,10 @@ depends() {
         dwarning "Required modules to build a squashed kdump image is missing!"
     fi
 
+    if is_wdt_active; then
+        add_opt_module watchdog
+    fi
+
     if is_ssh_dump_target; then
         _dep="$_dep ssh-client"
     fi

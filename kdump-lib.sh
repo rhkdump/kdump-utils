@@ -479,6 +479,18 @@ is_wdt_mod_omitted() {
 	return $ret
 }
 
+is_wdt_active() {
+    local active
+
+    [ -d /sys/class/watchdog ] || return 1
+    for dir in /sys/class/watchdog/*; do
+        [ -f "$dir/state" ] || continue
+        active=$(< "$dir/state")
+        [ "$active" =  "active" ] && return 0
+    done
+    return 1
+}
+
 # If "dracut_args" contains "--mount" information, use it
 # directly without any check(users are expected to ensure
 # its correctness).

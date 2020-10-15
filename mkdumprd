@@ -44,20 +44,6 @@ trap '
 # clean up after ourselves no matter how we die.
 trap 'exit 1;' SIGINT
 
-is_wdt_addition_needed() {
-	local active
-
-	is_wdt_mod_omitted
-	[[ $? -eq 0 ]] && return 1
-	[[ -d /sys/class/watchdog/ ]] || return 1
-	for dir in /sys/class/watchdog/*; do
-		[[ -f "$dir/state" ]] || continue
-		active=$(< "$dir/state")
-		[[ "$active" =  "active" ]] && return 0
-	done
-	return 1
-}
-
 add_dracut_arg() {
     dracut_args="$dracut_args $@"
 }
@@ -415,10 +401,6 @@ keyfile=$(awk '/^sshkey/ {print $2}' $conf_file)
 if [ -f "$keyfile" ]; then
     # canonicalize the path
     SSH_KEY_LOCATION=$(/usr/bin/readlink -m $keyfile)
-fi
-
-if is_wdt_addition_needed; then
-    add_dracut_arg "-a" "watchdog"
 fi
 
 while read config_opt config_val;
