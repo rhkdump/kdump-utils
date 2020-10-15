@@ -36,6 +36,14 @@ depends() {
         dwarning "Required modules to build a squashed kdump image is missing!"
     fi
 
+    if is_ssh_dump_target; then
+        _dep="$_dep ssh-client"
+    fi
+
+    if [ "$(uname -m)" = "s390x" ]; then
+        _dep="$_dep znet"
+    fi
+
     if [ -n "$( find /sys/devices -name drm )" ] || [ -d /sys/module/hyperv_fb ]; then
         _dep="$_dep drm"
     fi
@@ -45,7 +53,6 @@ depends() {
     fi
 
     echo $_dep
-    return 0
 }
 
 kdump_is_bridge() {

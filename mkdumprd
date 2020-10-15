@@ -62,10 +62,6 @@ add_dracut_arg() {
     dracut_args="$dracut_args $@"
 }
 
-add_dracut_module() {
-    add_dracut_arg "--add" "\"$1\""
-}
-
 add_dracut_mount() {
     add_dracut_arg "--mount" "\"$1\""
 }
@@ -421,10 +417,6 @@ if [ -f "$keyfile" ]; then
     SSH_KEY_LOCATION=$(/usr/bin/readlink -m $keyfile)
 fi
 
-if [ "$(uname -m)" = "s390x" ]; then
-    add_dracut_module "znet"
-fi
-
 if is_wdt_addition_needed; then
     add_dracut_arg "-a" "watchdog"
 fi
@@ -457,7 +449,6 @@ do
         then
             mkdir_save_path_ssh $config_val
             check_size ssh $config_val
-            add_dracut_module "ssh-client"
             add_dracut_sshkey "$SSH_KEY_LOCATION"
         else
             perror_exit "Bad ssh dump target $config_val"
