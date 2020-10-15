@@ -20,6 +20,10 @@ check() {
 depends() {
     local _dep="base shutdown"
 
+    add_opt_module() {
+        [[ " $omit_dracutmodules " != *\ $1\ * ]] && _dep="$_dep $1"
+    }
+
     is_squash_available() {
         for kmodule in squashfs overlay loop; do
             if [ -z "$KDUMP_KERNELVER" ]; then
@@ -31,7 +35,7 @@ depends() {
     }
 
     if is_squash_available && ! is_fadump_capable; then
-        _dep="$_dep squash"
+        add_opt_module squash
     else
         dwarning "Required modules to build a squashed kdump image is missing!"
     fi
@@ -45,7 +49,7 @@ depends() {
     fi
 
     if [ -n "$( find /sys/devices -name drm )" ] || [ -d /sys/module/hyperv_fb ]; then
-        _dep="$_dep drm"
+        add_opt_module drm
     fi
 
     if is_generic_fence_kdump || is_pcs_fence_kdump; then
