@@ -452,7 +452,7 @@ check_drivers_modified()
 	fi
 
 	# Include watchdog drivers if watchdog module is not omitted
-	is_wdt_mod_omitted || _new_drivers+=" $(get_watchdog_drvs)"
+	is_dracut_mod_omitted watchdog || _new_drivers+=" $(get_watchdog_drvs)"
 
 	[ -z "$_new_drivers" ] && return 0
 	_old_drivers="$(lsinitrd $TARGET_INITRD -f /usr/lib/dracut/hostonly-kernel-modules.txt | tr '\n' ' ')"

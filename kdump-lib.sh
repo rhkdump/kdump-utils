@@ -455,28 +455,21 @@ get_ifcfg_filename() {
     echo -n "${ifcfg_file}"
 }
 
-# returns 0 when omission of watchdog module is desired in dracut_args
+# returns 0 when omission of a module is desired in dracut_args
 # returns 1 otherwise
-is_wdt_mod_omitted() {
-	local dracut_args
-	local ret=1
+is_dracut_mod_omitted() {
+    local dracut_args dracut_mod=$1
 
-	dracut_args=$(grep  "^dracut_args" /etc/kdump.conf)
-	[[ -z $dracut_args ]] && return $ret
+    set -- $(grep  "^dracut_args" /etc/kdump.conf)
+    while [ $# -gt 0 ]; do
+        case $1 in
+            -o|--omit)
+                [[ " ${2//[^[:alnum:]]/ } " ==  *" $dracut_mod "* ]] && return 0
+        esac
+        shift
+    done
 
-	eval set -- $dracut_args
-	while :; do
-		[[ -z $1 ]] && break
-		case $1 in
-			-o|--omit)
-				echo $2 | grep -qw "watchdog"
-				[[ $? == 0 ]] && ret=0
-				break
-		esac
-		shift
-	done
-
-	return $ret
+    return 1
 }
 
 is_wdt_active() {
