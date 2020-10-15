@@ -451,10 +451,13 @@ check_drivers_modified()
 		check_block_and_slaves_all _record_block_drivers "$(get_maj_min "$_target")"
 	fi
 
+	# Include watchdog drivers if watchdog module is not omitted
+	is_wdt_mod_omitted || _new_drivers+=" $(get_watchdog_drvs)"
+
 	[ -z "$_new_drivers" ] && return 0
 	_old_drivers="$(lsinitrd $TARGET_INITRD -f /usr/lib/dracut/hostonly-kernel-modules.txt | tr '\n' ' ')"
 
-	ddebug "Modules required for dump target: '$_new_drivers'"
+	ddebug "Modules required for kdump: '$_new_drivers'"
 	ddebug "Modules included in old initramfs: '$_old_drivers'"
 	for _driver in $_new_drivers; do
 		# Skip deprecated/invalid driver name or built-in module
@@ -526,62 +529,6 @@ check_fs_modified()
 	return 1
 }
 
-check_wdt_modified()
-{
-	local -A _drivers
-	local _alldrivers _active _wdtdrv _wdtppath _dir
-	local wd_old wd_new
-
-	is_wdt_mod_omitted
-	[[ $? -eq 0 ]] && return 0
-	[[ -d /sys/class/watchdog/ ]] || return 0
-
-	# Copied logic from dracut 04watchdog/module-setup.sh::installkernel()
-	for _dir in /sys/class/watchdog/*; do
-		[[ -d "$_dir" ]] || continue
-		[[ -f "$_dir/state" ]] || continue
-		_active=$(< "$_dir/state")
-		[[ "$_active" =  "active" ]] || continue
-		# device/modalias will return driver of this device
-		_wdtdrv=$(< "$_dir/device/modalias")
-		# There can be more than one module represented by same
-		# modalias. Currently load all of them.
-		# TODO: Need to find a way to avoid any unwanted module
-		# represented by modalias
-		_wdtdrv=$(modprobe --set-version "$KDUMP_KERNELVER" -R $_wdtdrv 2>/dev/null)
-		if [[ $_wdtdrv ]]; then
-			for i in $_wdtdrv; do
-				_drivers[$i]=1
-			done
-		fi
-		# however in some cases, we also need to check that if there is
-		# a specific driver for the parent bus/device.  In such cases
-		# we also need to enable driver for parent bus/device.
-		_wdtppath=$(readlink -f "$_dir/device")
-		while [[ -d "$_wdtppath" ]] && [[ "$_wdtppath" != "/sys" ]]; do
-			_wdtppath=$(readlink -f "$_wdtppath/..")
-			[[ -f "$_wdtppath/modalias" ]] || continue
-
-			_wdtdrv=$(< "$_wdtppath/modalias")
-			_wdtdrv=$(modprobe --set-version "$KDUMP_KERNELVER" -R $_wdtdrv 2>/dev/null)
-			if [[ $_wdtdrv ]]; then
-				for i in $_wdtdrv; do
-					_drivers[$i]=1
-				done
-			fi
-		done
-	done
-
-	# ensure that watchdog module is loaded as early as possible
-	_alldrivers="${!_drivers[*]}"
-	[[ $_alldrivers ]] && wd_new="rd.driver.pre=${_alldrivers// /,}"
-	wd_old=$(lsinitrd $TARGET_INITRD -f etc/cmdline.d/00-watchdog.conf)
-
-	[[ "$wd_old" = "$wd_new" ]] && return 0
-
-	return 1
-}
-
 # returns 0 if system is not modified
 # returns 1 if system is modified
 # returns 2 if system modification is invalid
@@ -607,12 +554,6 @@ check_system_modified()
 	ret=$?
 	if [ $ret -ne 0 ]; then
 		return $ret
-	fi
-
-	check_wdt_modified
-	if [ $? -ne 0 ]; then
-		dinfo "Detected change in watchdog state"
-		return 1
 	fi
 
 	return 0
