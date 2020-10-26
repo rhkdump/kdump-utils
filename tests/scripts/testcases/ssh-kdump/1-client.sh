@@ -11,7 +11,7 @@ on_test() {
 	if [ "$boot_count" -eq 1 ]; then
 cat << EOF > /etc/kdump.conf
 ssh root@192.168.77.1
-core_collector makedumpfile -l --message-level 1 -d 31 -F
+core_collector makedumpfile -l --message-level 7 -d 31 -F
 EOF
 
 		ssh-keygen -q -t rsa -N '' -f /root/.ssh/id_rsa <<< y &>/dev/ttyS1

@@ -6,7 +6,7 @@
 KDUMP_PATH="/var/crash"
 KDUMP_LOG_FILE="/run/initramfs/kexec-dmesg.log"
 CORE_COLLECTOR=""
-DEFAULT_CORE_COLLECTOR="makedumpfile -l --message-level 1 -d 31"
+DEFAULT_CORE_COLLECTOR="makedumpfile -l --message-level 7 -d 31"
 DMESG_COLLECTOR="/sbin/vmcore-dmesg"
 FAILURE_ACTION="systemctl reboot -f"
 DATEDIR=`date +%Y-%m-%d-%T`

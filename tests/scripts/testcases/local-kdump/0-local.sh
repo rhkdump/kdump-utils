@@ -8,7 +8,7 @@ on_test() {
 	if [ $boot_count -eq 1 ]; then
 		cat << EOF > /etc/kdump.conf
 path /var/crash
-core_collector makedumpfile -l --message-level 1 -d 31
+core_collector makedumpfile -l --message-level 7 -d 31
 EOF
 		kdumpctl start || test_failed "Failed to start kdump"
 

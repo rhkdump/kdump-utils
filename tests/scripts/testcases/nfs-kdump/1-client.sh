@@ -11,7 +11,7 @@ on_test() {
 	if [ "$boot_count" -eq 1 ]; then
 		cat << EOF > /etc/kdump.conf
 nfs $nfs_server:/srv/nfs
-core_collector makedumpfile -l --message-level 1 -d 31
+core_collector makedumpfile -l --message-level 7 -d 31
 EOF
 
 		while ! ping -c 1 $nfs_server -W 1; do
