@@ -885,3 +885,38 @@ Debugging Tips
   minicom -C /tmp/console-logs
 
   Now minicom should be logging serial console in file console-logs.
+
+- Using the logger to output kdump log messages
+
+  Currently, kdump messages are printed with the 'echo' command or redirect
+  to console, and which does not support to output kdump messages according
+  to the log level.
+
+  That is not convenient to debug kdump issues, we usually need to capture
+  additional debugging information via the modification of the options or the
+  scripts like kdumpctl, mkdumprd, etc. Because there is no complete debugging
+  messages, which could waste valuable time.
+
+  To cope with this challenging, we introduce the logger to output the kdump
+  messages according to the log level, and provide a chance to save logs to
+  the journald if the journald service is available, and then dump all logs
+  to a file, otherwise dump the logs with the dmesg to a file.
+
+  Logging is controlled by following global variables:
+    - @var kdump_stdloglvl - logging level to standard error (console output)
+    - @var kdump_sysloglvl - logging level to syslog (by logger command)
+    - @var kdump_kmsgloglvl - logging level to /dev/kmsg (only for boot-time)
+  If any of the variables is not set, this function set it to default:
+    - @var kdump_stdloglvl=4 (info)
+    - @var kdump_sysloglvl=4 (info)
+    - @var kdump_kmsgloglvl=0 (no logging)
+
+  Logging levels: fatal(1),error(2),warn(3),info(4),debug(5),trace(6)
+
+  We can easily configure the above variables in the /etc/sysconfig/kdump. For
+  example:
+  kdump_sysloglvl=5
+  kdump_stdloglvl=5
+
+  The above configurations indicate that kdump messages will be printed to the
+  console and journald if the journald service is enabled.
