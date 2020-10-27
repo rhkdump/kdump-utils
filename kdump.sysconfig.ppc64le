@@ -40,3 +40,19 @@ KDUMP_IMG="vmlinuz"
 KDUMP_IMG_EXT=""
 
 #Specify the action after failure
+
+# Logging is controlled by following global variables:
+#   - @var kdump_stdloglvl - logging level to standard error (console output)
+#   - @var kdump_sysloglvl - logging level to syslog (by logger command)
+#   - @var kdump_kmsgloglvl - logging level to /dev/kmsg (only for boot-time)
+# If any of the variables is not set, this function set it to default:
+#   - @var kdump_stdloglvl=4 (info)
+#   - @var kdump_sysloglvl=4 (info)
+#   - @var kdump_kmsgloglvl=0 (no logging)
+#
+# Logging levels: fatal(1),error(2),warn(3),info(4),debug(5),trace(6)
+#
+# For example: the following configurations indicate that kdump messages will be printed
+# to console and journald for debugging case.
+# kdump_sysloglvl=5
+# kdump_stdloglvl=5
