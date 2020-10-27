@@ -1,8 +1,10 @@
 # These variables and functions are useful in 2nd kernel
 
+. /etc/sysconfig/kdump
 . /lib/kdump-lib.sh
 
 KDUMP_PATH="/var/crash"
+KDUMP_LOG_FILE="/run/initramfs/kexec-dmesg.log"
 CORE_COLLECTOR=""
 DEFAULT_CORE_COLLECTOR="makedumpfile -l --message-level 1 -d 31"
 DMESG_COLLECTOR="/sbin/vmcore-dmesg"
@@ -19,6 +21,13 @@ KDUMP_PRE=""
 KDUMP_POST=""
 NEWROOT="/sysroot"
 OPALCORE="/sys/firmware/opal/mpipl/core"
+
+#initiate the kdump logger
+dlog_init
+if [ $? -ne 0 ]; then
+    echo "failed to initiate the kdump logger."
+    exit 1
+fi
 
 get_kdump_confs()
 {
@@ -94,27 +103,40 @@ get_kdump_confs()
     fi
 }
 
+# store the kexec kernel log to a file.
+save_log()
+{
+    dmesg -T > $KDUMP_LOG_FILE
+
+    if command -v journalctl > /dev/null; then
+        journalctl -ab >> $KDUMP_LOG_FILE
+    fi
+}
+
 # dump_fs <mount point>
 dump_fs()
 {
+    local ret
     local _mp=$1
     local _dev=$(get_mount_info SOURCE target $_mp -f)
     local _op=$(get_mount_info OPTIONS target $_mp -f)
 
+    ddebug "_mp=$_mp _dev=$_dev _op=$_op"
+
     # If dump path have a corresponding device entry but not mounted, mount it.
     if [ -n "$_dev" ]; then
         if ! is_mounted "$_mp"; then
-            echo "kdump: dump target $_dev is not mounted, trying to mount..."
+            dinfo "dump target $_dev is not mounted, trying to mount..."
             mkdir -p $_mp
             mount -o $_op $_dev $_mp
 
             if [ $? -ne 0 ]; then
-                echo "kdump: mounting failed (mount point: $_mp, option: $_op)"
+                derror "mounting failed (mount point: $_mp, option: $_op)"
                 return 1
             fi
         fi
     else
-        echo "kdump: failed to dump to \"$_mp\", it's not a mount point!"
+        derror "failed to dump to \"$_mp\", it's not a mount point!"
         return 1
     fi
 
@@ -123,11 +145,11 @@ dump_fs()
 
     local _dump_path=$(echo "$_mp/$KDUMP_PATH/$HOST_IP-$DATEDIR/" | tr -s /)
 
-    echo "kdump: saving to $_dump_path"
+    dinfo "saving to $_dump_path"
 
     # Only remount to read-write mode if the dump target is mounted read-only.
     if [[ "$_op" = "ro"* ]]; then
-       echo "kdump: Mounting Dump target $_dev in rw mode."
+       dinfo "Mounting Dump target $_dev in rw mode."
        mount -o remount,rw $_dev $_mp || return 1
     fi
 
@@ -136,12 +158,18 @@ dump_fs()
     save_vmcore_dmesg_fs ${DMESG_COLLECTOR} "$_dump_path"
     save_opalcore_fs "$_dump_path"
 
-    echo "kdump: saving vmcore"
-    $CORE_COLLECTOR /proc/vmcore $_dump_path/vmcore-incomplete || return 1
+    dinfo "saving vmcore"
+    $CORE_COLLECTOR /proc/vmcore $_dump_path/vmcore-incomplete
+    ret=$?
+    save_log
+    mv $KDUMP_LOG_FILE $_dump_path/
+    if [ $ret -ne 0 ]; then
+	    return 1
+    fi
     mv $_dump_path/vmcore-incomplete $_dump_path/vmcore
     sync
 
-    echo "kdump: saving vmcore complete"
+    dinfo "saving vmcore complete"
 
     # improper kernel cmdline can cause the failure of echo, we can ignore this kind of failure
     return 0
@@ -151,7 +179,7 @@ save_vmcore_dmesg_fs() {
     local _dmesg_collector=$1
     local _path=$2
 
-    echo "kdump: saving vmcore-dmesg.txt"
+    dinfo "saving vmcore-dmesg.txt to ${_path}"
     $_dmesg_collector /proc/vmcore > ${_path}/vmcore-dmesg-incomplete.txt
     _exitcode=$?
     if [ $_exitcode -eq 0 ]; then
@@ -161,9 +189,9 @@ save_vmcore_dmesg_fs() {
         # saving vmcore failed and system rebooted without sync and there
         # was no vmcore-dmesg.txt available.
         sync
-        echo "kdump: saving vmcore-dmesg.txt complete"
+        dinfo "saving vmcore-dmesg.txt complete"
     else
-        echo "kdump: saving vmcore-dmesg.txt failed"
+        derror "saving vmcore-dmesg.txt failed"
     fi
 }
 
@@ -179,25 +207,27 @@ save_opalcore_fs() {
         fi
     fi
 
-    echo "kdump: saving opalcore"
+    dinfo "saving opalcore:$OPALCORE to ${_path}/opalcore"
     cp $OPALCORE ${_path}/opalcore
     if [ $? -ne 0 ]; then
-        echo "kdump: saving opalcore failed"
+        derror "saving opalcore failed"
         return 1
     fi
 
     sync
-    echo "kdump: saving opalcore complete"
+    dinfo "saving opalcore complete"
     return 0
 }
 
 dump_to_rootfs()
 {
 
-    echo "Kdump: trying to bring up rootfs device"
+    dinfo "Trying to bring up rootfs device"
     systemctl start dracut-initqueue
-    echo "Kdump: waiting for rootfs mount, will timeout after 90 seconds"
+    dinfo "Waiting for rootfs mount, will timeout after 90 seconds"
     systemctl start sysroot.mount
+
+    ddebug "NEWROOT=$NEWROOT"
 
     dump_fs $NEWROOT
 }
@@ -205,17 +235,19 @@ dump_to_rootfs()
 kdump_emergency_shell()
 {
     echo "PS1=\"kdump:\\\${PWD}# \"" >/etc/profile
+    ddebug "Switching to dracut emergency..."
     /bin/dracut-emergency
     rm -f /etc/profile
 }
 
 do_failure_action()
 {
-    echo "Kdump: Executing failure action $FAILURE_ACTION"
+    dinfo "Executing failure action $FAILURE_ACTION"
     eval $FAILURE_ACTION
 }
 
 do_final_action()
 {
+    dinfo "Executing final action $FINAL_ACTION"
     eval $FINAL_ACTION
 }

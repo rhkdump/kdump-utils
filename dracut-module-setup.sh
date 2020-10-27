@@ -818,6 +818,7 @@ install() {
         kdump_install_random_seed
     fi
     dracut_install -o /etc/adjtime /etc/localtime
+    inst_simple "/etc/sysconfig/kdump"
     inst "$moddir/monitor_dd_progress" "/kdumpscripts/monitor_dd_progress"
     chmod +x ${initdir}/kdumpscripts/monitor_dd_progress
     inst "/bin/dd" "/bin/dd"
@@ -830,8 +831,11 @@ install() {
     inst "/bin/sed" "/bin/sed"
     inst "/sbin/makedumpfile" "/sbin/makedumpfile"
     inst "/sbin/vmcore-dmesg" "/sbin/vmcore-dmesg"
+    inst "/usr/bin/printf" "/sbin/printf"
+    inst "/usr/bin/logger" "/sbin/logger"
     inst "/lib/kdump/kdump-lib.sh" "/lib/kdump-lib.sh"
     inst "/lib/kdump/kdump-lib-initramfs.sh" "/lib/kdump-lib-initramfs.sh"
+    inst "/lib/kdump/kdump-logger.sh" "/lib/kdump-logger.sh"
     inst "$moddir/kdump.sh" "/usr/bin/kdump.sh"
     inst "$moddir/kdump-capture.service" "$systemdsystemunitdir/kdump-capture.service"
     mkdir -p "$initdir/$systemdsystemunitdir/initrd.target.wants"

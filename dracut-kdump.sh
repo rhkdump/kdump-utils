@@ -5,7 +5,6 @@ if [ -f /etc/fadump.initramfs ] && [ ! -f /proc/device-tree/rtas/ibm,kernel-dump
     exit 0
 fi
 
-exec &> /dev/console
 . /lib/dracut-lib.sh
 . /lib/kdump-lib-initramfs.sh
 
@@ -22,7 +21,7 @@ do_dump()
     _ret=$?
 
     if [ $_ret -ne 0 ]; then
-        echo "kdump: saving vmcore failed"
+        derror "saving vmcore failed"
     fi
 
     return $_ret
@@ -36,7 +35,7 @@ do_kdump_pre()
         "$KDUMP_PRE"
         _ret=$?
         if [ $_ret -ne 0 ]; then
-            echo "kdump: $KDUMP_PRE exited with $_ret status"
+            derror "$KDUMP_PRE exited with $_ret status"
             return $_ret
         fi
     fi
@@ -47,7 +46,7 @@ do_kdump_pre()
             "$file"
             _ret=$?
             if [ $_ret -ne 0 ]; then
-                echo "kdump: $file exited with $_ret status"
+                derror "$file exited with $_ret status"
             fi
         done
     fi
@@ -63,7 +62,7 @@ do_kdump_post()
             "$file" "$1"
             _ret=$?
             if [ $_ret -ne 0 ]; then
-                echo "kdump: $file exited with $_ret status"
+                derror "$file exited with $_ret status"
             fi
         done
     fi
@@ -72,7 +71,7 @@ do_kdump_post()
         "$KDUMP_POST" "$1"
         _ret=$?
         if [ $_ret -ne 0 ]; then
-            echo "kdump: $KDUMP_POST exited with $_ret status"
+            derror "$KDUMP_POST exited with $_ret status"
         fi
     fi
 }
@@ -88,7 +87,7 @@ dump_raw()
 
     [ -b "$_raw" ] || return 1
 
-    echo "kdump: saving to raw disk $_raw"
+    dinfo "saving to raw disk $_raw"
 
     if ! $(echo -n $CORE_COLLECTOR|grep -q makedumpfile); then
         _src_size=`ls -l /proc/vmcore | cut -d' ' -f5`
@@ -96,21 +95,22 @@ dump_raw()
         monitor_dd_progress $_src_size_mb &
     fi
 
-    echo "kdump: saving vmcore"
+    dinfo "saving vmcore"
     $CORE_COLLECTOR /proc/vmcore | dd of=$_raw bs=$DD_BLKSIZE >> /tmp/dd_progress_file 2>&1 || return 1
     sync
 
-    echo "kdump: saving vmcore complete"
+    dinfo "saving vmcore complete"
     return 0
 }
 
 dump_ssh()
 {
+    local ret
     local _opt="-i $1 -o BatchMode=yes -o StrictHostKeyChecking=yes"
     local _dir="$KDUMP_PATH/$HOST_IP-$DATEDIR"
     local _host=$2
 
-    echo "kdump: saving to $_host:$_dir"
+    dinfo "saving to $_host:$_dir"
 
     cat /var/lib/random-seed > /dev/urandom
     ssh -q $_opt $_host mkdir -p $_dir || return 1
@@ -118,17 +118,29 @@ dump_ssh()
     save_vmcore_dmesg_ssh ${DMESG_COLLECTOR} ${_dir} "${_opt}" $_host
     save_opalcore_ssh ${_dir} "${_opt}" $_host
 
-    echo "kdump: saving vmcore"
+    dinfo "saving vmcore"
 
     if [ "${CORE_COLLECTOR%%[[:blank:]]*}" = "scp" ]; then
-        scp -q $_opt /proc/vmcore "$_host:$_dir/vmcore-incomplete" || return 1
+        scp -q $_opt /proc/vmcore "$_host:$_dir/vmcore-incomplete"
+        ret=$?
+        save_log
+        scp -q $_opt $KDUMP_LOG_FILE "$_host:$_dir/"
+        if [ $ret -ne 0 ]; then
+            return 1
+        fi
         ssh $_opt $_host "mv $_dir/vmcore-incomplete $_dir/vmcore" || return 1
     else
-        $CORE_COLLECTOR /proc/vmcore | ssh $_opt $_host "dd bs=512 of=$_dir/vmcore-incomplete" || return 1
+        $CORE_COLLECTOR /proc/vmcore | ssh $_opt $_host "dd bs=512 of=$_dir/vmcore-incomplete"
+        ret=$?
+        save_log
+        scp -q $_opt $KDUMP_LOG_FILE "$_host:$_dir/"
+        if [ $ret -ne 0 ]; then
+            return 1
+        fi
         ssh $_opt $_host "mv $_dir/vmcore-incomplete $_dir/vmcore.flat" || return 1
     fi
 
-    echo "kdump: saving vmcore complete"
+    dinfo "saving vmcore complete"
     return 0
 }
 
@@ -136,6 +148,8 @@ save_opalcore_ssh() {
     local _path=$1
     local _opts="$2"
     local _location=$3
+
+    ddebug "_path=$_path _opts=$_opts _location=$_location"
 
     if [ ! -f $OPALCORE ]; then
         # Check if we are on an old kernel that uses a different path
@@ -146,15 +160,15 @@ save_opalcore_ssh() {
         fi
     fi
 
-    echo "kdump: saving opalcore"
+    dinfo "saving opalcore:$OPALCORE to $_location:$_path"
     scp $_opts $OPALCORE $_location:$_path/opalcore-incomplete
     if [ $? -ne 0 ]; then
-        echo "kdump: saving opalcore failed"
+        derror "saving opalcore failed"
        return 1
     fi
 
     ssh $_opts $_location mv $_path/opalcore-incomplete $_path/opalcore
-    echo "kdump: saving opalcore complete"
+    dinfo "saving opalcore complete"
     return 0
 }
 
@@ -164,15 +178,15 @@ save_vmcore_dmesg_ssh() {
     local _opts="$3"
     local _location=$4
 
-    echo "kdump: saving vmcore-dmesg.txt"
+    dinfo "saving vmcore-dmesg.txt to $_location:$_path"
     $_dmesg_collector /proc/vmcore | ssh $_opts $_location "dd of=$_path/vmcore-dmesg-incomplete.txt"
     _exitcode=$?
 
     if [ $_exitcode -eq 0 ]; then
         ssh -q $_opts $_location mv $_path/vmcore-dmesg-incomplete.txt $_path/vmcore-dmesg.txt
-        echo "kdump: saving vmcore-dmesg.txt complete"
+        dinfo "saving vmcore-dmesg.txt complete"
     else
-        echo "kdump: saving vmcore-dmesg.txt failed"
+        derror "saving vmcore-dmesg.txt failed"
     fi
 }
 
@@ -182,12 +196,12 @@ get_host_ip()
     if is_nfs_dump_target || is_ssh_dump_target
     then
         kdumpnic=$(getarg kdumpnic=)
-        [ -z "$kdumpnic" ] && echo "kdump: failed to get kdumpnic!" && return 1
+        [ -z "$kdumpnic" ] && derror "failed to get kdumpnic!" && return 1
         _host=`ip addr show dev $kdumpnic|grep '[ ]*inet'`
-        [ $? -ne 0 ] && echo "kdump: wrong kdumpnic: $kdumpnic" && return 1
+        [ $? -ne 0 ] && derror "wrong kdumpnic: $kdumpnic" && return 1
         _host=`echo $_host | head -n 1 | cut -d' ' -f2`
         _host="${_host%%/*}"
-        [ -z "$_host" ] && echo "kdump: wrong kdumpnic: $kdumpnic" && return 1
+        [ -z "$_host" ] && derror "wrong kdumpnic: $kdumpnic" && return 1
         HOST_IP=$_host
     fi
     return 0
@@ -196,7 +210,7 @@ get_host_ip()
 read_kdump_conf()
 {
     if [ ! -f "$KDUMP_CONF" ]; then
-        echo "kdump: $KDUMP_CONF not found"
+        derror "$KDUMP_CONF not found"
         return
     fi
 
@@ -240,7 +254,7 @@ fence_kdump_notify
 
 get_host_ip
 if [ $? -ne 0 ]; then
-    echo "kdump: get_host_ip exited with non-zero status!"
+    derror "get_host_ip exited with non-zero status!"
     exit 1
 fi
 
@@ -250,7 +264,7 @@ fi
 
 do_kdump_pre
 if [ $? -ne 0 ]; then
-    echo "kdump: kdump_pre script exited with non-zero status!"
+    derror "kdump_pre script exited with non-zero status!"
     do_final_action
     # During systemd service to reboot the machine, stop this shell script running
     exit 1
@@ -261,7 +275,7 @@ DUMP_RETVAL=$?
 
 do_kdump_post $DUMP_RETVAL
 if [ $? -ne 0 ]; then
-    echo "kdump: kdump_post script exited with non-zero status!"
+    derror "kdump_post script exited with non-zero status!"
 fi
 
 if [ $DUMP_RETVAL -ne 0 ]; then
