@@ -8,6 +8,12 @@ FENCE_KDUMP_CONFIG_FILE="/etc/sysconfig/fence_kdump"
 FENCE_KDUMP_SEND="/usr/libexec/fence_kdump_send"
 FADUMP_ENABLED_SYS_NODE="/sys/kernel/fadump_enabled"
 
+if [ -f /lib/kdump/kdump-logger.sh ]; then
+    . /lib/kdump/kdump-logger.sh
+elif [ -f /lib/kdump-logger.sh ]; then
+    . /lib/kdump-logger.sh
+fi
+
 is_fadump_capable()
 {
     # Check if firmware-assisted dump is enabled
@@ -20,12 +26,8 @@ is_fadump_capable()
 }
 
 perror_exit() {
-    echo $@ >&2
+    derror "$@"
     exit 1
-}
-
-perror() {
-    echo $@ >&2
 }
 
 is_fs_type_nfs()
@@ -503,7 +505,7 @@ check_crash_mem_reserved()
 
     mem_reserved=$(cat /sys/kernel/kexec_crash_size)
     if [ $mem_reserved -eq 0 ]; then
-        echo "No memory reserved for crash kernel"
+        derror "No memory reserved for crash kernel"
         return 1
     fi
 
@@ -513,7 +515,7 @@ check_crash_mem_reserved()
 check_kdump_feasibility()
 {
     if [ ! -e /sys/kernel/kexec_crash_loaded ]; then
-        echo "Kdump is not supported on this kernel"
+        derror "Kdump is not supported on this kernel"
         return 1
     fi
     check_crash_mem_reserved
@@ -523,7 +525,7 @@ check_kdump_feasibility()
 check_current_kdump_status()
 {
     if [ ! -f /sys/kernel/kexec_crash_loaded ];then
-        echo "Perhaps CONFIG_CRASH_DUMP is not enabled in kernel"
+        derror "Perhaps CONFIG_CRASH_DUMP is not enabled in kernel"
         return 1
     fi
 
@@ -651,8 +653,7 @@ prepare_kexec_args()
             found_elf_args=`echo $kexec_args | grep elf32-core-headers`
             if [ -n "$found_elf_args" ]
             then
-                echo -n "Warning: elf32-core-headers overrides correct elf64 setting"
-                echo
+                dwarn "Warning: elf32-core-headers overrides correct elf64 setting"
             else
                 kexec_args="$kexec_args --elf64-core-headers"
             fi
@@ -703,7 +704,7 @@ prepare_kdump_bootinfo()
     done
 
     if ! [ -e "$KDUMP_KERNEL" ]; then
-        echo "Failed to detect kdump kernel location"
+        derror "Failed to detect kdump kernel location"
         return 1
     fi
 

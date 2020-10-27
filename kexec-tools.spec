@@ -37,6 +37,7 @@ Source27: early-kdump-howto.txt
 Source28: kdump-udev-throttler
 Source29: kdump.sysconfig.aarch64
 Source30: 60-kdump.install
+Source31: kdump-logger.sh
 
 #######################################
 # These are sources for mkdumpramfs
@@ -190,6 +191,7 @@ install -m 644 %{SOURCE12} $RPM_BUILD_ROOT%{_mandir}/man8/mkdumprd.8
 install -m 644 %{SOURCE25} $RPM_BUILD_ROOT%{_mandir}/man8/kdumpctl.8
 install -m 755 %{SOURCE20} $RPM_BUILD_ROOT%{_prefix}/lib/kdump/kdump-lib.sh
 install -m 755 %{SOURCE23} $RPM_BUILD_ROOT%{_prefix}/lib/kdump/kdump-lib-initramfs.sh
+install -m 755 %{SOURCE31} $RPM_BUILD_ROOT%{_prefix}/lib/kdump/kdump-logger.sh
 %ifnarch s390x
 install -m 755 %{SOURCE28} $RPM_BUILD_ROOT%{_udevrulesdir}/../kdump-udev-throttler
 %endif

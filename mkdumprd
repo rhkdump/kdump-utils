@@ -6,10 +6,21 @@
 # Written by Cong Wang <amwang@redhat.com>
 #
 
+if [ -f /etc/sysconfig/kdump ]; then
+	. /etc/sysconfig/kdump
+fi
+
 [[ $dracutbasedir ]] || dracutbasedir=/usr/lib/dracut
 . $dracutbasedir/dracut-functions.sh
 . /lib/kdump/kdump-lib.sh
 export IN_KDUMP=1
+
+#initiate the kdump logger
+dlog_init
+if [ $? -ne 0 ]; then
+	echo "failed to initiate the kdump logger."
+	exit 1
+fi
 
 conf_file="/etc/kdump.conf"
 SSH_KEY_LOCATION="/root/.ssh/kdump_id_rsa"
@@ -180,8 +191,8 @@ check_size() {
     fi
 
     if [ $avail -lt $memtotal ]; then
-        echo "Warning: There might not be enough space to save a vmcore."
-        echo "         The size of $2 should be greater than $memtotal kilo bytes."
+        dwarn "Warning: There might not be enough space to save a vmcore."
+        dwarn "         The size of $2 should be greater than $memtotal kilo bytes."
     fi
 }
 
@@ -253,7 +264,7 @@ verify_core_collector() {
 
     if [ "$_cmd" != "makedumpfile" ]; then
         if is_raw_dump_target; then
-            echo "Warning: specifying a non-makedumpfile core collector, you will have to recover the vmcore manually."
+            dwarn "Warning: specifying a non-makedumpfile core collector, you will have to recover the vmcore manually."
         fi
         return
     fi
@@ -343,7 +354,7 @@ is_unresettable()
         resettable="$(cat $path)"
         [ $resettable -eq 0 -a "$OVERRIDE_RESETTABLE" -eq 0 ] && {
             local device=$(udevadm info --query=all --path=/sys/dev/block/$1 | awk -F= '/DEVNAME/{print $2}')
-            echo "Error: Can not save vmcore because device $device is unresettable"
+            derror "Error: Can not save vmcore because device $device is unresettable"
             return 0
         }
     fi
@@ -377,7 +388,7 @@ is_crypt()
     eval "$line"
     [[ "$ID_FS_TYPE" = "crypto_LUKS" ]] && {
         dev=$(udevadm info --query=all --path=/sys/dev/block/$majmin | awk -F= '/DEVNAME/{print $2}')
-        echo "Device $dev is encrypted."
+        derror "Device $dev is encrypted."
         return 0
     }
     return 1
@@ -400,7 +411,7 @@ if ! check_resettable; then
 fi
 
 if ! check_crypt; then
-    echo "Warning: Encrypted device is in dump path, which is not recommended, see kexec-kdump-howto.txt for more details."
+    dwarn "Warning: Encrypted device is in dump path, which is not recommended, see kexec-kdump-howto.txt for more details."
 fi
 
 # firstly get right SSH_KEY_LOCATION
