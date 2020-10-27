@@ -254,8 +254,7 @@ check_config()
 			;;
 		raw)
 			if [ -d "/proc/device-tree/ibm,opal/dump" ]; then
-				derror "WARNING: Won't capture opalcore when 'raw' dump target is used."
-				return 1
+				dwarn "WARNING: Won't capture opalcore when 'raw' dump target is used."
 			fi
 			config_opt=_target
 			;;
