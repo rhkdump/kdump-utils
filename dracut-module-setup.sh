@@ -799,13 +799,14 @@ kdump_install_systemd_conf() {
         echo "DefaultTimeoutStartSec=300s" >> ${initdir}/etc/systemd/system.conf.d/kdump.conf
     fi
 
-    # Forward logs to console directly, this avoids unneccessary memory
-    # consumption and make console output more useful.
+    # Forward logs to console directly, and don't read Kmsg, this avoids
+    # unneccessary memory consumption and make console output more useful.
     # Only do so for non fadump image.
-    if ! is_fadump_capable && [ "$failure_action" != "shell" ]; then
+    if ! is_fadump_capable; then
         mkdir -p ${initdir}/etc/systemd/journald.conf.d
         echo "[Journal]" > ${initdir}/etc/systemd/journald.conf.d/kdump.conf
-        echo "Storage=none" >> ${initdir}/etc/systemd/journald.conf.d/kdump.conf
+        echo "Storage=volatile" >> ${initdir}/etc/systemd/journald.conf.d/kdump.conf
+        echo "ReadKMsg=no" >> ${initdir}/etc/systemd/journald.conf.d/kdump.conf
         echo "ForwardToConsole=yes" >> ${initdir}/etc/systemd/journald.conf.d/kdump.conf
     fi
 }
