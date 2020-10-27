@@ -6,6 +6,7 @@ KDUMP_KERNEL=""
 KDUMP_COMMANDLINE=""
 KEXEC_ARGS=""
 KDUMP_CONFIG_FILE="/etc/kdump.conf"
+KDUMP_LOG_PATH="/var/log"
 MKDUMPRD="/sbin/mkdumprd -f"
 DRACUT_MODULES_FILE="/usr/lib/dracut/modules.txt"
 SAVE_PATH=/var/crash
@@ -21,7 +22,7 @@ FADUMP_REGISTER_SYS_NODE="/sys/kernel/fadump_registered"
 DEFAULT_DUMP_MODE="kdump"
 image_time=0
 
-standard_kexec_args="-p"
+standard_kexec_args="-d -p"
 
 # Some default values in case /etc/sysconfig/kdump doesn't include
 KDUMP_COMMANDLINE_REMOVE="hugepages hugepagesz slub_debug"
@@ -704,6 +705,8 @@ check_rebuild()
 # as the currently running kernel.
 load_kdump()
 {
+	local ret
+
 	KEXEC_ARGS=$(prepare_kexec_args "${KEXEC_ARGS}")
 	KDUMP_COMMANDLINE=$(prepare_cmdline "${KDUMP_COMMANDLINE}" "${KDUMP_COMMANDLINE_REMOVE}" "${KDUMP_COMMANDLINE_APPEND}")
 
@@ -717,10 +720,20 @@ load_kdump()
 
 	ddebug "$KEXEC $KEXEC_ARGS $standard_kexec_args --command-line=$KDUMP_COMMANDLINE --initrd=$TARGET_INITRD $KDUMP_KERNEL"
 
+	exec 12>&2
+	exec 2>> $KDUMP_LOG_PATH/kdump.log
+	PS4='+ $(date "+%Y-%m-%d %H:%M:%S") ${BASH_SOURCE}@${LINENO}: '
+	set -x
+
 	$KEXEC $KEXEC_ARGS $standard_kexec_args \
 		--command-line="$KDUMP_COMMANDLINE" \
 		--initrd=$TARGET_INITRD $KDUMP_KERNEL
-	if [ $? == 0 ]; then
+
+	ret=$?
+	set +x
+	exec 2>&12 12>&-
+
+	if [ $ret == 0 ]; then
 		dinfo "kexec: loaded kdump kernel"
 		return 0
 	else
