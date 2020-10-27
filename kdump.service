@@ -2,6 +2,7 @@
 Description=Crash recovery kernel arming
 After=network.target network-online.target remote-fs.target basic.target
 DefaultDependencies=no
+ConditionKernelCommandLine=crashkernel
 
 [Service]
 Type=oneshot
