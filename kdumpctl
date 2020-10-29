@@ -719,6 +719,10 @@ load_kdump()
 
 	ddebug "$KEXEC $KEXEC_ARGS $standard_kexec_args --command-line=$KDUMP_COMMANDLINE --initrd=$TARGET_INITRD $KDUMP_KERNEL"
 
+	# The '12' represents an intermediate temporary file descriptor
+	# to store the standard error file descriptor '2', and later
+	# restore the error file descriptor with the file descriptor '12'
+	# and release it.
 	exec 12>&2
 	exec 2>> $KDUMP_LOG_PATH/kdump.log
 	PS4='+ $(date "+%Y-%m-%d %H:%M:%S") ${BASH_SOURCE}@${LINENO}: '

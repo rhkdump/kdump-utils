@@ -53,6 +53,9 @@ early_kdump_load()
         EARLY_KEXEC_ARGS="$EARLY_KEXEC_ARGS -s"
     fi
 
+    # Here, only output the messages, but do not save these messages
+    # to a file because the target disk may not be mounted yet, the
+    # earlykdump is too early.
     ddebug "earlykdump: $KEXEC ${EARLY_KEXEC_ARGS} $standard_kexec_args \
 	--command-line=$EARLY_KDUMP_CMDLINE --initrd=$EARLY_KDUMP_INITRD \
 	$EARLY_KDUMP_KERNEL"
