@@ -4,7 +4,7 @@
 
 Name: kexec-tools
 Version: 2.0.20
-Release: 18%{?dist}
+Release: 19%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -362,6 +362,28 @@ done
 %endif
 
 %changelog
+- Fix comment about ssh dump target
+- mkdumprd: Ensure kdumpbase is added
+- kdump.service: use ConditionKernelCommandLine=crashkernel
+- Revert "Revert "s390x: enable the kexec file load by def
+- increase makdumpfile default message level to 7
+- Fix error when using raw target with opalcore
+- module-setup.sh: Instead of drop journalctl log, just don't read kmsg
+- Doc: add a documentation for the usage of logger
+- Improve debugging in the kdump kernel
+- kdumpctl: add the '-d' option to enable the kexec loading debugging messages
+- kdump.sysconfig: add the kdump logger configurations
+- enable the logger for kdump
+- introduce the kdump logger from the dracut
+- Rework check_config and warn on any duplicated option
+- (watchdog) kdump-lib.sh: detect secure boot on s390
+- Don't drop journalctl content if failure action is "shell"
+- dracut-module-install: Move systemd conf install code to a function
+- selftest: Show the path of dumped vmcore on test end
+- selftest: Add document for selftests
+- selftest: Add basic test framework
+- selftest: Add basic infrastructure to build test image
+
 * Thu Aug 27 2020 Kairui Song <kasong@redhat.com> - 2.0.20-18
 - mkdumprd: Improve the warning message when using encrypted target
 - kdump-lib.sh: Remove is_atomic
