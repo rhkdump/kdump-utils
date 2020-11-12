@@ -172,7 +172,10 @@ _dlvl2syslvl() {
         *) return 1;;
     esac
 
-    [ -s /proc/vmcore ] && echo $((24+$lvl)) || echo $((8+$lvl))
+    # The number is constructed by multiplying the facility by 8 and then
+    # adding the level.
+    # About The Syslog Protocol, please refer to the RFC5424 for more details.
+    echo $((24+$lvl))
 }
 
 ## @brief Prints to stderr, to syslog and/or /dev/kmsg given message with
