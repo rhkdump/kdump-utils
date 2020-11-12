@@ -34,15 +34,42 @@
 # First of all you have to start with dlog_init() function which initializes
 # required variables. Don't call any other logging function before that one!
 #
+
+# @brief Check the log level.
+# @retval 1 if something has gone wrong
+# @retval 0 on success.
+#
+check_loglvl()
+{
+    case "$1" in
+        0|1|2|3|4|5|6)
+            return 0
+           ;;
+        *)
+            return 1
+            ;;
+        esac
+}
+
 # @brief Initializes Logger.
 # @retval 1 if something has gone wrong
 # @retval 0 on success.
 #
 dlog_init() {
     local ret=0; local errmsg
+
     [ -z "$kdump_stdloglvl" ] && kdump_stdloglvl=4
     [ -z "$kdump_sysloglvl" ] && kdump_sysloglvl=4
     [ -z "$kdump_kmsgloglvl" ] && kdump_kmsgloglvl=0
+
+    for loglvl in "$kdump_stdloglvl" "$kdump_kmsgloglvl" "$kdump_sysloglvl"; do
+        check_loglvl "$loglvl"
+        if [ $? -ne 0 ]; then
+            echo "Illegal log level: $kdump_stdloglvl $kdump_kmsgloglvl $kdump_sysloglvl"
+            return 1
+        fi
+    done
+
     # Skip initialization if it's already done.
     [ -n "$kdump_maxloglvl" ] && return 0
 
