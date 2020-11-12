@@ -36,18 +36,18 @@ KEXEC_ARGS=""
 #What is the image type used for kdump
 KDUMP_IMG="vmlinuz"
 
-# Logging is controlled by following global variables:
-#   - @var kdump_stdloglvl - logging level to standard error (console output)
-#   - @var kdump_sysloglvl - logging level to syslog (by logger command)
-#   - @var kdump_kmsgloglvl - logging level to /dev/kmsg (only for boot-time)
-# If any of the variables is not set, this function set it to default:
-#   - @var kdump_stdloglvl=4 (info)
-#   - @var kdump_sysloglvl=4 (info)
-#   - @var kdump_kmsgloglvl=0 (no logging)
+# Logging is controlled by following variables in the first kernel:
+#   - @var KDUMP_STDLOGLVL - logging level to standard error (console output)
+#   - @var KDUMP_SYSLOGLVL - logging level to syslog (by logger command)
+#   - @var KDUMP_KMSGLOGLVL - logging level to /dev/kmsg (only for boot-time)
 #
-# Logging levels: fatal(1),error(2),warn(3),info(4),debug(5),trace(6)
+# In the second kernel, kdump will use the rd.kdumploglvl option to set the
+# log level in the above KDUMP_COMMANDLINE_APPEND.
+#   - @var rd.kdumploglvl - logging level to syslog (by logger command)
+#   - for example: add the rd.kdumploglvl=3 option to KDUMP_COMMANDLINE_APPEND
 #
-# For example: the following configurations indicate that kdump messages will be printed
-# to console and journald for debugging case.
-# kdump_sysloglvl=5
-# kdump_stdloglvl=5
+# Logging levels: no logging(0), error(1),warn(2),info(3),debug(4)
+#
+# KDUMP_STDLOGLVL=3
+# KDUMP_SYSLOGLVL=0
+# KDUMP_KMSGLOGLVL=0
