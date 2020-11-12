@@ -888,35 +888,80 @@ Debugging Tips
 
 - Using the logger to output kdump log messages
 
-  Currently, kdump messages are printed with the 'echo' command or redirect
-  to console, and which does not support to output kdump messages according
-  to the log level.
+  You can configure the kdump log level for the first kernel in the
+  /etc/sysconfig/kdump. For example:
 
-  That is not convenient to debug kdump issues, we usually need to capture
-  additional debugging information via the modification of the options or the
-  scripts like kdumpctl, mkdumprd, etc. Because there is no complete debugging
-  messages, which could waste valuable time.
+  KDUMP_STDLOGLVL=3
+  KDUMP_SYSLOGLVL=0
+  KDUMP_KMSGLOGLVL=0
 
-  To cope with this challenging, we introduce the logger to output the kdump
-  messages according to the log level, and provide a chance to save logs to
-  the journald if the journald service is available, and then dump all logs
-  to a file, otherwise dump the logs with the dmesg to a file.
+  The above configurations indicate that kdump messages will be printed
+  to the console, and the KDUMP_STDLOGLVL is set to 3(info), but the
+  KDUMP_SYSLOGLVL and KDUMP_KMSGLOGLVL are set to 0(no logging). This
+  is also the current default log levels in the first kernel.
 
-  Logging is controlled by following global variables:
-    - @var kdump_stdloglvl - logging level to standard error (console output)
-    - @var kdump_sysloglvl - logging level to syslog (by logger command)
-    - @var kdump_kmsgloglvl - logging level to /dev/kmsg (only for boot-time)
-  If any of the variables is not set, this function set it to default:
-    - @var kdump_stdloglvl=4 (info)
-    - @var kdump_sysloglvl=4 (info)
-    - @var kdump_kmsgloglvl=0 (no logging)
+  In the second kernel, you can add the 'rd.kdumploglvl=X' option to the
+  KDUMP_COMMANDLINE_APPEND in the /etc/sysconfig/kdump so that you can also
+  set the log levels for the second kernel. The 'X' represents the logging
+  levels, the default log level is 3(info) in the second kernel, for example:
 
-  Logging levels: fatal(1),error(2),warn(3),info(4),debug(5),trace(6)
+  # cat /etc/sysconfig/kdump |grep rd.kdumploglvl
+  KDUMP_COMMANDLINE_APPEND="irqpoll nr_cpus=1 reset_devices cgroup_disable=memory mce=off numa=off udev.children-max=2 panic=10 acpi_no_memhotplug transparent_hugepage=never nokaslr hest_disable novmcoredd rd.kdumploglvl=3"
 
-  We can easily configure the above variables in the /etc/sysconfig/kdump. For
-  example:
-  kdump_sysloglvl=5
-  kdump_stdloglvl=5
+  Logging levels: no logging(0), error(1),warn(2),info(3),debug(4)
 
-  The above configurations indicate that kdump messages will be printed to the
-  console and journald if the journald service is enabled.
+  The ERROR level designates error events that might still allow the application
+  to continue running.
+
+  The WARN level designates potentially harmful situations.
+
+  The INFO level designates informational messages that highlight the progress
+  of the application at coarse-grained level.
+
+  The DEBUG level designates fine-grained informational events that are most
+  useful to debug an application.
+
+  Note: if you set the log level to 0, that will disable the logs at the
+  corresponding log level, which indicates that it has no log output.
+
+  At present, the logger works in both the first kernel(kdump service debugging)
+  and the second kernel.
+
+  In the first kernel, you can find the historical logs with the journalctl
+  command and check kdump service debugging information. In addition, the
+  'kexec -d' debugging messages are also saved to /var/log/kdump.log in the
+  first kernel. For example:
+
+  [root@ibm-z-109 ~]# ls -al /var/log/kdump.log
+  -rw-r--r--. 1 root root 63238 Oct 28 06:40 /var/log/kdump.log
+
+  If you want to get the debugging information of building kdump initramfs, you
+  can enable the '--debug' option for the dracut_args in the /etc/kdump.conf, and
+  then rebuild the kdump initramfs as below:
+
+  # systemctl restart kdump.service
+
+  That will rebuild the kdump initramfs and gerenate some logs to journald, you
+  can find the dracut logs with the journalctl command.
+
+  In the second kernel, kdump will automatically put the kexec-dmesg.log to a same
+  directory with the vmcore, the log file includes the debugging messages like dmesg
+  and journald logs. For example:
+
+  [root@ibm-z-109 ~]# ls -al /var/crash/127.0.0.1-2020-10-28-02\:01\:23/
+  drwxr-xr-x. 2 root root       67 Oct 28 02:02 .
+  drwxr-xr-x. 6 root root      154 Oct 28 02:01 ..
+  -rw-r--r--. 1 root root    21164 Oct 28 02:01 kexec-dmesg.log
+  -rw-------. 1 root root 74238698 Oct 28 02:01 vmcore
+  -rw-r--r--. 1 root root    17532 Oct 28 02:01 vmcore-dmesg.txt
+
+  If you want to get more debugging information in the second kernel, you can add
+  the 'rd.debug' option to the KDUMP_COMMANDLINE_APPEND in the /etc/sysconfig/kdump,
+  and then reload them in order to make the changes take effect.
+
+  In addition, you can also add the 'rd.memdebug=X' option to the KDUMP_COMMANDLINE_APPEND
+  in the /etc/sysconfig/kdump in order to output the additional information about
+  kernel module memory consumption during loading.
+
+  For more details, please refer to the /etc/sysconfig/kdump, or the man page of
+  dracut.cmdline and kdump.conf.
