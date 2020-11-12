@@ -1,6 +1,5 @@
 # These variables and functions are useful in 2nd kernel
 
-. /etc/sysconfig/kdump
 . /lib/kdump-lib.sh
 
 KDUMP_PATH="/var/crash"

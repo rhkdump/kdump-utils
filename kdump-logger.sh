@@ -20,14 +20,42 @@
 #   - @var kdump_sysloglvl - logging level to syslog (by logger command)
 #   - @var kdump_kmsgloglvl - logging level to /dev/kmsg (only for boot-time)
 #
-# If any of the variables is not set, this function set it to default:
-#   - @var kdump_stdloglvl = 3 (info)
-#   - @var kdump_sysloglvl = 3 (info)
-#   - @var kdump_kmsgloglvl = 0 (no logging)
+# If any of the variables is not set, the function dlog_init() sets it to default:
+#   - In the first kernel:
+#     - @var kdump_stdloglvl = 3 (info)
+#     - @var kdump_sysloglvl = 0 (no logging)
+#     - @var kdump_kmsgloglvl = 0 (no logging)
+#
+#   -In the second kernel:
+#    - @var kdump_stdloglvl = 0 (no logging)
+#    - @var kdump_sysloglvl = 3 (info)
+#    - @var kdump_kmsgloglvl = 0 (no logging)
 #
 # First of all you have to start with dlog_init() function which initializes
 # required variables. Don't call any other logging function before that one!
 #
+
+# The dracut-lib.sh is only available in the second kernel, and it won't
+# be used in the first kernel because the dracut-lib.sh is invisible in
+# the first kernel.
+if [ -f /lib/dracut-lib.sh ]; then
+    . /lib/dracut-lib.sh
+fi
+
+# @brief Get the log level from kernel command line.
+# @retval 1 if something has gone wrong
+# @retval 0 on success.
+#
+get_kdump_loglvl()
+{
+    (type -p getarg) && kdump_sysloglvl=$(getarg rd.kdumploglvl)
+    [ -z "$kdump_sysloglvl" ] && return 1;
+
+    (type -p isdigit) && isdigit $kdump_sysloglvl
+    [ $? -ne 0 ] && return 1;
+
+    return 0
+}
 
 # @brief Check the log level.
 # @retval 1 if something has gone wrong
@@ -52,8 +80,18 @@ check_loglvl()
 dlog_init() {
     local ret=0; local errmsg
 
+    if [ -s /proc/vmcore ];then
+        get_kdump_loglvl
+        if [ $? -ne 0 ];then
+            logger -t "kdump[$$]" -p warn -- "Kdump is using the default log level(3)."
+            kdump_sysloglvl=3
+        fi
+        kdump_stdloglvl=0
+        kdump_kmsgloglvl=0
+    fi
+
     [ -z "$kdump_stdloglvl" ] && kdump_stdloglvl=3
-    [ -z "$kdump_sysloglvl" ] && kdump_sysloglvl=3
+    [ -z "$kdump_sysloglvl" ] && kdump_sysloglvl=0
     [ -z "$kdump_kmsgloglvl" ] && kdump_kmsgloglvl=0
 
     for loglvl in "$kdump_stdloglvl" "$kdump_kmsgloglvl" "$kdump_sysloglvl"; do
