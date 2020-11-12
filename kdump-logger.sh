@@ -35,6 +35,11 @@
 # required variables. Don't call any other logging function before that one!
 #
 
+# Define vairables for the log levels in this module.
+kdump_stdloglvl=""
+kdump_sysloglvl=""
+kdump_kmsgloglvl=""
+
 # The dracut-lib.sh is only available in the second kernel, and it won't
 # be used in the first kernel because the dracut-lib.sh is invisible in
 # the first kernel.
@@ -88,6 +93,10 @@ dlog_init() {
         fi
         kdump_stdloglvl=0
         kdump_kmsgloglvl=0
+    else
+        kdump_stdloglvl=$KDUMP_STDLOGLVL
+        kdump_sysloglvl=$KDUMP_SYSLOGLVL
+        kdump_kmsgloglvl=$KDUMP_KMSGLOGLVL
     fi
 
     [ -z "$kdump_stdloglvl" ] && kdump_stdloglvl=3
