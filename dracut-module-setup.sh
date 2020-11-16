@@ -298,13 +298,9 @@ kdump_setup_vlan() {
     local _netmac="$(kdump_get_mac_addr $_phydev)"
     local _kdumpdev
 
-    #Just support vlan over bond, it is not easy
-    #to support all other complex setup
+    #Just support vlan over bond and team
     if kdump_is_bridge "$_phydev"; then
         derror "Vlan over bridge is not supported!"
-        exit 1
-    elif kdump_is_team "$_phydev"; then
-        derror "Vlan over team is not supported!"
         exit 1
     elif kdump_is_bond "$_phydev"; then
         kdump_setup_bond "$_phydev"
