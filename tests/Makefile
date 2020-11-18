@@ -11,9 +11,9 @@ DIST ?= fedora
 DIST_ABR ?= f
 DIST_ABRL ?= fc
 DIST_UNSET ?= rhel
-RELEASE ?= 32
+RELEASE ?= 33
 
-DEFAULT_BASE_IMAGE_VER ?= 1.6
+DEFAULT_BASE_IMAGE_VER ?= 1.2
 DEFAULT_BASE_IMAGE ?= Fedora-Cloud-Base-$(RELEASE)-$(DEFAULT_BASE_IMAGE_VER).$(ARCH).raw.xz
 DEFAULT_BASE_IMAGE_URL ?= https://dl.fedoraproject.org/pub/fedora/linux/releases/$(RELEASE)/Cloud/$(ARCH)/images/$(DEFAULT_BASE_IMAGE)
 
