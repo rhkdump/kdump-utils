@@ -73,25 +73,33 @@ has_valid_vmcore_dir() {
 	local vmcore_dir=$path/$(ls -1 $path | tail -n 1)
 	local vmcore="<invalid>"
 
+	test_output "Found a vmcore dir \"$vmcore_dir\":"
 	# Checking with `crash` is slow and consume a lot of memory/disk,
 	# just do a sanity check by check if log are available.
 	if [ -e $vmcore_dir/vmcore ]; then
 		vmcore=$vmcore_dir/vmcore
-		makedumpfile --dump-dmesg $vmcore $vmcore_dir/vmcore-dmesg.txt.2 || return 1
+		makedumpfile --dump-dmesg $vmcore $vmcore_dir/vmcore-dmesg.txt.2 || {
+			test_output "Failed to retrive dmesg from vmcore!"
+			return 1
+		}
 	elif [ -e $vmcore_dir/vmcore.flat ]; then
 		vmcore=$vmcore_dir/vmcore.flat
 		makedumpfile -R $vmcore_dir/vmcore < $vmcore || return 1
-		makedumpfile --dump-dmesg $vmcore_dir/vmcore $vmcore_dir/vmcore-dmesg.txt.2 || return 1
+		makedumpfile --dump-dmesg $vmcore_dir/vmcore $vmcore_dir/vmcore-dmesg.txt.2 || {
+			test_output "Failed to retrive dmesg from vmcore!"
+			return 1
+		}
 		rm $vmcore_dir/vmcore
 	else
+		test_output "The vmcore dir is empty!"
 		return 1
 	fi
 
-	if diff $vmcore_dir/vmcore-dmesg.txt.2 $vmcore_dir/vmcore-dmesg.txt; then
+	if ! diff $vmcore_dir/vmcore-dmesg.txt.2 $vmcore_dir/vmcore-dmesg.txt; then
+		test_output "Dmesg retrived from vmcore is different from dump version!"
 		return 1
 	fi
 
-	test_output "Found a valid vmcore in \"$vmcore_dir\""
 	test_output "VMCORE: $vmcore"
 	test_output "KERNEL VERSION: $(rpm -q kernel-core)"
 

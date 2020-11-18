@@ -22,7 +22,7 @@ EOF
 		if has_valid_vmcore_dir /var/crash; then
 			test_passed
 		else
-			test_failed
+			test_failed "Vmcore missing"
 		fi
 
 		shutdown -h 0
