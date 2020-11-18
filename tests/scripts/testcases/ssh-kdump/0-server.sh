@@ -9,6 +9,9 @@ on_build() {
 	img_run_cmd 'sed -i "s/^.*PermitRootLogin .*\$/PermitRootLogin yes/"  /etc/ssh/sshd_config'
 	img_run_cmd "systemctl enable sshd"
 
+	img_run_cmd "touch /etc/systemd/resolved.conf"
+	img_run_cmd "echo DNSStubListener=no >> /etc/systemd/resolved.conf"
+
 	img_run_cmd "echo interface=eth0 > /etc/dnsmasq.conf"
 	img_run_cmd "echo dhcp-authoritative >> /etc/dnsmasq.conf"
 	img_run_cmd "echo dhcp-range=192.168.77.50,192.168.77.100,255.255.255.0,12h >> /etc/dnsmasq.conf"

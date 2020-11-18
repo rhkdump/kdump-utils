@@ -94,7 +94,7 @@ for test_case in $testcases; do
 
 		$(run_test_sync $script > $(get_test_console_file $script)) &
 
-		sleep 3
+		sleep 5
 	done
 
 	script="$main_script"

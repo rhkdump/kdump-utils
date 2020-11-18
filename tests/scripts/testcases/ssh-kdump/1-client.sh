@@ -14,7 +14,7 @@ ssh root@192.168.77.1
 core_collector makedumpfile -l --message-level 7 -d 31 -F
 EOF
 
-		ssh-keygen -q -t rsa -N '' -f /root/.ssh/id_rsa <<< y &>/dev/ttyS1
+		ssh-keygen -q -t rsa -N '' -f /root/.ssh/id_rsa <<< y
 
 		while ! ping -c 1 $ssh_server -W 1; do
 			sleep 1
@@ -24,9 +24,11 @@ EOF
 			ssh-keyscan -H 192.168.77.1 > /root/.ssh/known_hosts
 		done
 
-		sshpass -p fedora ssh-copy-id root@$ssh_server -f &>/dev/ttyS1
+		sshpass -p fedora ssh $ssh_server "mkdir /root/.ssh"
+		cat /root/.ssh/id_rsa.pub | sshpass -p fedora ssh $ssh_server "cat >> /root/.ssh/authorized_keys"
 
-		sshpass -p fedora kdumpctl propagate &>/dev/ttyS1
+		sshpass -p fedora kdumpctl propagate
+		cat /root/.ssh/kdump_id_rsa.pub | sshpass -p fedora ssh $ssh_server "cat >> /root/.ssh/authorized_keys"
 
 		kdumpctl start || test_failed "Failed to start kdump"
 

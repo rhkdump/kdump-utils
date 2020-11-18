@@ -15,7 +15,7 @@ core_collector makedumpfile -l --message-level 7 -d 31
 EOF
 
 		while ! ping -c 1 $nfs_server -W 1; do
-			:
+			sleep 1
 		done
 
 		kdumpctl start || test_failed "Failed to start kdump"
