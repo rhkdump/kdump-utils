@@ -4,7 +4,7 @@
 
 Name: kexec-tools
 Version: 2.0.20
-Release: 19%{?dist}
+Release: 20%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -362,6 +362,25 @@ done
 %endif
 
 %changelog
+* Thu Nov 19 2020 Kairui Song <kasong@redhat.com> - 2.0.20-20
+- selftest: Fix several test issue with Fedora 33
+- selftest: add more detailed log and fix a test failure issue
+- selftest: Update test base image to Fedora 33
+- selftest: Fix qcow2 image format detect
+- selftest: Always use the get_image_fmt helper
+- Doc: improve the usage documentation of the logger
+- Update the kdump sysconfig
+- Capitalize the configuration name of log level
+- Add the rd.kdumploglvl option to control log level in the second kernel
+- Appropriately converts logger numeric level to syslog log level
+- Remove unused log levels for kdump logger
+- Add sanity checks for the log levels
+- Move watchdog detect and install code to module-setup.sh
+- Add a helper to omit non-mandatory dracut module
+- Move some dracut module dependencies checks to module-setup.sh
+- Add code comments to help better understanding
+
+* Thu Nov 05 2020 Kairui Song <kasong@redhat.com> - 2.0.20-19
 - Fix comment about ssh dump target
 - mkdumprd: Ensure kdumpbase is added
 - kdump.service: use ConditionKernelCommandLine=crashkernel
