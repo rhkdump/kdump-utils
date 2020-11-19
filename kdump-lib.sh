@@ -797,5 +797,21 @@ prepare_cmdline()
     if [ ! -z ${id} ] ; then
         cmdline=$(append_cmdline "${cmdline}" disable_cpu_apicid ${id})
     fi
+
+    # If any watchdog is used, set it's pretimeout to 0. pretimeout let
+    # watchdog panic the kernel first, and reset the system after the
+    # panic. If the system is already in kdump, panic is not helpful
+    # and only increase the chance of watchdog failure.
+    for i in $(get_watchdog_drvs); do
+        cmdline+=" $i.pretimeout=0"
+
+        if [[ $i == hpwdt ]]; then
+            # hpwdt have a special parameter kdumptimeout, is's only suppose
+            # to be set to non-zero in first kernel. In kdump, non-zero
+            # value could prevent the watchdog from resetting the system.
+            cmdline+=" $i.kdumptimeout=0"
+        fi
+    done
+
     echo ${cmdline}
 }
