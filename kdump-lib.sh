@@ -744,6 +744,25 @@ prepare_kdump_bootinfo()
     fi
 }
 
+get_watchdog_drvs()
+{
+    local _wdtdrvs _drv _dir
+
+    for _dir in /sys/class/watchdog/*; do
+        # device/modalias will return driver of this device
+        [[ -f "$_dir/device/modalias" ]] || continue
+        _drv=$(< "$_dir/device/modalias")
+        _drv=$(modprobe --set-version "$KDUMP_KERNELVER" -R $_drv 2>/dev/null)
+        for i in $_drv; do
+            if ! [[ " $_wdtdrvs " == *" $i "* ]]; then
+                _wdtdrvs="$_wdtdrvs $i"
+            fi
+        done
+    done
+
+    echo $_wdtdrvs
+}
+
 #
 # prepare_cmdline <commandline> <commandline remove> <commandline append>
 # This function performs a series of edits on the command line.
