@@ -256,9 +256,9 @@ is_mounted()
 get_mount_info()
 {
     local _info_type=$1 _src_type=$2 _src=$3; shift 3
-    local _info=$(findmnt --real -k -n -r -o $_info_type --$_src_type $_src $@)
+    local _info=$(findmnt -k -n -r -o $_info_type --$_src_type $_src $@)
 
-    [ -z "$_info" ] && [ -e "/etc/fstab" ] && _info=$(findmnt --real -s -n -r -o $_info_type --$_src_type $_src $@)
+    [ -z "$_info" ] && [ -e "/etc/fstab" ] && _info=$(findmnt -s -n -r -o $_info_type --$_src_type $_src $@)
 
     echo $_info
 }

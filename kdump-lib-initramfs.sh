@@ -123,7 +123,7 @@ dump_fs()
     ddebug "_mp=$_mp _dev=$_dev _op=$_op"
 
     # If dump path have a corresponding device entry but not mounted, mount it.
-    if [ -n "$_dev" ]; then
+    if [ -n "$_dev" ] && [ "$_dev" != "rootfs" ]; then
         if ! is_mounted "$_mp"; then
             dinfo "dump target $_dev is not mounted, trying to mount..."
             mkdir -p $_mp
