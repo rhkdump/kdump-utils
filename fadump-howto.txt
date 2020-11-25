@@ -104,6 +104,11 @@ For the recommended value of X, see 'FADump Memory Requirements' section.
 
    # grubby --args="fadump=on crashkernel=6G" --update-kernel=/boot/vmlinuz-`uname -r`
 
+By default, FADump reserved memory will be initialized as CMA area to make the
+memory available through CMA allocator on the production kernel. We can opt out
+of this, making reserved memory unavailable to production kernel, by booting the
+linux kernel with 'fadump=nocma' instead of 'fadump=on'.
+
 The term 'boot memory' means size of the low memory chunk that is required for
 a kernel to boot successfully when booted with restricted memory.  By default,
 the boot memory size will be the larger of 5% of system RAM or 256MB.
@@ -326,9 +331,14 @@ the original command line completely.
 
 How to disable FADump:
 
-Remove "fadump=on" from kernel cmdline parameters:
+Remove "fadump=on"/"fadump=nocma" from kernel cmdline parameters OR replace
+it with "fadump=off" kernel cmdline parameter:
 
    # grubby --update-kernel=/boot/vmlinuz-`uname -r` --remove-args="fadump=on"
+or
+   # grubby --update-kernel=/boot/vmlinuz-`uname -r` --remove-args="fadump=nocma"
+OR
+   # grubby --update-kernel=/boot/vmlinuz-`uname -r` --args="fadump=off"
 
 If KDump is to be used as the dump capturing mechanism, update the crashkernel
 parameter (Else, remove "crashkernel=" parameter too, using grubby):
