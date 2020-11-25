@@ -211,8 +211,8 @@ get_kdump_targets()
 # /mnt/bind -> /path/to/src, /mnt/bind/dump -> /path/to/src/dump
 #
 # findmnt uses the option "-v, --nofsroot" to exclusive the [/dir]
-# in the SOURCE column for bind-mounts, then if $_mntpoint equals to
-# $_mntpoint_nofsroot, the mountpoint is not bind mounted directory.
+# in the SOURCE column for bind-mounts, then if $_src equals to
+# $_src_nofsroot, the mountpoint is not bind mounted directory.
 #
 # Below is just an example for mount info
 # /dev/mapper/atomicos-root[/ostree/deploy/rhel-atomic-host/var], if the
@@ -220,22 +220,36 @@ get_kdump_targets()
 # part is the bind mounted directory which quotes by bracket "[]".
 get_bind_mount_source()
 {
-    local _path=$1
-    # In case it's a sub path in a mount point, get the mount point first
-    local _mnt_top=$(df $_path | tail -1 | awk '{print $NF}')
-    local _mntpoint=$(findmnt $_mnt_top | tail -n 1 | awk '{print $2}')
-    local _mntpoint_nofsroot=$(findmnt -v $_mnt_top | tail -n 1 | awk '{print $2}')
+    local _mnt=$(df $1 | tail -1 | awk '{print $NF}')
+    local _path=${1#$_mnt}
 
-    if [[ "$_mntpoint" = $_mntpoint_nofsroot ]]; then
-        echo $_path && return
+    local _src=$(get_mount_info SOURCE target $_mnt -f)
+    local _opt=$(get_mount_info OPTIONS target $_mnt -f)
+    local _fstype=$(get_mount_info FSTYPE target $_mnt -f)
+
+    # bind mount in fstab
+    if [[ -d "$_src" ]] && [[ "$_fstype" = none ]] && (echo "$_opt" | grep -q "\bbind\b"); then
+        echo $_src$_path && return
     fi
 
-    _mntpoint=${_mntpoint#*$_mntpoint_nofsroot}
-    _mntpoint=${_mntpoint#[}
-    _mntpoint=${_mntpoint%]}
-    _path=${_path#$_mnt_top}
+    # direct mount
+    local _src_nofsroot=$(get_mount_info SOURCE target $_mnt -v -f)
+    if [[ $_src_nofsroot = $_src ]]; then
+        echo $_mnt$_path && return
+    fi
 
-    echo $_mntpoint$_path
+    local _fsroot=${_src#$_src_nofsroot[}
+    _fsroot=${_fsroot%]}
+    _mnt=$(get_mount_info TARGET source $_src_nofsroot -f)
+
+    # for btrfs, _fsroot will also contain the subvol value as well, strip it
+    if [[ "$_fstype" = btrfs ]]; then
+        local _subvol
+        _subvol=${_opt#*subvol=}
+        _subvol=${_subvol%,*}
+        _fsroot=${_fsroot#$_subvol}
+    fi
+    echo $_mnt$_fsroot$_path
 }
 
 # Return the current underlaying device of a path, ignore bind mounts
