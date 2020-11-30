@@ -5,7 +5,7 @@
 
 Name: kexec-tools
 Version: 2.0.20
-Release: 20%{?dist}
+Release: 21%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -359,6 +359,19 @@ done
 %endif
 
 %changelog
+* Mon Nov 30 2020 Kairui Song <kasong@redhat.com> - 2.0.20-21
+- Rebase makedumpfile to 1.6.8
+- fadump-howto: update about 'nocma' and 'off' options for 'fadump=' parameter
+- module-setup.sh: enable vlan on team interface
+- kdump-lib: Fix get_bind_mount_source to support btrfs and fstab
+- Make get_mount_info work with bind mount
+- Set watchdog's pretimeout to zero in kdump kernel
+- kdump-lib.sh: Use a more generic helper to detect omitted dracut module
+- Fix the watchdog drivers detection code
+- Add a helper for detecting watchdog drivers
+- Remove a redundant nfs check
+- kdumpctl: split the driver detection from fs dection function
+
 * Thu Nov 19 2020 Kairui Song <kasong@redhat.com> - 2.0.20-20
 - selftest: Fix several test issue with Fedora 33
 - selftest: add more detailed log and fix a test failure issue
