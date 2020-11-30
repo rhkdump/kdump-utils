@@ -1,6 +1,7 @@
 %global eppic_ver d84c3541035d95077aa8571f5d5c3e07c6ef510b
 %global eppic_shortver %(c=%{eppic_ver}; echo ${c:0:7})
-%global mkdf_ver 1.6.7
+%global mkdf_ver 1.6.8
+%global mkdf_shortver %(c=%{mkdf_ver}; echo ${c:0:7})
 
 Name: kexec-tools
 Version: 2.0.20
@@ -16,7 +17,7 @@ Source4: kdump.sysconfig.i386
 Source5: kdump.sysconfig.ppc64
 Source7: mkdumprd
 Source8: kdump.conf
-Source9: http://downloads.sourceforge.net/project/makedumpfile/makedumpfile/%{mkdf_ver}/makedumpfile-%{mkdf_ver}.tar.gz
+Source9: https://github.com/makedumpfile/makedumpfile/archive/%{mkdf_ver}/makedumpfile-%{mkdf_shortver}.tar.gz
 Source10: kexec-kdump-howto.txt
 Source11: fadump-howto.txt
 Source12: mkdumprd.8
@@ -100,9 +101,7 @@ Patch0: kexec-tools-2.0.20-fix-broken-multiboot2-buliding-for-i386.patch
 # Patches 601 onward are generic patches
 #
 Patch601: ./kexec-tools-2.0.20-eppic-Remove-duplicated-variable-declaration.patch
-Patch602: ./kexec-tools-2.0.20-makedumpfile-Remove-duplicated-variable-declarations.patch
-Patch603: ./kexec-tools-2.0.20-Remove-duplicated-variable-declarations.patch
-Patch604: ./kexec-tools-2.0.20-makedumpfile-Introduce-check-params-option.patch
+Patch602: ./kexec-tools-2.0.20-Remove-duplicated-variable-declarations.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -122,8 +121,6 @@ tar -z -x -v -f %{SOURCE19}
 
 %patch601 -p1
 %patch602 -p1
-%patch603 -p1
-%patch604 -p1
 
 %ifarch ppc
 %define archdef ARCH=ppc
