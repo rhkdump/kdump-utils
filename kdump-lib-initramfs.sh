@@ -222,7 +222,8 @@ dump_to_rootfs()
 {
 
     dinfo "Trying to bring up rootfs device"
-    systemctl start dracut-initqueue
+    systemctl is-failed dracut-initqueue || systemctl start dracut-initqueue
+
     dinfo "Waiting for rootfs mount, will timeout after 90 seconds"
     systemctl start sysroot.mount
 
