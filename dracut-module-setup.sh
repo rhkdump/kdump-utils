@@ -373,7 +373,7 @@ kdump_install_net() {
     if [ -n "$_static" ]; then
         _proto=none
     elif is_ipv6_address $_srcaddr; then
-        _proto=either6
+        _proto=auto6
     else
         _proto=dhcp
     fi
