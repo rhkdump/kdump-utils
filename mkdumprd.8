@@ -15,7 +15,13 @@ be loaded in the initramfs (based on configuration retrieved from
 \fI/etc/kdump.conf)\fR
 
 \fBmkdumprd\fR add a new \fBdracut\fR module 99kdumpbase and use \fBdracut\fR
-utility to generate the initramfs.
+utility to generate the initramfs. When generating a kdump initramfs, \fBmkdumprd\fR
+will determine how much disk space is available, if the dump target's available
+space is not greater than the total system memory, \fBmkdumprd\fR will print a
+warning to remind that there might not be enough space to save a vmcore. The
+warning covers extreme scenarios such as the slab explodes with non-zero data or
+a full vmcore, etc. Therefore, need to prevent users from having minimum disk
+space for crash dump.
 
 \fBmkdumprd\fR was not intended for casual use outside of the service
 initialization script for the kdump utility, and should not be run manually.  If
