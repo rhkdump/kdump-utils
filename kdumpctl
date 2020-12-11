@@ -944,7 +944,7 @@ check_fence_kdump_config()
 			return 1
 		fi
 		# node can be ipaddr
-		echo $ipaddrs | grep $node > /dev/null
+		echo "$ipaddrs " | grep "$node " > /dev/null
 		if [ $? -eq 0 ]; then
 			derror "Option fence_kdump_nodes cannot contain $node"
 			return 1
