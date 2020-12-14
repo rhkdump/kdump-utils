@@ -849,8 +849,7 @@ install() {
     inst "/lib/kdump/kdump-logger.sh" "/lib/kdump-logger.sh"
     inst "$moddir/kdump.sh" "/usr/bin/kdump.sh"
     inst "$moddir/kdump-capture.service" "$systemdsystemunitdir/kdump-capture.service"
-    mkdir -p "$initdir/$systemdsystemunitdir/initrd.target.wants"
-    ln_r "$systemdsystemunitdir/kdump-capture.service" "$systemdsystemunitdir/initrd.target.wants/kdump-capture.service"
+    systemctl -q --root "$initdir" add-wants initrd.target kdump-capture.service
     inst "$moddir/kdump-error-handler.sh" "/usr/bin/kdump-error-handler.sh"
     inst "$moddir/kdump-error-handler.service" "$systemdsystemunitdir/kdump-error-handler.service"
     # Replace existing emergency service and emergency target
