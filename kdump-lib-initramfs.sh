@@ -115,7 +115,7 @@ save_log()
 # dump_fs <mount point>
 dump_fs()
 {
-    local ret
+    local _exitcode
     local _mp=$1
     local _dev=$(get_mount_info SOURCE target $_mp -f)
     local _op=$(get_mount_info OPTIONS target $_mp -f)
@@ -159,16 +159,20 @@ dump_fs()
 
     dinfo "saving vmcore"
     $CORE_COLLECTOR /proc/vmcore $_dump_path/vmcore-incomplete
-    ret=$?
+    _exitcode=$?
+    if [ $_exitcode -eq 0 ]; then
+        mv $_dump_path/vmcore-incomplete $_dump_path/vmcore
+        sync
+        dinfo "saving vmcore complete"
+    else
+        derror "saving vmcore failed, _exitcode:$_exitcode"
+    fi
+
     save_log
     mv $KDUMP_LOG_FILE $_dump_path/
-    if [ $ret -ne 0 ]; then
-	    return 1
+    if [ $_exitcode -ne 0 ]; then
+        return 1
     fi
-    mv $_dump_path/vmcore-incomplete $_dump_path/vmcore
-    sync
-
-    dinfo "saving vmcore complete"
 
     # improper kernel cmdline can cause the failure of echo, we can ignore this kind of failure
     return 0

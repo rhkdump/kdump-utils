@@ -105,10 +105,12 @@ dump_raw()
 
 dump_ssh()
 {
-    local ret
+    local _ret=0
+    local _exitcode=0 _exitcode2=0
     local _opt="-i $1 -o BatchMode=yes -o StrictHostKeyChecking=yes"
     local _dir="$KDUMP_PATH/$HOST_IP-$DATEDIR"
     local _host=$2
+    local _vmcore="vmcore"
 
     dinfo "saving to $_host:$_dir"
 
@@ -122,25 +124,36 @@ dump_ssh()
 
     if [ "${CORE_COLLECTOR%%[[:blank:]]*}" = "scp" ]; then
         scp -q $_opt /proc/vmcore "$_host:$_dir/vmcore-incomplete"
-        ret=$?
-        save_log
-        scp -q $_opt $KDUMP_LOG_FILE "$_host:$_dir/"
-        if [ $ret -ne 0 ]; then
-            return 1
-        fi
-        ssh $_opt $_host "mv $_dir/vmcore-incomplete $_dir/vmcore" || return 1
+        _exitcode=$?
     else
         $CORE_COLLECTOR /proc/vmcore | ssh $_opt $_host "dd bs=512 of=$_dir/vmcore-incomplete"
-        ret=$?
-        save_log
-        scp -q $_opt $KDUMP_LOG_FILE "$_host:$_dir/"
-        if [ $ret -ne 0 ]; then
-            return 1
-        fi
-        ssh $_opt $_host "mv $_dir/vmcore-incomplete $_dir/vmcore.flat" || return 1
+        _exitcode=$?
+        _vmcore="vmcore.flat"
     fi
 
-    dinfo "saving vmcore complete"
+    if [ $_exitcode -eq 0 ]; then
+        ssh $_opt $_host "mv $_dir/vmcore-incomplete $_dir/$_vmcore"
+        _exitcode2=$?
+        if [ $_exitcode2 -ne 0 ]; then
+            derror "moving vmcore failed, _exitcode:$_exitcode2"
+        else
+            dinfo "saving vmcore complete"
+        fi
+    else
+        derror "saving vmcore failed, _exitcode:$_exitcode"
+    fi
+
+    save_log
+    scp -q $_opt $KDUMP_LOG_FILE "$_host:$_dir/"
+    _ret=$?
+    if [ $_ret -ne 0 ]; then
+        derror "saving log file failed, _exitcode:$_ret"
+    fi
+
+    if [ $_exitcode -ne 0 ] || [ $_exitcode2 -ne 0 ];then
+        return 1
+    fi
+
     return 0
 }
 
