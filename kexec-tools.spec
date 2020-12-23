@@ -4,8 +4,8 @@
 %global mkdf_shortver %(c=%{mkdf_ver}; echo ${c:0:7})
 
 Name: kexec-tools
-Version: 2.0.20
-Release: 21%{?dist}
+Version: 2.0.21
+Release: 1%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -80,7 +80,6 @@ Requires:       systemd-udev%{?_isa}
 #
 # Patches 0 through 100 are meant for x86 kexec-tools enablement
 #
-Patch0: kexec-tools-2.0.20-fix-broken-multiboot2-buliding-for-i386.patch
 
 #
 # Patches 101 through 200 are meant for x86_64 kexec-tools enablement
@@ -101,7 +100,6 @@ Patch0: kexec-tools-2.0.20-fix-broken-multiboot2-buliding-for-i386.patch
 # Patches 601 onward are generic patches
 #
 Patch601: ./kexec-tools-2.0.20-eppic-Remove-duplicated-variable-declaration.patch
-Patch602: ./kexec-tools-2.0.20-Remove-duplicated-variable-declarations.patch
 Patch603: ./kexec-tools-2.0.20-makedumpfile-printk-add-support-for-lockless-ringbuffer.patch
 Patch604: ./kexec-tools-2.0.20-makedumpfile-printk-use-committed-finalized-state-value.patch
 
@@ -119,10 +117,7 @@ mkdir -p -m755 kcp
 tar -z -x -v -f %{SOURCE9}
 tar -z -x -v -f %{SOURCE19}
 
-%patch0 -p1
-
 %patch601 -p1
-%patch602 -p1
 %patch603 -p1
 %patch604 -p1
 
@@ -363,6 +358,14 @@ done
 %endif
 
 %changelog
+* Wed Dec 23 2020 Kairui Song <kasong@redhat.com> - 2.0.21-1
+- makedumpfile: printk: use committed/finalized state values
+- makedumpfile: printk: add support for lockless ringbuffer
+- dracut-module-setup.sh: Use systemctl call to replace ln_r
+- Doc: improve mkdumprd man page
+- Don's try to restart dracut-initqueue if it's already failed
+- dracut-module-setup.sh: use auto6 for ipv6
+
 * Mon Nov 30 2020 Kairui Song <kasong@redhat.com> - 2.0.20-21
 - Rebase makedumpfile to 1.6.8
 - fadump-howto: update about 'nocma' and 'off' options for 'fadump=' parameter
