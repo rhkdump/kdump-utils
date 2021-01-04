@@ -117,26 +117,15 @@ dump_fs()
 {
     local _exitcode
     local _mp=$1
-    local _dev=$(get_mount_info SOURCE target $_mp -f)
-    local _op=$(get_mount_info OPTIONS target $_mp -f)
+    ddebug "dump_fs _mp=$_mp"
 
-    ddebug "_mp=$_mp _dev=$_dev _op=$_op"
-
-    # If dump path have a corresponding device entry but not mounted, mount it.
-    if [ -n "$_dev" ] && [ "$_dev" != "rootfs" ]; then
-        if ! is_mounted "$_mp"; then
-            dinfo "dump target $_dev is not mounted, trying to mount..."
-            mkdir -p $_mp
-            mount -o $_op $_dev $_mp
-
-            if [ $? -ne 0 ]; then
-                derror "mounting failed (mount point: $_mp, option: $_op)"
-                return 1
-            fi
+    if ! is_mounted "$_mp"; then
+        dinfo "dump path \"$_mp\" is not mounted, trying to mount..."
+        mount --target $_mp
+        if [ $? -ne 0 ]; then
+            derror "failed to dump to \"$_mp\", it's not a mount point!"
+            return 1
         fi
-    else
-        derror "failed to dump to \"$_mp\", it's not a mount point!"
-        return 1
     fi
 
     # Remove -F in makedumpfile case. We don't want a flat format dump here.
