@@ -361,7 +361,7 @@ done
 %endif
 
 %changelog
-* Fri Jan 08 2020 Kairui Song <kasong@redhat.com> - 2.0.21-2
+* Fri Jan 08 2021 Kairui Song <kasong@redhat.com> - 2.0.21-2
 - makedumpfile: make use of 'uts_namespace.name' offset in VMCOREINFO
 - kdumpctl: fix a variable expansion in check_fence_kdump_config()
 - Add BuildRequires: make
