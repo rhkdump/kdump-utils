@@ -5,7 +5,7 @@
 
 Name: kexec-tools
 Version: 2.0.21
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -361,6 +361,12 @@ done
 %endif
 
 %changelog
+* Fri Jan 08 2020 Kairui Song <kasong@redhat.com> - 2.0.21-2
+- makedumpfile: make use of 'uts_namespace.name' offset in VMCOREINFO
+- kdumpctl: fix a variable expansion in check_fence_kdump_config()
+- Add BuildRequires: make
+- Save the final failure information to log file if saving vmcore failed
+
 * Wed Dec 23 2020 Kairui Song <kasong@redhat.com> - 2.0.21-1
 - makedumpfile: printk: use committed/finalized state values
 - makedumpfile: printk: add support for lockless ringbuffer
