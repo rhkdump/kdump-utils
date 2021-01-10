@@ -61,7 +61,7 @@ Requires(postun): systemd-units
 Requires(pre): coreutils sed zlib
 Requires: dracut >= 050
 Requires: dracut-network >= 050
-Requires: dracut-squash >= 050
+Recommends: dracut-squash >= 050
 Requires: ethtool
 BuildRequires: make
 BuildRequires: zlib-devel elfutils-devel glib2-devel bzip2-devel ncurses-devel bison flex lzo-devel snappy-devel
