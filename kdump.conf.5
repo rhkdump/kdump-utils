@@ -98,6 +98,11 @@ vmcore.flat, you will need to use "makedumpfile -R" to rearrange the
 dump data from standard input to a normal dumpfile (readable with analysis
 tools).
 ie. "makedumpfile -R vmcore < vmcore.flat"
+.PP
+Note 3: If specified core_collector simply copy the vmcore file to the
+dump target (eg: cp, scp), the vmcore could be significantly large.
+Please make sure the dump target has enough space, at leaset larger
+than the system's RAM.
 
 .RE
 
