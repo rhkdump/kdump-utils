@@ -158,6 +158,7 @@ dump_fs()
         derror "saving vmcore failed, _exitcode:$_exitcode"
     fi
 
+    dinfo "saving the $KDUMP_LOG_FILE to $_dump_path/"
     save_log
     mv $KDUMP_LOG_FILE $_dump_path/
     if [ $_exitcode -ne 0 ]; then

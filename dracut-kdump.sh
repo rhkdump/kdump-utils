@@ -111,6 +111,7 @@ dump_ssh()
     local _dir="$KDUMP_PATH/$HOST_IP-$DATEDIR"
     local _host=$2
     local _vmcore="vmcore"
+    local _ipv6_addr="" _username=""
 
     dinfo "saving to $_host:$_dir"
 
@@ -122,8 +123,17 @@ dump_ssh()
 
     dinfo "saving vmcore"
 
+    if is_ipv6_address "$_host"; then
+        _username=${_host%@*}
+	_ipv6_addr="[${_host#*@}]"
+    fi
+
     if [ "${CORE_COLLECTOR%%[[:blank:]]*}" = "scp" ]; then
-        scp -q $_opt /proc/vmcore "$_host:$_dir/vmcore-incomplete"
+        if [ -n "$_username" ] && [ -n "$_ipv6_addr" ]; then
+            scp -q $_opt /proc/vmcore "$_username@$_ipv6_addr:$_dir/vmcore-incomplete"
+        else
+            scp -q $_opt /proc/vmcore "$_host:$_dir/vmcore-incomplete"
+        fi
         _exitcode=$?
     else
         $CORE_COLLECTOR /proc/vmcore | ssh $_opt $_host "dd bs=512 of=$_dir/vmcore-incomplete"
@@ -143,8 +153,13 @@ dump_ssh()
         derror "saving vmcore failed, _exitcode:$_exitcode"
     fi
 
+    dinfo "saving the $KDUMP_LOG_FILE to $_host:$_dir/"
     save_log
-    scp -q $_opt $KDUMP_LOG_FILE "$_host:$_dir/"
+    if [ -n "$_username" ] && [ -n "$_ipv6_addr" ]; then
+        scp -q $_opt $KDUMP_LOG_FILE "$_username@$_ipv6_addr:$_dir/"
+    else
+        scp -q $_opt $KDUMP_LOG_FILE "$_host:$_dir/"
+    fi
     _ret=$?
     if [ $_ret -ne 0 ]; then
         derror "saving log file failed, _exitcode:$_ret"
@@ -161,6 +176,7 @@ save_opalcore_ssh() {
     local _path=$1
     local _opts="$2"
     local _location=$3
+    local _user_name="" _ipv6addr=""
 
     ddebug "_path=$_path _opts=$_opts _location=$_location"
 
@@ -173,8 +189,18 @@ save_opalcore_ssh() {
         fi
     fi
 
+    if is_ipv6_address "$_host"; then
+        _user_name=${_location%@*}
+        _ipv6addr="[${_location#*@}]"
+    fi
+
     dinfo "saving opalcore:$OPALCORE to $_location:$_path"
-    scp $_opts $OPALCORE $_location:$_path/opalcore-incomplete
+
+    if [ -n "$_user_name" ] && [ -n "$_ipv6addr" ]; then
+        scp $_opts $OPALCORE $_user_name@$_ipv6addr:$_path/opalcore-incomplete
+    else
+        scp $_opts $OPALCORE $_location:$_path/opalcore-incomplete
+    fi
     if [ $? -ne 0 ]; then
         derror "saving opalcore failed"
        return 1
