@@ -1,10 +1,12 @@
 #!/bin/bash
 
-. /lib/kdump/kdump-lib.sh
+kdump_module_init() {
+    if ! [[ -d "${initdir}/tmp" ]]; then
+        mkdir -p "${initdir}/tmp"
+    fi
 
-if ! [[ -d "${initdir}/tmp" ]]; then
-    mkdir -p "${initdir}/tmp"
-fi
+    . /lib/kdump/kdump-lib.sh
+}
 
 check() {
     [[ $debug ]] && set -x
@@ -18,6 +20,8 @@ check() {
 
 depends() {
     local _dep="base shutdown"
+
+    kdump_module_init
 
     add_opt_module() {
         [[ " $omit_dracutmodules " != *\ $1\ * ]] && _dep="$_dep $1"
@@ -825,6 +829,7 @@ kdump_install_systemd_conf() {
 }
 
 install() {
+    kdump_module_init
     kdump_install_conf
     overwrite_sysctl_conf
 

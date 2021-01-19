@@ -1,7 +1,6 @@
 #!/bin/bash
 
 . /etc/sysconfig/kdump
-. /lib/kdump/kdump-lib.sh
 
 KDUMP_KERNEL=""
 KDUMP_INITRD=""
@@ -21,6 +20,8 @@ depends() {
 }
 
 prepare_kernel_initrd() {
+    . /lib/kdump/kdump-lib.sh
+
     prepare_kdump_bootinfo
 
     # $kernel is a variable from dracut
