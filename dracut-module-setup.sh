@@ -1,6 +1,5 @@
 #!/bin/bash
 
-. $dracutfunctions
 . /lib/kdump/kdump-lib.sh
 
 if ! [[ -d "${initdir}/tmp" ]]; then
