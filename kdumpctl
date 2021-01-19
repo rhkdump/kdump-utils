@@ -34,6 +34,7 @@ fi
 [[ $dracutbasedir ]] || dracutbasedir=/usr/lib/dracut
 . $dracutbasedir/dracut-functions.sh
 . /lib/kdump/kdump-lib.sh
+. /lib/kdump/kdump-logger.sh
 
 #initiate the kdump logger
 dlog_init

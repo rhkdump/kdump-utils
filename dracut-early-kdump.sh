@@ -12,6 +12,7 @@ EARLY_KEXEC_ARGS=""
 . /etc/sysconfig/kdump
 . /lib/dracut-lib.sh
 . /lib/kdump-lib.sh
+. /lib/kdump-logger.sh
 
 #initiate the kdump logger
 dlog_init

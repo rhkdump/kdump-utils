@@ -13,6 +13,7 @@ fi
 [[ $dracutbasedir ]] || dracutbasedir=/usr/lib/dracut
 . $dracutbasedir/dracut-functions.sh
 . /lib/kdump/kdump-lib.sh
+. /lib/kdump/kdump-logger.sh
 export IN_KDUMP=1
 
 #initiate the kdump logger

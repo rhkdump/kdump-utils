@@ -1,6 +1,7 @@
 # These variables and functions are useful in 2nd kernel
 
 . /lib/kdump-lib.sh
+. /lib/kdump-logger.sh
 
 KDUMP_PATH="/var/crash"
 KDUMP_LOG_FILE="/run/initramfs/kexec-dmesg.log"
