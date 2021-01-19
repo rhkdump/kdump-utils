@@ -819,13 +819,11 @@ kdump_install_systemd_conf() {
     # Forward logs to console directly, and don't read Kmsg, this avoids
     # unneccessary memory consumption and make console output more useful.
     # Only do so for non fadump image.
-    if ! is_fadump_capable; then
-        mkdir -p ${initdir}/etc/systemd/journald.conf.d
-        echo "[Journal]" > ${initdir}/etc/systemd/journald.conf.d/kdump.conf
-        echo "Storage=volatile" >> ${initdir}/etc/systemd/journald.conf.d/kdump.conf
-        echo "ReadKMsg=no" >> ${initdir}/etc/systemd/journald.conf.d/kdump.conf
-        echo "ForwardToConsole=yes" >> ${initdir}/etc/systemd/journald.conf.d/kdump.conf
-    fi
+    mkdir -p ${initdir}/etc/systemd/journald.conf.d
+    echo "[Journal]" > ${initdir}/etc/systemd/journald.conf.d/kdump.conf
+    echo "Storage=volatile" >> ${initdir}/etc/systemd/journald.conf.d/kdump.conf
+    echo "ReadKMsg=no" >> ${initdir}/etc/systemd/journald.conf.d/kdump.conf
+    echo "ForwardToConsole=yes" >> ${initdir}/etc/systemd/journald.conf.d/kdump.conf
 }
 
 install() {
