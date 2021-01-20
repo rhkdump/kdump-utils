@@ -5,7 +5,7 @@
 
 Name: kexec-tools
 Version: 2.0.21
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -361,6 +361,18 @@ done
 %endif
 
 %changelog
+* Wed Jan 20 2021 Kairui Song <kasong@redhat.com> - 2.0.21-3
+- module-setup.sh: don't polute the namespace unnecessarily
+- module-setup.sh: don't source $dracutfunctions
+- logger: source the logger file individually
+- Fix dump_fs mount point detection and fallback mount
+- Revert "Don's try to restart dracut-initqueue if it's already failed"
+- Revert "Append both nofail and x-systemd.before to kdump mount target"
+- Doc: Improve the kdump sysconfig document
+- kdump.conf: Update doc about core_collector for ssh target
+- Merge #4 `Make dracut-squash a weak dep`
+- Fix a date error in the change log
+
 * Fri Jan 08 2021 Kairui Song <kasong@redhat.com> - 2.0.21-2
 - makedumpfile: make use of 'uts_namespace.name' offset in VMCOREINFO
 - kdumpctl: fix a variable expansion in check_fence_kdump_config()
