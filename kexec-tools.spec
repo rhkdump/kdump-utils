@@ -5,7 +5,7 @@
 
 Name: kexec-tools
 Version: 2.0.21
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -361,6 +361,11 @@ done
 %endif
 
 %changelog
+* Fri Jan 22 2021 Kairui Song <kasong@redhat.com> - 2.0.21-4
+- dracut-module-setup.sh: enable ForwardToConsole=yes in fadump mode
+- kdump.conf: add ipv6 example for nfs and ssh dump
+- fix kdump failure of saving vmcore with the scp + ipv6 method
+
 * Wed Jan 20 2021 Kairui Song <kasong@redhat.com> - 2.0.21-3
 - module-setup.sh: don't polute the namespace unnecessarily
 - module-setup.sh: don't source $dracutfunctions
