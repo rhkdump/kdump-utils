@@ -5,7 +5,7 @@
 
 Name: kexec-tools
 Version: 2.0.21
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -361,6 +361,9 @@ done
 %endif
 
 %changelog
+* Tue Jan 26 2021 Fedora Release Engineering <releng@fedoraproject.org> - 2.0.21-5
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_34_Mass_Rebuild
+
 * Fri Jan 22 2021 Kairui Song <kasong@redhat.com> - 2.0.21-4
 - dracut-module-setup.sh: enable ForwardToConsole=yes in fadump mode
 - kdump.conf: add ipv6 example for nfs and ssh dump
