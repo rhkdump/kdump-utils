@@ -821,6 +821,10 @@ prepare_cmdline()
         fi
     done
 
+    # Remove trace_buf_size, trace_event
+    cmdline=$(remove_cmdline_param "$cmdline" trace_buf_size trace_event)
+    cmdline="${cmdline} trace_buf_size=1"
+
     echo ${cmdline}
 }
 
