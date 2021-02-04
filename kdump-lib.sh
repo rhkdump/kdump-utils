@@ -823,3 +823,71 @@ prepare_cmdline()
 
     echo ${cmdline}
 }
+
+#get system memory size in the unit of GB
+get_system_size()
+{
+    result=$(cat /proc/iomem  | grep "System RAM" | awk -F ":" '{ print $1 }' | tr [:lower:] [:upper:] | paste -sd+)
+    result="+$result"
+    # replace '-' with '+0x' and '+' with '-0x'
+    sum=$( echo $result | sed -e 's/-/K0x/g' | sed -e 's/+/-0x/g' | sed -e 's/K/+/g' )
+    size=$(printf "%d\n" $(($sum)))
+    let size=$size/1024/1024/1024
+
+    echo $size
+}
+
+get_recommend_size()
+{
+    local mem_size=$1
+    local _ck_cmdline=$2
+    local OLDIFS="$IFS"
+
+    last_sz=""
+    last_unit=""
+
+    IFS=','
+    for i in $_ck_cmdline; do
+        end=$(echo $i | awk -F "-" '{ print $2 }' | awk -F ":" '{ print $1 }')
+        recommend=$(echo $i | awk -F "-" '{ print $2 }' | awk -F ":" '{ print $2 }')
+        size=${end: : -1}
+        unit=${end: -1}
+        if [ $unit == 'T' ]; then
+            let size=$size*1024
+        fi
+        if [ $mem_size -lt $size ]; then
+            echo $recommend
+            IFS="$OLDIFS"
+            return
+        fi
+    done
+    IFS="$OLDIFS"
+}
+
+# return recommended size based on current system RAM size
+kdump_get_arch_recommend_size()
+{
+    if ! [[ -r "/proc/iomem" ]] ; then
+        echo "Error, can not access /proc/iomem."
+        return 1
+    fi
+    arch=$(lscpu | grep Architecture | awk -F ":" '{ print $2 }' | tr [:lower:] [:upper:])
+
+    if [ $arch == "X86_64" ] || [ $arch == "S390" ]; then
+        ck_cmdline="1G-4G:160M,4G-64G:192M,64G-1T:256M,1T-:512M"
+    elif [ $arch == "ARM64" ]; then
+        ck_cmdline="2G-:448M"
+    elif [ $arch == "PPC64LE" ]; then
+        if is_fadump_capable; then
+            ck_cmdline="4G-16G:768M,16G-64G:1G,64G-128G:2G,128G-1T:4G,1T-2T:6G,2T-4T:12G,4T-8T:20G,8T-16T:36G,16T-32T:64G,32T-64T:128G,64T-:180G"
+        else
+            ck_cmdline="2G-4G:384M,4G-16G:512M,16G-64G:1G,64G-128G:2G,128G-:4G"
+        fi
+    fi
+
+    ck_cmdline=$(echo $ck_cmdline | sed -e 's/-:/-102400T:/g')
+    sys_mem=$(get_system_size)
+    result=$(get_recommend_size $sys_mem "$ck_cmdline")
+    echo $result
+    return 0
+}
