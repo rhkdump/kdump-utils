@@ -5,7 +5,7 @@
 
 Name: kexec-tools
 Version: 2.0.21
-Release: 5%{?dist}
+Release: 6%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -361,6 +361,10 @@ done
 %endif
 
 %changelog
+* Mon Feb 08 2021 Kairui Song <kasong@redhat.com> - 2.0.21-6
+- Remove trace_buf_size and trace_event from the kernel bootparameters of the kdump kernel
+- kdump-lib.sh: introduce functions to return recommened mem size
+
 * Tue Jan 26 2021 Fedora Release Engineering <releng@fedoraproject.org> - 2.0.21-5
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_34_Mass_Rebuild
 
