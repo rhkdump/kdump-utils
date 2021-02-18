@@ -638,6 +638,35 @@ check_rebuild()
 	return $?
 }
 
+# On ppc64le LPARs, the keys trusted by firmware do not end up in
+# .builtin_trusted_keys. So instead, add the key to the .ima keyring
+function load_kdump_kernel_key()
+{
+	# this is only called inside is_secure_boot_enforced,
+	# no need to retest
+
+        # this is only required if DT /ibm,secure-boot is a file.
+        # if it is a dir, we are on OpenPower and don't need this.
+        if ! [ -f /proc/device-tree/ibm,secure-boot ]; then
+                return
+        fi
+
+        KDUMP_KEY_ID=$(cat /usr/share/doc/kernel-keys/$KDUMP_KERNELVER/kernel-signing-ppc.cer |
+                        keyctl padd asymmetric kernelkey-$RANDOM %:.ima)
+}
+
+# remove a previously loaded key. There's no real security implication
+# to leaving it around, we choose to do this because it makes it easier
+# to be idempotent and so as to reduce the potential for confusion.
+function remove_kdump_kernel_key()
+{
+	if [ -z "$KDUMP_KEY_ID" ]; then
+		return
+	fi
+
+	keyctl unlink $KDUMP_KEY_ID %:.ima
+}
+
 # Load the kdump kernel specified in /etc/sysconfig/kdump
 # If none is specified, try to load a kdump kernel with the same version
 # as the currently running kernel.
@@ -654,6 +683,7 @@ load_kdump()
 	if is_secure_boot_enforced; then
 		dinfo "Secure Boot is enabled. Using kexec file based syscall."
 		KEXEC_ARGS="$KEXEC_ARGS -s"
+		load_kdump_kernel_key
 	fi
 
 	ddebug "$KEXEC $KEXEC_ARGS $standard_kexec_args --command-line=$KDUMP_COMMANDLINE --initrd=$TARGET_INITRD $KDUMP_KERNEL"
@@ -674,6 +704,8 @@ load_kdump()
 	ret=$?
 	set +x
 	exec 2>&12 12>&-
+
+	remove_kdump_kernel_key
 
 	if [ $ret == 0 ]; then
 		dinfo "kexec: loaded kdump kernel"
