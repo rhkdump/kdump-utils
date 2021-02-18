@@ -224,12 +224,16 @@ Things to remember:
    dracut_args --add "network"
 
 4) If FADump is configured to capture vmcore to a remote dump target using SSH
-   or NFS protocol, the network interface is renamed to kdump-<interface-name>
-   if <interface-name> is generic, for example, *eth#, or net#. This problem
-   occurs because the vmcore capture scripts in the initial RAM disk (initrd)
-   add the kdump- prefix to the network interface name to secure persistent
-   naming. As the same initrd is used for production kernel boot, the interface
-   name is changed for the production kernel too.
+   or NFS protocol, the corresponding network interface '<interface-name>' is
+   renamed to 'kdump-<interface-name>', if it is generic (like *eth# or net#).
+   It happens because vmcore capture scripts in the initial RAM disk (initrd)
+   add the 'kdump-' prefix to the network interface name to secure persistent
+   naming. And as capture kernel and production kernel use the same initrd in
+   case of FADump, the interface name is changed for the production kernel too.
+   This is likely to impact network configuration setup for production kernel.
+   So, it is recommended to use a non-generic name for a network interface,
+   before setting up FADump to capture vmcore to a remote dump target based on
+   that network interface, to avoid running into network configuration issues.
 
 Dump Triggering methods:
 
