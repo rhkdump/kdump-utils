@@ -185,6 +185,26 @@ check_save_path_fs()
     fi
 }
 
+mount_failure()
+{
+    local _target=$1
+    local _mnt=$2
+    local _fstype=$3
+    local msg="Failed to mount $_target"
+
+    if [ -n "$_mnt" ]; then
+        msg="$msg on $_mnt"
+    fi
+
+    msg="$msg for kdump preflight check."
+
+    if [[ $_fstype = "nfs" ]]; then
+        msg="$msg Please make sure nfs-utils has been installed."
+    fi
+
+    perror_exit "$msg"
+}
+
 check_user_configured_target()
 {
     local _target=$1 _cfg_fs_type=$2 _mounted
@@ -210,7 +230,7 @@ check_user_configured_target()
         if ! is_mounted "$_mnt"; then
             if [[ $_opt  = *",noauto"* ]]; then
                 mount $_mnt
-                [ $? -ne 0 ] && perror_exit "Failed to mount $_target on $_mnt for kdump preflight check."
+                [ $? -ne 0 ] && mount_failure "$_target" "$_mnt" "$_fstype"
                 _mounted=$_mnt
             else
                 perror_exit "Dump target \"$_target\" is neither mounted nor configured as \"noauto\""
@@ -220,7 +240,7 @@ check_user_configured_target()
         _mnt=$MKDUMPRD_TMPMNT
         mkdir -p $_mnt
         mount $_target $_mnt -t $_fstype -o defaults
-        [ $? -ne 0 ] && perror_exit "Failed to mount $_target for kdump preflight check."
+        [ $? -ne 0 ] && mount_failure "$_target" "" "$_fstype"
         _mounted=$_mnt
     fi
 
