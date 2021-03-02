@@ -5,7 +5,7 @@
 
 Name: kexec-tools
 Version: 2.0.21
-Release: 6%{?dist}
+Release: 7%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -362,6 +362,10 @@ done
 %endif
 
 %changelog
+* Tue Mar 02 2021 Zbigniew Jędrzejewski-Szmek <zbyszek@in.waw.pl> - 2.0.21-7
+- Rebuilt for updated systemd-rpm-macros
+  See https://pagure.io/fesco/issue/2583.
+
 * Mon Feb 08 2021 Kairui Song <kasong@redhat.com> - 2.0.21-6
 - Remove trace_buf_size and trace_event from the kernel bootparameters of the kdump kernel
 - kdump-lib.sh: introduce functions to return recommened mem size
