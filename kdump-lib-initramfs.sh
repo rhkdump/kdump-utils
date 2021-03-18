@@ -111,6 +111,7 @@ save_log()
     if command -v journalctl > /dev/null; then
         journalctl -ab >> $KDUMP_LOG_FILE
     fi
+    chmod 600 $KDUMP_LOG_FILE
 }
 
 # dump_fs <mount point>
@@ -178,6 +179,7 @@ save_vmcore_dmesg_fs() {
     _exitcode=$?
     if [ $_exitcode -eq 0 ]; then
         mv ${_path}/vmcore-dmesg-incomplete.txt ${_path}/vmcore-dmesg.txt
+        chmod 600 ${_path}/vmcore-dmesg.txt
 
         # Make sure file is on disk. There have been instances where later
         # saving vmcore failed and system rebooted without sync and there
