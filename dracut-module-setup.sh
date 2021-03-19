@@ -58,7 +58,7 @@ depends() {
         _dep="$_dep znet"
     fi
 
-    if [ -n "$( find /sys/devices -name drm )" ] || [ -d /sys/module/hyperv_fb ]; then
+    if [ -n "$( ls -A /sys/class/drm 2>/dev/null )" ] || [ -d /sys/module/hyperv_fb ]; then
         add_opt_module drm
     fi
 
