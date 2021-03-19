@@ -136,7 +136,7 @@ dump_ssh()
         fi
         _exitcode=$?
     else
-        $CORE_COLLECTOR /proc/vmcore | ssh $_opt $_host "dd bs=512 of=$_dir/vmcore-incomplete"
+        $CORE_COLLECTOR /proc/vmcore | ssh $_opt $_host "umask 0077 && dd bs=512 of=$_dir/vmcore-incomplete"
         _exitcode=$?
         _vmcore="vmcore.flat"
     fi
@@ -218,7 +218,7 @@ save_vmcore_dmesg_ssh() {
     local _location=$4
 
     dinfo "saving vmcore-dmesg.txt to $_location:$_path"
-    $_dmesg_collector /proc/vmcore | ssh $_opts $_location "dd of=$_path/vmcore-dmesg-incomplete.txt"
+    $_dmesg_collector /proc/vmcore | ssh $_opts $_location "umask 0077 && dd of=$_path/vmcore-dmesg-incomplete.txt"
     _exitcode=$?
 
     if [ $_exitcode -eq 0 ]; then
