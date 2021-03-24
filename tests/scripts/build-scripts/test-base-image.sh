@@ -6,7 +6,7 @@ for _rpm in $@; do
 	if [[ ! -e $_rpm ]]; then
 		perror_exit "'$_rpm' not found"
 	else
-		TEST_RPMS=$(realpath "$_rpm")
+		TEST_RPMS="$TEST_RPMS $(realpath "$_rpm")"
 	fi
 done
 
