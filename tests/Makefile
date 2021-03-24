@@ -74,7 +74,7 @@ $(TEST_ROOT)/output/test-base-image: $(BUILD_ROOT)/inst-base-image $(KEXEC_TOOLS
 		$(BUILD_ROOT)/inst-base-image \
 		$(TEST_ROOT)/output/test-base-image \
 		$(TEST_ROOT)/scripts/build-scripts/test-base-image.sh \
-		$(KEXEC_TOOLS_RPM)
+		$(KEXEC_TOOLS_RPM) $(EXTRA_RPMS)
 
 test-run: $(TEST_ROOT)/output/test-base-image
 ifeq ($(strip $(TEST_CASE)),)
