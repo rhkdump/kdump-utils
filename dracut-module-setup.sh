@@ -334,7 +334,10 @@ kdump_setup_znet() {
 kdump_get_ip_route()
 {
     local _route=$(/sbin/ip -o route get to $1 2>&1)
-    [ $? != 0 ] && die "Bad kdump network destination: $1"
+    if [[ $? != 0 ]]; then
+        derror "Bad kdump network destination: $1"
+        exit 1
+    fi
     echo $_route
 }
 
