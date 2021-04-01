@@ -94,15 +94,26 @@ source_ifcfg_file() {
     fi
 }
 
-# $1: netdev name
+# $1: nmcli connection show output
 kdump_setup_dns() {
-    local _nameserver _dns
+    local _netdev="$1"
+    local _nm_show_cmd="$2"
+    local _nameserver _dns _tmp array
     local _dnsfile=${initdir}/etc/cmdline.d/42dns.conf
 
-    source_ifcfg_file $1
-
-    [ -n "$DNS1" ] && echo "nameserver=$DNS1" > "$_dnsfile"
-    [ -n "$DNS2" ] && echo "nameserver=$DNS2" >> "$_dnsfile"
+    _tmp=$(get_nmcli_value_by_field "$_nm_show_cmd" "IP4.DNS")
+    array=(${_tmp//|/ })
+    if [[ ${array[@]} ]]; then
+        for _dns in "${array[@]}"
+        do
+            echo "nameserver=$_dns" >> "$_dnsfile"
+        done
+    else
+        dwarning "Failed to get DNS info via nmcli output. Now try sourcing ifcfg script"
+        source_ifcfg_file "$_netdev"
+        [ -n "$DNS1" ] && echo "nameserver=$DNS1" > "$_dnsfile"
+        [ -n "$DNS2" ] && echo "nameserver=$DNS2" >> "$_dnsfile"
+    fi
 
     while read content;
     do
@@ -546,7 +557,7 @@ kdump_install_net() {
         echo "$_ifname_opts" >> $_ip_conf
     fi
 
-    kdump_setup_dns "$_netdev"
+    kdump_setup_dns "$_netdev" "$_nm_show_cmd"
 
     if [ ! -f ${initdir}/etc/cmdline.d/50neednet.conf ]; then
         # network-manager module needs this parameter
