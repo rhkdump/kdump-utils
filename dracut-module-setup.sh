@@ -86,6 +86,7 @@ kdump_is_vlan() {
 source_ifcfg_file() {
     local ifcfg_file
 
+    dwarning "Network Scripts are deprecated. You are encouraged to set up network by NetworkManager."
     ifcfg_file=$(get_ifcfg_filename $1)
     if [ -f "${ifcfg_file}" ]; then
         . ${ifcfg_file}
