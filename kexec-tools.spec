@@ -1,4 +1,4 @@
-%global eppic_ver d84c3541035d95077aa8571f5d5c3e07c6ef510b
+%global eppic_ver e8844d3793471163ae4a56d8f95897be9e5bd554
 %global eppic_shortver %(c=%{eppic_ver}; echo ${c:0:7})
 %global mkdf_ver 1.6.8
 %global mkdf_shortver %(c=%{mkdf_ver}; echo ${c:0:7})
@@ -101,7 +101,6 @@ Requires:       systemd-udev%{?_isa}
 #
 # Patches 601 onward are generic patches
 #
-Patch601: ./kexec-tools-2.0.20-eppic-Remove-duplicated-variable-declaration.patch
 Patch603: ./kexec-tools-2.0.20-makedumpfile-printk-add-support-for-lockless-ringbuffer.patch
 Patch604: ./kexec-tools-2.0.20-makedumpfile-printk-use-committed-finalized-state-value.patch
 Patch605: ./kexec-tools-2.0.21-makedumpfile-make-use-of-uts_namespace.name-offset-in-VMCOR.patch
@@ -120,7 +119,6 @@ mkdir -p -m755 kcp
 tar -z -x -v -f %{SOURCE9}
 tar -z -x -v -f %{SOURCE19}
 
-%patch601 -p1
 %patch603 -p1
 %patch604 -p1
 %patch605 -p1
