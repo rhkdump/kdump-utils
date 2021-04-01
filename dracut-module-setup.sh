@@ -365,7 +365,10 @@ kdump_setup_bridge() {
     for _dev in `ls /sys/class/net/$_netdev/brif/`; do
         _kdumpdev=$_dev
         if kdump_is_bond "$_dev"; then
-            kdump_setup_bond "$_dev"
+            $(kdump_setup_bond "$_dev" "$(get_nmcli_connection_show_cmd_by_ifname "$_dev")")
+            if [[ $? != 0 ]]; then
+                exit 1
+            fi
         elif kdump_is_team "$_dev"; then
             kdump_setup_team "$_dev"
         elif kdump_is_vlan "$_dev"; then
@@ -380,9 +383,13 @@ kdump_setup_bridge() {
     echo " bridge=$_netdev:$(echo $_brif | sed -e 's/,$//')" >> ${initdir}/etc/cmdline.d/41bridge.conf
 }
 
+# drauct takes bond=<bondname>[:<bondslaves>:[:<options>]] syntax to parse
+#    bond. For example:
+#     bond=bond0:eth0,eth1:mode=balance-rr
 kdump_setup_bond() {
-    local _netdev=$1
-    local _dev _mac _slaves _kdumpdev
+    local _netdev="$1"
+    local _nm_show_cmd="$2"
+    local _dev _mac _slaves _kdumpdev _bondoptions
     for _dev in `cat /sys/class/net/$_netdev/bonding/slaves`; do
         _mac=$(kdump_get_perm_addr $_dev)
         _kdumpdev=$(kdump_setup_ifname $_dev)
@@ -390,12 +397,21 @@ kdump_setup_bond() {
         _slaves+="$_kdumpdev,"
     done
     echo -n " bond=$_netdev:$(echo $_slaves | sed 's/,$//')" >> ${initdir}/etc/cmdline.d/42bond.conf
-    # Get bond options specified in ifcfg
 
-    source_ifcfg_file $_netdev
+    _bondoptions=$(get_nmcli_value_by_field "$_nm_show_cmd" "bond.options")
 
-    bondoptions=":$(echo $BONDING_OPTS | xargs echo | tr " " ",")"
-    echo "$bondoptions" >> ${initdir}/etc/cmdline.d/42bond.conf
+    if [[ -z "_bondoptions" ]]; then
+        dwarning "Failed to get bond configuration via nmlci output. Now try sourcing ifcfg script."
+        source_ifcfg_file $_netdev
+        _bondoptions="$(echo $BONDING_OPTS | xargs echo | tr " " ",")"
+    fi
+
+    if [[ -z "_bondoptions" ]]; then
+        derror "Get empty bond options"
+        exit 1
+    fi
+
+    echo ":$_bondoptions" >> ${initdir}/etc/cmdline.d/42bond.conf
 }
 
 kdump_setup_team() {
@@ -432,7 +448,10 @@ kdump_setup_vlan() {
         derror "Vlan over bridge is not supported!"
         exit 1
     elif kdump_is_bond "$_phydev"; then
-        kdump_setup_bond "$_phydev"
+        $(kdump_setup_bond "$_phydev" "$(get_nmcli_connection_show_cmd_by_ifname "$_phydev")")
+        if [[ $? != 0 ]]; then
+            exit 1
+        fi
         echo " vlan=$(kdump_setup_ifname $_netdev):$_phydev" > ${initdir}/etc/cmdline.d/43vlan.conf
     else
         _kdumpdev="$(kdump_setup_ifname $_phydev)"
@@ -547,7 +566,10 @@ kdump_install_net() {
     if kdump_is_bridge "$_netdev"; then
         kdump_setup_bridge "$_netdev"
     elif kdump_is_bond "$_netdev"; then
-        kdump_setup_bond "$_netdev"
+        $(kdump_setup_bond "$_netdev" "$_nm_show_cmd")
+        if [[ $? != 0 ]]; then
+            exit 1
+        fi
     elif kdump_is_team "$_netdev"; then
         kdump_setup_team "$_netdev"
     elif kdump_is_vlan "$_netdev"; then
