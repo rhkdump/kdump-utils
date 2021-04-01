@@ -392,6 +392,20 @@ get_nmcli_value_by_field()
     echo -n "$val"
 }
 
+# Get nmcli connection apath (a D-Bus active connection path ) by ifname
+#
+# apath is used for nmcli connection operations, e.g.
+#  $ nmcli connection show $apath
+get_nmcli_connection_apath_by_ifname()
+{
+    local _ifname=$1
+    local _nm_show_cmd="device show $_ifname"
+
+    local _apath=$(get_nmcli_value_by_field "$_nm_show_cmd" "GENERAL.CON-PATH")
+
+    echo -n "$_apath"
+}
+
 get_ifcfg_by_device()
 {
     grep -E -i -l "^[[:space:]]*DEVICE=\"*${1}\"*[[:space:]]*$" \
