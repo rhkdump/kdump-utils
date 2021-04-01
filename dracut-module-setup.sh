@@ -430,17 +430,33 @@ kdump_setup_vlan() {
 }
 
 # setup s390 znet cmdline
-# $1: netdev name
+# $1: netdev (ifname)
+# $2: nmcli connection show output
 kdump_setup_znet() {
+    local _netdev="$1"
+    local _nmcli_cmd="$2"
+    local s390_prefix="802-3-ethernet.s390-"
     local _options=""
-    local _netdev=$1
+    local NETTYPE
+    local SUBCHANNELS
 
-    source_ifcfg_file $_netdev
+    NETTYPE=$(get_nmcli_value_by_field "$_nmcli_cmd" "${s390_prefix}nettype")
+    SUBCHANNELS=$(get_nmcli_value_by_field "$_nmcli_cmd" "${s390_prefix}subchannels")
+    _options=$(get_nmcli_value_by_field "$_nmcli_cmd" "${s390_prefix}options")
 
-    for i in $OPTIONS; do
-        _options=${_options},$i
-    done
-    echo rd.znet=${NETTYPE},${SUBCHANNELS}${_options} rd.znet_ifname=$_netdev:${SUBCHANNELS} > ${initdir}/etc/cmdline.d/30znet.conf
+    if [[ -z "$NETTYPE" || -z "$SUBCHANNELS" || -z "$_options" ]]; then
+        dwarning "Failed to get znet configuration via nmlci output. Now try sourcing ifcfg script."
+        source_ifcfg_file $_netdev
+        for i in $OPTIONS; do
+            _options=${_options},$i
+        done
+    fi
+
+    if [[ -z "$NETTYPE" || -z "$SUBCHANNELS" || -z "$_options" ]]; then
+        exit 1
+    fi
+
+    echo rd.znet=${NETTYPE},${SUBCHANNELS},${_options} rd.znet_ifname=$_netdev:${SUBCHANNELS} > ${initdir}/etc/cmdline.d/30znet.conf
 }
 
 kdump_get_ip_route()
@@ -477,18 +493,23 @@ kdump_get_remote_ip()
 # initramfs accessing giving destination
 # $1: destination host
 kdump_install_net() {
-    local _destaddr _srcaddr _route _netdev kdumpnic
+    local _destaddr _srcaddr _route _netdev _nm_show_cmd kdumpnic
     local _static _proto _ip_conf _ip_opts _ifname_opts
 
     _destaddr=$(kdump_get_remote_ip $1)
     _route=$(kdump_get_ip_route $_destaddr)
     _srcaddr=$(kdump_get_ip_route_field "$_route" "src")
     _netdev=$(kdump_get_ip_route_field "$_route" "dev")
+    _nm_show_cmd=$(get_nmcli_connection_show_cmd_by_ifname "$_netdev")
     _netmac=$(kdump_get_mac_addr $_netdev)
     kdumpnic=$(kdump_setup_ifname $_netdev)
 
     if [ "$(uname -m)" = "s390x" ]; then
-        kdump_setup_znet $_netdev
+        $(kdump_setup_znet "$_netdev" "$_nm_show_cmd")
+        if [[ $? != 0 ]]; then
+            derror "Failed to set up znet"
+            exit 1
+        fi
     fi
 
     _static=$(kdump_static_ip $_netdev $_srcaddr $kdumpnic)
