@@ -372,6 +372,26 @@ get_hwaddr()
     fi
 }
 
+
+# Get value by a field using "nmcli -g"
+#
+# "nmcli --get-values" allows us to retrive value(s) by field, for example,
+# nmcli --get-values <field> connection show /org/freedesktop/NetworkManager/ActiveConnection/1
+# returns the following value for the corresponding field respectively,
+#   Field                                  Value
+#   IP4.DNS                                "10.19.42.41 | 10.11.5.19 | 10.5.30.160"
+#   802-3-ethernet.s390-subchannels        ""
+#   bond.options                           "mode=balance-rr"
+get_nmcli_value_by_field()
+{
+    local _nm_show_cmd=$1
+    local _field=$2
+
+    local val=$(LANG=C nmcli --get-values $_field $_nm_show_cmd)
+
+    echo -n "$val"
+}
+
 get_ifcfg_by_device()
 {
     grep -E -i -l "^[[:space:]]*DEVICE=\"*${1}\"*[[:space:]]*$" \
