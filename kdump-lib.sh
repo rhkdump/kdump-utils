@@ -406,6 +406,20 @@ get_nmcli_connection_apath_by_ifname()
     echo -n "$_apath"
 }
 
+# Get nmcli connection show cmd by ifname
+#
+# "$_apath" is supposed to not contain any chracter that
+# need to be escapded, e.g. space. Otherwise get_nmcli_value_by_field
+# would fail.
+get_nmcli_connection_show_cmd_by_ifname()
+{
+    local _ifname="$1"
+    local _apath=$(get_nmcli_connection_apath_by_ifname "$_ifname")
+    local _nm_show_cmd="connection show $_apath"
+
+    echo -n "$_nm_show_cmd"
+}
+
 get_ifcfg_by_device()
 {
     grep -E -i -l "^[[:space:]]*DEVICE=\"*${1}\"*[[:space:]]*$" \
