@@ -5,7 +5,7 @@
 
 Name: kexec-tools
 Version: 2.0.21
-Release: 7%{?dist}
+Release: 8%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -360,6 +360,17 @@ done
 %endif
 
 %changelog
+* Sat Apr 03 2021 Kairui Song <kasong@redhat.com> - 2.0.21-8
+- Update eppic to latest upstream snapshot
+- mkdumprd: prompt the user to install nfs-utils when mounting NFS fs failed
+- Fix incorrect permissions on kdump dmesg file
+- Fix incorrect vmcore permissions when dumped through ssh
+- (origin/main) Stop reloading kdump service on CPU hotplug event for FADump
+- Rebuilt for updated systemd-rpm-macros
+- fadump: improve fadump-howto.txt about remote dump target setup
+- kdumpctl: enable secure boot on ppc64le LPARs
+- add dependency on ipcalc
+
 * Tue Mar 02 2021 Zbigniew Jędrzejewski-Szmek <zbyszek@in.waw.pl> - 2.0.21-7
 - Rebuilt for updated systemd-rpm-macros
   See https://pagure.io/fesco/issue/2583.
