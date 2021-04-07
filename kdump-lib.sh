@@ -958,3 +958,20 @@ kdump_get_arch_recommend_size()
     echo $result
     return 0
 }
+
+# Print all underlying crypt devices of a block device
+# print nothing if device is not on top of a crypt device
+# $1: the block device to be checked in maj:min format
+get_luks_crypt_dev()
+{
+    [[ -b /dev/block/$1 ]] || return 1
+
+    local _type=$(eval "$(blkid -u filesystem,crypto -o export -- /dev/block/$1); echo \$TYPE")
+    [[ $_type == "crypto_LUKS" ]] && echo $1
+
+    for _x in /sys/dev/block/$1/slaves/*; do
+        [[ -f $_x/dev ]] || continue
+        [[ $_x/subsystem -ef /sys/class/block ]] || continue
+        get_luks_crypt_dev "$(< "$_x/dev")"
+    done
+}
