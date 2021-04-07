@@ -325,7 +325,6 @@ get_override_resettable()
     fi
 }
 
-
 # $1: function name
 for_each_block_target()
 {
@@ -339,8 +338,6 @@ for_each_block_target()
 
     return 0
 }
-
-
 
 #judge if a specific device with $1 is unresettable
 #return false if unresettable.
@@ -378,32 +375,15 @@ check_resettable()
     return 1
 }
 
-# $1: maj:min
-is_crypt()
-{
-    local majmin=$1 dev line ID_FS_TYPE=""
-
-    line=$(udevadm info --query=property --path=/sys/dev/block/$majmin \
-            | grep "^ID_FS_TYPE")
-    eval "$line"
-    [[ "$ID_FS_TYPE" = "crypto_LUKS" ]] && {
-        dev=$(udevadm info --query=all --path=/sys/dev/block/$majmin | awk -F= '/DEVNAME/{print $2}')
-        derror "Device $dev is encrypted."
-        return 0
-    }
-    return 1
-}
-
 check_crypt()
 {
-    local _ret _target
+    local _dev
 
-    for_each_block_target is_crypt
-    _ret=$?
-
-    [ $_ret -eq 0 ] && return
-
-    return 1
+    for _dev in $(get_kdump_targets); do
+        if [[ -n $(get_luks_crypt_dev "$(get_maj_min "$_dev")") ]]; then
+            derror "Device $_dev is encrypted." && return 1
+        fi
+    done
 }
 
 if ! check_resettable; then
