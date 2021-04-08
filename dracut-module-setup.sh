@@ -121,12 +121,122 @@ kdump_setup_dns() {
     done < "/etc/resolv.conf"
 }
 
+# $1: repeat times
+# $2: string to be repeated
+# $3: separator
+repeatedly_join_str() {
+    local _count="$1"
+    local _str="$2"
+    local _separator="$3"
+    local i _res
+
+    if [[ "$_count" -le 0 ]]; then
+        echo -n ""
+        return
+    fi
+
+    i=0
+    _res="$_str"
+    ((_count--))
+
+    while [[ "$i" -lt "$_count" ]]; do
+        ((i++))
+        _res="${_res}${_separator}${_str}"
+    done
+    echo -n "$_res"
+}
+
+# $1: prefix
+# $2: ipv6_flag="-6" indicates it's IPv6
+# Given a prefix, calculate the netmask (equivalent of "ipcalc -m")
+# by concatenating three parts,
+#  1) the groups with all bits set 1
+#  2) a group with partial bits set to 0
+#  3) the groups with all bits set to 0
+cal_netmask_by_prefix() {
+    local _prefix="$1"
+    local _ipv6_flag="$2" _ipv6
+    local _bits_per_octet=8
+    local _count _res _octets_per_group _octets_total _seperator _total_groups
+    local _max_group_value _max_group_value_repr _bits_per_group _tmp _zero_bits
+
+    if [[ "$_ipv6_flag" == "-6" ]]; then
+        _ipv6=1
+    else
+        _ipv6=0
+    fi
+
+    if [[ "$_prefix" -lt 0  ||  "$_prefix" -gt 128 ]] || \
+        ( ((!_ipv6)) && [[ "$_prefix" -gt 32 ]] ); then
+        derror "Bad prefix:$_prefix for calculating netmask"
+        exit 1
+    fi
+
+    if ((_ipv6)); then
+        _octets_per_group=2
+        _octets_total=16
+        _seperator=":"
+    else
+        _octets_per_group=1
+        _octets_total=4
+        _seperator="."
+    fi
+
+    _total_groups=$((_octets_total/_octets_per_group))
+    _bits_per_group=$((_octets_per_group * _bits_per_octet))
+    _max_group_value=$(((1 << _bits_per_group) - 1))
+
+    if ((_ipv6)); then
+        _max_group_value_repr=$(printf "%x" $_max_group_value)
+    else
+        _max_group_value_repr="$_max_group_value"
+    fi
+
+    _count=$((_prefix/_octets_per_group/_bits_per_octet))
+    _first_part=$(repeatedly_join_str "$_count" "$_max_group_value_repr" "$_seperator")
+    _res="$_first_part"
+
+    _tmp=$((_octets_total*_bits_per_octet-_prefix))
+    _zero_bits=$(expr $_tmp % $_bits_per_group)
+    if [[ "$_zero_bits" -ne 0 ]]; then
+        _second_part=$((_max_group_value >> _zero_bits << _zero_bits))
+        if ((_ipv6)); then
+            _second_part=$(printf "%x" $_second_part)
+        fi
+        ((_count++))
+        if [[ -z "$_first_part" ]]; then
+            _res="$_second_part"
+        else
+            _res="${_first_part}${_seperator}${_second_part}"
+        fi
+    fi
+
+    _count=$((_total_groups-_count))
+    if [[ "$_count" -eq 0 ]]; then
+        echo -n "$_res"
+        return
+    fi
+
+    if ((_ipv6)) && [[ "$_count" -gt 1 ]] ; then
+        # use condensed notion for IPv6
+        _third_part=":"
+    else
+        _third_part=$(repeatedly_join_str "$_count" "0" "$_seperator")
+    fi
+
+    if [[ -z "$_res" ]] && ((!_ipv6)) ; then
+        echo -n "${_third_part}"
+    else
+        echo -n "${_res}${_seperator}${_third_part}"
+    fi
+}
+
 #$1: netdev name
 #$2: srcaddr
 #if it use static ip echo it, or echo null
 kdump_static_ip() {
     local _netdev="$1" _srcaddr="$2" _ipv6_flag
-    local _netmask _gateway _ipaddr _target _nexthop
+    local _netmask _gateway _ipaddr _target _nexthop _prefix
 
     _ipaddr=$(ip addr show dev $_netdev permanent | awk "/ $_srcaddr\/.* /{print \$2}")
 
@@ -144,7 +254,12 @@ kdump_static_ip() {
             _srcaddr="[$_srcaddr]"
             _gateway="[$_gateway]"
         else
-            _netmask=$(ipcalc -m $_ipaddr | cut -d'=' -f2)
+            _prefix=$(cut -d'/' -f2 <<< "$_ipaddr")
+            _netmask=$(cal_netmask_by_prefix "$_prefix" "$_ipv6_flag")
+            if [[ "$?" -ne 0 ]]; then
+                derror "Failed to calculate netmask for $_ipaddr"
+                exit 1
+            fi
         fi
         echo -n "${_srcaddr}::${_gateway}:${_netmask}::"
     fi
