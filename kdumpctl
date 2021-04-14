@@ -237,12 +237,7 @@ restore_default_initrd()
 check_config()
 {
 	local -A _opt_rec
-	while read config_opt config_val; do
-		if [ -z "$config_val" ]; then
-			derror "Invalid kdump config value for option $config_opt"
-			return 1
-		fi
-
+	while read -r config_opt config_val; do
 		case "$config_opt" in
 		dracut_args)
 			if [[ $config_val == *--mount* ]]; then
@@ -268,11 +263,19 @@ check_config()
 			derror "Deprecated kdump config option: $config_opt. Refer to kdump.conf manpage for alternatives."
 			return 1
 			;;
+		'')
+			continue
+			;;
 		*)
 			derror "Invalid kdump config option $config_opt"
 			return 1
 			;;
 		esac
+
+		if [[ -z "$config_val" ]]; then
+			derror "Invalid kdump config value for option '$config_opt'"
+			return 1
+		fi
 
 		if [ -n "${_opt_rec[$config_opt]}" ]; then
 			if [ $config_opt == _target ]; then
