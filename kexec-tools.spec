@@ -169,6 +169,7 @@ mkdir -p $RPM_BUILD_ROOT%{_unitdir}
 mkdir -p -m755 $RPM_BUILD_ROOT%{_bindir}
 mkdir -p -m755 $RPM_BUILD_ROOT%{_libdir}
 mkdir -p -m755 $RPM_BUILD_ROOT%{_prefix}/lib/kdump
+mkdir -p -m755 $RPM_BUILD_ROOT%{_sharedstatedir}/kdump
 install -m 755 %{SOURCE1} $RPM_BUILD_ROOT%{_bindir}/kdumpctl
 
 install -m 755 build/sbin/kexec $RPM_BUILD_ROOT/usr/sbin/kexec
@@ -334,6 +335,7 @@ done
 %dir %{_sysconfdir}/kdump
 %dir %{_sysconfdir}/kdump/pre.d
 %dir %{_sysconfdir}/kdump/post.d
+%dir %{_sharedstatedir}/kdump
 %{_mandir}/man8/kdumpctl.8.gz
 %{_mandir}/man8/kexec.8.gz
 %ifarch %{ix86} x86_64 ppc64 s390x ppc64le aarch64

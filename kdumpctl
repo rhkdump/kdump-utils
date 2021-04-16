@@ -151,8 +151,8 @@ rebuild_kdump_initrd()
 
 rebuild_initrd()
 {
-	if [[ ! -w "$KDUMP_BOOTDIR" ]];then
-		derror "$KDUMP_BOOTDIR does not have write permission. Can not rebuild $TARGET_INITRD"
+	if [[ ! -w $(dirname $TARGET_INITRD) ]];then
+		derror "$(dirname $TARGET_INITRD) does not have write permission. Cannot rebuild $TARGET_INITRD"
 		return 1
 	fi
 

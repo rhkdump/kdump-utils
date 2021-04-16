@@ -733,20 +733,30 @@ prepare_kdump_bootinfo()
     boot_initrdlist="initramfs-$KDUMP_KERNELVER.img initrd"
     for initrd in $boot_initrdlist; do
         if [ -f "$KDUMP_BOOTDIR/$initrd" ]; then
-            DEFAULT_INITRD="$KDUMP_BOOTDIR/$initrd"
+            defaut_initrd_base="$initrd"
+            DEFAULT_INITRD="$KDUMP_BOOTDIR/$defaut_initrd_base"
             break
         fi
     done
 
-    # Get kdump initrd from default initrd filename
+    # Create kdump initrd basename from default initrd basename
     # initramfs-5.7.9-200.fc32.x86_64.img => initramfs-5.7.9-200.fc32.x86_64kdump.img
     # initrd => initrdkdump
-    if [[ -z "$DEFAULT_INITRD" ]]; then
-        KDUMP_INITRD=${KDUMP_BOOTDIR}/initramfs-${KDUMP_KERNELVER}kdump.img
-    elif [[ $(basename $DEFAULT_INITRD) == *.* ]]; then
-        KDUMP_INITRD=${DEFAULT_INITRD%.*}kdump.${DEFAULT_INITRD##*.}
+    if [[ -z "$defaut_initrd_base" ]]; then
+        kdump_initrd_base=initramfs-${KDUMP_KERNELVER}kdump.img
+    elif [[ $defaut_initrd_base == *.* ]]; then
+        kdump_initrd_base=${defaut_initrd_base%.*}kdump.${DEFAULT_INITRD##*.}
     else
-        KDUMP_INITRD=${DEFAULT_INITRD}kdump
+        kdump_initrd_base=${defaut_initrd_base}kdump
+    fi
+
+    # Place kdump initrd in `/var/lib/kdump` if `KDUMP_BOOTDIR` not writable
+    if [[ ! -w "$KDUMP_BOOTDIR" ]];then
+        var_target_initrd_dir="/var/lib/kdump"
+        mkdir -p "$var_target_initrd_dir"
+        KDUMP_INITRD="$var_target_initrd_dir/$kdump_initrd_base"
+    else
+        KDUMP_INITRD="$KDUMP_BOOTDIR/$kdump_initrd_base"
     fi
 }
 
