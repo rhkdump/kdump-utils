@@ -105,6 +105,7 @@ Patch604: ./kexec-tools-2.0.20-makedumpfile-printk-use-committed-finalized-state
 Patch605: ./kexec-tools-2.0.21-makedumpfile-make-use-of-uts_namespace.name-offset-in-VMCOR.patch
 Patch606: ./kexec-tools-2.0.21-makedumpfile-Add-dry-run-option.patch
 Patch607: ./kexec-tools-2.0.21-makedumpfile-Add-shorthand-show-stats-option.patch
+Patch608: ./kexec-tools-2.0.21-makedumpfile-Show-write-byte-size-in-report-messages.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -125,6 +126,7 @@ tar -z -x -v -f %{SOURCE19}
 %patch605 -p1
 %patch606 -p1
 %patch607 -p1
+%patch608 -p1
 
 %ifarch ppc
 %define archdef ARCH=ppc
