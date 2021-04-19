@@ -103,6 +103,7 @@ Requires:       systemd-udev%{?_isa}
 Patch603: ./kexec-tools-2.0.20-makedumpfile-printk-add-support-for-lockless-ringbuffer.patch
 Patch604: ./kexec-tools-2.0.20-makedumpfile-printk-use-committed-finalized-state-value.patch
 Patch605: ./kexec-tools-2.0.21-makedumpfile-make-use-of-uts_namespace.name-offset-in-VMCOR.patch
+Patch606: ./kexec-tools-2.0.21-makedumpfile-Add-dry-run-option.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -121,6 +122,7 @@ tar -z -x -v -f %{SOURCE19}
 %patch603 -p1
 %patch604 -p1
 %patch605 -p1
+%patch606 -p1
 
 %ifarch ppc
 %define archdef ARCH=ppc
