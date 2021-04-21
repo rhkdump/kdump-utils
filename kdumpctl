@@ -1249,6 +1249,97 @@ rebuild() {
 	return $?
 }
 
+do_estimate() {
+	local kdump_mods
+	local -A large_mods
+	local baseline
+	local kernel_size mod_size initrd_size baseline_size runtime_size reserved_size estimated_size recommanded_size
+	local size_mb=$(( 1024 * 1024 ))
+
+	setup_initrd
+	if [ ! -f "$TARGET_INITRD" ]; then
+		derror "kdumpctl estimate: kdump initramfs is not built yet."
+		exit 1
+	fi
+
+	kdump_mods="$(lsinitrd "$TARGET_INITRD" -f /usr/lib/dracut/hostonly-kernel-modules.txt | tr '\n' ' ')"
+	baseline=$(kdump_get_arch_recommend_size)
+	if [[ "${baseline: -1}" == "M" ]]; then
+		baseline=${baseline%M}
+	elif [[ "${baseline: -1}" == "G" ]]; then
+		baseline=$(( ${baseline%G} * 1024 ))
+	elif [[ "${baseline: -1}" == "T" ]]; then
+		baseline=$(( ${baseline%Y} * 1048576 ))
+	fi
+
+	# The default value when using crashkernel=auto
+	baseline_size=$((baseline * size_mb))
+	# Current reserved crashkernel size
+	reserved_size=$(cat /sys/kernel/kexec_crash_size)
+	# A pre-estimated value for userspace usage and kernel
+	# runtime allocation, 64M should good for most cases
+	runtime_size=$((64 * size_mb))
+	# Kernel image size
+	kernel_size=$(get_kernel_size "$KDUMP_KERNEL")
+	# Kdump initramfs size
+	initrd_size=$(du -b "$TARGET_INITRD" | awk '{print $1}')
+	# Kernel modules static size after loaded
+	mod_size=0
+	while read -r _name _size _; do
+		if [[ ! " $kdump_mods " == *" $_name "* ]]; then
+			continue
+		fi
+		mod_size=$((mod_size + _size))
+
+		# Mark module with static size larger than 2M as large module
+		if [[ $((_size / size_mb)) -ge 1 ]]; then
+			large_mods[$_name]=$_size
+		fi
+	done <<< "$(< /proc/modules)"
+
+	# Extra memory usage required for LUKS2 decryption
+	crypt_size=0
+	for _dev in $(get_all_kdump_crypt_dev); do
+		_crypt_info=$(cryptsetup luksDump "/dev/block/$_dev")
+		[[ $(echo "$_crypt_info" | sed -n "s/^Version:\s*\(.*\)/\1/p" ) == "2" ]] || continue
+		for _mem in $(echo "$_crypt_info" | sed -n "s/\sMemory:\s*\(.*\)/\1/p" | sort -n ); do
+			crypt_size=$((crypt_size + _mem * 1024))
+			break
+		done
+	done
+	[[ $crypt_size -ne 0 ]] && echo -e "Encrypted kdump target requires extra memory, assuming using the keyslot with minimun memory requirement\n"
+
+	estimated_size=$((kernel_size + mod_size + initrd_size + runtime_size + crypt_size))
+	if [[ $baseline_size -gt $estimated_size ]]; then
+		recommanded_size=$baseline_size
+	else
+		recommanded_size=$estimated_size
+	fi
+
+	echo "Reserved crashkernel:    $((reserved_size / size_mb))M"
+	echo "Recommanded crashkernel: $((recommanded_size / size_mb))M"
+	echo
+	echo "Kernel image size:   $((kernel_size / size_mb))M"
+	echo "Kernel modules size: $((mod_size / size_mb))M"
+	echo "Initramfs size:      $((initrd_size / size_mb))M"
+	echo "Runtime reservation: $((runtime_size / size_mb))M"
+	[[ $crypt_size -ne 0 ]] && \
+	echo "LUKS required size:  $((crypt_size / size_mb))M"
+	echo -n "Large modules:"
+	if [[ "${#large_mods[@]}" -eq 0 ]]; then
+		echo " <none>"
+	else
+		echo ""
+		for _mod in "${!large_mods[@]}"; do
+			echo "    $_mod: ${large_mods[$_mod]}"
+		done
+	fi
+
+	if [[ $reserved_size -le $recommanded_size ]]; then
+		echo "WARNING: Current crashkernel size is lower than recommanded size $((recommanded_size / size_mb))M."
+	fi
+}
+
 if [ ! -f "$KDUMP_CONFIG_FILE" ]; then
 	derror "Error: No kdump config file found!"
 	exit 1
@@ -1304,8 +1395,11 @@ main ()
 	  showmem)
 		show_reserved_mem
 		;;
+	  estimate)
+		do_estimate
+		;;
 	  *)
-		dinfo $"Usage: $0 {start|stop|status|restart|reload|rebuild|propagate|showmem}"
+		dinfo $"Usage: $0 {estimate|start|stop|status|restart|reload|rebuild|propagate|showmem}"
 		exit 1
 	esac
 }

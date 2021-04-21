@@ -44,6 +44,11 @@ impossible to use password authentication during kdump.
 .TP
 .I showmem
 Prints the size of reserved memory for crash kernel in megabytes.
+.TP
+.I estimate
+Estimate a suitable crashkernel value for current machine. This is a
+best-effort estimate. It will print a recommanded crashkernel value
+based on current kdump setup, and list some details of memory usage.
 
 .SH "SEE ALSO"
 .BR kdump.conf (5),
