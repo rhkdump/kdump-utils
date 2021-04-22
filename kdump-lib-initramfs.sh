@@ -119,7 +119,8 @@ dump_fs()
 {
     local _exitcode
     local _mp=$1
-    ddebug "dump_fs _mp=$_mp"
+    local _op=$(get_mount_info OPTIONS target $_mp -f)
+    ddebug "dump_fs _mp=$_mp _opts=$_op"
 
     if ! is_mounted "$_mp"; then
         dinfo "dump path \"$_mp\" is not mounted, trying to mount..."
@@ -139,8 +140,8 @@ dump_fs()
 
     # Only remount to read-write mode if the dump target is mounted read-only.
     if [[ "$_op" = "ro"* ]]; then
-       dinfo "Mounting Dump target $_dev in rw mode."
-       mount -o remount,rw $_dev $_mp || return 1
+       dinfo "Remounting the dump target in rw mode."
+       mount -o remount,rw $_mp || return 1
     fi
 
     mkdir -p $_dump_path || return 1
