@@ -35,9 +35,6 @@ depends() {
                 modprobe -S $KDUMP_KERNELVER --dry-run $kmodule &>/dev/null || return 1
             fi
         done
-
-        # check that the dracut squash module is available
-        [ -d "$(dracut_module_path squash)" ] || return 1
     }
 
     if is_squash_available && ! is_fadump_capable; then
