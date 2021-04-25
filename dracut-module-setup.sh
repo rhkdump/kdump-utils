@@ -352,8 +352,8 @@ kdump_setup_ifname() {
 }
 
 kdump_setup_bridge() {
-    local _netdev=$1
-    local _brif _dev _mac _kdumpdev
+    local _netdev=$1 kdumpnic=$2
+    local _brif _dev _mac
     for _dev in `ls /sys/class/net/$_netdev/brif/`; do
         _kdumpdev=$_dev
         if kdump_is_bond "$_dev"; then
@@ -364,8 +364,7 @@ kdump_setup_bridge() {
             kdump_setup_vlan "$_dev"
         else
             _mac=$(kdump_get_mac_addr $_dev)
-            _kdumpdev=$(kdump_setup_ifname $_dev)
-            echo -n " ifname=$_kdumpdev:$_mac" >> ${initdir}/etc/cmdline.d/41bridge.conf
+            echo -n " ifname=$kdumpnic:$_mac" >> ${initdir}/etc/cmdline.d/41bridge.conf
         fi
         _brif+="$_kdumpdev,"
     done
@@ -373,12 +372,11 @@ kdump_setup_bridge() {
 }
 
 kdump_setup_bond() {
-    local _netdev=$1
-    local _dev _mac _slaves _kdumpdev
+    local _netdev=$1 kdumpnic=$2
+    local _dev _mac _slaves
     for _dev in `cat /sys/class/net/$_netdev/bonding/slaves`; do
         _mac=$(kdump_get_perm_addr $_dev)
-        _kdumpdev=$(kdump_setup_ifname $_dev)
-        echo -n " ifname=$_kdumpdev:$_mac" >> ${initdir}/etc/cmdline.d/42bond.conf
+        echo -n " ifname=$kdumpnic:$_mac" >> ${initdir}/etc/cmdline.d/42bond.conf
         _slaves+="$_kdumpdev,"
     done
     echo -n " bond=$_netdev:$(echo $_slaves | sed 's/,$//')" >> ${initdir}/etc/cmdline.d/42bond.conf
@@ -391,12 +389,11 @@ kdump_setup_bond() {
 }
 
 kdump_setup_team() {
-    local _netdev=$1
-    local _dev _mac _slaves _kdumpdev
+    local _netdev=$1 kdumpnic=$2
+    local _dev _mac _slaves
     for _dev in `teamnl $_netdev ports | awk -F':' '{print $2}'`; do
         _mac=$(kdump_get_perm_addr $_dev)
-        _kdumpdev=$(kdump_setup_ifname $_dev)
-        echo -n " ifname=$_kdumpdev:$_mac" >> ${initdir}/etc/cmdline.d/44team.conf
+        echo -n " ifname=$kdumpnic:$_mac" >> ${initdir}/etc/cmdline.d/44team.conf
         _slaves+="$_kdumpdev,"
     done
     echo " team=$_netdev:$(echo $_slaves | sed -e 's/,$//')" >> ${initdir}/etc/cmdline.d/44team.conf
@@ -414,7 +411,7 @@ kdump_setup_team() {
 }
 
 kdump_setup_vlan() {
-    local _netdev=$1
+    local _netdev=$1 kdumpnic=$2
     local _phydev="$(awk '/^Device:/{print $2}' /proc/net/vlan/"$_netdev")"
     local _netmac="$(kdump_get_mac_addr $_phydev)"
     local _kdumpdev
@@ -425,10 +422,10 @@ kdump_setup_vlan() {
         exit 1
     elif kdump_is_bond "$_phydev"; then
         kdump_setup_bond "$_phydev"
-        echo " vlan=$(kdump_setup_ifname $_netdev):$_phydev" > ${initdir}/etc/cmdline.d/43vlan.conf
+        echo " vlan=$kdumpnic:$_phydev" > ${initdir}/etc/cmdline.d/43vlan.conf
     else
         _kdumpdev="$(kdump_setup_ifname $_phydev)"
-        echo " vlan=$(kdump_setup_ifname $_netdev):$_kdumpdev ifname=$_kdumpdev:$_netmac" > ${initdir}/etc/cmdline.d/43vlan.conf
+        echo " vlan=$kdumpnic:$_kdumpdev ifname=$_kdumpdev:$_netmac" > ${initdir}/etc/cmdline.d/43vlan.conf
     fi
 }
 
@@ -516,13 +513,13 @@ kdump_install_net() {
     fi
 
     if kdump_is_bridge "$_netdev"; then
-        kdump_setup_bridge "$_netdev"
+        kdump_setup_bridge "$_netdev" "$kdumpnic"
     elif kdump_is_bond "$_netdev"; then
-        kdump_setup_bond "$_netdev"
+        kdump_setup_bond "$_netdev" "$kdumpnic"
     elif kdump_is_team "$_netdev"; then
-        kdump_setup_team "$_netdev"
+        kdump_setup_team "$_netdev" "$kdumpnic"
     elif kdump_is_vlan "$_netdev"; then
-        kdump_setup_vlan "$_netdev"
+        kdump_setup_vlan "$_netdev" "$kdumpnic"
     else
         _ifname_opts=" ifname=$kdumpnic:$_netmac"
         echo "$_ifname_opts" >> $_ip_conf
