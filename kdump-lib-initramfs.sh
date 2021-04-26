@@ -222,8 +222,11 @@ save_opalcore_fs() {
 dump_to_rootfs()
 {
 
-    dinfo "Trying to bring up rootfs device"
-    systemctl start dracut-initqueue
+    if [[ $(systemctl status dracut-initqueue | sed -n "s/^\s*Active: \(\S*\)\s.*$/\1/p") == "inactive" ]]; then
+        dinfo "Trying to bring up initqueue for rootfs mount"
+        systemctl start dracut-initqueue
+    fi
+
     dinfo "Waiting for rootfs mount, will timeout after 90 seconds"
     systemctl start sysroot.mount
 
