@@ -237,10 +237,35 @@ dump_to_rootfs()
 
 kdump_emergency_shell()
 {
-    echo "PS1=\"kdump:\\\${PWD}# \"" >/etc/profile
-    ddebug "Switching to dracut emergency..."
-    /bin/dracut-emergency
-    rm -f /etc/profile
+    ddebug "Switching to kdump emergency shell..."
+
+    [ -f /etc/profile ] && . /etc/profile
+    export PS1='kdump:${PWD}# '
+
+    . /lib/dracut-lib.sh
+    if [ -f /dracut-state.sh ]; then
+        . /dracut-state.sh 2>/dev/null
+    fi
+
+    source_conf /etc/conf.d
+
+    type plymouth >/dev/null 2>&1 && plymouth quit
+
+    source_hook "emergency"
+    while read _tty rest; do
+        (
+        echo
+        echo
+        echo 'Entering kdump emergency mode.'
+        echo 'Type "journalctl" to view system logs.'
+        echo 'Type "rdsosreport" to generate a sosreport, you can then'
+        echo 'save it elsewhere and attach it to a bug report.'
+        echo
+        echo
+        ) > /dev/$_tty
+    done < /proc/consoles
+    sh -i -l
+    /bin/rm -f -- /.console_lock
 }
 
 do_failure_action()
