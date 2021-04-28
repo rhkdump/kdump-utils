@@ -5,7 +5,7 @@
 
 Name: kexec-tools
 Version: 2.0.21
-Release: 8%{?dist}
+Release: 9%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -367,6 +367,18 @@ done
 %endif
 
 %changelog
+* Wed Apr 28 2021 Kairui Song <kasong@redhat.com> - 2.0.21-9
+- Make dracut-squash required for kexec-tools
+- Show write byte size in report messages
+- Add shorthand --show-stats option to show report stats
+- Add --dry-run option to prevent writing the dumpfile
+- fadump: fix dump capture failure to root disk
+- Write to `/var/lib/kdump` if $KDUMP_BOOTDIR not writable
+- Drop dependency on ipcalc
+- Implement IP netmask calculation to replace "ipcalc -m"
+- Don't use die in dracut-module-setup.sh
+- Don't iterate the whole /sys/devices just to find drm device
+
 * Sat Apr 03 2021 Kairui Song <kasong@redhat.com> - 2.0.21-8
 - Update eppic to latest upstream snapshot
 - mkdumprd: prompt the user to install nfs-utils when mounting NFS fs failed
