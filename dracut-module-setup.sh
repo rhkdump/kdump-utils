@@ -232,7 +232,7 @@ cal_netmask_by_prefix() {
 #$2: srcaddr
 #if it use static ip echo it, or echo null
 kdump_static_ip() {
-    local _netdev="$1" _srcaddr="$2" _ipv6_flag
+    local _netdev="$1" _srcaddr="$2" kdumpnic="$3" _ipv6_flag
     local _netmask _gateway _ipaddr _target _nexthop _prefix
 
     _ipaddr=$(ip addr show dev $_netdev permanent | awk "/ $_srcaddr\/.* /{print \$2}")
@@ -270,14 +270,14 @@ kdump_static_ip() {
             _target="[$_target]"
             _nexthop="[$_nexthop]"
         fi
-        echo "rd.route=$_target:$_nexthop:$_netdev"
+        echo "rd.route=$_target:$_nexthop:$kdumpnic"
     done >> ${initdir}/etc/cmdline.d/45route-static.conf
 
-    kdump_handle_mulitpath_route $_netdev $_srcaddr
+    kdump_handle_mulitpath_route $_netdev $_srcaddr $kdumpnic
 }
 
 kdump_handle_mulitpath_route() {
-    local _netdev="$1" _srcaddr="$2" _ipv6_flag
+    local _netdev="$1" _srcaddr="$2" kdumpnic="$3" _ipv6_flag
     local _target _nexthop _route _weight _max_weight _rule
 
     if is_ipv6_address $_srcaddr; then
@@ -296,9 +296,9 @@ kdump_handle_mulitpath_route() {
                 _nexthop=`echo "$_route" | cut -d ' ' -f3`
                 _max_weight=$_weight
                 if [ "x" !=  "x"$_ipv6_flag ]; then
-                    _rule="rd.route=[$_target]:[$_nexthop]:$_netdev"
+                    _rule="rd.route=[$_target]:[$_nexthop]:$kdumpnic"
                 else
-                    _rule="rd.route=$_target:$_nexthop:$_netdev"
+                    _rule="rd.route=$_target:$_nexthop:$kdumpnic"
                 fi
             fi
         else
@@ -491,7 +491,7 @@ kdump_install_net() {
         kdump_setup_znet $_netdev
     fi
 
-    _static=$(kdump_static_ip $_netdev $_srcaddr)
+    _static=$(kdump_static_ip $_netdev $_srcaddr $kdumpnic)
     if [ -n "$_static" ]; then
         _proto=none
     elif is_ipv6_address $_srcaddr; then
