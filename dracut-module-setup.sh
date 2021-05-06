@@ -477,7 +477,7 @@ kdump_get_remote_ip()
 # initramfs accessing giving destination
 # $1: destination host
 kdump_install_net() {
-    local _destaddr _srcaddr _route _netdev
+    local _destaddr _srcaddr _route _netdev kdumpnic
     local _static _proto _ip_conf _ip_opts _ifname_opts
 
     _destaddr=$(kdump_get_remote_ip $1)
@@ -485,6 +485,7 @@ kdump_install_net() {
     _srcaddr=$(kdump_get_ip_route_field "$_route" "src")
     _netdev=$(kdump_get_ip_route_field "$_route" "dev")
     _netmac=$(kdump_get_mac_addr $_netdev)
+    kdumpnic=$(kdump_setup_ifname $_netdev)
 
     if [ "$(uname -m)" = "s390x" ]; then
         kdump_setup_znet $_netdev
@@ -500,7 +501,7 @@ kdump_install_net() {
     fi
 
     _ip_conf="${initdir}/etc/cmdline.d/40ip.conf"
-    _ip_opts=" ip=${_static}$(kdump_setup_ifname $_netdev):${_proto}"
+    _ip_opts=" ip=${_static}$kdumpnic:${_proto}"
 
     # dracut doesn't allow duplicated configuration for same NIC, even they're exactly the same.
     # so we have to avoid adding duplicates
@@ -520,7 +521,7 @@ kdump_install_net() {
     elif kdump_is_vlan "$_netdev"; then
         kdump_setup_vlan "$_netdev"
     else
-        _ifname_opts=" ifname=$(kdump_setup_ifname $_netdev):$_netmac"
+        _ifname_opts=" ifname=$kdumpnic:$_netmac"
         echo "$_ifname_opts" >> $_ip_conf
     fi
 
@@ -540,8 +541,8 @@ kdump_install_net() {
     # gateway.
     if [ ! -f ${initdir}/etc/cmdline.d/60kdumpnic.conf ] &&
        [ ! -f ${initdir}/etc/cmdline.d/70bootdev.conf ]; then
-        echo "kdumpnic=$(kdump_setup_ifname $_netdev)" > ${initdir}/etc/cmdline.d/60kdumpnic.conf
-        echo "bootdev=$(kdump_setup_ifname $_netdev)" > ${initdir}/etc/cmdline.d/70bootdev.conf
+        echo "kdumpnic=$kdumpnic" > ${initdir}/etc/cmdline.d/60kdumpnic.conf
+        echo "bootdev=$kdumpnic" > ${initdir}/etc/cmdline.d/70bootdev.conf
     fi
 }
 
