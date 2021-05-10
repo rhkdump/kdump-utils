@@ -188,6 +188,9 @@ save_vmcore_dmesg_fs() {
         sync
         dinfo "saving vmcore-dmesg.txt complete"
     else
+        if [ -f ${_path}/vmcore-dmesg-incomplete.txt ]; then
+            chmod 600 ${_path}/vmcore-dmesg-incomplete.txt
+        fi
         derror "saving vmcore-dmesg.txt failed"
     fi
 }
