@@ -4,8 +4,8 @@
 %global mkdf_shortver %(c=%{mkdf_ver}; echo ${c:0:7})
 
 Name: kexec-tools
-Version: 2.0.21
-Release: 9%{?dist}
+Version: 2.0.22
+Release: 1%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -367,6 +367,14 @@ done
 %endif
 
 %changelog
+* Tue May 11 2021 Kairui Song <kasong@redhat.com> - 2.0.22-1
+- Update kexec-tools to 2.0.22
+- rd.route should use the name from kdump_setup_ifname
+- get kdump ifname once in kdump_install_net
+- Fix incorrect file permissions of vmcore-dmesg-incomplete.txt
+- Revert "Always set vm.zone_reclaim_mode = 3 in kdump kernel"
+- kdumpctl: fix check_config error when kdump.conf is empty
+
 * Wed Apr 28 2021 Kairui Song <kasong@redhat.com> - 2.0.21-9
 - Make dracut-squash required for kexec-tools
 - Show write byte size in report messages
