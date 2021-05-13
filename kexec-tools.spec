@@ -5,7 +5,7 @@
 
 Name: kexec-tools
 Version: 2.0.22
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -355,6 +355,17 @@ done
 %endif
 
 %changelog
+* Thu May 13 2021 Kairui Song <kasong@redhat.com> - 2.0.22-2
+- Disable CMA in kdump 2nd kernel
+- Warn the user if network scripts are used
+- Set up bond cmdline by "nmcli --get-values"
+- Set up dns cmdline by parsing "nmcli --get-values"
+- Set up s390 znet cmdline by "nmcli --get-values"
+- Add helper to get nmcli connection show cmd by ifname
+- Add helper to get nmcli connection apath by ifname
+- Add helper to get value by field using "nmcli --get-values"
+- Update makedumpfile to 1.6.9
+
 * Tue May 11 2021 Kairui Song <kasong@redhat.com> - 2.0.22-1
 - Update kexec-tools to 2.0.22
 - rd.route should use the name from kdump_setup_ifname
