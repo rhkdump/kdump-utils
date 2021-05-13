@@ -1,6 +1,6 @@
 %global eppic_ver e8844d3793471163ae4a56d8f95897be9e5bd554
 %global eppic_shortver %(c=%{eppic_ver}; echo ${c:0:7})
-%global mkdf_ver 1.6.8
+%global mkdf_ver 1.6.9
 %global mkdf_shortver %(c=%{mkdf_ver}; echo ${c:0:7})
 
 Name: kexec-tools
@@ -93,6 +93,7 @@ Requires:       systemd-udev%{?_isa}
 #
 # Patches 401 through 500 are meant for s390 kexec-tools enablement
 #
+
 #
 # Patches 501 through 600 are meant for ARM kexec-tools enablement
 #
@@ -100,12 +101,6 @@ Requires:       systemd-udev%{?_isa}
 #
 # Patches 601 onward are generic patches
 #
-Patch603: ./kexec-tools-2.0.20-makedumpfile-printk-add-support-for-lockless-ringbuffer.patch
-Patch604: ./kexec-tools-2.0.20-makedumpfile-printk-use-committed-finalized-state-value.patch
-Patch605: ./kexec-tools-2.0.21-makedumpfile-make-use-of-uts_namespace.name-offset-in-VMCOR.patch
-Patch606: ./kexec-tools-2.0.21-makedumpfile-Add-dry-run-option.patch
-Patch607: ./kexec-tools-2.0.21-makedumpfile-Add-shorthand-show-stats-option.patch
-Patch608: ./kexec-tools-2.0.21-makedumpfile-Show-write-byte-size-in-report-messages.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -120,13 +115,6 @@ component of the kernel's kexec feature.
 mkdir -p -m755 kcp
 tar -z -x -v -f %{SOURCE9}
 tar -z -x -v -f %{SOURCE19}
-
-%patch603 -p1
-%patch604 -p1
-%patch605 -p1
-%patch606 -p1
-%patch607 -p1
-%patch608 -p1
 
 %ifarch ppc
 %define archdef ARCH=ppc
