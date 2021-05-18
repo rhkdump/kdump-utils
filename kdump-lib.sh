@@ -975,3 +975,24 @@ get_luks_crypt_dev()
         get_luks_crypt_dev "$(< "$_x/dev")"
     done
 }
+
+# kdump_get_maj_min <device>
+# Prints the major and minor of a device node.
+# Example:
+# $ get_maj_min /dev/sda2
+# 8:2
+kdump_get_maj_min() {
+    local _majmin
+    _majmin="$(stat -L -c '%t:%T' "$1" 2> /dev/null)"
+    printf "%s" "$((0x${_majmin%:*})):$((0x${_majmin#*:}))"
+}
+
+get_all_kdump_crypt_dev()
+{
+    local _dev _crypt
+
+    for _dev in $(get_block_dump_target); do
+        _crypt=$(get_luks_crypt_dev $(kdump_get_maj_min "$_dev"))
+        [[ -n "$_crypt" ]] && echo $_crypt
+    done
+}
