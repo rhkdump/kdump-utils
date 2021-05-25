@@ -913,6 +913,11 @@ get_recommend_size()
     last_sz=""
     last_unit=""
 
+    start=${_ck_cmdline: :1}
+    if [ $mem_size -lt $start ]; then
+        echo "0M"
+        return
+    fi
     IFS=','
     for i in $_ck_cmdline; do
         end=$(echo $i | awk -F "-" '{ print $2 }' | awk -F ":" '{ print $1 }')
@@ -940,9 +945,9 @@ kdump_get_arch_recommend_size()
     fi
     arch=$(lscpu | grep Architecture | awk -F ":" '{ print $2 }' | tr [:lower:] [:upper:])
 
-    if [ $arch == "X86_64" ] || [ $arch == "S390" ]; then
+    if [ $arch == "X86_64" ] || [ $arch == "S390X" ]; then
         ck_cmdline="1G-4G:160M,4G-64G:192M,64G-1T:256M,1T-:512M"
-    elif [ $arch == "ARM64" ]; then
+    elif [ $arch == "AARCH64" ]; then
         ck_cmdline="2G-:448M"
     elif [ $arch == "PPC64LE" ]; then
         if is_fadump_capable; then
