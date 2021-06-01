@@ -746,7 +746,7 @@ prepare_kdump_bootinfo()
     local boot_imglist boot_dirlist boot_initrdlist curr_kver="$(uname -r)"
     local machine_id
 
-    if [ -z "$KDUMP_KERNELVER"]; then
+    if [ -z "$KDUMP_KERNELVER" ]; then
         KDUMP_KERNELVER="$(uname -r)"
     fi
 
