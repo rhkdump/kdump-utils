@@ -60,9 +60,6 @@ Source109: dracut-early-kdump-module-setup.sh
 Source200: dracut-fadump-init-fadump.sh
 Source201: dracut-fadump-module-setup.sh
 
-Requires(post): systemd-units
-Requires(preun): systemd-units
-Requires(postun): systemd-units
 Requires(pre): coreutils sed zlib
 Requires: dracut >= 050
 Requires: dracut-network >= 050
@@ -72,7 +69,7 @@ Requires: grubby
 BuildRequires: make
 BuildRequires: zlib-devel elfutils-devel glib2-devel bzip2-devel ncurses-devel bison flex lzo-devel snappy-devel
 BuildRequires: pkgconfig intltool gettext
-BuildRequires: systemd-units
+BuildRequires: systemd-rpm-macros
 BuildRequires: automake autoconf libtool
 %ifarch %{ix86} x86_64 ppc64 ppc s390x ppc64le
 Obsoletes: diskdumputils netdump kexec-tools-eppic
@@ -292,19 +289,7 @@ fi
 %systemd_postun_with_restart kdump.service
 
 %preun
-# Package removal, not upgrade
 %systemd_preun kdump.service
-
-%triggerun -- kexec-tools < 2.0.2-3
-# Save the current service runlevel info
-# User must manually run systemd-sysv-convert --apply kdump
-# to migrate them to systemd targets
-/usr/bin/systemd-sysv-convert --save kdump >/dev/null 2>&1 ||:
-
-# Run these because the SysV package being removed won't do them
-/sbin/chkconfig --del kdump >/dev/null 2>&1 || :
-/bin/systemctl try-restart kdump.service >/dev/null 2>&1 || :
-
 
 %triggerin -- kernel-kdump
 touch %{_sysconfdir}/kdump.conf
