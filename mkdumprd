@@ -246,7 +246,7 @@ check_user_configured_target()
 
     # For user configured target, use $SAVE_PATH as the dump path within the target
     if [ ! -d "$_mnt/$SAVE_PATH" ]; then
-        perror_exit "Dump path \"$SAVE_PATH\" does not exist in dump target \"$_target\""
+        perror_exit "Dump path \"$_mnt/$SAVE_PATH\" does not exist in dump target \"$_target\""
     fi
 
     check_size fs "$_target"
