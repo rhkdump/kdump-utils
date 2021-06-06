@@ -460,6 +460,34 @@ kdump_setup_vlan() {
     fi
 }
 
+# find online znet device
+# return ifname (_netdev)
+# code reaped from the list_configured function of
+# https://github.com/hreinecke/s390-tools/blob/master/zconf/znetconf
+find_online_znet_device() {
+    local CCWGROUPBUS_DEVICEDIR="/sys/bus/ccwgroup/devices"
+    local NETWORK_DEVICES d ifname ONLINE
+    NETWORK_DEVICES=$(find $CCWGROUPBUS_DEVICEDIR -type l)
+	for d in $NETWORK_DEVICES
+	do
+        read ONLINE < $d/online
+        if [ $ONLINE -ne 1 ]; then
+            continue
+        fi
+	    # determine interface name, if there (only for qeth and if
+        # device is online)
+	    if [ -f $d/if_name ]
+	    then
+            read ifname < $d/if_name
+	    elif [ -d $d/net ]
+	    then
+	        ifname=$(ls $d/net/)
+        fi
+        [ -n "$ifname" ] && break
+    done
+    echo -n "$ifname"
+}
+
 # setup s390 znet cmdline
 # $1: netdev (ifname)
 # $2: nmcli connection show output
@@ -526,6 +554,7 @@ kdump_get_remote_ip()
 kdump_install_net() {
     local _destaddr _srcaddr _route _netdev _nm_show_cmd kdumpnic
     local _static _proto _ip_conf _ip_opts _ifname_opts
+    local _znet_netdev _nm_show_cmd_znet
 
     _destaddr=$(kdump_get_remote_ip $1)
     _route=$(kdump_get_ip_route $_destaddr)
@@ -535,8 +564,10 @@ kdump_install_net() {
     _netmac=$(kdump_get_mac_addr $_netdev)
     kdumpnic=$(kdump_setup_ifname $_netdev)
 
-    if [ "$(uname -m)" = "s390x" ]; then
-        $(kdump_setup_znet "$_netdev" "$_nm_show_cmd")
+    _znet_netdev=$(find_online_znet_device)
+    if [[ -n "$_znet_netdev" ]]; then
+        _nm_show_cmd_znet=$(get_nmcli_connection_show_cmd_by_ifname "$_znet_netdev")
+        $(kdump_setup_znet "$_znet_netdev" "$_nm_show_cmd_znet")
         if [[ $? != 0 ]]; then
             derror "Failed to set up znet"
             exit 1
