@@ -95,7 +95,7 @@ has_valid_vmcore_dir() {
 		return 1
 	fi
 
-	if ! diff $vmcore_dir/vmcore-dmesg.txt.2 $vmcore_dir/vmcore-dmesg.txt; then
+	if ! diff -w $vmcore_dir/vmcore-dmesg.txt.2 $vmcore_dir/vmcore-dmesg.txt; then
 		test_output "Dmesg retrived from vmcore is different from dump version!"
 		return 1
 	fi
