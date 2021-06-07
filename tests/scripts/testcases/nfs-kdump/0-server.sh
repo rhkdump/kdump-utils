@@ -17,7 +17,7 @@ on_build() {
 	img_run_cmd "systemctl enable dnsmasq"
 
 	img_run_cmd 'echo DEVICE="eth0" > /etc/sysconfig/network-scripts/ifcfg-eth0'
-	img_run_cmd 'echo BOOTPROTO="none >> /etc/sysconfig/network-scripts/ifcfg-eth0"'
+	img_run_cmd 'echo BOOTPROTO="none" >> /etc/sysconfig/network-scripts/ifcfg-eth0'
 	img_run_cmd 'echo ONBOOT="yes" >> /etc/sysconfig/network-scripts/ifcfg-eth0'
 	img_run_cmd 'echo PREFIX="24" >> /etc/sysconfig/network-scripts/ifcfg-eth0'
 	img_run_cmd 'echo IPADDR="192.168.77.1" >> /etc/sysconfig/network-scripts/ifcfg-eth0'
