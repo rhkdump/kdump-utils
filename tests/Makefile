@@ -67,7 +67,7 @@ $(BUILD_ROOT)/inst-base-image: $(BUILD_ROOT)/base-image
 		$(BUILD_ROOT)/inst-base-image \
 		$(TEST_ROOT)/scripts/build-scripts/base-image.sh
 
-$(TEST_ROOT)/output/test-base-image: $(BUILD_ROOT)/inst-base-image $(KEXEC_TOOLS_RPM) $(KEXEC_TOOLS_TEST_SRC)
+$(TEST_ROOT)/output/test-base-image: $(BUILD_ROOT)/inst-base-image $(KEXEC_TOOLS_RPM) $(KEXEC_TOOLS_TEST_SRC) $(EXTRA_RPMS)
 	@echo "Building test base image"
 	mkdir -p $(TEST_ROOT)/output
 	$(TEST_ROOT)/scripts/build-image.sh \
