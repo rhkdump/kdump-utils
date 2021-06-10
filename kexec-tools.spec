@@ -40,6 +40,7 @@ Source29: kdump.sysconfig.aarch64
 Source30: 60-kdump.install
 Source31: kdump-logger.sh
 Source32: mkfadumprd
+Source33: 92-crashkernel.install
 
 #######################################
 # These are sources for mkdumpramfs
@@ -66,6 +67,7 @@ Requires: dracut >= 050
 Requires: dracut-network >= 050
 Requires: dracut-squash >= 050
 Requires: ethtool
+Requires: grubby
 BuildRequires: make
 BuildRequires: zlib-devel elfutils-devel glib2-devel bzip2-devel ncurses-devel bison flex lzo-devel snappy-devel
 BuildRequires: pkgconfig intltool gettext
@@ -210,6 +212,7 @@ install -m 644 %{SOURCE15} $RPM_BUILD_ROOT%{_mandir}/man5/kdump.conf.5
 install -m 644 %{SOURCE16} $RPM_BUILD_ROOT%{_unitdir}/kdump.service
 install -m 755 -D %{SOURCE22} $RPM_BUILD_ROOT%{_prefix}/lib/systemd/system-generators/kdump-dep-generator.sh
 install -m 755 -D %{SOURCE30} $RPM_BUILD_ROOT%{_prefix}/lib/kernel/install.d/60-kdump.install
+install -m 755 -D %{SOURCE33} $RPM_BUILD_ROOT%{_prefix}/lib/kernel/install.d/92-crashkernel.install
 
 %ifarch %{ix86} x86_64 ppc64 s390x ppc64le aarch64
 install -m 755 makedumpfile-%{mkdf_ver}/makedumpfile $RPM_BUILD_ROOT/usr/sbin/makedumpfile
@@ -360,6 +363,7 @@ done
 %{_unitdir}/kdump.service
 %{_prefix}/lib/systemd/system-generators/kdump-dep-generator.sh
 %{_prefix}/lib/kernel/install.d/60-kdump.install
+%{_prefix}/lib/kernel/install.d/92-crashkernel.install
 %doc News
 %license COPYING
 %doc TODO
