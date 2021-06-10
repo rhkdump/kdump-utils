@@ -49,6 +49,15 @@ Prints the size of reserved memory for crash kernel in megabytes.
 Estimate a suitable crashkernel value for current machine. This is a
 best-effort estimate. It will print a recommanded crashkernel value
 based on current kdump setup, and list some details of memory usage.
+.TP
+.I reset-crashkernel [KERNEL]
+Reset crashkernel value to default value. kdumpctl will try to read
+from /usr/lib/modules/<KERNEL>/crashkernel.default and reset specified
+kernel's crashkernel cmdline value. If no kernel is
+specified, will reset current running kernel's crashkernel value.
+If /usr/lib/modules/<KERNEL>/crashkernel.default doesn't exist, will
+simply exit return 1.
+
 
 .SH "SEE ALSO"
 .BR kdump.conf (5),
