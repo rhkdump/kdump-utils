@@ -5,7 +5,7 @@
 
 Name: kexec-tools
 Version: 2.0.22
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -353,6 +353,21 @@ done
 %endif
 
 %changelog
+* Sun Jun 20 2021 Kairui Song <kasong@redhat.com> - 2.0.22-3
+- selftest: Make test_base_image depends on EXTRA_RPMS
+- selftest: fix the error of misplacing double quotes
+- mkdumprd: display the absolute path of dump location in the check_user_configured_target()
+- Iterate /sys/bus/ccwgroup/devices to tell if we should set up rd.znet
+- Use a customized emergency shell
+- Remove the kdump error handler isolation wrapper
+- Don's try to restart dracut-initqueue if it's already there
+- kdump-lib.sh: fix a warning in prepare_kdump_bootinfo()
+- kdump-lib.sh: fix the case if no enough total RAM for kdump in get_recommend_size()
+- kdumpctl: Add kdumpctl estimate
+- mkdumprd: make use of the new get_luks_crypt_dev helper
+- kdump-lib.sh: introduce a helper to get all crypt dev used by kdump
+- kdump-lib.sh: introduce a helper to get underlying crypt device
+
 * Thu May 13 2021 Kairui Song <kasong@redhat.com> - 2.0.22-2
 - Disable CMA in kdump 2nd kernel
 - Warn the user if network scripts are used
