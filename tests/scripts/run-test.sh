@@ -1,9 +1,38 @@
 #!/bin/bash
 
+_kill_if_valid_pid() {
+	local _pid="$1"
+	if ps -p "$_pid" > /dev/null
+	then
+		kill "$_pid"
+	fi
+}
+
+_recursive_kill() {
+	local _pid="$1"
+	local _children _child
+
+	_children=$(pgrep -P "$_pid")
+	if [ -n "$_children" ]; then
+		for _child in $_children
+		do
+			_recursive_kill "$_child"
+			_kill_if_valid_pid "$_child"
+		done
+	fi
+	_kill_if_valid_pid "$_pid"
+}
+
 _kill_all_jobs() {
 	local _jobs=$(jobs -r -p)
+	local _job
 
-	[ -n "$_jobs" ] && kill $_jobs
+	if [ -n "$_jobs" ]; then
+		for _job in $_jobs
+		do
+			_recursive_kill "$_job"
+		done
+	fi
 }
 
 trap '
@@ -121,7 +150,7 @@ for test_case in $testcases; do
 
 	[ $? -ne 0 ] && ret=$(expr $ret + 1)
 	results[$test_case]="$res"
-
+	_kill_all_jobs
 	echo -e "-------- Test finished: $test_case $res --------"
 	for script in $scripts; do
 		script="$testdir/$script"

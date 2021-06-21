@@ -146,8 +146,7 @@ watch_test_outputs() {
 				ret=$?
 
 				if [ $ret -ne 255 ]; then
-					# Test finished, kill VMs
-					kill $(jobs -p)
+					# Test finished
 					break 2
 				fi
 			done
