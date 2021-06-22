@@ -1,0 +1,42 @@
+From 646456862df8926ba10dd7330abf3bf0f887e1b6 Mon Sep 17 00:00:00 2001
+From: Kazuhito Hagio <k-hagio-ab@nec.com>
+Date: Wed, 26 May 2021 14:31:26 +0900
+Subject: [PATCH] Increase SECTION_MAP_LAST_BIT to 5
+
+* Required for kernel 5.12
+
+Kernel commit 1f90a3477df3 ("mm: teach pfn_to_online_page() about
+ZONE_DEVICE section collisions") added a section flag
+(SECTION_TAINT_ZONE_DEVICE) and causes makedumpfile an error on
+some machines like this:
+
+  __vtop4_x86_64: Can't get a valid pmd_pte.
+  readmem: Can't convert a virtual address(ffffe2bdc2000000) to physical address.
+  readmem: type_addr: 0, addr:ffffe2bdc2000000, size:32768
+  __exclude_unnecessary_pages: Can't read the buffer of struct page.
+  create_2nd_bitmap: Can't exclude unnecessary pages.
+
+Increase SECTION_MAP_LAST_BIT to 5 to fix this.  The bit had not
+been used until the change, so we can just increase the value.
+
+Signed-off-by: Kazuhito Hagio <k-hagio-ab@nec.com>
+---
+ makedumpfile.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/makedumpfile-1.6.9/makedumpfile.h b/makedumpfile-1.6.9/makedumpfile.h
+index 93aa774..79046f2 100644
+--- a/makedumpfile-1.6.9/makedumpfile.h
++++ b/makedumpfile-1.6.9/makedumpfile.h
+@@ -195,7 +195,7 @@ isAnon(unsigned long mapping)
+  *  2. it has been verified that (1UL<<2) was never set, so it is
+  *     safe to mask that bit off even in old kernels.
+  */
+-#define SECTION_MAP_LAST_BIT	(1UL<<4)
++#define SECTION_MAP_LAST_BIT	(1UL<<5)
+ #define SECTION_MAP_MASK	(~(SECTION_MAP_LAST_BIT-1))
+ #define NR_SECTION_ROOTS()	divideup(num_section, SECTIONS_PER_ROOT())
+ #define SECTION_NR_TO_PFN(sec)	((sec) << PFN_SECTION_SHIFT())
+-- 
+2.29.2
+

@@ -100,6 +100,7 @@ Requires:       systemd-udev%{?_isa}
 #
 # Patches 601 onward are generic patches
 #
+Patch601: ./kexec-tools-2.0.22-makedumpfile-Increase-SECTION_MAP_LAST_BIT-to-5.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -114,6 +115,8 @@ component of the kernel's kexec feature.
 mkdir -p -m755 kcp
 tar -z -x -v -f %{SOURCE9}
 tar -z -x -v -f %{SOURCE19}
+
+%patch601 -p1
 
 %ifarch ppc
 %define archdef ARCH=ppc
