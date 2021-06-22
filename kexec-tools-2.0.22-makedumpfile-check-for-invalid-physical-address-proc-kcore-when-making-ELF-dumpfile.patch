@@ -1,0 +1,43 @@
+From 9a6f589d99dcef114c89fde992157f5467028c8f Mon Sep 17 00:00:00 2001
+From: Tao Liu <ltao@redhat.com>
+Date: Fri, 18 Jun 2021 18:28:04 +0800
+Subject: [PATCH] check for invalid physical address of /proc/kcore
+ when making ELF dumpfile
+
+Previously when executing makedumpfile with -E option against
+/proc/kcore, makedumpfile will fail:
+
+  # makedumpfile -E -d 31 /proc/kcore kcore.dump
+  ...
+  write_elf_load_segment: Can't convert physaddr(ffffffffffffffff) to an offset.
+
+  makedumpfile Failed.
+
+It's because /proc/kcore contains PT_LOAD program headers which have
+physaddr (0xffffffffffffffff).  With -E option, makedumpfile will
+try to convert the physaddr to an offset and fails.
+
+Skip the PT_LOAD program headers which have such physaddr.
+
+Signed-off-by: Tao Liu <ltao@redhat.com>
+Signed-off-by: Kazuhito Hagio <k-hagio-ab@nec.com>
+---
+ makedumpfile.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/makedumpfile-1.6.9/makedumpfile.c b/makedumpfile-1.6.9/makedumpfile.c
+index 894c88e..fcb571f 100644
+--- a/makedumpfile-1.6.9/makedumpfile.c
++++ b/makedumpfile-1.6.9/makedumpfile.c
+@@ -7764,7 +7764,7 @@ write_elf_pages_cyclic(struct cache_data *cd_header, struct cache_data *cd_page)
+ 		if (!get_phdr_memory(i, &load))
+ 			return FALSE;
+ 
+-		if (load.p_type != PT_LOAD)
++		if (load.p_type != PT_LOAD || load.p_paddr == NOT_PADDR)
+ 			continue;
+ 
+ 		off_memory= load.p_offset;
+-- 
+2.29.2
+
