@@ -101,6 +101,7 @@ Requires:       systemd-udev%{?_isa}
 # Patches 601 onward are generic patches
 #
 Patch601: ./kexec-tools-2.0.22-makedumpfile-Increase-SECTION_MAP_LAST_BIT-to-5.patch
+Patch602: ./kexec-tools-2.0.22-makedumpfile-check-for-invalid-physical-address-proc-kcore-when-finding-max_paddr.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -117,6 +118,7 @@ tar -z -x -v -f %{SOURCE9}
 tar -z -x -v -f %{SOURCE19}
 
 %patch601 -p1
+%patch602 -p1
 
 %ifarch ppc
 %define archdef ARCH=ppc

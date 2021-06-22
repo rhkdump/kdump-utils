@@ -1,0 +1,60 @@
+From 38d921a2ef50ebd36258097553626443ffe27496 Mon Sep 17 00:00:00 2001
+From: Coiby Xu <coxu@redhat.com>
+Date: Tue, 15 Jun 2021 18:26:31 +0800
+Subject: [PATCH] check for invalid physical address of /proc/kcore
+ when finding max_paddr
+
+Kernel commit 464920104bf7adac12722035bfefb3d772eb04d8 ("/proc/kcore:
+update physical address for kcore ram and text") sets an invalid paddr
+(0xffffffffffffffff = -1) for PT_LOAD segments of not direct mapped
+regions:
+
+  $ readelf -l /proc/kcore
+  ...
+  Program Headers:
+    Type           Offset             VirtAddr           PhysAddr
+                   FileSiz            MemSiz              Flags  Align
+    NOTE           0x0000000000000120 0x0000000000000000 0x0000000000000000
+                   0x0000000000002320 0x0000000000000000         0x0
+    LOAD           0x1000000000010000 0xd000000000000000 0xffffffffffffffff
+                                                         ^^^^^^^^^^^^^^^^^^
+                   0x0001f80000000000 0x0001f80000000000  RWE    0x10000
+
+makedumpfile uses max_paddr to calculate the number of sections for
+sparse memory model thus wrong number is obtained based on max_paddr
+(-1).  This error could lead to the failure of copying /proc/kcore
+for RHEL-8.5 on ppc64le machine [1]:
+
+  $ makedumpfile /proc/kcore vmcore1
+  get_mem_section: Could not validate mem_section.
+  get_mm_sparsemem: Can't get the address of mem_section.
+
+  makedumpfile Failed.
+
+Let's check if the phys_start of the segment is a valid physical
+address to fix this problem.
+
+[1] https://bugzilla.redhat.com/show_bug.cgi?id=1965267
+
+Reported-by: Xiaoying Yan <yiyan@redhat.com>
+Signed-off-by: Coiby Xu <coxu@redhat.com>
+---
+ elf_info.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/makedumpfile-1.6.9/elf_info.c b/makedumpfile-1.6.9/elf_info.c
+index e8affb7..bc24083 100644
+--- a/makedumpfile-1.6.9/elf_info.c
++++ b/makedumpfile-1.6.9/elf_info.c
+@@ -628,7 +628,7 @@ get_max_paddr(void)
+ 
+ 	for (i = 0; i < num_pt_loads; i++) {
+ 		pls = &pt_loads[i];
+-		if (max_paddr < pls->phys_end)
++		if (pls->phys_start != NOT_PADDR && max_paddr < pls->phys_end)
+ 			max_paddr = pls->phys_end;
+ 	}
+ 	return max_paddr;
+-- 
+2.29.2
+
