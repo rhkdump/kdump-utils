@@ -452,6 +452,11 @@ then
     add_dracut_arg "--add-drivers" \"$extra_modules\"
 fi
 
+# TODO: The below check is not needed anymore with the introduction of
+#       'zz-fadumpinit' module, that isolates fadump's capture kernel initrd,
+#       but still sysroot.mount unit gets generated based on 'root=' kernel
+#       parameter available in fadump case. So, find a way to fix that first
+#       before removing this check.
 if ! is_fadump_capable; then
     # The 2nd rootfs mount stays behind the normal dump target mount,
     # so it doesn't affect the logic of check_dump_fs_modified().

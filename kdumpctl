@@ -8,6 +8,7 @@ KEXEC_ARGS=""
 KDUMP_CONFIG_FILE="/etc/kdump.conf"
 KDUMP_LOG_PATH="/var/log"
 MKDUMPRD="/sbin/mkdumprd -f"
+MKFADUMPRD="/sbin/mkfadumprd"
 DRACUT_MODULES_FILE="/usr/lib/dracut/modules.txt"
 SAVE_PATH=/var/crash
 SSH_KEY_LOCATION="/root/.ssh/kdump_id_rsa"
@@ -104,25 +105,10 @@ save_core()
 
 rebuild_fadump_initrd()
 {
-	local target_initrd_tmp
-
-	# this file tells the initrd is fadump enabled
-	touch /tmp/fadump.initramfs
-	target_initrd_tmp="$TARGET_INITRD.tmp"
-	ddebug "rebuild fadump initrd: $target_initrd_tmp $DEFAULT_INITRD_BAK $KDUMP_KERNELVER"
-	$MKDUMPRD $target_initrd_tmp --rebuild $DEFAULT_INITRD_BAK --kver $KDUMP_KERNELVER \
-		-i /tmp/fadump.initramfs /etc/fadump.initramfs
-	if [ $? != 0 ]; then
-		derror "mkdumprd: failed to rebuild initrd with fadump support"
-		rm -f /tmp/fadump.initramfs
+	if ! $MKFADUMPRD "$DEFAULT_INITRD_BAK" "$TARGET_INITRD" --kver "$KDUMP_KERNELVER"; then
+		derror "mkfadumprd: failed to make fadump initrd"
 		return 1
 	fi
-	rm -f /tmp/fadump.initramfs
-
-	# updating fadump initrd
-	ddebug "updating fadump initrd: $target_initrd_tmp $TARGET_INITRD"
-	mv $target_initrd_tmp $TARGET_INITRD
-	sync
 
 	return 0
 }
@@ -612,7 +598,7 @@ check_rebuild()
 		#in case of fadump mode, check whether the default/target
 		#initrd is already built with dump capture capability
 		if [ "$DEFAULT_DUMP_MODE" == "fadump" ]; then
-			capture_capable_initrd=$(lsinitrd -f $DRACUT_MODULES_FILE $TARGET_INITRD | grep ^kdumpbase$ | wc -l)
+			capture_capable_initrd=$(lsinitrd -f $DRACUT_MODULES_FILE $TARGET_INITRD | grep -e ^kdumpbase$ -e ^zz-fadumpinit$ | wc -l)
 		fi
 	fi
 

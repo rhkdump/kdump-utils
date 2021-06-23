@@ -39,6 +39,7 @@ Source28: kdump-udev-throttler
 Source29: kdump.sysconfig.aarch64
 Source30: 60-kdump.install
 Source31: kdump-logger.sh
+Source32: mkfadumprd
 
 #######################################
 # These are sources for mkdumpramfs
@@ -53,6 +54,9 @@ Source106: dracut-kdump-capture.service
 Source107: dracut-kdump-emergency.target
 Source108: dracut-early-kdump.sh
 Source109: dracut-early-kdump-module-setup.sh
+
+Source200: dracut-fadump-init-fadump.sh
+Source201: dracut-fadump-module-setup.sh
 
 Requires(post): systemd-units
 Requires(preun): systemd-units
@@ -183,6 +187,7 @@ SYSCONFIG=$RPM_SOURCE_DIR/kdump.sysconfig.%{_target_cpu}
 install -m 644 $SYSCONFIG $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/kdump
 
 install -m 755 %{SOURCE7} $RPM_BUILD_ROOT/usr/sbin/mkdumprd
+install -m 755 %{SOURCE32} $RPM_BUILD_ROOT/usr/sbin/mkfadumprd
 install -m 644 %{SOURCE8} $RPM_BUILD_ROOT%{_sysconfdir}/kdump.conf
 install -m 644 kexec/kexec.8 $RPM_BUILD_ROOT%{_mandir}/man8/kexec.8
 install -m 644 %{SOURCE12} $RPM_BUILD_ROOT%{_mandir}/man8/mkdumprd.8
@@ -218,6 +223,7 @@ install -m 644 makedumpfile-%{mkdf_ver}/eppic_scripts/* $RPM_BUILD_ROOT/usr/shar
 
 %define remove_dracut_prefix() %(echo -n %1|sed 's/.*dracut-//g')
 %define remove_dracut_early_kdump_prefix() %(echo -n %1|sed 's/.*dracut-early-kdump-//g')
+%define remove_dracut_fadump_prefix() %(echo -n %1|sed 's/.*dracut-fadump-//g')
 
 # deal with dracut modules
 mkdir -p -m755 $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99kdumpbase
@@ -235,6 +241,13 @@ cp %{SOURCE108} $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99earlyk
 cp %{SOURCE109} $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99earlykdump/%{remove_dracut_early_kdump_prefix %{SOURCE109}}
 chmod 755 $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99earlykdump/%{remove_dracut_prefix %{SOURCE108}}
 chmod 755 $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99earlykdump/%{remove_dracut_early_kdump_prefix %{SOURCE109}}
+%ifarch ppc64 ppc64le
+mkdir -p -m755 $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99zz-fadumpinit
+cp %{SOURCE200} $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99zz-fadumpinit/%{remove_dracut_fadump_prefix %{SOURCE200}}
+cp %{SOURCE201} $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99zz-fadumpinit/%{remove_dracut_fadump_prefix %{SOURCE201}}
+chmod 755 $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99zz-fadumpinit/%{remove_dracut_fadump_prefix %{SOURCE200}}
+chmod 755 $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99zz-fadumpinit/%{remove_dracut_fadump_prefix %{SOURCE201}}
+%endif
 
 
 %define dracutlibdir %{_prefix}/lib/dracut
@@ -316,6 +329,7 @@ done
 /usr/sbin/makedumpfile
 %endif
 /usr/sbin/mkdumprd
+/usr/sbin/mkfadumprd
 /usr/sbin/vmcore-dmesg
 %{_bindir}/*
 %{_datadir}/kdump

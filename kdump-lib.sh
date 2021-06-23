@@ -19,6 +19,16 @@ is_fadump_capable()
     return 1
 }
 
+is_squash_available() {
+    for kmodule in squashfs overlay loop; do
+        if [ -z "$KDUMP_KERNELVER" ]; then
+            modprobe --dry-run $kmodule &>/dev/null || return 1
+        else
+            modprobe -S $KDUMP_KERNELVER --dry-run $kmodule &>/dev/null || return 1
+        fi
+    done
+}
+
 perror_exit() {
     derror "$@"
     exit 1

@@ -1,0 +1,60 @@
+#!/bin/bash --norc
+# Generate an initramfs image that isolates dump capture capability within
+# the default initramfs using zz-fadumpinit dracut module.
+
+if [ -f /etc/sysconfig/kdump ]; then
+	. /etc/sysconfig/kdump
+fi
+
+[[ $dracutbasedir ]] || dracutbasedir=/usr/lib/dracut
+. $dracutbasedir/dracut-functions.sh
+. /lib/kdump/kdump-lib.sh
+. /lib/kdump/kdump-logger.sh
+
+#initiate the kdump logger
+if ! dlog_init; then
+	echo "mkfadumprd: failed to initiate the kdump logger."
+	exit 1
+fi
+
+readonly MKFADUMPRD_TMPDIR="$(mktemp -d -t mkfadumprd.XXXXXX)"
+[ -d "$MKFADUMPRD_TMPDIR" ] || perror_exit "mkfadumprd: mktemp -d -t mkfadumprd.XXXXXX failed."
+trap '
+    ret=$?;
+    [[ -d $MKFADUMPRD_TMPDIR ]] && rm --one-file-system -rf -- "$MKFADUMPRD_TMPDIR";
+    exit $ret;
+    ' EXIT
+
+# clean up after ourselves no matter how we die.
+trap 'exit 1;' SIGINT
+
+MKDUMPRD="/sbin/mkdumprd -f"
+# Default boot initramfs to be rebuilt
+REBUILD_INITRD="$1" && shift
+TARGET_INITRD="$1" && shift
+FADUMP_INITRD="$MKFADUMPRD_TMPDIR/fadump.img"
+
+### First build an initramfs with dump capture capability
+# this file tells the initrd is fadump enabled
+touch "$MKFADUMPRD_TMPDIR/fadump.initramfs"
+ddebug "rebuild fadump initrd: $FADUMP_INITRD $DEFAULT_INITRD $KDUMP_KERNELVER"
+if ! $MKDUMPRD "$FADUMP_INITRD" -i "$MKFADUMPRD_TMPDIR/fadump.initramfs" /etc/fadump.initramfs; then
+	perror_exit "mkfadumprd: failed to build image with dump capture support"
+fi
+
+### Unpack the initramfs having dump capture capability
+mkdir -p "$MKFADUMPRD_TMPDIR/fadumproot"
+if ! (pushd "$MKFADUMPRD_TMPDIR/fadumproot" > /dev/null && lsinitrd --unpack "$MKFADUMPRD_TMPDIR/fadump.img" && \
+	popd > /dev/null); then
+	derror "mkfadumprd: failed to unpack '$MKFADUMPRD_TMPDIR'"
+	exit 1
+fi
+
+### Pack it into the normal boot initramfs with zz-fadumpinit module
+_dracut_isolate_args="--rebuild $REBUILD_INITRD --add zz-fadumpinit -i $MKFADUMPRD_TMPDIR/fadumproot /fadumproot"
+if is_squash_available; then
+	_dracut_isolate_args="$_dracut_isolate_args --add squash"
+fi
+if ! dracut --force --quiet $_dracut_isolate_args $@ "$TARGET_INITRD"; then
+	perror_exit "mkfadumprd: failed to setup '$TARGET_INITRD' with dump capture capability"
+fi

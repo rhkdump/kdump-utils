@@ -27,17 +27,7 @@ depends() {
         [[ " $omit_dracutmodules " != *\ $1\ * ]] && _dep="$_dep $1"
     }
 
-    is_squash_available() {
-        for kmodule in squashfs overlay loop; do
-            if [ -z "$KDUMP_KERNELVER" ]; then
-                modprobe --dry-run $kmodule &>/dev/null || return 1
-            else
-                modprobe -S $KDUMP_KERNELVER --dry-run $kmodule &>/dev/null || return 1
-            fi
-        done
-    }
-
-    if is_squash_available && ! is_fadump_capable; then
+    if is_squash_available; then
         add_opt_module squash
     else
         dwarning "Required modules to build a squashed kdump image is missing!"
@@ -1087,7 +1077,5 @@ install() {
       ${initdir}/etc/lvm/lvm.conf &>/dev/null
 
     # Save more memory by dropping switch root capability
-    if ! is_fadump_capable; then
-        dracut_no_switch_root
-    fi
+    dracut_no_switch_root
 }
