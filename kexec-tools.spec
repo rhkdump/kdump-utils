@@ -41,6 +41,7 @@ Source30: 60-kdump.install
 Source31: kdump-logger.sh
 Source32: mkfadumprd
 Source33: 92-crashkernel.install
+Source34: crashkernel-howto.txt
 
 #######################################
 # These are sources for mkdumpramfs
@@ -151,6 +152,7 @@ cp %{SOURCE11} .
 cp %{SOURCE21} .
 cp %{SOURCE26} .
 cp %{SOURCE27} .
+cp %{SOURCE34} .
 
 make
 %ifarch %{ix86} x86_64 ppc64 s390x ppc64le aarch64
@@ -372,6 +374,7 @@ done
 %doc fadump-howto.txt
 %doc kdump-in-cluster-environment.txt
 %doc live-image-kdump-howto.txt
+%doc crashkernel-howto.txt
 %ifarch %{ix86} x86_64 ppc64 s390x ppc64le aarch64
 %{_libdir}/eppic_makedumpfile.so
 /usr/share/makedumpfile/

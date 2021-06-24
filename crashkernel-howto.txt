@@ -1,0 +1,204 @@
+Introduction
+============
+
+This document describes features the kexec-tools package provides for setting
+and estimating the crashkernel value.
+
+Kdump lives in a pre-reserved chunk of memory, and the size of the reserved
+memory is specified by the `crashkernel=` kernel parameter. It's hard to
+estimate an accurate `crashkernel=` value, so it's always recommended to test
+kdump after you updated the `crashkernel=` value or changed the dump target.
+
+
+Default crashkernel value
+=========================
+
+Latest kernel packages includes a `crashkernel.default` file installed in kernel
+modules folder, available as:
+
+	/usr/lib/modules/<kernel>/crashkernel.default
+
+The content of the file will be taken as the default value of 'crashkernel=', or
+take this file as a reference for setting crashkernel value manually.
+
+
+New installed system
+====================
+
+Anaconda is the OS installer which sets all the kernel boot cmdline on a new
+installed system. If kdump is set enabled during Anaconda installation, Anaconda
+will use the `crashkernel.default` file as the default `crashkernel=` value on
+the new installed system.
+
+Users can also override the value during Anaconda installation manually.
+
+
+Auto update of crashkernel boot parameter
+=========================================
+
+Following context in this section assumes all kernel packages have a
+`crashkernel.default` file bundled, which is true for the latest official kernel
+packages. For kexec-tools behavior with a kernel that doesn't have a
+`crashkernel.default` file, please refer to the “Custom Kernel” section of this
+doc.
+
+When `crashkernel=` is using the default value, kexec-tools will need to update
+the `crashkernel=` value of new installed kernels, since the default value may
+change in new kernel packages.
+
+kexec-tools does so by adding a kernel installation hook, which gets triggered
+every time a new kernel is installed, so kexec-tools can do necessary checks and
+updates.
+
+
+Supported Bootloaders
+---------------------
+
+This auto update only works with GRUB2 and ZIPL, as kexec-tools heavily depends
+on `grubby`. If other boot loaders are used, the user will have to update the
+`crashkernel=` value manually.
+
+
+Updating kernel package
+-----------------------
+
+When a new version of package kernel is released in the official repository, the
+package will always come with a `crashkernel.default` file bundled. Kexec-tools
+will act with following rules:
+
+If current boot kernel is using the default `crashkernel=` boot param value from
+its `crashkernel.default` file, then kexec-tools will update new installed
+kernel’s `crashkernel=` boot param using the value from the new installed
+kernel’s `crashkernel.default` file. This ensures `crashkernel=` is always using
+the latest default value.
+
+If current boot kernel's `crashkernel=` value is set to a non-default value, the
+new installed kernel simply inherits this value.
+
+On systems using GRUB2 as the bootloader, each kernel has its own boot entry,
+making it possible to set different `crashkernel=` boot param values for
+different kernels. So kexec-tools won’t touch any already installed kernel's
+boot param, only new installed kernel's `crashkernel=` boot param value will be
+updated.
+
+But some utilities like `grub2-mkconfig` and `grubby` can override all boot
+entry's boot params with the boot params value from the GRUB config file
+`/etc/defaults/grub`, so kexec-tools will also update the GRUB config file in
+case old `crashkernel=` value overrides new installed kernel’s boot param.
+
+
+Downgrading kernel package
+--------------------------
+
+When upgrading a kernel package, kexec-tools may update the `crashkernel=` value
+in GRUB2 config file to the new value. So when downgrading the kernel package,
+kexec-tools will also try to revert that update by setting GRUB2 config file’s
+`crashkernel=` value back to the default value in the older kernel package. This
+will only occur when the GRUB2 config file is using the default `crashkernel=`
+value.
+
+
+Custom kernel
+=============
+
+To make auto crashkernel update more robust, kexec-tools will try to keep
+tracking the default 'crashkernel=` value with kernels that don’t have a
+`crashkernel.default` file, such kernels are referred to as “custom kernel” in
+this doc. This is only a best-effort support to make it easier debugging and
+testing the system.
+
+When installing a custom kernel that doesn’t have a `crashkernel.default` file,
+the `crashkernel=` value will be simply inherited from the current boot kernel.
+
+When installing a new official kernel package and current boot kernel is a
+custom kernel, since the boot kernel doesn’t have a `crashkernel.default` file,
+kexec-tools will iterate installed kernels and check if the boot kernel
+inherited the default value from any other existing kernels’
+`crashkernel.default` file. If a matching `crashkernel.default` file is found,
+kexec-tools will update the new installed kernel `crashkernel=` boot param using
+the value from the new installed kernel’s `crashkernel.default` file, ensures
+the auto crashkernel value update won’t break over one or two custom kernel
+installations.
+
+It is possible that the auto crashkernel value update will fail when custom
+kernels are used. One example is a custom kernel inheriting the default
+`crashkernel=` value from an older official kernel package, but later that
+kernel package is uninstalled. So when booted with the custom kernel,
+kexec-tools can't determine if the boot kernel is inheriting a default
+`crashkernel=` value from any official build. In such a case, please refer to
+the "Reset crashkernel to default value" section of this doc.
+
+
+Reset crashkernel to default value
+==================================
+
+kexec-tools only perform the auto update of crashkernel value when it can
+confirm the boot kernel's crashkernel value is using its corresponding default
+value or inherited from any installed kernel.
+
+kexec-tools may fail to determine if the boot kernel is using default
+crashkernel value in some use cases:
+- kexec-tools package is absent during a kernel package upgrade, and the new
+  kernel package’s `crashkernel.default` value has changed.
+- Custom kernel is used and the kernel it inherits `crashkernel=`  value from is
+  uninstalled.
+
+So it's recommended to reset the crashkernel value if users have uninstalled
+kexec-tools or using a custom kernel.
+
+Reset using kdumpctl
+--------------------
+
+To make it easier to reset the `crashkernel=` kernel cmdline to this default
+value properly, `kdumpctl` also provides a sub-command:
+
+	`kdumpctl reset-crashkernel [<kernel version>]`
+
+This command will read from the `crashkernel.default` file and reset
+bootloader's kernel cmdline to the default value. It will also update bootloader
+config if the bootloader has a standalone config file. User will have to reboot
+the machine after this command to make it take effect.
+
+Reset manually
+--------------
+
+To reset the crashkernel value manually, it's recommended to use utils like
+`grubby`. A one liner script for resetting `crashkernel=` value of all installed
+kernels to current boot kernel's  crashkernel.default` is:
+
+	grubby --update-kernel ALL --args "$(cat /usr/lib/modules/$(uname -r)/crashkernel.default)"
+
+Estimate crashkernel
+====================
+
+The best way to estimate a usable crashkernel value is by testing kdump
+manually.  And you can set crashkernel to a large value, then adjust the
+crashkernel value to an acceptable value gradually.
+
+`kdumpctl` also provides a sub-command for doing rough estimating without
+triggering kdump:
+
+	`kdumpctl estimate`
+
+The output will be like this:
+
+```
+      Encrypted kdump target requires extra memory, assuming using the keyslot with minimun memory requirement
+
+      Reserved crashkernel:    256M
+      Recommended crashkernel: 655M
+
+      Kernel image size:   47M
+      Kernel modules size: 12M
+      Initramfs size:      19M
+      Runtime reservation: 64M
+      LUKS required size:  512M
+      Large modules:
+          xfs: 1892352
+          nouveau: 2318336
+      WARNING: Current crashkernel size is lower than recommended size 655M.
+```
+
+It will generate a summary report about the estimated memory consumption
+of each component of kdump. The value may not be accurate enough, but
+would be a good start for finding a suitable crashkernel value.
