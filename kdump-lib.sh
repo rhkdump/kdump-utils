@@ -341,6 +341,11 @@ kdump_get_persistent_dev() {
     echo $(get_persistent_dev "$dev")
 }
 
+is_atomic()
+{
+    grep -q "ostree" /proc/cmdline
+}
+
 is_ipv6_address()
 {
     echo $1 | grep -q ":"
