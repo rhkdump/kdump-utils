@@ -20,9 +20,13 @@ if [ -f /proc/device-tree/rtas/ibm,kernel-dump ] || [ -f /proc/device-tree/ibm,o
 		done
 		exec switch_root /newroot /init
 	else
-		mkdir /newroot/sys /newroot/proc /newroot/oldroot
-		mount --move /proc /newroot/proc
+		mkdir /newroot/sys /newroot/proc /newroot/dev /newroot/run /newroot/oldroot
+
+		grep -q '^devtmpfs /dev devtmpfs' /proc/mounts && mount --move /dev /newroot/dev
+		grep -q '^tmpfs /run tmpfs' /proc/mounts && mount --move /run /newroot/run
 		mount --move /sys /newroot/sys
+		mount --move /proc /newroot/proc
+
 		cp --reflink=auto --sparse=auto --preserve=mode,timestamps,links -dfr /fadumproot/. /newroot/
 		cd /newroot && pivot_root . oldroot
 
@@ -31,11 +35,11 @@ if [ -f /proc/device-tree/rtas/ibm,kernel-dump ] || [ -f /proc/device-tree/ibm,o
 			unset loop
 			while read -r _ mp _; do
 				case $mp in
-				/oldroot/*) umount "$mp" && loop=1 ;;
+				/oldroot/*) umount -d "$mp" && loop=1 ;;
 				esac
 			done </proc/mounts
 		done
-		umount -l oldroot
+		umount -d -l oldroot
 
 		exec /init
 	fi
