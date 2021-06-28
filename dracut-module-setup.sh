@@ -467,7 +467,9 @@ kdump_setup_vlan() {
 find_online_znet_device() {
     local CCWGROUPBUS_DEVICEDIR="/sys/bus/ccwgroup/devices"
     local NETWORK_DEVICES d ifname ONLINE
-    NETWORK_DEVICES=$(find $CCWGROUPBUS_DEVICEDIR -type l)
+
+	[ ! -d "$CCWGROUPBUS_DEVICEDIR" ] && return
+    NETWORK_DEVICES=$(find $CCWGROUPBUS_DEVICEDIR)
 	for d in $NETWORK_DEVICES
 	do
         read ONLINE < $d/online
