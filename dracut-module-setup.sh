@@ -465,29 +465,29 @@ kdump_setup_vlan() {
 # code reaped from the list_configured function of
 # https://github.com/hreinecke/s390-tools/blob/master/zconf/znetconf
 find_online_znet_device() {
-    local CCWGROUPBUS_DEVICEDIR="/sys/bus/ccwgroup/devices"
-    local NETWORK_DEVICES d ifname ONLINE
+	local CCWGROUPBUS_DEVICEDIR="/sys/bus/ccwgroup/devices"
+	local NETWORK_DEVICES d ifname ONLINE
 
 	[ ! -d "$CCWGROUPBUS_DEVICEDIR" ] && return
-    NETWORK_DEVICES=$(find $CCWGROUPBUS_DEVICEDIR)
+	NETWORK_DEVICES=$(find $CCWGROUPBUS_DEVICEDIR)
 	for d in $NETWORK_DEVICES
 	do
-        read ONLINE < $d/online
-        if [ $ONLINE -ne 1 ]; then
-            continue
-        fi
-	    # determine interface name, if there (only for qeth and if
-        # device is online)
-	    if [ -f $d/if_name ]
-	    then
-            read ifname < $d/if_name
-	    elif [ -d $d/net ]
-	    then
-	        ifname=$(ls $d/net/)
-        fi
-        [ -n "$ifname" ] && break
-    done
-    echo -n "$ifname"
+		read ONLINE < $d/online
+		if [ $ONLINE -ne 1 ]; then
+			continue
+		fi
+		# determine interface name, if there (only for qeth and if
+		# device is online)
+		if [ -f $d/if_name ]
+		then
+			read ifname < $d/if_name
+		elif [ -d $d/net ]
+		then
+			ifname=$(ls $d/net/)
+		fi
+		[ -n "$ifname" ] && break
+	done
+	echo -n "$ifname"
 }
 
 # setup s390 znet cmdline
