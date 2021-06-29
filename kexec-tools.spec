@@ -5,7 +5,7 @@
 
 Name: kexec-tools
 Version: 2.0.22
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -360,6 +360,13 @@ done
 %endif
 
 %changelog
+* Tue Jun 29 2021 Kairui Song <kasong@redhat.com> - 2.0.22-4
+* fix format issue in find_online_znet_device
+* check the existence of /sys/bus/ccwgroup/devices before trying to find online network device
+* check for invalid physical address of /proc/kcore when making ELF dumpfile
+* check for invalid physical address of /proc/kcore when finding max_paddr
+* Increase SECTION_MAP_LAST_BIT to 5
+
 * Sun Jun 20 2021 Kairui Song <kasong@redhat.com> - 2.0.22-3
 - selftest: Make test_base_image depends on EXTRA_RPMS
 - selftest: fix the error of misplacing double quotes
