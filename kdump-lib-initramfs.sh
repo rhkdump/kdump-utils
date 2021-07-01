@@ -227,6 +227,8 @@ dump_to_rootfs()
         systemctl start dracut-initqueue
     fi
 
+    dinfo "Clean up dead systemd services"
+    systemctl cancel
     dinfo "Waiting for rootfs mount, will timeout after 90 seconds"
     systemctl start sysroot.mount
 
