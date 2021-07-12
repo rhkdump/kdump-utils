@@ -42,6 +42,8 @@ Source31: kdump-logger.sh
 Source32: mkfadumprd
 Source33: 92-crashkernel.install
 Source34: crashkernel-howto.txt
+Source35: kdump-migrate-action.sh
+Source36: kdump-restart.sh
 
 #######################################
 # These are sources for mkdumpramfs
@@ -60,6 +62,9 @@ Source109: dracut-early-kdump-module-setup.sh
 Source200: dracut-fadump-init-fadump.sh
 Source201: dracut-fadump-module-setup.sh
 
+%ifarch ppc64 ppc64le
+Requires(post): servicelog
+%endif
 Requires(pre): coreutils sed zlib
 Requires: dracut >= 050
 Requires: dracut-network >= 050
@@ -196,6 +201,10 @@ install -m 644 %{SOURCE25} $RPM_BUILD_ROOT%{_mandir}/man8/kdumpctl.8
 install -m 755 %{SOURCE20} $RPM_BUILD_ROOT%{_prefix}/lib/kdump/kdump-lib.sh
 install -m 755 %{SOURCE23} $RPM_BUILD_ROOT%{_prefix}/lib/kdump/kdump-lib-initramfs.sh
 install -m 755 %{SOURCE31} $RPM_BUILD_ROOT%{_prefix}/lib/kdump/kdump-logger.sh
+%ifarch ppc64 ppc64le
+install -m 755 %{SOURCE35} $RPM_BUILD_ROOT%{_prefix}/lib/kdump/kdump-migrate-action.sh
+install -m 755 %{SOURCE36} $RPM_BUILD_ROOT%{_prefix}/lib/kdump/kdump-restart.sh
+%endif
 %ifnarch s390x
 install -m 755 %{SOURCE28} $RPM_BUILD_ROOT%{_udevrulesdir}/../kdump-udev-throttler
 %endif
@@ -262,6 +271,13 @@ mv $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/* $RPM_BUILD_ROOT/%{d
 %systemd_post kdump.service
 
 touch /etc/kdump.conf
+
+ARCH=`uname -m`
+if [ "$ARCH" == "ppc64" ] || [ "$ARCH" == "ppc64le" ]
+then
+	servicelog_notify --add --command=/usr/lib/kdump/kdump-migrate-action.sh --match='refcode="#MIGRATE" and serviceable=0' --type=EVENT --method=pairs_stdin
+fi
+
 # This portion of the script is temporary.  Its only here
 # to fix up broken boxes that require special settings 
 # in /etc/sysconfig/kdump.  It will be removed when 
