@@ -1243,7 +1243,7 @@ do_estimate() {
 	local kdump_mods
 	local -A large_mods
 	local baseline
-	local kernel_size mod_size initrd_size baseline_size runtime_size reserved_size estimated_size recommanded_size
+	local kernel_size mod_size initrd_size baseline_size runtime_size reserved_size estimated_size recommended_size
 	local size_mb=$(( 1024 * 1024 ))
 
 	setup_initrd
@@ -1301,13 +1301,13 @@ do_estimate() {
 
 	estimated_size=$((kernel_size + mod_size + initrd_size + runtime_size + crypt_size))
 	if [[ $baseline_size -gt $estimated_size ]]; then
-		recommanded_size=$baseline_size
+		recommended_size=$baseline_size
 	else
-		recommanded_size=$estimated_size
+		recommended_size=$estimated_size
 	fi
 
 	echo "Reserved crashkernel:    $((reserved_size / size_mb))M"
-	echo "Recommanded crashkernel: $((recommanded_size / size_mb))M"
+	echo "Recommended crashkernel: $((recommended_size / size_mb))M"
 	echo
 	echo "Kernel image size:   $((kernel_size / size_mb))M"
 	echo "Kernel modules size: $((mod_size / size_mb))M"
@@ -1325,8 +1325,8 @@ do_estimate() {
 		done
 	fi
 
-	if [[ $reserved_size -le $recommanded_size ]]; then
-		echo "WARNING: Current crashkernel size is lower than recommanded size $((recommanded_size / size_mb))M."
+	if [[ $reserved_size -le $recommended_size ]]; then
+		echo "WARNING: Current crashkernel size is lower than recommended size $((recommended_size / size_mb))M."
 	fi
 }
 
