@@ -462,6 +462,7 @@ find_online_znet_device() {
 	NETWORK_DEVICES=$(find $CCWGROUPBUS_DEVICEDIR)
 	for d in $NETWORK_DEVICES
 	do
+		[ ! -f "$d/online" ] && continue
 		read ONLINE < $d/online
 		if [ $ONLINE -ne 1 ]; then
 			continue
