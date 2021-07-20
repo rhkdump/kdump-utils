@@ -230,10 +230,20 @@ dump_to_rootfs()
     dinfo "Clean up dead systemd services"
     systemctl cancel
     dinfo "Waiting for rootfs mount, will timeout after 90 seconds"
-    systemctl start sysroot.mount
+    systemctl start --no-block sysroot.mount
+
+    _loop=0
+    while [ $_loop -lt 90 ] && ! is_mounted /sysroot; do
+        sleep 1
+        _loop=$((_loop + 1))
+    done
+
+    if ! is_mounted /sysroot; then
+        derror "Failed to mount rootfs"
+        return
+    fi
 
     ddebug "NEWROOT=$NEWROOT"
-
     dump_fs $NEWROOT
 }
 
