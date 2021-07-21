@@ -13,7 +13,7 @@ kdump after you updated the `crashkernel=` value or changed the dump target.
 Default crashkernel value
 =========================
 
-Latest kernel packages includes a `crashkernel.default` file installed in kernel
+Latest kernel packages include a `crashkernel.default` file installed in kernel
 modules folder, available as:
 
 	/usr/lib/modules/<kernel>/crashkernel.default
@@ -25,12 +25,12 @@ take this file as a reference for setting crashkernel value manually.
 New installed system
 ====================
 
-Anaconda is the OS installer which sets all the kernel boot cmdline on a new
-installed system. If kdump is set enabled during Anaconda installation, Anaconda
+Anaconda is the OS installer which sets all the kernel boot cmdline on a newly
+installed system. If kdump is enabled during Anaconda installation, Anaconda
 will use the `crashkernel.default` file as the default `crashkernel=` value on
-the new installed system.
+the newly installed system.
 
-Users can also override the value during Anaconda installation manually.
+Users can override the value during Anaconda installation manually.
 
 
 Auto update of crashkernel boot parameter
