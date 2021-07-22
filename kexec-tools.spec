@@ -5,7 +5,7 @@
 
 Name: kexec-tools
 Version: 2.0.22
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -382,6 +382,9 @@ done
 %endif
 
 %changelog
+* Thu Jul 22 2021 Fedora Release Engineering <releng@fedoraproject.org> - 2.0.22-5
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_35_Mass_Rebuild
+
 * Tue Jun 29 2021 Kairui Song <kasong@redhat.com> - 2.0.22-4
 * fix format issue in find_online_znet_device
 * check the existence of /sys/bus/ccwgroup/devices before trying to find online network device
