@@ -272,11 +272,10 @@ mv $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/* $RPM_BUILD_ROOT/%{d
 
 touch /etc/kdump.conf
 
-ARCH=`uname -m`
-if [ "$ARCH" == "ppc64" ] || [ "$ARCH" == "ppc64le" ]
-then
-	servicelog_notify --add --command=/usr/lib/kdump/kdump-migrate-action.sh --match='refcode="#MIGRATE" and serviceable=0' --type=EVENT --method=pairs_stdin
-fi
+%ifarch ppc64 ppc64le
+servicelog_notify --remove --command=/usr/lib/kdump/kdump-migrate-action.sh
+servicelog_notify --add --command=/usr/lib/kdump/kdump-migrate-action.sh --match='refcode="#MIGRATE" and serviceable=0' --type=EVENT --method=pairs_stdin
+%endif
 
 # This portion of the script is temporary.  Its only here
 # to fix up broken boxes that require special settings 
@@ -305,6 +304,9 @@ fi
 %systemd_postun_with_restart kdump.service
 
 %preun
+%ifarch ppc64 ppc64le
+servicelog_notify --remove --command=/usr/lib/kdump/kdump-migrate-action.sh
+%endif
 %systemd_preun kdump.service
 
 %triggerin -- kernel-kdump
