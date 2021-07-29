@@ -1,0 +1,32 @@
+# EditorConfig configuration for kexec-tools
+# http://EditorConfig.org
+
+# Top-most EditorConfig file
+root = true
+
+# Default code style for kexec-tools scripts
+[*]
+end_of_line = lf
+shell_variant = posix
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = tab
+indent_size = 1
+switch_case_indent = false
+function_next_line = true
+binary_next_line   = false
+space_redirects    = true
+
+# Some scripts will only run with bash
+[{mkfadumprd,mkdumprd,kdumpctl}]
+shell_variant = bash
+
+# Use dracut code style for *-module-setup.sh
+[*-module-setup.sh]
+shell_variant = bash
+indent_style = space
+indent_size = 4
+switch_case_indent = true
+function_next_line = false
+binary_next_line   = true
+space_redirects    = true
