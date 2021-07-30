@@ -1262,7 +1262,7 @@ do_estimate() {
 		baseline=$(( ${baseline%Y} * 1048576 ))
 	fi
 
-	# The default value when using crashkernel=auto
+	# The default pre-reserved crashkernel value
 	baseline_size=$((baseline * size_mb))
 	# Current reserved crashkernel size
 	reserved_size=$(cat /sys/kernel/kexec_crash_size)

@@ -344,9 +344,12 @@ or
 OR
    # grubby --update-kernel=/boot/vmlinuz-`uname -r` --args="fadump=off"
 
-If KDump is to be used as the dump capturing mechanism, update the crashkernel
-parameter (Else, remove "crashkernel=" parameter too, using grubby):
+Remove "crashkernel=" from kernel cmdline parameters:
 
-   # grubby --update-kernel=/boot/vmlinuz-$kver --args="crashkernl=auto"
+   # grubby --update-kernel=/boot/vmlinuz-`uname -r` --remove-args="crashkernel"
+
+If KDump is to be used as the dump capturing mechanism, reset the crashkernel parameter:
+
+   # kdumpctl reset-crashkernel `uname -r`
 
 Reboot the system for the settings to take effect.
