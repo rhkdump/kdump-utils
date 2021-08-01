@@ -36,9 +36,7 @@ DUMP_RETVAL=0
 
 get_kdump_confs()
 {
-    local config_opt config_val
-
-    while read config_opt config_val;
+    while read -r config_opt config_val;
     do
         # remove inline comments after the end of a directive.
         case "$config_opt" in
@@ -359,11 +357,6 @@ do_kdump_post()
     fi
 }
 
-add_dump_code()
-{
-    DUMP_INSTRUCTION=$1
-}
-
 dump_raw()
 {
     local _raw=$1
@@ -547,18 +540,18 @@ read_kdump_confs()
             config_val=$(get_dracut_args_target "$config_val")
             if [ -n "$config_val" ]; then
                 config_val=$(get_mntpoint_from_target "$config_val")
-                add_dump_code "dump_fs $config_val"
+                DUMP_INSTRUCTION="dump_fs $config_val"
             fi
             ;;
         ext[234]|xfs|btrfs|minix|nfs)
             config_val=$(get_mntpoint_from_target "$config_val")
-            add_dump_code "dump_fs $config_val"
+            DUMP_INSTRUCTION="dump_fs $config_val"
             ;;
         raw)
-            add_dump_code "dump_raw $config_val"
+            DUMP_INSTRUCTION="dump_raw $config_val"
             ;;
         ssh)
-            add_dump_code "dump_ssh $SSH_KEY_LOCATION $config_val"
+            DUMP_INSTRUCTION="dump_ssh $SSH_KEY_LOCATION $config_val"
             ;;
         esac
     done <<< "$(kdump_read_conf)"
@@ -594,7 +587,7 @@ if [ $? -ne 0 ]; then
 fi
 
 if [ -z "$DUMP_INSTRUCTION" ]; then
-    add_dump_code "dump_fs $NEWROOT"
+    DUMP_INSTRUCTION="dump_fs $NEWROOT"
 fi
 
 do_kdump_pre
