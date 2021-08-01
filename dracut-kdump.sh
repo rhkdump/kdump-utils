@@ -24,7 +24,6 @@ DATEDIR=`date +%Y-%m-%d-%T`
 HOST_IP='127.0.0.1'
 DUMP_INSTRUCTION=""
 SSH_KEY_LOCATION="/root/.ssh/kdump_id_rsa"
-KDUMP_SCRIPT_DIR="/kdumpscripts"
 DD_BLKSIZE=512
 FINAL_ACTION="systemctl reboot -f"
 KDUMP_PRE=""
@@ -34,8 +33,6 @@ OPALCORE="/sys/firmware/opal/mpipl/core"
 
 set -o pipefail
 DUMP_RETVAL=0
-
-export PATH=$PATH:$KDUMP_SCRIPT_DIR
 
 get_kdump_confs()
 {
@@ -378,7 +375,7 @@ dump_raw()
     if ! $(echo -n $CORE_COLLECTOR|grep -q makedumpfile); then
         _src_size=`ls -l /proc/vmcore | cut -d' ' -f5`
         _src_size_mb=$(($_src_size / 1048576))
-        monitor_dd_progress $_src_size_mb &
+        /kdumpscripts/monitor_dd_progress $_src_size_mb &
     fi
 
     dinfo "saving vmcore"
