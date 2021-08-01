@@ -1,9 +1,7 @@
 #!/bin/sh
-
-# continue here only if we have to save dump.
-if [ -f /etc/fadump.initramfs ] && [ ! -f /proc/device-tree/rtas/ibm,kernel-dump ] && [ ! -f /proc/device-tree/ibm,opal/dump/mpipl-boot ]; then
-    exit 0
-fi
+#
+# The main kdump routine in capture kernel
+#
 
 . /lib/dracut-lib.sh
 . /lib/kdump-lib-initramfs.sh
@@ -287,6 +285,19 @@ fence_kdump_notify()
         $FENCE_KDUMP_SEND $FENCE_KDUMP_ARGS $FENCE_KDUMP_NODES &
     fi
 }
+
+if [ "$1" = "--error-handler" ]; then
+    get_kdump_confs
+    do_failure_action
+    do_final_action
+
+    exit $?
+fi
+
+# continue here only if we have to save dump.
+if [ -f /etc/fadump.initramfs ] && [ ! -f /proc/device-tree/rtas/ibm,kernel-dump ] && [ ! -f /proc/device-tree/ibm,opal/dump/mpipl-boot ]; then
+    exit 0
+fi
 
 read_kdump_confs
 fence_kdump_notify

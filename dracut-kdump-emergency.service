@@ -12,7 +12,7 @@ Environment=HOME=/
 Environment=DRACUT_SYSTEMD=1
 Environment=NEWROOT=/sysroot
 WorkingDirectory=/
-ExecStart=/bin/kdump-error-handler.sh
+ExecStart=/bin/kdump.sh --error-handler
 ExecStopPost=-/bin/rm -f -- /.console_lock
 Type=oneshot
 StandardInput=tty-force
