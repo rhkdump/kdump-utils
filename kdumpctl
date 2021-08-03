@@ -5,7 +5,6 @@ KDUMP_KERNELVER=""
 KDUMP_KERNEL=""
 KDUMP_COMMANDLINE=""
 KEXEC_ARGS=""
-KDUMP_CONFIG_FILE="/etc/kdump.conf"
 KDUMP_LOG_PATH="/var/log"
 MKDUMPRD="/sbin/mkdumprd -f"
 MKFADUMPRD="/sbin/mkfadumprd"
@@ -272,7 +271,7 @@ check_config()
 			return 1
 		fi
 		_opt_rec[$config_opt]="$config_val"
-	done <<< "$(read_strip_comments $KDUMP_CONFIG_FILE)"
+	done <<< "$(kdump_read_conf)"
 
 	check_failure_action_config || return 1
 	check_final_action_config || return 1
@@ -731,7 +730,7 @@ check_ssh_config()
 		*)
 			;;
 		esac
-	done <<< "$(read_strip_comments $KDUMP_CONFIG_FILE)"
+	done <<< "$(kdump_read_conf)"
 
 	#make sure they've configured kdump.conf for ssh dumps
 	local SSH_TARGET=`echo -n $DUMP_TARGET | sed -n '/.*@/p'`
@@ -1362,7 +1361,7 @@ reset_crashkernel() {
 		grubby --args "$crashkernel_default" --update-kernel "$entry" $zipl_arg
 		[[ $zipl_arg ]] && zipl > /dev/null
 	fi
-    }
+}
 
 if [ ! -f "$KDUMP_CONFIG_FILE" ]; then
 	derror "Error: No kdump config file found!"

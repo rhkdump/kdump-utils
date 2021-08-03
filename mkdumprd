@@ -443,7 +443,7 @@ do
     *)
         ;;
     esac
-done <<< "$(read_strip_comments $conf_file)"
+done <<< "$(kdump_read_conf)"
 
 handle_default_dump_target
 

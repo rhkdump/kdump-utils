@@ -682,7 +682,8 @@ default_dump_target_install_conf()
 #install kdump.conf and what user specifies in kdump.conf
 kdump_install_conf() {
     local _opt _val _pdev
-    (read_strip_comments /etc/kdump.conf) > ${initdir}/tmp/$$-kdump.conf
+
+    kdump_read_conf > "${initdir}/tmp/$$-kdump.conf"
 
     while read _opt _val;
     do
@@ -711,7 +712,7 @@ kdump_install_conf() {
             dracut_install "${_val%%[[:blank:]]*}"
             ;;
         esac
-    done <<< "$(read_strip_comments /etc/kdump.conf)"
+    done <<< "$(kdump_read_conf)"
 
     kdump_install_pre_post_conf
 

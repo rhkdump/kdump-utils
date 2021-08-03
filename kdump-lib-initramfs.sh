@@ -16,7 +16,6 @@ SSH_KEY_LOCATION="/root/.ssh/kdump_id_rsa"
 KDUMP_SCRIPT_DIR="/kdumpscripts"
 DD_BLKSIZE=512
 FINAL_ACTION="systemctl reboot -f"
-KDUMP_CONF="/etc/kdump.conf"
 KDUMP_PRE=""
 KDUMP_POST=""
 NEWROOT="/sysroot"
@@ -93,7 +92,7 @@ get_kdump_confs()
                 esac
             ;;
         esac
-    done <<< "$(read_strip_comments $KDUMP_CONF)"
+    done <<< "$(kdump_read_conf)"
 
     if [ -z "$CORE_COLLECTOR" ]; then
         CORE_COLLECTOR="$DEFAULT_CORE_COLLECTOR"

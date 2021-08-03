@@ -246,10 +246,10 @@ get_host_ip()
     return 0
 }
 
-read_kdump_conf()
+read_kdump_confs()
 {
-    if [ ! -f "$KDUMP_CONF" ]; then
-        derror "$KDUMP_CONF not found"
+    if [ ! -f "$KDUMP_CONFIG_FILE" ]; then
+        derror "$KDUMP_CONFIG_FILE not found"
         return
     fi
 
@@ -278,7 +278,7 @@ read_kdump_conf()
             add_dump_code "dump_ssh $SSH_KEY_LOCATION $config_val"
             ;;
         esac
-    done <<< "$(read_strip_comments $KDUMP_CONF)"
+    done <<< "$(kdump_read_conf)"
 }
 
 fence_kdump_notify()
@@ -288,7 +288,7 @@ fence_kdump_notify()
     fi
 }
 
-read_kdump_conf
+read_kdump_confs
 fence_kdump_notify
 
 get_host_ip

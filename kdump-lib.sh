@@ -7,6 +7,7 @@ DEFAULT_PATH="/var/crash/"
 FENCE_KDUMP_CONFIG_FILE="/etc/sysconfig/fence_kdump"
 FENCE_KDUMP_SEND="/usr/libexec/fence_kdump_send"
 FADUMP_ENABLED_SYS_NODE="/sys/kernel/fadump_enabled"
+KDUMP_CONFIG_FILE="/etc/kdump.conf"
 
 is_fadump_capable()
 {
@@ -80,12 +81,12 @@ strip_comments()
     echo $@ | sed -e 's/\(.*\)#.*/\1/'
 }
 
-# Read from kdump config file stripping all comments
-read_strip_comments()
+# Read kdump config in well formatted style
+kdump_read_conf()
 {
-    # strip heading spaces, and print any content starting with
-    # neither space or #, and strip everything after #
-    sed -n -e "s/^\s*\([^# \t][^#]\+\).*/\1/gp" $1
+    # Following steps are applied in order: strip trailing comment, strip trailing space,
+    # strip heading space, match non-empty line, remove duplicated spaces between conf name and value
+    [ -f "$KDUMP_CONFIG_FILE" ] && sed -n -e "s/#.*//;s/\s*$//;s/^\s*//;s/\(\S\+\)\s*\(.*\)/\1 \2/p" $KDUMP_CONFIG_FILE
 }
 
 # Check if fence kdump is configured in Pacemaker cluster
