@@ -51,14 +51,17 @@ if ! (pushd "$MKFADUMPRD_TMPDIR/fadumproot" > /dev/null && lsinitrd --unpack "$F
 fi
 
 ### Pack it into the normal boot initramfs with zz-fadumpinit module
-_dracut_isolate_args="--rebuild $REBUILD_INITRD --add zz-fadumpinit \
-	-i $MKFADUMPRD_TMPDIR/fadumproot /fadumproot \
-	-i $MKFADUMPRD_TMPDIR/fadumproot/usr/lib/dracut/hostonly-kernel-modules.txt
-	   /usr/lib/dracut/fadump-kernel-modules.txt"
+_dracut_isolate_args=(\
+	--rebuild "$REBUILD_INITRD" --add zz-fadumpinit \
+	-i "$MKFADUMPRD_TMPDIR/fadumproot" /fadumproot
+	-i "$MKFADUMPRD_TMPDIR/fadumproot/usr/lib/dracut/hostonly-kernel-modules.txt"
+	/usr/lib/dracut/fadump-kernel-modules.txt
+)
 
 if is_squash_available; then
-	_dracut_isolate_args="$_dracut_isolate_args --add squash"
+	_dracut_isolate_args+=( --add squash )
 fi
-if ! dracut --force --quiet $_dracut_isolate_args $@ "$TARGET_INITRD"; then
+
+if ! dracut --force --quiet "${_dracut_isolate_args[@]}" "$@" "$TARGET_INITRD"; then
 	perror_exit "mkfadumprd: failed to setup '$TARGET_INITRD' with dump capture capability"
 fi
