@@ -339,8 +339,8 @@ check_files_modified()
 	#also rebuild when Pacemaker cluster conf is changed and fence kdump is enabled.
 	modified_files=$(get_pcs_cluster_modified_files)
 
-	EXTRA_BINS=`grep ^kdump_post $KDUMP_CONFIG_FILE | cut -d\  -f2`
-	CHECK_FILES=`grep ^kdump_pre $KDUMP_CONFIG_FILE | cut -d\  -f2`
+	EXTRA_BINS=$(kdump_get_conf_val kdump_post)
+	CHECK_FILES=$(kdump_get_conf_val kdump_pre)
 	HOOKS="/etc/kdump/post.d/ /etc/kdump/pre.d/"
 	if [ -d /etc/kdump/post.d ]; then
 		for file in /etc/kdump/post.d/*; do
@@ -357,17 +357,17 @@ check_files_modified()
 		done
 	fi
 	HOOKS="$HOOKS $POST_FILES $PRE_FILES"
-	CORE_COLLECTOR=`grep ^core_collector $KDUMP_CONFIG_FILE | cut -d\  -f2`
+	CORE_COLLECTOR=$(kdump_get_conf_val core_collector | awk '{print $1}')
 	CORE_COLLECTOR=`type -P $CORE_COLLECTOR`
 	# POST_FILES and PRE_FILES are already checked against executable, need not to check again.
 	EXTRA_BINS="$EXTRA_BINS $CHECK_FILES"
-	CHECK_FILES=`grep ^extra_bins $KDUMP_CONFIG_FILE | cut -d\  -f2-`
+	CHECK_FILES=$(kdump_get_conf_val extra_bins)
 	EXTRA_BINS="$EXTRA_BINS $CHECK_FILES"
 	files="$KDUMP_CONFIG_FILE $KDUMP_KERNEL $EXTRA_BINS $CORE_COLLECTOR"
 	[[ -e /etc/fstab ]] && files="$files /etc/fstab"
 
 	# Check for any updated extra module
-	EXTRA_MODULES="$(grep ^extra_modules $KDUMP_CONFIG_FILE | sed 's/^extra_modules\s*//')"
+	EXTRA_MODULES="$(kdump_get_conf_val extra_modules)"
 	if [ -n "$EXTRA_MODULES" ]; then
 		if [ -e /lib/modules/$KDUMP_KERNELVER/modules.dep ]; then
 			files="$files /lib/modules/$KDUMP_KERNELVER/modules.dep"
@@ -555,8 +555,7 @@ check_system_modified()
 check_rebuild()
 {
 	local capture_capable_initrd="1"
-	local _force_rebuild force_rebuild="0"
-	local _force_no_rebuild force_no_rebuild="0"
+	local force_rebuild force_no_rebuild
 	local ret system_modified="0"
 
 	setup_initrd
@@ -565,22 +564,18 @@ check_rebuild()
 		return 1
 	fi
 
-	_force_no_rebuild=`grep ^force_no_rebuild $KDUMP_CONFIG_FILE 2>/dev/null`
-	if [ $? -eq 0 ]; then
-		force_no_rebuild=`echo $_force_no_rebuild | cut -d' '  -f2`
-		if [ "$force_no_rebuild" != "0" ] && [ "$force_no_rebuild" != "1" ];then
-			derror "Error: force_no_rebuild value is invalid"
-			return 1
-		fi
+	force_no_rebuild=$(kdump_get_conf_val force_no_rebuild)
+	force_no_rebuild=${force_no_rebuild:-0}
+	if [ "$force_no_rebuild" != "0" ] && [ "$force_no_rebuild" != "1" ];then
+		derror "Error: force_no_rebuild value is invalid"
+		return 1
 	fi
 
-	_force_rebuild=`grep ^force_rebuild $KDUMP_CONFIG_FILE 2>/dev/null`
-	if [ $? -eq 0 ]; then
-		force_rebuild=`echo $_force_rebuild | cut -d' '  -f2`
-		if [ "$force_rebuild" != "0" ] && [ "$force_rebuild" != "1" ];then
-			derror "Error: force_rebuild value is invalid"
-			return 1
-		fi
+	force_rebuild=$(kdump_get_conf_val force_rebuild)
+	force_rebuild=${force_rebuild:-0}
+	if [ "$force_rebuild" != "0" ] && [ "$force_rebuild" != "1" ];then
+		derror "Error: force_rebuild value is invalid"
+		return 1
 	fi
 
 	if [[ "$force_no_rebuild" == "1" && "$force_rebuild" == "1" ]]; then
@@ -867,7 +862,7 @@ save_raw()
 	local kdump_dir
 	local raw_target
 
-	raw_target=$(awk '$1 ~ /^raw$/ { print $2; }' $KDUMP_CONFIG_FILE)
+	raw_target=$(kdump_get_conf_val raw)
 	[ -z "$raw_target" ] && return 0
 	[ -b "$raw_target" ] || {
 		derror "raw partition $raw_target not found"
@@ -878,7 +873,7 @@ save_raw()
 		dwarn "Warning: Detected '$check_fs' signature on $raw_target, data loss is expected."
 		return 0
 	fi
-	kdump_dir=`grep ^path $KDUMP_CONFIG_FILE | cut -d' '  -f2-`
+	kdump_dir=$(kdump_get_conf_val path)
 	if [ -z "${kdump_dir}" ]; then
 		coredir="/var/crash/`date +"%Y-%m-%d-%H:%M"`"
 	else
@@ -1018,8 +1013,8 @@ check_failure_action_config()
 	local failure_action
 	local option="failure_action"
 
-	default_option=$(awk '$1 ~ /^default$/ {print $2;}' $KDUMP_CONFIG_FILE)
-	failure_action=$(awk '$1 ~ /^failure_action$/ {print $2;}' $KDUMP_CONFIG_FILE)
+	default_option=$(kdump_get_conf_val default)
+	failure_action=$(kdump_get_conf_val failure_action)
 
 	if [ -z "$failure_action" -a -z "$default_option" ]; then
 		return 0
@@ -1047,7 +1042,7 @@ check_final_action_config()
 {
 	local final_action
 
-	final_action=$(awk '$1 ~ /^final_action$/ {print $2;}' $KDUMP_CONFIG_FILE)
+	final_action=$(kdump_get_conf_val final_action)
 	if [ -z "$final_action" ]; then
 		return 0
 	else
