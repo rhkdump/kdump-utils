@@ -28,7 +28,7 @@ SAVE_PATH=$(get_save_path)
 OVERRIDE_RESETTABLE=0
 
 extra_modules=""
-dracut_args="--add kdumpbase --quiet --hostonly --hostonly-cmdline --hostonly-i18n --hostonly-mode strict -o \"plymouth dash resume ifcfg earlykdump\""
+dracut_args=( --add kdumpbase --quiet --hostonly --hostonly-cmdline --hostonly-i18n --hostonly-mode strict -o "plymouth dash resume ifcfg earlykdump" )
 
 readonly MKDUMPRD_TMPDIR="$(mktemp -d -t mkdumprd.XXXXXX)"
 [ -d "$MKDUMPRD_TMPDIR" ] || perror_exit "dracut: mktemp -p -d -t dracut.XXXXXX failed."
@@ -45,15 +45,15 @@ trap '
 trap 'exit 1;' SIGINT
 
 add_dracut_arg() {
-    dracut_args="$dracut_args $@"
+    dracut_args+=( "$@" )
 }
 
 add_dracut_mount() {
-    add_dracut_arg "--mount" "\"$1\""
+    add_dracut_arg "--mount" "$1"
 }
 
 add_dracut_sshkey() {
-    add_dracut_arg "--sshkey" "\"$1\""
+    add_dracut_arg "--sshkey" "$1"
 }
 
 # caller should ensure $1 is valid and mounted in 1st kernel
@@ -428,7 +428,9 @@ do
         verify_core_collector "$config_val"
         ;;
     dracut_args)
-        add_dracut_arg $config_val
+        while read -r dracut_arg; do
+            add_dracut_arg "$dracut_arg"
+        done <<< "$(echo "$config_val" | xargs -n 1 echo)"
         ;;
     *)
         ;;
@@ -439,7 +441,7 @@ handle_default_dump_target
 
 if [ -n "$extra_modules" ]
 then
-    add_dracut_arg "--add-drivers" \"$extra_modules\"
+    add_dracut_arg "--add-drivers" "$extra_modules"
 fi
 
 # TODO: The below check is not needed anymore with the introduction of
@@ -455,7 +457,7 @@ if ! is_fadump_capable; then
     add_dracut_arg "--no-hostonly-default-device"
 fi
 
-echo "$dracut_args $@" | xargs dracut
+dracut "${dracut_args[@]}" "$@"
 
 _rc=$?
 sync
