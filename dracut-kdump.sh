@@ -387,29 +387,25 @@ dump_ssh()
     local _dir="$KDUMP_PATH/$HOST_IP-$DATEDIR"
     local _host=$2
     local _vmcore="vmcore"
-    local _ipv6_addr="" _username=""
+
+    if is_ipv6_address "$_host"; then
+        _scp_address=${_host%@*}@"[${_host#*@}]"
+    else
+        _scp_address=$_host
+    fi
 
     dinfo "saving to $_host:$_dir"
 
     cat /var/lib/random-seed > /dev/urandom
     ssh -q $_opt $_host mkdir -p $_dir || return 1
 
-    save_vmcore_dmesg_ssh ${DMESG_COLLECTOR} ${_dir} "${_opt}" $_host
-    save_opalcore_ssh ${_dir} "${_opt}" $_host
-
+    save_vmcore_dmesg_ssh ${DMESG_COLLECTOR} ${_dir} "${_opt}" "$_host"
     dinfo "saving vmcore"
 
-    if is_ipv6_address "$_host"; then
-        _username=${_host%@*}
-	_ipv6_addr="[${_host#*@}]"
-    fi
+    save_opalcore_ssh ${_dir} "${_opt}" "$_host" "$_scp_address"
 
     if [ "${CORE_COLLECTOR%%[[:blank:]]*}" = "scp" ]; then
-        if [ -n "$_username" ] && [ -n "$_ipv6_addr" ]; then
-            scp -q $_opt /proc/vmcore "$_username@$_ipv6_addr:$_dir/vmcore-incomplete"
-        else
-            scp -q $_opt /proc/vmcore "$_host:$_dir/vmcore-incomplete"
-        fi
+        scp -q $_opt /proc/vmcore "$_scp_address:$_dir/vmcore-incomplete"
         _exitcode=$?
     else
         $CORE_COLLECTOR /proc/vmcore | ssh $_opt $_host "umask 0077 && dd bs=512 of=$_dir/vmcore-incomplete"
@@ -431,11 +427,7 @@ dump_ssh()
 
     dinfo "saving the $KDUMP_LOG_FILE to $_host:$_dir/"
     save_log
-    if [ -n "$_username" ] && [ -n "$_ipv6_addr" ]; then
-        scp -q $_opt $KDUMP_LOG_FILE "$_username@$_ipv6_addr:$_dir/"
-    else
-        scp -q $_opt $KDUMP_LOG_FILE "$_host:$_dir/"
-    fi
+    scp -q $_opt $KDUMP_LOG_FILE "$_scp_address:$_dir/"
     _ret=$?
     if [ $_ret -ne 0 ]; then
         derror "saving log file failed, _exitcode:$_ret"
@@ -452,7 +444,7 @@ save_opalcore_ssh() {
     local _path=$1
     local _opts="$2"
     local _location=$3
-    local _user_name="" _ipv6addr=""
+    local _scp_address=$4
 
     ddebug "_path=$_path _opts=$_opts _location=$_location"
 
@@ -465,18 +457,9 @@ save_opalcore_ssh() {
         fi
     fi
 
-    if is_ipv6_address "$_host"; then
-        _user_name=${_location%@*}
-        _ipv6addr="[${_location#*@}]"
-    fi
-
     dinfo "saving opalcore:$OPALCORE to $_location:$_path"
 
-    if [ -n "$_user_name" ] && [ -n "$_ipv6addr" ]; then
-        scp $_opts $OPALCORE $_user_name@$_ipv6addr:$_path/opalcore-incomplete
-    else
-        scp $_opts $OPALCORE $_location:$_path/opalcore-incomplete
-    fi
+    scp $_opts $OPALCORE $_scp_address:$_path/opalcore-incomplete
     if [ $? -ne 0 ]; then
         derror "saving opalcore failed"
        return 1
