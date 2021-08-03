@@ -42,16 +42,16 @@ is_fs_type_nfs()
 
 is_ssh_dump_target()
 {
-    grep -q "^ssh[[:blank:]].*@" /etc/kdump.conf
+    [[ $(kdump_get_conf_val ssh) == *@* ]]
 }
 
 is_nfs_dump_target()
 {
-    if grep -q "^nfs" /etc/kdump.conf; then
+    if [[ $(kdump_get_conf_val nfs) ]]; then
         return 0;
     fi
 
-    if is_fs_type_nfs $(get_dracut_args_fstype "$(grep "^dracut_args .*\-\-mount" /etc/kdump.conf)"); then
+    if is_fs_type_nfs $(get_dracut_args_fstype "$(kdump_get_conf_val dracut_args)"); then
         return 0
     fi
 
@@ -68,12 +68,12 @@ is_nfs_dump_target()
 
 is_raw_dump_target()
 {
-    grep -q "^raw" /etc/kdump.conf
+    [[ $(kdump_get_conf_val raw) ]]
 }
 
 is_fs_dump_target()
 {
-    egrep -q "^ext[234]|^xfs|^btrfs|^minix" /etc/kdump.conf
+    [[ $(kdump_get_conf_val "ext[234]\|xfs\|btrfs\|minix") ]]
 }
 
 # Read kdump config in well formatted style
@@ -109,7 +109,7 @@ is_generic_fence_kdump()
 {
     [ -x $FENCE_KDUMP_SEND ] || return 1
 
-    grep -q "^fence_kdump_nodes" /etc/kdump.conf
+    [[ $(kdump_get_conf_val fence_kdump_nodes) ]]
 }
 
 to_dev_name() {
@@ -128,17 +128,17 @@ to_dev_name() {
 
 is_user_configured_dump_target()
 {
-    grep -E -q "^ext[234]|^xfs|^btrfs|^minix|^raw|^nfs|^ssh" /etc/kdump.conf || is_mount_in_dracut_args;
+    [[ $(kdump_get_conf_val "ext[234]\|xfs\|btrfs\|minix\|raw\|nfs\|ssh") ]] || is_mount_in_dracut_args
 }
 
 get_user_configured_dump_disk()
 {
     local _target
 
-    _target=$(egrep "^ext[234]|^xfs|^btrfs|^minix|^raw" /etc/kdump.conf 2>/dev/null |awk '{print $2}')
+    _target=$(kdump_get_conf_val "ext[234]\|xfs\|btrfs\|minix\|raw")
     [ -n "$_target" ] && echo $_target && return
 
-    _target=$(get_dracut_args_target "$(grep "^dracut_args .*\-\-mount" /etc/kdump.conf)")
+    _target=$(get_dracut_args_target "$(kdump_get_conf_val "dracut_args")")
     [ -b "$_target" ] && echo $_target
 }
 
@@ -149,7 +149,7 @@ get_root_fs_device()
 
 get_save_path()
 {
-    local _save_path=$(awk '$1 == "path" {print $2}' /etc/kdump.conf)
+    local _save_path=$(kdump_get_conf_val path)
     [ -z "$_save_path" ] && _save_path=$DEFAULT_PATH
 
     # strip the duplicated "/"
@@ -175,7 +175,7 @@ get_block_dump_target()
 
 is_dump_to_rootfs()
 {
-    grep -E "^(failure_action|default)[[:space:]]dump_to_rootfs" /etc/kdump.conf >/dev/null
+    [[ $(kdump_get_conf_val "failure_action|default") == dump_to_rootfs ]]
 }
 
 get_failure_action_target()
@@ -530,7 +530,7 @@ get_ifcfg_filename() {
 is_dracut_mod_omitted() {
     local dracut_args dracut_mod=$1
 
-    set -- $(grep  "^dracut_args" /etc/kdump.conf)
+    set -- $(kdump_get_conf_val dracut_args)
     while [ $# -gt 0 ]; do
         case $1 in
             -o|--omit)
@@ -559,7 +559,7 @@ is_wdt_active() {
 # its correctness).
 is_mount_in_dracut_args()
 {
-    grep -q "^dracut_args .*\-\-mount" /etc/kdump.conf
+    [[ " $(kdump_get_conf_val dracut_args)" =~ .*[[:space:]]--mount[=[:space:]].* ]]
 }
 
 # If $1 contains dracut_args "--mount", return <filesystem type>
