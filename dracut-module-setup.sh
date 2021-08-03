@@ -523,9 +523,7 @@ kdump_get_ip_route()
 
 kdump_get_ip_route_field()
 {
-    if `echo $1 | grep -q $2`; then
-        echo ${1##*$2} | cut -d ' ' -f1
-    fi
+    echo "$1" | sed -n -e "s/^.*\<$2\>\s\+\(\S\+\).*$/\1/p"
 }
 
 kdump_get_remote_ip()
