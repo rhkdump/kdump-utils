@@ -114,7 +114,7 @@ kdump_setup_dns() {
         _dns=$(echo $_nameserver | cut -d' ' -f2)
         [ -z "$_dns" ] && continue
 
-        if [ ! -f $_dnsfile ] || [ ! $(cat $_dnsfile | grep -q $_dns) ]; then
+        if [ ! -f $_dnsfile ] || ! grep -q "$_dns" "$_dnsfile" ; then
             echo "nameserver=$_dns" >> "$_dnsfile"
         fi
     done < "/etc/resolv.conf"
@@ -988,7 +988,9 @@ kdump_configure_fence_kdump () {
 # Install a random seed used to feed /dev/urandom
 # By the time kdump service starts, /dev/uramdom is already fed by systemd
 kdump_install_random_seed() {
-    local poolsize=`cat /proc/sys/kernel/random/poolsize`
+    local poolsize
+
+    poolsize=$(</proc/sys/kernel/random/poolsize)
 
     if [ ! -d ${initdir}/var/lib/ ]; then
         mkdir -p ${initdir}/var/lib/

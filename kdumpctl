@@ -204,8 +204,8 @@ restore_default_initrd()
 	# fadump to kdump. Restore the original default initrd.
 	if [ -f $DEFAULT_INITRD_BAK ] && [ -f $INITRD_CHECKSUM_LOCATION ]; then
 		# verify checksum before restoring
-		backup_checksum=`sha1sum $DEFAULT_INITRD_BAK | awk '{ print $1 }'`
-		default_checksum=`cat $INITRD_CHECKSUM_LOCATION | awk '{ print $1 }'`
+		backup_checksum=$(sha1sum "$DEFAULT_INITRD_BAK" | awk '{ print $1 }')
+		default_checksum=$(awk '{ print $1 }' "$INITRD_CHECKSUM_LOCATION")
 		if [ "$default_checksum" != "$backup_checksum" ]; then
 			dwarn "WARNING: checksum mismatch! Can't restore original initrd.."
 		else
@@ -638,8 +638,7 @@ function load_kdump_kernel_key()
                 return
         fi
 
-        KDUMP_KEY_ID=$(cat /usr/share/doc/kernel-keys/$KDUMP_KERNELVER/kernel-signing-ppc.cer |
-                        keyctl padd asymmetric kernelkey-$RANDOM %:.ima)
+        KDUMP_KEY_ID=$(keyctl padd asymmetric kernelkey-$RANDOM %:.ima < "/usr/share/doc/kernel-keys/$KDUMP_KERNELVER/kernel-signing-ppc.cer")
 }
 
 # remove a previously loaded key. There's no real security implication
@@ -832,8 +831,11 @@ propagate_ssh_key()
 
 show_reserved_mem()
 {
-    local mem=$(cat /sys/kernel/kexec_crash_size)
-    local mem_mb=$(expr $mem / 1024 / 1024)
+    local mem
+    local mem_mb
+
+    mem=$(</sys/kernel/kexec_crash_size)
+    mem_mb=$(expr "$mem" / 1024 / 1024)
 
     dinfo "Reserved "$mem_mb"MB memory for crash kernel"
 }
@@ -841,8 +843,8 @@ show_reserved_mem()
 check_current_fadump_status()
 {
 	# Check if firmware-assisted dump has been registered.
-	rc=`cat $FADUMP_REGISTER_SYS_NODE`
-	[ $rc -eq 1 ] && return 0
+	rc=$(<$FADUMP_REGISTER_SYS_NODE)
+	[[ $rc -eq 1 ]] && return 0
 	return 1
 }
 
@@ -1259,7 +1261,7 @@ do_estimate() {
 	# The default pre-reserved crashkernel value
 	baseline_size=$((baseline * size_mb))
 	# Current reserved crashkernel size
-	reserved_size=$(cat /sys/kernel/kexec_crash_size)
+	reserved_size=$(</sys/kernel/kexec_crash_size)
 	# A pre-estimated value for userspace usage and kernel
 	# runtime allocation, 64M should good for most cases
 	runtime_size=$((64 * size_mb))

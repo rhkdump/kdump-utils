@@ -331,7 +331,7 @@ is_unresettable()
 
     if [ -f "$path" ]
     then
-        resettable="$(cat $path)"
+        resettable="$(<"$path")"
         [ $resettable -eq 0 -a "$OVERRIDE_RESETTABLE" -eq 0 ] && {
             local device=$(udevadm info --query=all --path=/sys/dev/block/$1 | awk -F= '/DEVNAME/{print $2}')
             derror "Error: Can not save vmcore because device $device is unresettable"
