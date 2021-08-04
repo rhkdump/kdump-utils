@@ -944,12 +944,12 @@ selinux_relabel()
 		return
 	fi
 
-	for _i in $(find $_path); do
-		_attr=$(getfattr -m "security.selinux" $_i 2>/dev/null)
+	while IFS= read -r -d '' _i; do
+		_attr=$(getfattr -m "security.selinux" "$_i" 2>/dev/null)
 		if [ -z "$_attr" ]; then
-			restorecon $_i;
+			restorecon "$_i";
 		fi
-	done
+	done < <(find "$_path" -print0)
 }
 
 check_fence_kdump_config()
