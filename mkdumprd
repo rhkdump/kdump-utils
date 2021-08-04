@@ -58,7 +58,7 @@ add_dracut_sshkey() {
 
 # caller should ensure $1 is valid and mounted in 1st kernel
 to_mount() {
-    local _target=$1 _fstype=$2 _options=$3 _new_mntpoint _pdev
+    local _target=$1 _fstype=$2 _options=$3 _sed_cmd _new_mntpoint _pdev
 
     _new_mntpoint=$(get_kdump_mntpoint_from_target $_target)
     _fstype="${_fstype:-$(get_fs_type_from_target $_target)}"
@@ -67,9 +67,9 @@ to_mount() {
 
     if [[ "$_fstype" == "nfs"* ]]; then
         _pdev=$_target
-        _options=$(echo $_options | sed 's/,addr=[^,]*//')
-        _options=$(echo $_options | sed 's/,proto=[^,]*//')
-        _options=$(echo $_options | sed 's/,clientaddr=[^,]*//')
+        _sed_cmd+='s/,addr=[^,]*//;'
+        _sed_cmd+='s/,proto=[^,]*//;'
+        _sed_cmd+='s/,clientaddr=[^,]*//;'
     else
         # for non-nfs _target converting to use udev persistent name
         _pdev="$(kdump_get_persistent_dev $_target)"
@@ -79,13 +79,15 @@ to_mount() {
     fi
 
     # mount fs target as rw in 2nd kernel
-    _options=$(echo $_options | sed 's/\(^\|,\)ro\($\|,\)/\1rw\2/g')
+    _sed_cmd+='s/\(^\|,\)ro\($\|,\)/\1rw\2/g;'
     # with 'noauto' in fstab nfs and non-root disk mount will fail in 2nd
     # kernel, filter it out here.
-    _options=$(echo $_options | sed 's/\(^\|,\)noauto\($\|,\)/\1/g')
+    _sed_cmd+='s/\(^\|,\)noauto\($\|,\)/\1/g;'
     # drop nofail or nobootwait
-    _options=$(echo $_options | sed 's/\(^\|,\)nofail\($\|,\)/\1/g')
-    _options=$(echo $_options | sed 's/\(^\|,\)nobootwait\($\|,\)/\1/g')
+    _sed_cmd+='s/\(^\|,\)nofail\($\|,\)/\1/g;'
+    _sed_cmd+='s/\(^\|,\)nobootwait\($\|,\)/\1/g;'
+
+    _options=$(echo "$_options" | sed "$_sed_cmd")
 
     echo "$_pdev $_new_mntpoint $_fstype $_options"
 }

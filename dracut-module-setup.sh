@@ -288,7 +288,7 @@ kdump_handle_mulitpath_route() {
 
     while IFS="" read _route; do
         if [[ "$_route" =~ [[:space:]]+nexthop ]]; then
-            _route=$(echo "$_route" | sed -e 's/^[[:space:]]*//')
+            _route=${_route##[[:space:]]}
             # Parse multipath route, using previous _target
             [[ "$_target" == 'default' ]] && continue
             [[ "$_route" =~ .*via.*\ $_netdev ]] || continue
@@ -373,7 +373,7 @@ kdump_setup_bridge() {
         fi
         _brif+="$_kdumpdev,"
     done
-    echo " bridge=$_netdev:$(echo $_brif | sed -e 's/,$//')" >> ${initdir}/etc/cmdline.d/41bridge.conf
+    echo " bridge=$_netdev:${_brif%,}" >> "${initdir}/etc/cmdline.d/41bridge.conf"
 }
 
 # drauct takes bond=<bondname>[:<bondslaves>:[:<options>]] syntax to parse
@@ -389,7 +389,7 @@ kdump_setup_bond() {
         echo -n " ifname=$_kdumpdev:$_mac" >> ${initdir}/etc/cmdline.d/42bond.conf
         _slaves+="$_kdumpdev,"
     done
-    echo -n " bond=$_netdev:$(echo $_slaves | sed 's/,$//')" >> ${initdir}/etc/cmdline.d/42bond.conf
+    echo -n " bond=$_netdev:${_slaves%,}" >> "${initdir}/etc/cmdline.d/42bond.conf"
 
     _bondoptions=$(get_nmcli_value_by_field "$_nm_show_cmd" "bond.options")
 
@@ -416,7 +416,7 @@ kdump_setup_team() {
         echo -n " ifname=$_kdumpdev:$_mac" >> ${initdir}/etc/cmdline.d/44team.conf
         _slaves+="$_kdumpdev,"
     done
-    echo " team=$_netdev:$(echo $_slaves | sed -e 's/,$//')" >> ${initdir}/etc/cmdline.d/44team.conf
+    echo " team=$_netdev:${_slaves%,}" >> "${initdir}/etc/cmdline.d/44team.conf"
     #Buggy version teamdctl outputs to stderr!
     #Try to use the latest version of teamd.
     teamdctl "$_netdev" config dump > ${initdir}/tmp/$$-$_netdev.conf
