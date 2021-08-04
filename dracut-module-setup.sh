@@ -855,7 +855,7 @@ kdump_check_iscsi_targets () {
         _dev=$1
 
         [[ -L /sys/dev/block/$_dev ]] || return
-        cd "$(readlink -f /sys/dev/block/$_dev)"
+        cd "$(readlink -f "/sys/dev/block/$_dev")" || return 1
         until [[ -d sys || -d iscsi_session ]]; do
             cd ..
         done
