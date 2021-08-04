@@ -391,13 +391,13 @@ kdump_setup_bond() {
 
     _bondoptions=$(get_nmcli_value_by_field "$_nm_show_cmd" "bond.options")
 
-    if [[ -z "_bondoptions" ]]; then
+    if [[ -z "$_bondoptions" ]]; then
         dwarning "Failed to get bond configuration via nmlci output. Now try sourcing ifcfg script."
         source_ifcfg_file $_netdev
         _bondoptions="$(echo $BONDING_OPTS | xargs echo | tr " " ",")"
     fi
 
-    if [[ -z "_bondoptions" ]]; then
+    if [[ -z "$_bondoptions" ]]; then
         derror "Get empty bond options"
         exit 1
     fi
