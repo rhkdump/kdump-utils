@@ -772,7 +772,7 @@ check_and_wait_network_ready()
 		fi
 
 		cur=$(date +%s)
-		let "diff = $cur - $start_time"
+		diff=$((cur - start_time))
 		# 60s time out
 		if [ $diff -gt 180 ]; then
 			break;
@@ -835,7 +835,7 @@ show_reserved_mem()
     local mem_mb
 
     mem=$(</sys/kernel/kexec_crash_size)
-    mem_mb=$(expr "$mem" / 1024 / 1024)
+    mem_mb=$((mem / 1024 / 1024))
 
     dinfo "Reserved "$mem_mb"MB memory for crash kernel"
 }

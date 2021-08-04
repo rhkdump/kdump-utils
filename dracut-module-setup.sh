@@ -196,7 +196,7 @@ cal_netmask_by_prefix() {
     _res="$_first_part"
 
     _tmp=$((_octets_total*_bits_per_octet-_prefix))
-    _zero_bits=$(expr $_tmp % $_bits_per_group)
+    _zero_bits=$((_tmp % _bits_per_group))
     if [[ "$_zero_bits" -ne 0 ]]; then
         _second_part=$((_max_group_value >> _zero_bits << _zero_bits))
         if ((_ipv6)); then
