@@ -689,11 +689,11 @@ kdump_install_conf() {
         case "$_opt" in
         raw)
             _pdev=$(persistent_policy="by-id" kdump_get_persistent_dev $_val)
-            sed -i -e "s#^$_opt[[:space:]]\+$_val#$_opt $_pdev#" ${initdir}/tmp/$$-kdump.conf
+            sed -i -e "s#^${_opt}[[:space:]]\+$_val#$_opt $_pdev#" ${initdir}/tmp/$$-kdump.conf
             ;;
         ext[234]|xfs|btrfs|minix)
             _pdev=$(kdump_get_persistent_dev $_val)
-            sed -i -e "s#^$_opt[[:space:]]\+$_val#$_opt $_pdev#" ${initdir}/tmp/$$-kdump.conf
+            sed -i -e "s#^${_opt}[[:space:]]\+$_val#$_opt $_pdev#" ${initdir}/tmp/$$-kdump.conf
             ;;
         ssh|nfs)
             kdump_install_net "$_val"
