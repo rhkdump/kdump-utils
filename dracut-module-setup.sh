@@ -94,7 +94,7 @@ kdump_setup_dns() {
 
     _tmp=$(get_nmcli_value_by_field "$_nm_show_cmd" "IP4.DNS")
     array=(${_tmp//|/ })
-    if [[ ${array[@]} ]]; then
+    if [[ ${array[*]} ]]; then
         for _dns in "${array[@]}"
         do
             echo "nameserver=$_dns" >> "$_dnsfile"
