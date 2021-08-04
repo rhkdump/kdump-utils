@@ -106,7 +106,7 @@ kdump_setup_dns() {
         [ -n "$DNS2" ] && echo "nameserver=$DNS2" >> "$_dnsfile"
     fi
 
-    while read content;
+    while read -r content;
     do
         _nameserver=$(echo $content | grep ^nameserver)
         [ -z "$_nameserver" ] && continue
@@ -265,7 +265,7 @@ kdump_static_ip() {
 
     /sbin/ip $_ipv6_flag route show | grep -v default |\
     grep ".*via.* $_netdev " | grep -v "^[[:space:]]*nexthop" |\
-    while read _route; do
+    while read -r _route; do
         _target=`echo $_route | cut -d ' ' -f1`
         _nexthop=`echo $_route | cut -d ' ' -f3`
         if [ "x" !=  "x"$_ipv6_flag ]; then
@@ -286,7 +286,7 @@ kdump_handle_mulitpath_route() {
         _ipv6_flag="-6"
     fi
 
-    while IFS="" read _route; do
+    while IFS="" read -r _route; do
         if [[ "$_route" =~ [[:space:]]+nexthop ]]; then
             _route=${_route##[[:space:]]}
             # Parse multipath route, using previous _target
@@ -465,7 +465,7 @@ find_online_znet_device() {
 	for d in $NETWORK_DEVICES
 	do
 		[ ! -f "$d/online" ] && continue
-		read ONLINE < $d/online
+		read -r ONLINE < $d/online
 		if [ $ONLINE -ne 1 ]; then
 			continue
 		fi
@@ -473,7 +473,7 @@ find_online_znet_device() {
 		# device is online)
 		if [ -f $d/if_name ]
 		then
-			read ifname < $d/if_name
+			read -r ifname < $d/if_name
 		elif [ -d $d/net ]
 		then
 			ifname=$(ls $d/net/)
@@ -685,7 +685,7 @@ kdump_install_conf() {
 
     kdump_read_conf > "${initdir}/tmp/$$-kdump.conf"
 
-    while read _opt _val;
+    while read -r _opt _val;
     do
         # remove inline comments after the end of a directive.
         case "$_opt" in
@@ -753,7 +753,7 @@ kdump_get_iscsi_initiator() {
 
     [ -f "$initiator_conf" ] || return 1
 
-    while read _initiator; do
+    while read -r _initiator; do
         [ -z "${_initiator%%#*}" ] && continue # Skip comment lines
 
         case $_initiator in

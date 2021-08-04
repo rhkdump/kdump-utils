@@ -390,7 +390,7 @@ if [ -f "$keyfile" ]; then
     SSH_KEY_LOCATION=$(/usr/bin/readlink -m $keyfile)
 fi
 
-while read config_opt config_val;
+while read -r config_opt config_val;
 do
     # remove inline comments after the end of a directive.
     case "$config_opt" in

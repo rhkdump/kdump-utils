@@ -704,7 +704,7 @@ load_kdump()
 
 check_ssh_config()
 {
-	while read config_opt config_val; do
+	while read -r config_opt config_val; do
 		case "$config_opt" in
 		sshkey)
 			# remove inline comments after the end of a directive.
