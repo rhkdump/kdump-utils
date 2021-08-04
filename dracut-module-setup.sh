@@ -353,7 +353,9 @@ kdump_setup_ifname() {
 kdump_setup_bridge() {
     local _netdev=$1
     local _brif _dev _mac _kdumpdev
-    for _dev in `ls /sys/class/net/$_netdev/brif/`; do
+    for _dev in "/sys/class/net/$_netdev/brif/"*; do
+        [[ -e $_dev ]] || continue
+        _dev=${_dev##*/}
         _kdumpdev=$_dev
         if kdump_is_bond "$_dev"; then
             $(kdump_setup_bond "$_dev" "$(get_nmcli_connection_show_cmd_by_ifname "$_dev")")
