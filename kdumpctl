@@ -506,7 +506,7 @@ check_fs_modified()
 
 	# if --mount argument present then match old and new target, mount
 	# point and file system. If any of them mismatches then rebuild
-	echo $_dracut_args | grep "\-\-mount" &> /dev/null
+	echo $_dracut_args | grep -q "\-\-mount"
 	if [[ $? -eq 0 ]];then
 		set -- $(echo $_dracut_args | awk -F "--mount '" '{print $2}' | cut -d' ' -f1,2,3)
 		_old_dev=$1
@@ -596,7 +596,7 @@ check_rebuild()
 		#in case of fadump mode, check whether the default/target
 		#initrd is already built with dump capture capability
 		if [ "$DEFAULT_DUMP_MODE" == "fadump" ]; then
-			capture_capable_initrd=$(lsinitrd -f $DRACUT_MODULES_FILE $TARGET_INITRD | grep -e ^kdumpbase$ -e ^zz-fadumpinit$ | wc -l)
+			capture_capable_initrd=$(lsinitrd -f $DRACUT_MODULES_FILE "$TARGET_INITRD" | grep -c -e ^kdumpbase$ -e ^zz-fadumpinit$)
 		fi
 	fi
 
@@ -761,7 +761,7 @@ check_and_wait_network_ready()
 
 		# if server removes the authorized_keys or, no /root/.ssh/kdump_id_rsa
 		ddebug "$errmsg"
-		echo $errmsg | grep -q "Permission denied\|No such file or directory\|Host key verification failed" &> /dev/null
+		echo $errmsg | grep -q "Permission denied\|No such file or directory\|Host key verification failed"
 		if [ $? -eq 0 ]; then
 			derror "Could not create $DUMP_TARGET:$SAVE_PATH, you probably need to run \"kdumpctl propagate\""
 			return 1
@@ -901,7 +901,7 @@ local_fs_dump_target()
 {
 	local _target
 
-	_target=$(egrep "^ext[234]|^xfs|^btrfs|^minix" /etc/kdump.conf)
+	_target=$(grep -E "^ext[234]|^xfs|^btrfs|^minix" /etc/kdump.conf)
 	if [ $? -eq 0 ]; then
 		echo $_target|awk '{print $2}'
 	fi
@@ -964,7 +964,7 @@ check_fence_kdump_config()
 			return 1
 		fi
 		# node can be ipaddr
-		echo "$ipaddrs " | grep "$node " > /dev/null
+		echo "$ipaddrs " | grep -q "$node "
 		if [ $? -eq 0 ]; then
 			derror "Option fence_kdump_nodes cannot contain $node"
 			return 1
