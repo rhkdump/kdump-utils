@@ -94,15 +94,14 @@ to_mount() {
 #$1=dump target
 #called from while loop and shouldn't read from stdin, so we're using "ssh -n"
 get_ssh_size() {
-    local _opt _out
-    _opt="-i $SSH_KEY_LOCATION -o BatchMode=yes -o StrictHostKeyChecking=yes"
-    _out=$(ssh -q -n $_opt $1 "df -P $SAVE_PATH")
-    [ $? -ne 0 ] && {
-        perror_exit "checking remote ssh server available size failed."
-    }
+    local _out
+    local _opt=("-i" "$SSH_KEY_LOCATION" "-o" "BatchMode=yes" "-o" "StrictHostKeyChecking=yes")
 
-    #ssh output removed the line break, so print field NF-2
-    echo -n "$_out" | awk '{avail=NF-2; print $avail}'
+    if ! _out=$(ssh -q -n "${_opt[@]}" "$1" "df" "--output=avail" "$SAVE_PATH"); then
+        perror_exit "checking remote ssh server available size failed."
+    fi
+
+    echo -n "$_out" | tail -1
 }
 
 #mkdir if save path does not exist on ssh dump target
