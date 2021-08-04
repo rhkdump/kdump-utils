@@ -997,8 +997,6 @@ kdump_install_random_seed() {
 }
 
 kdump_install_systemd_conf() {
-    local failure_action=$(kdump_get_conf_val "failure_action")
-
     # Kdump turns out to require longer default systemd mount timeout
     # than 1st kernel(90s by default), we use default 300s for kdump.
     grep -r "^[[:space:]]*DefaultTimeoutStartSec=" ${initdir}/etc/systemd/system.conf* &>/dev/null
