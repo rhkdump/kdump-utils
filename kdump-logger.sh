@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 #
 # This comes from the dracut-logger.sh
 #
@@ -53,11 +53,12 @@ fi
 #
 get_kdump_loglvl()
 {
-    (type -p getarg) && kdump_sysloglvl=$(getarg rd.kdumploglvl)
+    [ -f /lib/dracut-lib.sh ] && kdump_sysloglvl=$(getarg rd.kdumploglvl)
     [ -z "$kdump_sysloglvl" ] && return 1;
 
-    (type -p isdigit) && isdigit $kdump_sysloglvl
-    [ $? -ne 0 ] && return 1;
+    if [ -f /lib/dracut-lib.sh ] && ! isdigit "$kdump_sysloglvl"; then
+        return 1
+    fi
 
     return 0
 }
@@ -83,11 +84,10 @@ check_loglvl()
 # @retval 0 on success.
 #
 dlog_init() {
-    local ret=0; local errmsg
+    ret=0
 
     if [ -s /proc/vmcore ];then
-        get_kdump_loglvl
-        if [ $? -ne 0 ];then
+        if ! get_kdump_loglvl; then
             logger -t "kdump[$$]" -p warn -- "Kdump is using the default log level(3)."
             kdump_sysloglvl=3
         fi
@@ -104,8 +104,7 @@ dlog_init() {
     [ -z "$kdump_kmsgloglvl" ] && kdump_kmsgloglvl=0
 
     for loglvl in "$kdump_stdloglvl" "$kdump_kmsgloglvl" "$kdump_sysloglvl"; do
-        check_loglvl "$loglvl"
-        if [ $? -ne 0 ]; then
+        if ! check_loglvl "$loglvl"; then
             echo "Illegal log level: $kdump_stdloglvl $kdump_kmsgloglvl $kdump_sysloglvl"
             return 1
         fi
@@ -114,21 +113,21 @@ dlog_init() {
     # Skip initialization if it's already done.
     [ -n "$kdump_maxloglvl" ] && return 0
 
-    if [[ $UID -ne 0 ]]; then
+    if [ "$UID" -ne 0 ]; then
         kdump_kmsgloglvl=0
         kdump_sysloglvl=0
     fi
 
-    if [[ $kdump_sysloglvl -gt 0 ]]; then
-        if [[ -d /run/systemd/journal ]] \
-            && type -P systemd-cat &>/dev/null \
-            && systemctl --quiet is-active systemd-journald.socket &>/dev/null; then
+    if [ "$kdump_sysloglvl" -gt 0 ]; then
+        if [ -d /run/systemd/journal ] \
+            && systemd-cat --version 1>/dev/null 2>&1 \
+            && systemctl --quiet is-active systemd-journald.socket 1>/dev/null 2>&1; then
             readonly _systemdcatfile="/var/tmp/systemd-cat"
-            mkfifo "$_systemdcatfile" &>/dev/null
+            mkfifo "$_systemdcatfile" 1>/dev/null 2>&1
             readonly _dlogfd=15
             systemd-cat -t 'kdump' --level-prefix=true <"$_systemdcatfile" &
             exec 15>"$_systemdcatfile"
-        elif ! [ -S /dev/log -a -w /dev/log ] || ! command -v logger >/dev/null; then
+        elif ! [ -S /dev/log ] && [ -w /dev/log ] || ! command -v logger >/dev/null; then
             # We cannot log to syslog, so turn this facility off.
             kdump_kmsgloglvl=$kdump_sysloglvl
             kdump_sysloglvl=0
@@ -137,31 +136,31 @@ dlog_init() {
         fi
     fi
 
-    local lvl; local maxloglvl_l=0
-    for lvl in $kdump_stdloglvl $kdump_sysloglvl $kdump_kmsgloglvl; do
-        [[ $lvl -gt $maxloglvl_l ]] && maxloglvl_l=$lvl
+    kdump_maxloglvl=0
+    for _dlog_lvl in $kdump_stdloglvl $kdump_sysloglvl $kdump_kmsgloglvl; do
+        [ $_dlog_lvl -gt $kdump_maxloglvl ] && kdump_maxloglvl=$_dlog_lvl
     done
-    readonly kdump_maxloglvl=$maxloglvl_l
+    readonly kdump_maxloglvl
     export kdump_maxloglvl
 
-    if [[ $kdump_stdloglvl -lt 4 ]] && [[ $kdump_kmsgloglvl -lt 4 ]] && [[ $kdump_sysloglvl -lt 4 ]]; then
+    if [ $kdump_stdloglvl -lt 4 ] && [ $kdump_kmsgloglvl -lt 4 ] && [ $kdump_sysloglvl -lt 4 ]; then
         unset ddebug
         ddebug() { :; };
     fi
 
-    if [[ $kdump_stdloglvl -lt 3 ]] && [[ $kdump_kmsgloglvl -lt 3 ]] && [[ $kdump_sysloglvl -lt 3 ]]; then
+    if [ $kdump_stdloglvl -lt 3 ] && [ $kdump_kmsgloglvl -lt 3 ] && [ $kdump_sysloglvl -lt 3 ]; then
         unset dinfo
         dinfo() { :; };
     fi
 
-    if [[ $kdump_stdloglvl -lt 2 ]] && [[ $kdump_kmsgloglvl -lt 2 ]] && [[ $kdump_sysloglvl -lt 2 ]]; then
+    if [ $kdump_stdloglvl -lt 2 ] && [ $kdump_kmsgloglvl -lt 2 ] && [ $kdump_sysloglvl -lt 2 ]; then
         unset dwarn
         dwarn() { :; };
         unset dwarning
         dwarning() { :; };
     fi
 
-    if [[ $kdump_stdloglvl -lt 1 ]] && [[ $kdump_kmsgloglvl -lt 1 ]] && [[ $kdump_sysloglvl -lt 1 ]]; then
+    if [ $kdump_stdloglvl -lt 1 ] && [ $kdump_kmsgloglvl -lt 1 ] && [ $kdump_sysloglvl -lt 1 ]; then
         unset derror
         derror() { :; };
     fi
@@ -173,7 +172,7 @@ dlog_init() {
 
 ## @brief Converts numeric level to logger priority defined by POSIX.2.
 #
-# @param lvl Numeric logging level in range from 1 to 4.
+# @param $1: Numeric logging level in range from 1 to 4.
 # @retval 1 if @a lvl is out of range.
 # @retval 0 if @a lvl is correct.
 # @result Echoes logger priority.
@@ -189,7 +188,7 @@ _lvl2syspri() {
 
 ## @brief Converts logger numeric level to syslog log level
 #
-# @param lvl Numeric logging level in range from 1 to 4.
+# @param $1: Numeric logging level in range from 1 to 4.
 # @retval 1 if @a lvl is out of range.
 # @retval 0 if @a lvl is correct.
 # @result Echoes kernel console numeric log level
@@ -209,27 +208,25 @@ _lvl2syspri() {
 #
 # @see /usr/include/sys/syslog.h
 _dlvl2syslvl() {
-    local lvl
-
     case "$1" in
-        1) lvl=3;;
-        2) lvl=4;;
-        3) lvl=6;;
-        4) lvl=7;;
+        1) set -- 3;;
+        2) set -- 4;;
+        3) set -- 6;;
+        4) set -- 7;;
         *) return 1;;
     esac
 
     # The number is constructed by multiplying the facility by 8 and then
     # adding the level.
     # About The Syslog Protocol, please refer to the RFC5424 for more details.
-    echo $((24+$lvl))
+    echo $((24 + $1))
 }
 
 ## @brief Prints to stderr, to syslog and/or /dev/kmsg given message with
 #  given level (priority).
 #
-# @param lvl Numeric logging level.
-# @param msg Message.
+# @param $1: Numeric logging level.
+# @param $2: Message.
 # @retval 0 It's always returned, even if logging failed.
 #
 # @note This function is not supposed to be called manually. Please use
@@ -251,27 +248,24 @@ _dlvl2syslvl() {
 #   - @c INFO to @c info
 #   - @c DEBUG to @c debug
 _do_dlog() {
-    local lvl="$1"; shift
-    local msg="$*"
+    [ "$1" -le $kdump_stdloglvl ] && printf -- 'kdump: %s\n' "$2" >&2
 
-    [[ $lvl -le $kdump_stdloglvl ]] && printf -- 'kdump: %s\n' "$msg" >&2
-
-    if [[ $lvl -le $kdump_sysloglvl ]]; then
-        if [[ "$_dlogfd" ]]; then
-            printf -- "<%s>%s\n" "$(($(_dlvl2syslvl $lvl) & 7))" "$msg" >&$_dlogfd
+    if [ "$1" -le $kdump_sysloglvl ]; then
+        if [ "$_dlogfd" ]; then
+            printf -- "<%s>%s\n" "$(($(_dlvl2syslvl "$1") & 7))" "$2" 1>&$_dlogfd
         else
-            logger -t "kdump[$$]" -p $(_lvl2syspri $lvl) -- "$msg"
+            logger -t "kdump[$$]" -p "$(_lvl2syspri "$1")" -- "$2"
         fi
     fi
 
-    [[ $lvl -le $kdump_kmsgloglvl ]] && \
-        echo "<$(_dlvl2syslvl $lvl)>kdump[$$] $msg" >/dev/kmsg
+    [ "$1" -le $kdump_kmsgloglvl ] && \
+        echo "<$(_dlvl2syslvl "$1")>kdump[$$] $2" >/dev/kmsg
 }
 
 ## @brief Internal helper function for _do_dlog()
 #
-# @param lvl Numeric logging level.
-# @param msg Message.
+# @param $1: Numeric logging level.
+# @param $2 [...]: Message.
 # @retval 0 It's always returned, even if logging failed.
 #
 # @note This function is not supposed to be called manually. Please use
@@ -286,12 +280,13 @@ _do_dlog() {
 # echo "This is a warning" | dwarn
 dlog() {
     [ -z "$kdump_maxloglvl" ] && return 0
-    [[ $1 -le $kdump_maxloglvl ]] || return 0
+    [ "$1" -le "$kdump_maxloglvl" ] || return 0
 
-    if [[ $# -gt 1 ]]; then
-        _do_dlog "$@"
+    if [ $# -gt 1 ]; then
+        _dlog_lvl=$1; shift
+        _do_dlog "$_dlog_lvl" "$*"
     else
-        while read line || [ -n "$line" ]; do
+        while read -r line || [ -n "$line" ]; do
             _do_dlog "$1" "$line"
         done
     fi
@@ -304,7 +299,9 @@ dlog() {
 ddebug() {
     set +x
     dlog 4 "$@"
-    [ -n "$debug" ] && set -x || :
+    if [ -n "$debug" ]; then
+        set -x
+    fi
 }
 
 ## @brief Logs message at INFO level (3)
@@ -314,7 +311,9 @@ ddebug() {
 dinfo() {
     set +x
     dlog 3 "$@"
-    [ -n "$debug" ] && set -x || :
+    if [ -n "$debug" ]; then
+        set -x
+    fi
 }
 
 ## @brief Logs message at WARN level (2)
@@ -324,7 +323,9 @@ dinfo() {
 dwarn() {
     set +x
     dlog 2 "$@"
-    [ -n "$debug" ] && set -x || :
+    if [ -n "$debug" ]; then
+        set -x
+    fi
 }
 
 ## @brief It's an alias to dwarn() function.
@@ -334,7 +335,9 @@ dwarn() {
 dwarning() {
     set +x
     dwarn "$@"
-    [ -n "$debug" ] && set -x || :
+    if [ -n "$debug" ]; then
+        set -x
+    fi
 }
 
 ## @brief Logs message at ERROR level (1)
@@ -344,5 +347,7 @@ dwarning() {
 derror() {
     set +x
     dlog 1 "$@"
-    [ -n "$debug" ] && set -x || :
+    if [ -n "$debug" ]; then
+        set -x
+    fi
 }
