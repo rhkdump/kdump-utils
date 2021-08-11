@@ -31,7 +31,10 @@ KDUMP_POST=""
 NEWROOT="/sysroot"
 OPALCORE="/sys/firmware/opal/mpipl/core"
 
-set -o pipefail
+# POSIX doesn't have pipefail, only apply when using bash
+# shellcheck disable=SC3040
+[ -n "$BASH" ] && set -o pipefail
+
 DUMP_RETVAL=0
 
 get_kdump_confs()
