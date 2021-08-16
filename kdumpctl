@@ -961,7 +961,7 @@ check_fence_kdump_config()
 {
 	local hostname=`hostname`
 	local ipaddrs=`hostname -I`
-	local nodes=$(get_option_value "fence_kdump_nodes")
+	local nodes=$(kdump_get_conf_val "fence_kdump_nodes")
 
 	for node in $nodes; do
 		if [ "$node" = "$hostname" ]; then

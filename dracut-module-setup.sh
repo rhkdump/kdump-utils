@@ -938,7 +938,7 @@ get_generic_fence_kdump_nodes() {
     local filtered
     local nodes
 
-    nodes=$(get_option_value "fence_kdump_nodes")
+    nodes=$(kdump_get_conf_val "fence_kdump_nodes")
     for node in ${nodes}; do
         # Skip its own node name
         if is_localhost $node; then
@@ -999,7 +999,7 @@ kdump_install_random_seed() {
 }
 
 kdump_install_systemd_conf() {
-    local failure_action=$(get_option_value "failure_action")
+    local failure_action=$(kdump_get_conf_val "failure_action")
 
     # Kdump turns out to require longer default systemd mount timeout
     # than 1st kernel(90s by default), we use default 300s for kdump.
