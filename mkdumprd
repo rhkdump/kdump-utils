@@ -29,9 +29,9 @@ OVERRIDE_RESETTABLE=0
 extra_modules=""
 dracut_args=( --add kdumpbase --quiet --hostonly --hostonly-cmdline --hostonly-i18n --hostonly-mode strict -o "plymouth dash resume ifcfg earlykdump" )
 
-readonly MKDUMPRD_TMPDIR="$(mktemp -d -t mkdumprd.XXXXXX)"
+MKDUMPRD_TMPDIR="$(mktemp -d -t mkdumprd.XXXXXX)"
 [ -d "$MKDUMPRD_TMPDIR" ] || perror_exit "dracut: mktemp -p -d -t dracut.XXXXXX failed."
-readonly MKDUMPRD_TMPMNT="$MKDUMPRD_TMPDIR/target"
+MKDUMPRD_TMPMNT="$MKDUMPRD_TMPDIR/target"
 
 trap '
     ret=$?;
@@ -195,9 +195,11 @@ mount_failure()
 check_user_configured_target()
 {
     local _target=$1 _cfg_fs_type=$2 _mounted
-    local _mnt=$(get_mntpoint_from_target "$_target")
-    local _opt=$(get_mntopt_from_target "$_target")
-    local _fstype=$(get_fs_type_from_target "$_target")
+    local _mnt _opt _fstype
+
+    _mnt=$(get_mntpoint_from_target "$_target")
+    _opt=$(get_mntopt_from_target "$_target")
+    _fstype=$(get_fs_type_from_target "$_target")
 
     if [[ -n "$_fstype" ]]; then
         # In case of nfs4, nfs should be used instead, nfs* options is deprecated in kdump.conf
@@ -314,14 +316,13 @@ for_each_block_target()
 #return false if unresettable.
 is_unresettable()
 {
-    local path="/sys/$(udevadm info --query=all --path="/sys/dev/block/$1" | awk '/^P:/ {print $2}' | sed -e 's/\(cciss[0-9]\+\/\).*/\1/g' -e 's/\/block\/.*$//')/resettable"
-    local resettable=1
+    local path device resettable=1
 
-    if [[ -f "$path" ]]
-    then
+    path="/sys/$(udevadm info --query=all --path="/sys/dev/block/$1" | awk '/^P:/ {print $2}' | sed -e 's/\(cciss[0-9]\+\/\).*/\1/g' -e 's/\/block\/.*$//')/resettable"
+    if [[ -f "$path" ]]; then
         resettable="$(<"$path")"
         [[ $resettable -eq 0 ]] && [[ "$OVERRIDE_RESETTABLE" -eq 0 ]] && {
-            local device=$(udevadm info --query=all --path="/sys/dev/block/$1" | awk -F= '/DEVNAME/{print $2}')
+            device=$(udevadm info --query=all --path="/sys/dev/block/$1" | awk -F= '/DEVNAME/{print $2}')
             derror "Error: Can not save vmcore because device $device is unresettable"
             return 0
         }

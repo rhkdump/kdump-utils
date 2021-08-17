@@ -690,6 +690,8 @@ load_kdump()
 
 check_ssh_config()
 {
+	local SSH_TARGET
+
 	while read -r config_opt config_val; do
 		case "$config_opt" in
 		sshkey)
@@ -713,7 +715,7 @@ check_ssh_config()
 	done <<< "$(kdump_read_conf)"
 
 	#make sure they've configured kdump.conf for ssh dumps
-	local SSH_TARGET=$(echo -n "$DUMP_TARGET" | sed -n '/.*@/p')
+	SSH_TARGET=$(echo -n "$DUMP_TARGET" | sed -n '/.*@/p')
 	if [[ -z "$SSH_TARGET" ]]; then
 		return 1
 	fi
@@ -725,13 +727,14 @@ check_ssh_config()
 # by the return val of 'ssh'
 check_and_wait_network_ready()
 {
-	local start_time=$(date +%s)
+	local start_time
 	local warn_once=1
 	local cur
 	local diff
 	local retval
 	local errmsg
 
+	start_time=$(date +%s)
 	while true; do
 		errmsg=$(ssh -i "$SSH_KEY_LOCATION" -o BatchMode=yes "$DUMP_TARGET" mkdir -p "$SAVE_PATH" 2>&1)
 		retval=$?
@@ -935,9 +938,13 @@ selinux_relabel()
 
 check_fence_kdump_config()
 {
-	local hostname=$(hostname)
-	local ipaddrs=$(hostname -I)
-	local nodes=$(kdump_get_conf_val "fence_kdump_nodes")
+	local hostname
+	local ipaddrs
+	local nodes
+
+	hostname=$(hostname)
+	ipaddrs=$(hostname -I)
+	nodes=$(kdump_get_conf_val "fence_kdump_nodes")
 
 	for node in $nodes; do
 		if [[ "$node" = "$hostname" ]]; then

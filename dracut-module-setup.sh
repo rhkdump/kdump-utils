@@ -321,7 +321,8 @@ kdump_get_mac_addr() {
 #Bonding or team master modifies the mac address
 #of its slaves, we should use perm address
 kdump_get_perm_addr() {
-    local addr=$(ethtool -P "$1" | sed -e 's/Permanent address: //')
+    local addr
+    addr=$(ethtool -P "$1" | sed -e 's/Permanent address: //')
     if [[ -z "$addr" ]] || [[ "$addr" = "00:00:00:00:00:00" ]]
     then
         derror "Can't get the permanent address of $1"
@@ -427,9 +428,12 @@ kdump_setup_team() {
 
 kdump_setup_vlan() {
     local _netdev=$1
-    local _phydev="$(awk '/^Device:/{print $2}' /proc/net/vlan/"$_netdev")"
-    local _netmac="$(kdump_get_mac_addr "$_phydev")"
+    local _phydev
+    local _netmac
     local _kdumpdev
+
+    _phydev="$(awk '/^Device:/{print $2}' /proc/net/vlan/"$_netdev")"
+    _netmac="$(kdump_get_mac_addr "$_phydev")"
 
     #Just support vlan over bond and team
     if kdump_is_bridge "$_phydev"; then
@@ -522,7 +526,8 @@ kdump_get_ip_route_field()
 
 kdump_get_remote_ip()
 {
-    local _remote=$(get_remote_host "$1") _remote_temp
+    local _remote _remote_temp
+    _remote=$(get_remote_host "$1")
     if is_hostname "$_remote"; then
         _remote_temp=$(getent ahosts "$_remote" | grep -v : | head -n 1)
         if [[ -z "$_remote_temp" ]]; then
@@ -876,11 +881,14 @@ get_alias() {
 }
 
 is_localhost() {
-    local hostnames=$(hostname -A)
-    local shortnames=$(hostname -A -s)
-    local aliasname=$(get_alias)
+    local hostnames
+    local shortnames
+    local aliasname
     local nodename=$1
 
+    hostnames=$(hostname -A)
+    shortnames=$(hostname -A -s)
+    aliasname=$(get_alias)
     hostnames="$hostnames $shortnames $aliasname"
 
     for name in ${hostnames}; do
