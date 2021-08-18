@@ -8,8 +8,7 @@
 . /lib/kdump-lib-initramfs.sh
 
 #initiate the kdump logger
-dlog_init
-if [ $? -ne 0 ]; then
+if ! dlog_init; then
     echo "failed to initiate the kdump logger."
     exit 1
 fi
@@ -20,7 +19,7 @@ CORE_COLLECTOR=""
 DEFAULT_CORE_COLLECTOR="makedumpfile -l --message-level 7 -d 31"
 DMESG_COLLECTOR="/sbin/vmcore-dmesg"
 FAILURE_ACTION="systemctl reboot -f"
-DATEDIR=`date +%Y-%m-%d-%T`
+DATEDIR=$(date +%Y-%m-%d-%T)
 HOST_IP='127.0.0.1'
 DUMP_INSTRUCTION=""
 SSH_KEY_LOCATION="/root/.ssh/kdump_id_rsa"
@@ -30,6 +29,7 @@ KDUMP_PRE=""
 KDUMP_POST=""
 NEWROOT="/sysroot"
 OPALCORE="/sys/firmware/opal/mpipl/core"
+KDUMP_CONF_PARSED="/tmp/kdump.conf.$$"
 
 # POSIX doesn't have pipefail, only apply when using bash
 # shellcheck disable=SC3040
@@ -37,10 +37,11 @@ OPALCORE="/sys/firmware/opal/mpipl/core"
 
 DUMP_RETVAL=0
 
+kdump_read_conf > $KDUMP_CONF_PARSED
+
 get_kdump_confs()
 {
-    while read -r config_opt config_val;
-    do
+    while read -r config_opt config_val; do
         # remove inline comments after the end of a directive.
         case "$config_opt" in
             path)
@@ -99,7 +100,7 @@ get_kdump_confs()
                 esac
             ;;
         esac
-    done <<< "$(kdump_read_conf)"
+    done < "$KDUMP_CONF_PARSED"
 
     if [ -z "$CORE_COLLECTOR" ]; then
         CORE_COLLECTOR="$DEFAULT_CORE_COLLECTOR"
@@ -120,56 +121,58 @@ save_log()
     chmod 600 $KDUMP_LOG_FILE
 }
 
-# dump_fs <mount point>
+# $1: dump path, must be a mount point
 dump_fs()
 {
-    local _exitcode
-    local _mp=$1
-    local _op=$(get_mount_info OPTIONS target $_mp -f)
-    ddebug "dump_fs _mp=$_mp _opts=$_op"
+    ddebug "dump_fs _mp=$1"
 
-    if ! is_mounted "$_mp"; then
-        dinfo "dump path \"$_mp\" is not mounted, trying to mount..."
-        mount --target $_mp
-        if [ $? -ne 0 ]; then
-            derror "failed to dump to \"$_mp\", it's not a mount point!"
+    if ! is_mounted "$1"; then
+        dinfo "dump path '$1' is not mounted, trying to mount..."
+        if ! mount --target "$1"; then
+            derror "failed to dump to '$1', it's not a mount point!"
             return 1
         fi
     fi
 
     # Remove -F in makedumpfile case. We don't want a flat format dump here.
-    [[ $CORE_COLLECTOR = *makedumpfile* ]] && CORE_COLLECTOR=`echo $CORE_COLLECTOR | sed -e "s/-F//g"`
+    case $CORE_COLLECTOR in
+        *makedumpfile* )
+            CORE_COLLECTOR=$(echo "$CORE_COLLECTOR" | sed -e "s/-F//g")
+            ;;
+    esac
 
-    local _dump_path=$(echo "$_mp/$KDUMP_PATH/$HOST_IP-$DATEDIR/" | tr -s /)
-
-    dinfo "saving to $_dump_path"
+    _dump_fs_path=$(echo "$1/$KDUMP_PATH/$HOST_IP-$DATEDIR/" | tr -s /)
+    dinfo "saving to $_dump_fs_path"
 
     # Only remount to read-write mode if the dump target is mounted read-only.
-    if [[ "$_op" = "ro"* ]]; then
-       dinfo "Remounting the dump target in rw mode."
-       mount -o remount,rw $_mp || return 1
-    fi
+    _dump_mnt_op=$(get_mount_info OPTIONS target "$1" -f)
+    case $_dump_mnt_op in
+        ro* )
+            dinfo "Remounting the dump target in rw mode."
+            mount -o remount,rw "$1" || return 1
+            ;;
+    esac
 
-    mkdir -p $_dump_path || return 1
+    mkdir -p "$_dump_fs_path" || return 1
 
-    save_vmcore_dmesg_fs ${DMESG_COLLECTOR} "$_dump_path"
-    save_opalcore_fs "$_dump_path"
+    save_vmcore_dmesg_fs ${DMESG_COLLECTOR} "$_dump_fs_path"
+    save_opalcore_fs "$_dump_fs_path"
 
     dinfo "saving vmcore"
-    $CORE_COLLECTOR /proc/vmcore $_dump_path/vmcore-incomplete
-    _exitcode=$?
-    if [ $_exitcode -eq 0 ]; then
-        mv $_dump_path/vmcore-incomplete $_dump_path/vmcore
+    $CORE_COLLECTOR /proc/vmcore "$_dump_fs_path/vmcore-incomplete"
+    _dump_exitcode=$?
+    if [ $_dump_exitcode -eq 0 ]; then
+        mv "$_dump_fs_path/vmcore-incomplete" "$_dump_fs_path/vmcore"
         sync
         dinfo "saving vmcore complete"
     else
-        derror "saving vmcore failed, _exitcode:$_exitcode"
+        derror "saving vmcore failed, exitcode:$_dump_exitcode"
     fi
 
-    dinfo "saving the $KDUMP_LOG_FILE to $_dump_path/"
+    dinfo "saving the $KDUMP_LOG_FILE to $_dump_fs_path/"
     save_log
-    mv $KDUMP_LOG_FILE $_dump_path/
-    if [ $_exitcode -ne 0 ]; then
+    mv "$KDUMP_LOG_FILE" "$_dump_fs_path/"
+    if [ $_dump_exitcode -ne 0 ]; then
         return 1
     fi
 
@@ -177,16 +180,13 @@ dump_fs()
     return 0
 }
 
+# $1: dmesg collector
+# $2: dump path
 save_vmcore_dmesg_fs() {
-    local _dmesg_collector=$1
-    local _path=$2
-
-    dinfo "saving vmcore-dmesg.txt to ${_path}"
-    $_dmesg_collector /proc/vmcore > ${_path}/vmcore-dmesg-incomplete.txt
-    _exitcode=$?
-    if [ $_exitcode -eq 0 ]; then
-        mv ${_path}/vmcore-dmesg-incomplete.txt ${_path}/vmcore-dmesg.txt
-        chmod 600 ${_path}/vmcore-dmesg.txt
+    dinfo "saving vmcore-dmesg.txt to $2"
+    if $1 /proc/vmcore > "$2/vmcore-dmesg-incomplete.txt"; then
+        mv "$2/vmcore-dmesg-incomplete.txt" "$2/vmcore-dmesg.txt"
+        chmod 600 "$2/vmcore-dmesg.txt"
 
         # Make sure file is on disk. There have been instances where later
         # saving vmcore failed and system rebooted without sync and there
@@ -194,16 +194,15 @@ save_vmcore_dmesg_fs() {
         sync
         dinfo "saving vmcore-dmesg.txt complete"
     else
-        if [ -f ${_path}/vmcore-dmesg-incomplete.txt ]; then
-            chmod 600 ${_path}/vmcore-dmesg-incomplete.txt
+        if [ -f "$2/vmcore-dmesg-incomplete.txt" ]; then
+            chmod 600 "$2/vmcore-dmesg-incomplete.txt"
         fi
         derror "saving vmcore-dmesg.txt failed"
     fi
 }
 
+# $1: dump path
 save_opalcore_fs() {
-    local _path=$1
-
     if [ ! -f $OPALCORE ]; then
         # Check if we are on an old kernel that uses a different path
         if [ -f /sys/firmware/opal/core ]; then
@@ -213,9 +212,8 @@ save_opalcore_fs() {
         fi
     fi
 
-    dinfo "saving opalcore:$OPALCORE to ${_path}/opalcore"
-    cp $OPALCORE ${_path}/opalcore
-    if [ $? -ne 0 ]; then
+    dinfo "saving opalcore:$OPALCORE to $1/opalcore"
+    if ! cp $OPALCORE "$1/opalcore"; then
         derror "saving opalcore failed"
         return 1
     fi
@@ -228,7 +226,7 @@ save_opalcore_fs() {
 dump_to_rootfs()
 {
 
-    if [[ $(systemctl status dracut-initqueue | sed -n "s/^\s*Active: \(\S*\)\s.*$/\1/p") == "inactive" ]]; then
+    if [ "$(systemctl status dracut-initqueue | sed -n "s/^\s*Active: \(\S*\)\s.*$/\1/p")" = "inactive" ]; then
         dinfo "Trying to bring up initqueue for rootfs mount"
         systemctl start dracut-initqueue
     fi
@@ -270,7 +268,7 @@ kdump_emergency_shell()
     type plymouth >/dev/null 2>&1 && plymouth quit
 
     source_hook "emergency"
-    while read _tty rest; do
+    while read -r _tty rest; do
         (
         echo
         echo
@@ -280,7 +278,7 @@ kdump_emergency_shell()
         echo 'save it elsewhere and attach it to a bug report.'
         echo
         echo
-        ) > /dev/$_tty
+        ) > "/dev/$_tty"
     done < /proc/consoles
     sh -i -l
     /bin/rm -f -- /.console_lock
@@ -297,10 +295,9 @@ do_final_action()
     dinfo "Executing final action $FINAL_ACTION"
     eval $FINAL_ACTION
 }
+
 do_dump()
 {
-    local _ret
-
     eval $DUMP_INSTRUCTION
     _ret=$?
 
@@ -313,8 +310,6 @@ do_dump()
 
 do_kdump_pre()
 {
-    local _ret
-
     if [ -n "$KDUMP_PRE" ]; then
         "$KDUMP_PRE"
         _ret=$?
@@ -339,8 +334,6 @@ do_kdump_pre()
 
 do_kdump_post()
 {
-    local _ret
-
     if [ -d /etc/kdump/post.d ]; then
         for file in /etc/kdump/post.d/*; do
             "$file" "$1"
@@ -360,97 +353,86 @@ do_kdump_post()
     fi
 }
 
+# $1: block target, eg. /dev/sda
 dump_raw()
 {
-    local _raw=$1
+    [ -b "$1" ] || return 1
 
-    [ -b "$_raw" ] || return 1
+    dinfo "saving to raw disk $1"
 
-    dinfo "saving to raw disk $_raw"
-
-    if ! $(echo -n $CORE_COLLECTOR|grep -q makedumpfile); then
+    if ! echo "$CORE_COLLECTOR" | grep -q makedumpfile; then
         _src_size=$(stat --format %s /proc/vmcore)
-        _src_size_mb=$(($_src_size / 1048576))
+        _src_size_mb=$((_src_size / 1048576))
         /kdumpscripts/monitor_dd_progress $_src_size_mb &
     fi
 
     dinfo "saving vmcore"
-    $CORE_COLLECTOR /proc/vmcore | dd of=$_raw bs=$DD_BLKSIZE >> /tmp/dd_progress_file 2>&1 || return 1
+    $CORE_COLLECTOR /proc/vmcore | dd of="$1" bs=$DD_BLKSIZE >> /tmp/dd_progress_file 2>&1 || return 1
     sync
 
     dinfo "saving vmcore complete"
     return 0
 }
 
+# $1: ssh key file
+# $2: ssh address in <user>@<host> format
 dump_ssh()
 {
-    local _ret=0
-    local _exitcode=0 _exitcode2=0
-    local _opt="-i $1 -o BatchMode=yes -o StrictHostKeyChecking=yes"
-    local _dir="$KDUMP_PATH/$HOST_IP-$DATEDIR"
-    local _host=$2
-    local _vmcore="vmcore"
-
-    if is_ipv6_address "$_host"; then
-        _scp_address=${_host%@*}@"[${_host#*@}]"
+    _ret=0
+    _ssh_opt="-i $1 -o BatchMode=yes -o StrictHostKeyChecking=yes"
+    _ssh_dir="$KDUMP_PATH/$HOST_IP-$DATEDIR"
+    if is_ipv6_address "$2"; then
+        _scp_address=${2%@*}@"[${2#*@}]"
     else
-        _scp_address=$_host
+        _scp_address=$2
     fi
 
-    dinfo "saving to $_host:$_dir"
+    dinfo "saving to $2:$_ssh_dir"
 
     cat /var/lib/random-seed > /dev/urandom
-    ssh -q $_opt $_host mkdir -p $_dir || return 1
+    ssh -q $_ssh_opt "$2" mkdir -p "$_ssh_dir" || return 1
 
-    save_vmcore_dmesg_ssh ${DMESG_COLLECTOR} ${_dir} "${_opt}" "$_host"
+    save_vmcore_dmesg_ssh "$DMESG_COLLECTOR" "$_ssh_dir" "$_ssh_opt" "$2"
     dinfo "saving vmcore"
 
-    save_opalcore_ssh ${_dir} "${_opt}" "$_host" "$_scp_address"
+    save_opalcore_ssh "$_ssh_dir" "$_ssh_opt" "$2" "$_scp_address"
 
     if [ "${CORE_COLLECTOR%%[[:blank:]]*}" = "scp" ]; then
-        scp -q $_opt /proc/vmcore "$_scp_address:$_dir/vmcore-incomplete"
-        _exitcode=$?
+        scp -q $_ssh_opt /proc/vmcore "$_scp_address:$_ssh_dir/vmcore-incomplete"
+        _ret=$?
+        _vmcore="vmcore"
     else
-        $CORE_COLLECTOR /proc/vmcore | ssh $_opt $_host "umask 0077 && dd bs=512 of=$_dir/vmcore-incomplete"
-        _exitcode=$?
+        $CORE_COLLECTOR /proc/vmcore | ssh $_ssh_opt "$2" "umask 0077 && dd bs=512 of='$_ssh_dir/vmcore-incomplete'"
+        _ret=$?
         _vmcore="vmcore.flat"
     fi
 
-    if [ $_exitcode -eq 0 ]; then
-        ssh $_opt $_host "mv $_dir/vmcore-incomplete $_dir/$_vmcore"
-        _exitcode2=$?
-        if [ $_exitcode2 -ne 0 ]; then
-            derror "moving vmcore failed, _exitcode:$_exitcode2"
+    if [ $_ret -eq 0 ]; then
+        ssh $_ssh_opt "$2" "mv '$_ssh_dir/vmcore-incomplete' '$_ssh_dir/$_vmcore'"
+        _ret=$?
+        if [ $_ret -ne 0 ]; then
+            derror "moving vmcore failed, exitcode:$_ret"
         else
             dinfo "saving vmcore complete"
         fi
     else
-        derror "saving vmcore failed, _exitcode:$_exitcode"
+        derror "saving vmcore failed, exitcode:$_ret"
     fi
 
-    dinfo "saving the $KDUMP_LOG_FILE to $_host:$_dir/"
+    dinfo "saving the $KDUMP_LOG_FILE to $2:$_ssh_dir/"
     save_log
-    scp -q $_opt $KDUMP_LOG_FILE "$_scp_address:$_dir/"
-    _ret=$?
-    if [ $_ret -ne 0 ]; then
+    if ! scp -q $_ssh_opt $KDUMP_LOG_FILE "$_scp_address:$_ssh_dir/"; then
         derror "saving log file failed, _exitcode:$_ret"
     fi
 
-    if [ $_exitcode -ne 0 ] || [ $_exitcode2 -ne 0 ];then
-        return 1
-    fi
-
-    return 0
+    return $_ret
 }
 
+# $1: dump path
+# $2: ssh opts
+# $3: ssh address in <user>@<host> format
+# $4: scp address, similar with ssh address but IPv6 addresses are quoted
 save_opalcore_ssh() {
-    local _path=$1
-    local _opts="$2"
-    local _location=$3
-    local _scp_address=$4
-
-    ddebug "_path=$_path _opts=$_opts _location=$_location"
-
     if [ ! -f $OPALCORE ]; then
         # Check if we are on an old kernel that uses a different path
         if [ -f /sys/firmware/opal/core ]; then
@@ -460,31 +442,26 @@ save_opalcore_ssh() {
         fi
     fi
 
-    dinfo "saving opalcore:$OPALCORE to $_location:$_path"
+    dinfo "saving opalcore:$OPALCORE to $3:$1"
 
-    scp $_opts $OPALCORE $_scp_address:$_path/opalcore-incomplete
-    if [ $? -ne 0 ]; then
+    if ! scp $2 $OPALCORE "$4:$1/opalcore-incomplete"; then
         derror "saving opalcore failed"
-       return 1
+        return 1
     fi
 
-    ssh $_opts $_location mv $_path/opalcore-incomplete $_path/opalcore
+    ssh $2 "$3" mv "$1/opalcore-incomplete" "$1/opalcore"
     dinfo "saving opalcore complete"
     return 0
 }
 
+# $1: dmesg collector
+# $2: dump path
+# $3: ssh opts
+# $4: ssh address in <user>@<host> format
 save_vmcore_dmesg_ssh() {
-    local _dmesg_collector=$1
-    local _path=$2
-    local _opts="$3"
-    local _location=$4
-
-    dinfo "saving vmcore-dmesg.txt to $_location:$_path"
-    $_dmesg_collector /proc/vmcore | ssh $_opts $_location "umask 0077 && dd of=$_path/vmcore-dmesg-incomplete.txt"
-    _exitcode=$?
-
-    if [ $_exitcode -eq 0 ]; then
-        ssh -q $_opts $_location mv $_path/vmcore-dmesg-incomplete.txt $_path/vmcore-dmesg.txt
+    dinfo "saving vmcore-dmesg.txt to $4:$2"
+    if $1 /proc/vmcore | ssh $3 "$4" "umask 0077 && dd of='$2/vmcore-dmesg-incomplete.txt'"; then
+        ssh -q $3 "$4" mv "$2/vmcore-dmesg-incomplete.txt" "$2/vmcore-dmesg.txt"
         dinfo "saving vmcore-dmesg.txt complete"
     else
         derror "saving vmcore-dmesg.txt failed"
@@ -493,17 +470,24 @@ save_vmcore_dmesg_ssh() {
 
 get_host_ip()
 {
-    local _host
     if is_nfs_dump_target || is_ssh_dump_target
     then
         kdumpnic=$(getarg kdumpnic=)
-        [ -z "$kdumpnic" ] && derror "failed to get kdumpnic!" && return 1
-        _host=`ip addr show dev $kdumpnic|grep '[ ]*inet'`
-        [ $? -ne 0 ] && derror "wrong kdumpnic: $kdumpnic" && return 1
-        _host=`echo $_host | head -n 1 | cut -d' ' -f2`
-        _host="${_host%%/*}"
-        [ -z "$_host" ] && derror "wrong kdumpnic: $kdumpnic" && return 1
-        HOST_IP=$_host
+        if [ -z "$kdumpnic" ]; then
+            derror "failed to get kdumpnic!"
+            return 1
+        fi
+        if ! kdumphost=$(ip addr show dev "$kdumpnic" | grep '[ ]*inet'); then
+            derror "wrong kdumpnic: $kdumpnic"
+            return 1
+        fi
+        kdumphost=$(echo "$kdumphost" | head -n 1 | awk '{print $2}')
+        kdumphost="${kdumphost%%/*}"
+        if [ -z "$kdumphost" ]; then
+            derror "wrong kdumpnic: $kdumpnic"
+            return 1
+        fi
+        HOST_IP=$kdumphost
     fi
     return 0
 }
@@ -518,7 +502,7 @@ read_kdump_confs()
     get_kdump_confs
 
     # rescan for add code for dump target
-    while read config_opt config_val;
+    while read -r config_opt config_val;
     do
         # remove inline comments after the end of a directive.
         case "$config_opt" in
@@ -540,12 +524,13 @@ read_kdump_confs()
             DUMP_INSTRUCTION="dump_ssh $SSH_KEY_LOCATION $config_val"
             ;;
         esac
-    done <<< "$(kdump_read_conf)"
+    done < "$KDUMP_CONF_PARSED"
 }
 
 fence_kdump_notify()
 {
     if [ -n "$FENCE_KDUMP_NODES" ]; then
+        # shellcheck disable=SC2086
         $FENCE_KDUMP_SEND $FENCE_KDUMP_ARGS $FENCE_KDUMP_NODES &
     fi
 }
@@ -566,8 +551,7 @@ fi
 read_kdump_confs
 fence_kdump_notify
 
-get_host_ip
-if [ $? -ne 0 ]; then
+if ! get_host_ip; then
     derror "get_host_ip exited with non-zero status!"
     exit 1
 fi
@@ -576,8 +560,7 @@ if [ -z "$DUMP_INSTRUCTION" ]; then
     DUMP_INSTRUCTION="dump_fs $NEWROOT"
 fi
 
-do_kdump_pre
-if [ $? -ne 0 ]; then
+if ! do_kdump_pre; then
     derror "kdump_pre script exited with non-zero status!"
     do_final_action
     # During systemd service to reboot the machine, stop this shell script running
@@ -587,8 +570,7 @@ make_trace_mem "kdump saving vmcore" '1:shortmem' '2+:mem' '3+:slab'
 do_dump
 DUMP_RETVAL=$?
 
-do_kdump_post $DUMP_RETVAL
-if [ $? -ne 0 ]; then
+if ! do_kdump_post $DUMP_RETVAL; then
     derror "kdump_post script exited with non-zero status!"
 fi
 
