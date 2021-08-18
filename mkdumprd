@@ -111,20 +111,20 @@ get_ssh_size() {
 mkdir_save_path_ssh()
 {
     local _opt _dir
-    _opt="-i $SSH_KEY_LOCATION -o BatchMode=yes -o StrictHostKeyChecking=yes"
-    ssh -qn $_opt $1 mkdir -p $SAVE_PATH 2>&1 > /dev/null
+    _opt=(-i "$SSH_KEY_LOCATION" -o BatchMode=yes -o StrictHostKeyChecking=yes)
+    ssh -qn "${_opt[@]}" $1 mkdir -p $SAVE_PATH 2>&1 > /dev/null
     _ret=$?
     if [ $_ret -ne 0 ]; then
         perror_exit "mkdir failed on $1:$SAVE_PATH"
     fi
 
     #check whether user has write permission on $1:$SAVE_PATH
-    _dir=$(ssh -qn $_opt $1 mktemp -dqp $SAVE_PATH 2>/dev/null)
+    _dir=$(ssh -qn "${_opt[@]}" $1 mktemp -dqp $SAVE_PATH 2>/dev/null)
     _ret=$?
     if [ $_ret -ne 0 ]; then
         perror_exit "Could not create temporary directory on $1:$SAVE_PATH. Make sure user has write permission on destination"
     fi
-    ssh -qn $_opt $1 rmdir $_dir
+    ssh -qn "${_opt[@]}" $1 rmdir $_dir
 
     return 0
 }
