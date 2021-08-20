@@ -5,7 +5,7 @@
 
 Name: kexec-tools
 Version: 2.0.22
-Release: 5%{?dist}
+Release: 6%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -384,15 +384,37 @@ done
 %endif
 
 %changelog
+* Fri Aug 20 2021 Kairui Song <kasong@redhat.com> - 2.0.22-6
+- Remove hard requirement on grubby
+- Clear old crashkernl=auto in comment and doc
+- kdump/ppc64: migration action registration clean up
+- Check the existence of /sys/bus/ccwgroup/devices/*/online beforehand
+- Make `dump_to_rootfs` wait for 90s for real
+- Update crashkernel-howto.txt
+- kdump/ppc64: rebuild initramfs image after migration
+- kdump.sysconfig.s390: Remove "prot_virt" from kdump kernel cmdline
+- kdumpctl: fix a typo
+- Remove references to systemd-sysv-convert
+- kdump-lib.sh: kdump_get_arch_recommend_size uses crashkernel.default
+- Revert "Revert "x86_64: enable the kexec file load by default""
+- Cleanup dead systemd services before start sysroot.mount
+- Add a crashkernel-howto.txt doc
+- Add a new hook: 92-crashkernel.install
+- kdumpctl: Add kdumpctl reset-crashkernel
+- Revert "kdump-lib.sh: Remove is_atomic"
+- fadump-init: clean up mount points properly
+- fadump: kdumpctl should check the modules used by the fadump initramfs
+- fadump: isolate fadump initramfs image within the default one
+
 * Thu Jul 22 2021 Fedora Release Engineering <releng@fedoraproject.org> - 2.0.22-5
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_35_Mass_Rebuild
 
 * Tue Jun 29 2021 Kairui Song <kasong@redhat.com> - 2.0.22-4
-* fix format issue in find_online_znet_device
-* check the existence of /sys/bus/ccwgroup/devices before trying to find online network device
-* check for invalid physical address of /proc/kcore when making ELF dumpfile
-* check for invalid physical address of /proc/kcore when finding max_paddr
-* Increase SECTION_MAP_LAST_BIT to 5
+- fix format issue in find_online_znet_device
+- check the existence of /sys/bus/ccwgroup/devices before trying to find online network device
+- check for invalid physical address of /proc/kcore when making ELF dumpfile
+- check for invalid physical address of /proc/kcore when finding max_paddr
+- Increase SECTION_MAP_LAST_BIT to 5
 
 * Sun Jun 20 2021 Kairui Song <kasong@redhat.com> - 2.0.22-3
 - selftest: Make test_base_image depends on EXTRA_RPMS
