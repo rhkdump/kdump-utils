@@ -61,7 +61,7 @@ set_kernel_ck() {
 
 	[[ -f /etc/zipl.conf ]] && zipl_arg="--zipl"
 	grubby --args "$ck_cmdline" --update-kernel "$entry" $zipl_arg
-	[[ $zipl_arg ]] && zipl > /dev/null
+	[[ $zipl_arg ]] && zipl > /dev/null ||:
 }
 
 case "$COMMAND" in

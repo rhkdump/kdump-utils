@@ -5,7 +5,7 @@
 
 Name: kexec-tools
 Version: 2.0.22
-Release: 6%{?dist}
+Release: 7%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -384,6 +384,9 @@ done
 %endif
 
 %changelog
+* Tue Aug 31 2021 Adam Williamson <awilliam@redhat.com> - 2.0.22-7
+- Don't exit 1 from 92-crashkernel.install if zipl is absent (#1993505)
+
 * Fri Aug 20 2021 Kairui Song <kasong@redhat.com> - 2.0.22-6
 - Remove hard requirement on grubby
 - Clear old crashkernl=auto in comment and doc
