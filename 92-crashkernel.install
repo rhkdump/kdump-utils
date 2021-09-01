@@ -120,8 +120,9 @@ add)
 	if [[ "$boot_ck_cmdline" != "$inst_ck_default" ]] && [[ "$boot_ck_cmdline" == "$boot_ck_default" ]]; then
 		set_kernel_ck "$KERNEL_VERSION" "$inst_ck_default"
 	fi
-	;;
 
+	exit 0
+	;;
 remove)
 	# If grub default value is upgraded when this kernel was installed, try downgrade it
 	grub_etc_ck=$(get_grub_etc_ck)
@@ -139,5 +140,7 @@ remove)
 			set_grub_ck "$highest_ck_default"
 		fi
 	fi
+
+	exit 0
 	;;
 esac
