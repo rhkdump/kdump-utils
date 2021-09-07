@@ -266,8 +266,8 @@ kdump_static_ip() {
     /sbin/ip $_ipv6_flag route show | grep -v default |\
     grep ".*via.* $_netdev " | grep -v "^[[:space:]]*nexthop" |\
     while read -r _route; do
-        _target=`echo $_route | cut -d ' ' -f1`
-        _nexthop=`echo $_route | cut -d ' ' -f3`
+        _target=$(echo $_route | cut -d ' ' -f1)
+        _nexthop=$(echo $_route | cut -d ' ' -f3)
         if [ "x" !=  "x"$_ipv6_flag ]; then
             _target="[$_target]"
             _nexthop="[$_nexthop]"
@@ -293,9 +293,9 @@ kdump_handle_mulitpath_route() {
             [[ "$_target" == 'default' ]] && continue
             [[ "$_route" =~ .*via.*\ $_netdev ]] || continue
 
-            _weight=`echo "$_route" | cut -d ' ' -f7`
+            _weight=$(echo "$_route" | cut -d ' ' -f7)
             if [[ "$_weight" -gt "$_max_weight" ]]; then
-                _nexthop=`echo "$_route" | cut -d ' ' -f3`
+                _nexthop=$(echo "$_route" | cut -d ' ' -f3)
                 _max_weight=$_weight
                 if [ "x" !=  "x"$_ipv6_flag ]; then
                     _rule="rd.route=[$_target]:[$_nexthop]:$kdumpnic"
@@ -305,7 +305,7 @@ kdump_handle_mulitpath_route() {
             fi
         else
             [[ -n "$_rule" ]] && echo "$_rule"
-            _target=`echo "$_route" | cut -d ' ' -f1`
+            _target=$(echo "$_route" | cut -d ' ' -f1)
             _rule="" _max_weight=0 _weight=0
         fi
     done >> ${initdir}/etc/cmdline.d/45route-static.conf\
@@ -383,7 +383,7 @@ kdump_setup_bond() {
     local _netdev="$1"
     local _nm_show_cmd="$2"
     local _dev _mac _slaves _kdumpdev _bondoptions
-    for _dev in `cat /sys/class/net/$_netdev/bonding/slaves`; do
+    for _dev in $(cat /sys/class/net/$_netdev/bonding/slaves); do
         _mac=$(kdump_get_perm_addr $_dev)
         _kdumpdev=$(kdump_setup_ifname $_dev)
         echo -n " ifname=$_kdumpdev:$_mac" >> ${initdir}/etc/cmdline.d/42bond.conf
@@ -410,7 +410,7 @@ kdump_setup_bond() {
 kdump_setup_team() {
     local _netdev=$1
     local _dev _mac _slaves _kdumpdev
-    for _dev in `teamnl $_netdev ports | awk -F':' '{print $2}'`; do
+    for _dev in $(teamnl $_netdev ports | awk -F':' '{print $2}'); do
         _mac=$(kdump_get_perm_addr $_dev)
         _kdumpdev=$(kdump_setup_ifname $_dev)
         echo -n " ifname=$_kdumpdev:$_mac" >> ${initdir}/etc/cmdline.d/44team.conf
@@ -532,11 +532,11 @@ kdump_get_remote_ip()
 {
     local _remote=$(get_remote_host $1) _remote_temp
     if is_hostname $_remote; then
-        _remote_temp=`getent ahosts $_remote | grep -v : | head -n 1`
+        _remote_temp=$(getent ahosts $_remote | grep -v : | head -n 1)
         if [ -z "$_remote_temp" ]; then
-            _remote_temp=`getent ahosts $_remote | head -n 1`
+            _remote_temp=$(getent ahosts $_remote | head -n 1)
         fi
-        _remote=`echo $_remote_temp | cut -d' ' -f1`
+        _remote=$(echo $_remote_temp | cut -d' ' -f1)
     fi
     echo $_remote
 }
@@ -908,7 +908,7 @@ get_pcs_fence_kdump_nodes() {
 
     pcs cluster sync > /dev/null 2>&1 && pcs cluster cib-upgrade > /dev/null 2>&1
     # get cluster nodes from cluster cib, get interface and ip address
-    nodelist=`pcs cluster cib | xmllint --xpath "/cib/status/node_state/@uname" -`
+    nodelist=$(pcs cluster cib | xmllint --xpath "/cib/status/node_state/@uname" -)
 
     # nodelist is formed as 'uname="node1" uname="node2" ... uname="nodeX"'
     # we need to convert each to node1, node2 ... nodeX in each iteration

@@ -76,7 +76,7 @@ determine_dump_mode()
 
 save_core()
 {
-	coredir="/var/crash/`date +"%Y-%m-%d-%H:%M"`"
+	coredir="/var/crash/$(date +"%Y-%m-%d-%H:%M")"
 
 	mkdir -p $coredir
 	ddebug "cp --sparse=always /proc/vmcore $coredir/vmcore-incomplete"
@@ -290,15 +290,14 @@ get_pcs_cluster_modified_files()
 	is_generic_fence_kdump && return 1
 	is_pcs_fence_kdump || return 1
 
-	time_stamp=`pcs cluster cib | xmllint --xpath 'string(/cib/@cib-last-written)' - | \
-		xargs -0 date +%s --date`
+	time_stamp=$(pcs cluster cib | xmllint --xpath 'string(/cib/@cib-last-written)' - | xargs -0 date +%s --date)
 
 	if [ -n $time_stamp -a $time_stamp -gt $image_time ]; then
 		modified_files="cluster-cib"
 	fi
 
 	if [ -f $FENCE_KDUMP_CONFIG_FILE ]; then
-		time_stamp=`stat -c "%Y" $FENCE_KDUMP_CONFIG_FILE`
+		time_stamp=$(stat -c "%Y" $FENCE_KDUMP_CONFIG_FILE)
 		if [ "$time_stamp" -gt "$image_time" ]; then
 			modified_files="$modified_files $FENCE_KDUMP_CONFIG_FILE"
 		fi
@@ -358,7 +357,7 @@ check_files_modified()
 	fi
 	HOOKS="$HOOKS $POST_FILES $PRE_FILES"
 	CORE_COLLECTOR=$(kdump_get_conf_val core_collector | awk '{print $1}')
-	CORE_COLLECTOR=`type -P $CORE_COLLECTOR`
+	CORE_COLLECTOR=$(type -P $CORE_COLLECTOR)
 	# POST_FILES and PRE_FILES are already checked against executable, need not to check again.
 	EXTRA_BINS="$EXTRA_BINS $CHECK_FILES"
 	CHECK_FILES=$(kdump_get_conf_val extra_bins)
@@ -395,13 +394,13 @@ check_files_modified()
 
 	for file in $files; do
 		if [ -e "$file" ]; then
-			time_stamp=`stat -c "%Y" $file`
+			time_stamp=$(stat -c "%Y" $file)
 			if [ "$time_stamp" -gt "$image_time" ]; then
 				modified_files="$modified_files $file"
 			fi
 			if [ -L "$file" ]; then
 				file=$(readlink -m $file)
-				time_stamp=`stat -c "%Y" $file`
+				time_stamp=$(stat -c "%Y" $file)
 				if [ "$time_stamp" -gt "$image_time" ]; then
 					modified_files="$modified_files $file"
 				fi
@@ -591,7 +590,7 @@ check_rebuild()
 	#check to see if dependent files has been modified
 	#since last build of the image file
 	if [ -f $TARGET_INITRD ]; then
-		image_time=`stat -c "%Y" $TARGET_INITRD 2>/dev/null`
+		image_time=$(stat -c "%Y" $TARGET_INITRD 2>/dev/null)
 
 		#in case of fadump mode, check whether the default/target
 		#initrd is already built with dump capture capability
@@ -727,7 +726,7 @@ check_ssh_config()
 	done <<< "$(kdump_read_conf)"
 
 	#make sure they've configured kdump.conf for ssh dumps
-	local SSH_TARGET=`echo -n $DUMP_TARGET | sed -n '/.*@/p'`
+	local SSH_TARGET=$(echo -n $DUMP_TARGET | sed -n '/.*@/p')
 	if [ -z "$SSH_TARGET" ]; then
 		return 1
 	fi
@@ -814,8 +813,8 @@ propagate_ssh_key()
 	fi
 
 	#now find the target ssh user and server to contact.
-	SSH_USER=`echo $DUMP_TARGET | cut -d\  -f2 | cut -d@ -f1`
-	SSH_SERVER=`echo $DUMP_TARGET | sed -e's/\(.*@\)\(.*$\)/\2/'`
+	SSH_USER=$(echo $DUMP_TARGET | cut -d\  -f2 | cut -d@ -f1)
+	SSH_SERVER=$(echo $DUMP_TARGET | sed -e's/\(.*@\)\(.*$\)/\2/')
 
 	#now send the found key to the found server
 	ssh-copy-id -i $KEYFILE $SSH_USER@$SSH_SERVER
@@ -844,7 +843,7 @@ check_current_fadump_status()
 {
 	# Check if firmware-assisted dump has been registered.
 	rc=$(<$FADUMP_REGISTER_SYS_NODE)
-	[[ $rc -eq 1 ]] && return 0
+	[ $rc -eq 1 ] && return 0
 	return 1
 }
 
@@ -877,9 +876,9 @@ save_raw()
 	fi
 	kdump_dir=$(kdump_get_conf_val path)
 	if [ -z "${kdump_dir}" ]; then
-		coredir="/var/crash/`date +"%Y-%m-%d-%H:%M"`"
+		coredir="/var/crash/$(date +"%Y-%m-%d-%H:%M")"
 	else
-		coredir="${kdump_dir}/`date +"%Y-%m-%d-%H:%M"`"
+		coredir="${kdump_dir}/$(date +"%Y-%m-%d-%H:%M")"
 	fi
 
 	mkdir -p "$coredir"
@@ -956,8 +955,8 @@ selinux_relabel()
 
 check_fence_kdump_config()
 {
-	local hostname=`hostname`
-	local ipaddrs=`hostname -I`
+	local hostname=$(hostname)
+	local ipaddrs=$(hostname -I)
 	local nodes=$(kdump_get_conf_val "fence_kdump_nodes")
 
 	for node in $nodes; do
