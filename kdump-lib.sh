@@ -158,12 +158,15 @@ get_kdump_targets()
 # part is the bind mounted directory which quotes by bracket "[]".
 get_bind_mount_source()
 {
-    local _mnt=$(df "$1" | tail -1 | awk '{print $NF}')
-    local _path=${1#$_mnt}
+    local _mnt _path _src _opt _fstype
+    local _fsroot _src_nofsroot
 
-    local _src=$(get_mount_info SOURCE target "$_mnt" -f)
-    local _opt=$(get_mount_info OPTIONS target "$_mnt" -f)
-    local _fstype=$(get_mount_info FSTYPE target "$_mnt" -f)
+    _mnt=$(df "$1" | tail -1 | awk '{print $NF}')
+    _path=${1#$_mnt}
+
+    _src=$(get_mount_info SOURCE target "$_mnt" -f)
+    _opt=$(get_mount_info OPTIONS target "$_mnt" -f)
+    _fstype=$(get_mount_info FSTYPE target "$_mnt" -f)
 
     # bind mount in fstab
     if [[ -d "$_src" ]] && [[ "$_fstype" = none ]] && (echo "$_opt" | grep -q "\bbind\b"); then
@@ -171,12 +174,12 @@ get_bind_mount_source()
     fi
 
     # direct mount
-    local _src_nofsroot=$(get_mount_info SOURCE target "$_mnt" -v -f)
+    _src_nofsroot=$(get_mount_info SOURCE target "$_mnt" -v -f)
     if [[ $_src_nofsroot = "$_src" ]]; then
         echo "$_mnt$_path" && return
     fi
 
-    local _fsroot=${_src#${_src_nofsroot}[}
+    _fsroot=${_src#${_src_nofsroot}[}
     _fsroot=${_fsroot%]}
     _mnt=$(get_mount_info TARGET source "$_src_nofsroot" -f)
 
@@ -199,8 +202,9 @@ get_mntopt_from_target()
 # $1: kdump target device
 get_kdump_mntpoint_from_target()
 {
-    local _mntpoint=$(get_mntpoint_from_target "$1")
+    local _mntpoint
 
+    _mntpoint=$(get_mntpoint_from_target "$1")
     # mount under /sysroot if dump to root disk or mount under
     # mount under /kdumproot if dump target is not mounted in first kernel
     # mount under /kdumproot/$_mntpoint in other cases in 2nd kernel.
@@ -254,8 +258,9 @@ get_remote_host()
 
 is_hostname()
 {
-    local _hostname=$(echo "$1" | grep ":")
+    local _hostname
 
+    _hostname=$(echo "$1" | grep ":")
     if [[ -n "$_hostname" ]]; then
         return 1
     fi
@@ -369,7 +374,7 @@ get_ifcfg_nmcli()
 # $1: netdev name
 get_ifcfg_legacy()
 {
-    local ifcfg_file
+    local ifcfg_file hwaddr
 
     ifcfg_file="/etc/sysconfig/network-scripts/ifcfg-${1}"
     [[ -f "${ifcfg_file}" ]] && echo -n "${ifcfg_file}" && return
@@ -377,7 +382,7 @@ get_ifcfg_legacy()
     ifcfg_file=$(get_ifcfg_by_name "${1}")
     [[ -f "${ifcfg_file}" ]] && echo -n "${ifcfg_file}" && return
 
-    local hwaddr=$(get_hwaddr "${1}")
+    hwaddr=$(get_hwaddr "${1}")
     if [[ -n "$hwaddr" ]]; then
         ifcfg_file=$(get_ifcfg_by_hwaddr "${hwaddr}")
         [[ -f "${ifcfg_file}" ]] && echo -n "${ifcfg_file}" && return
@@ -621,7 +626,7 @@ prepare_kexec_args()
 #
 prepare_kdump_bootinfo()
 {
-    local boot_imglist boot_dirlist boot_initrdlist
+    local boot_img boot_imglist boot_dirlist boot_initrdlist
     local machine_id
 
     if [[ -z "$KDUMP_KERNELVER" ]]; then
@@ -633,7 +638,7 @@ prepare_kdump_bootinfo()
     boot_imglist="$KDUMP_IMG-$KDUMP_KERNELVER$KDUMP_IMG_EXT $machine_id/$KDUMP_KERNELVER/$KDUMP_IMG"
 
     # Use BOOT_IMAGE as reference if possible, strip the GRUB root device prefix in (hd0,gpt1) format
-    local boot_img="$(sed "s/^BOOT_IMAGE=\((\S*)\)\?\(\S*\) .*/\2/" /proc/cmdline)"
+    boot_img="$(sed "s/^BOOT_IMAGE=\((\S*)\)\?\(\S*\) .*/\2/" /proc/cmdline)"
     if [[ -n "$boot_img" ]]; then
         boot_imglist="$boot_img $boot_imglist"
     fi
@@ -855,9 +860,11 @@ kdump_get_arch_recommend_size()
 # $1: the block device to be checked in maj:min format
 get_luks_crypt_dev()
 {
+    local _type
+
     [[ -b /dev/block/$1 ]] || return 1
 
-    local _type=$(eval "$(blkid -u filesystem,crypto -o export -- "/dev/block/$1"); echo \$TYPE")
+    _type=$(eval "$(blkid -u filesystem,crypto -o export -- "/dev/block/$1"); echo \$TYPE")
     [[ $_type == "crypto_LUKS" ]] && echo "$1"
 
     for _x in "/sys/dev/block/$1/slaves/"*; do
@@ -932,7 +939,9 @@ try_decompress()
 get_kernel_size()
 {
     # Prepare temp files:
-    local img=$1 tmp=$(mktemp /tmp/vmlinux-XXX)
+    local tmp img=$1
+
+    tmp=$(mktemp /tmp/vmlinux-XXX)
     trap 'rm -f "$tmp"' 0
 
     # Try to check if it's a vmlinux already
