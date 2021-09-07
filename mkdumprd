@@ -132,7 +132,7 @@ mkdir_save_path_ssh()
 #Function: get_fs_size
 #$1=dump target
 get_fs_size() {
-    df -P "$(get_mntpoint_from_target "$1")/$SAVE_PATH"|tail -1|awk '{print $4}'
+    df --output=avail "$(get_mntpoint_from_target "$1")/$SAVE_PATH" | tail -1
 }
 
 #Function: get_raw_size
