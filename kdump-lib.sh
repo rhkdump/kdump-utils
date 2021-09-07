@@ -14,7 +14,7 @@ is_fadump_capable()
     # Check if firmware-assisted dump is enabled
     # if no, fallback to kdump check
     if [[ -f $FADUMP_ENABLED_SYS_NODE ]]; then
-        rc=$(cat $FADUMP_ENABLED_SYS_NODE)
+        rc=$(<$FADUMP_ENABLED_SYS_NODE)
         [[ $rc -eq 1 ]] && return 0
     fi
     return 1
@@ -59,13 +59,14 @@ to_dev_name() {
 
     case "$dev" in
     UUID=*)
-        dev=$(blkid -U "${dev#UUID=}")
+        blkid -U "${dev#UUID=}"
         ;;
     LABEL=*)
-        dev=$(blkid -L "${dev#LABEL=}")
+        blkid -L "${dev#LABEL=}"
         ;;
+    *)
+        echo "$dev"
     esac
-    echo $dev
 }
 
 is_user_configured_dump_target()
@@ -93,12 +94,12 @@ get_block_dump_target()
     fi
 
     _target=$(get_user_configured_dump_disk)
-    [[ -n "$_target" ]] && echo $(to_dev_name $_target) && return
+    [[ -n "$_target" ]] && to_dev_name $_target && return
 
     # Get block device name from local save path
     _path=$(get_save_path)
     _target=$(get_target_from_path $_path)
-    [[ -b "$_target" ]] && echo $(to_dev_name $_target)
+    [[ -b "$_target" ]] && to_dev_name $_target
 }
 
 is_dump_to_rootfs()
@@ -113,7 +114,7 @@ get_failure_action_target()
     if is_dump_to_rootfs; then
         # Get rootfs device name
         _target=$(get_root_fs_device)
-        [[ -b "$_target" ]] && echo $(to_dev_name $_target) && return
+        [[ -b "$_target" ]] && to_dev_name $_target && return
         # Then, must be nfs root
         echo "nfs"
     fi
@@ -441,7 +442,7 @@ check_crash_mem_reserved()
 {
     local mem_reserved
 
-    mem_reserved=$(cat /sys/kernel/kexec_crash_size)
+    mem_reserved=$(</sys/kernel/kexec_crash_size)
     if [[ $mem_reserved -eq 0 ]]; then
         derror "No memory reserved for crash kernel"
         return 1
@@ -467,7 +468,7 @@ check_current_kdump_status()
         return 1
     fi
 
-    rc=$(cat /sys/kernel/kexec_crash_loaded)
+    rc=$(</sys/kernel/kexec_crash_loaded)
     if [[ $rc == 1 ]]; then
         return 0
     else
@@ -571,7 +572,7 @@ is_secure_boot_enforced()
     fi
 
     # Detect secure boot on s390x
-    if [[ -e "/sys/firmware/ipl/secure" && "$(cat /sys/firmware/ipl/secure)" == "1" ]]; then
+    if [[ -e "/sys/firmware/ipl/secure" && "$(</sys/firmware/ipl/secure)" == "1" ]]; then
         return 0
     fi
 
@@ -632,7 +633,7 @@ prepare_kdump_bootinfo()
     boot_imglist="$KDUMP_IMG-$KDUMP_KERNELVER$KDUMP_IMG_EXT $machine_id/$KDUMP_KERNELVER/$KDUMP_IMG"
 
     # Use BOOT_IMAGE as reference if possible, strip the GRUB root device prefix in (hd0,gpt1) format
-    local boot_img="$(cat /proc/cmdline | sed "s/^BOOT_IMAGE=\((\S*)\)\?\(\S*\) .*/\2/")"
+    local boot_img="$(sed "s/^BOOT_IMAGE=\((\S*)\)\?\(\S*\) .*/\2/" /proc/cmdline)"
     if [[ -n "$boot_img" ]]; then
         boot_imglist="$boot_img $boot_imglist"
     fi
@@ -713,7 +714,7 @@ prepare_cmdline()
     local cmdline id
 
     if [[ -z "$1" ]]; then
-        cmdline=$(cat /proc/cmdline)
+        cmdline=$(</proc/cmdline)
     else
         cmdline="$1"
     fi
@@ -771,7 +772,7 @@ prepare_cmdline()
 #get system memory size in the unit of GB
 get_system_size()
 {
-    result=$(cat /proc/iomem  | grep "System RAM" | awk -F ":" '{ print $1 }' | tr [:lower:] [:upper:] | paste -sd+)
+    result=$(grep "System RAM" /proc/iomem | awk -F ":" '{ print $1 }' | tr [:lower:] [:upper:] | paste -sd+)
     result="+$result"
     # replace '-' with '+0x' and '+' with '-0x'
     sum=$( echo $result | sed -e 's/-/K0x/g' | sed -e 's/+/-0x/g' | sed -e 's/K/+/g' )
@@ -880,11 +881,10 @@ kdump_get_maj_min() {
 
 get_all_kdump_crypt_dev()
 {
-    local _dev _crypt
+    local _dev
 
     for _dev in $(get_block_dump_target); do
-        _crypt=$(get_luks_crypt_dev $(kdump_get_maj_min "$_dev"))
-        [[ -n "$_crypt" ]] && echo $_crypt
+        get_luks_crypt_dev "$(kdump_get_maj_min "$_dev")"
     done
 }
 
@@ -953,7 +953,7 @@ get_kernel_size()
 
     # Fallback to use iomem
     local _size=0
-    for _seg in $(cat /proc/iomem  | grep -E "Kernel (code|rodata|data|bss)" | cut -d ":" -f 1); do
+    for _seg in $(grep -E "Kernel (code|rodata|data|bss)" /proc/iomem | cut -d ":" -f 1); do
 	    _size=$(( $_size + 0x${_seg#*-} - 0x${_seg%-*} ))
     done
     echo $_size
