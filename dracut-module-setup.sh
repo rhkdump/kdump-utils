@@ -358,7 +358,7 @@ kdump_setup_bridge() {
         _dev=${_dev##*/}
         _kdumpdev=$_dev
         if kdump_is_bond "$_dev"; then
-            $(kdump_setup_bond "$_dev" "$(get_nmcli_connection_show_cmd_by_ifname "$_dev")")
+            (kdump_setup_bond "$_dev" "$(get_nmcli_connection_show_cmd_by_ifname "$_dev")")
             if [[ $? != 0 ]]; then
                 exit 1
             fi
@@ -441,7 +441,7 @@ kdump_setup_vlan() {
         derror "Vlan over bridge is not supported!"
         exit 1
     elif kdump_is_bond "$_phydev"; then
-        $(kdump_setup_bond "$_phydev" "$(get_nmcli_connection_show_cmd_by_ifname "$_phydev")")
+        (kdump_setup_bond "$_phydev" "$(get_nmcli_connection_show_cmd_by_ifname "$_phydev")")
         if [[ $? != 0 ]]; then
             exit 1
         fi
@@ -560,7 +560,7 @@ kdump_install_net() {
     _znet_netdev=$(find_online_znet_device)
     if [[ -n "$_znet_netdev" ]]; then
         _nm_show_cmd_znet=$(get_nmcli_connection_show_cmd_by_ifname "$_znet_netdev")
-        $(kdump_setup_znet "$_znet_netdev" "$_nm_show_cmd_znet")
+        (kdump_setup_znet "$_znet_netdev" "$_nm_show_cmd_znet")
         if [[ $? != 0 ]]; then
             derror "Failed to set up znet"
             exit 1
@@ -591,7 +591,7 @@ kdump_install_net() {
     if kdump_is_bridge "$_netdev"; then
         kdump_setup_bridge "$_netdev"
     elif kdump_is_bond "$_netdev"; then
-        $(kdump_setup_bond "$_netdev" "$_nm_show_cmd")
+        (kdump_setup_bond "$_netdev" "$_nm_show_cmd")
         if [[ $? != 0 ]]; then
             exit 1
         fi
