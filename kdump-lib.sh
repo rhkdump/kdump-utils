@@ -275,6 +275,7 @@ get_hwaddr()
 
 
 # Get value by a field using "nmcli -g"
+# Usage: get_nmcli_value_by_field <field> <nmcli command>
 #
 # "nmcli --get-values" allows us to retrive value(s) by field, for example,
 # nmcli --get-values <field> connection show /org/freedesktop/NetworkManager/ActiveConnection/1
@@ -285,12 +286,16 @@ get_hwaddr()
 #   bond.options                           "mode=balance-rr"
 get_nmcli_value_by_field()
 {
-    local _nm_show_cmd=$1
-    local _field=$2
+    LANG=C nmcli --get-values "$@"
+}
 
-    local val=$(LANG=C nmcli --get-values $_field $_nm_show_cmd)
+# Get nmcli field value of an connection apath (a D-Bus active connection path)
+# Usage: get_nmcli_field_by_apath <field> <apath>
+get_nmcli_field_by_conpath()
+{
+    local _field=$1 _apath=$2
 
-    echo -n "$val"
+    get_nmcli_value_by_field "$_field" connection show "$_apath"
 }
 
 # Get nmcli connection apath (a D-Bus active connection path ) by ifname
@@ -300,25 +305,8 @@ get_nmcli_value_by_field()
 get_nmcli_connection_apath_by_ifname()
 {
     local _ifname=$1
-    local _nm_show_cmd="device show $_ifname"
 
-    local _apath=$(get_nmcli_value_by_field "$_nm_show_cmd" "GENERAL.CON-PATH")
-
-    echo -n "$_apath"
-}
-
-# Get nmcli connection show cmd by ifname
-#
-# "$_apath" is supposed to not contain any chracter that
-# need to be escapded, e.g. space. Otherwise get_nmcli_value_by_field
-# would fail.
-get_nmcli_connection_show_cmd_by_ifname()
-{
-    local _ifname="$1"
-    local _apath=$(get_nmcli_connection_apath_by_ifname "$_ifname")
-    local _nm_show_cmd="connection show $_apath"
-
-    echo -n "$_nm_show_cmd"
+    get_nmcli_value_by_field "GENERAL.CON-PATH" device show "$_ifname"
 }
 
 get_ifcfg_by_device()

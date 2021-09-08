@@ -84,14 +84,13 @@ source_ifcfg_file() {
     fi
 }
 
-# $1: nmcli connection show output
 kdump_setup_dns() {
     local _netdev="$1"
-    local _nm_show_cmd="$2"
+    local _conpath="$2"
     local _nameserver _dns _tmp array
     local _dnsfile=${initdir}/etc/cmdline.d/42dns.conf
 
-    _tmp=$(get_nmcli_value_by_field "$_nm_show_cmd" "IP4.DNS")
+    _tmp=$(get_nmcli_field_by_conpath "IP4.DNS" "$_conpath")
     # shellcheck disable=SC2206
     array=(${_tmp//|/ })
     if [[ ${array[*]} ]]; then
@@ -355,7 +354,7 @@ kdump_setup_bridge() {
         _dev=${_dev##*/}
         _kdumpdev=$_dev
         if kdump_is_bond "$_dev"; then
-            (kdump_setup_bond "$_dev" "$(get_nmcli_connection_show_cmd_by_ifname "$_dev")") || exit 1
+            (kdump_setup_bond "$_dev" "$(get_nmcli_connection_apath_by_ifname "$_dev")") || exit 1
         elif kdump_is_team "$_dev"; then
             kdump_setup_team "$_dev"
         elif kdump_is_vlan "$_dev"; then
@@ -375,7 +374,7 @@ kdump_setup_bridge() {
 #     bond=bond0:eth0,eth1:mode=balance-rr
 kdump_setup_bond() {
     local _netdev="$1"
-    local _nm_show_cmd="$2"
+    local _conpath="$2"
     local _dev _mac _slaves _kdumpdev _bondoptions
     for _dev in $(cat "/sys/class/net/$_netdev/bonding/slaves"); do
         _mac=$(kdump_get_perm_addr "$_dev")
@@ -385,7 +384,7 @@ kdump_setup_bond() {
     done
     echo -n " bond=$_netdev:${_slaves%,}" >> "${initdir}/etc/cmdline.d/42bond.conf"
 
-    _bondoptions=$(get_nmcli_value_by_field "$_nm_show_cmd" "bond.options")
+    _bondoptions=$(get_nmcli_field_by_conpath "bond.options" "$_conpath")
 
     if [[ -z $_bondoptions ]]; then
         dwarning "Failed to get bond configuration via nmlci output. Now try sourcing ifcfg script."
@@ -436,7 +435,7 @@ kdump_setup_vlan() {
         derror "Vlan over bridge is not supported!"
         exit 1
     elif kdump_is_bond "$_phydev"; then
-        (kdump_setup_bond "$_phydev" "$(get_nmcli_connection_show_cmd_by_ifname "$_phydev")") || exit 1
+        (kdump_setup_bond "$_phydev" "$(get_nmcli_connection_apath_by_ifname "$_phydev")") || exit 1
         echo " vlan=$(kdump_setup_ifname "$_netdev"):$_phydev" > "${initdir}/etc/cmdline.d/43vlan.conf"
     else
         _kdumpdev="$(kdump_setup_ifname "$_phydev")"
@@ -474,18 +473,18 @@ find_online_znet_device() {
 
 # setup s390 znet cmdline
 # $1: netdev (ifname)
-# $2: nmcli connection show output
+# $2: nmcli connection path
 kdump_setup_znet() {
     local _netdev="$1"
-    local _nmcli_cmd="$2"
+    local _conpath="$2"
     local s390_prefix="802-3-ethernet.s390-"
     local _options=""
     local NETTYPE
     local SUBCHANNELS
 
-    NETTYPE=$(get_nmcli_value_by_field "$_nmcli_cmd" "${s390_prefix}nettype")
-    SUBCHANNELS=$(get_nmcli_value_by_field "$_nmcli_cmd" "${s390_prefix}subchannels")
-    _options=$(get_nmcli_value_by_field "$_nmcli_cmd" "${s390_prefix}options")
+    NETTYPE=$(get_nmcli_field_by_conpath "${s390_prefix}nettype" "$_conpath")
+    SUBCHANNELS=$(get_nmcli_field_by_conpath "${s390_prefix}subchannels" "$_conpath")
+    _options=$(get_nmcli_field_by_conpath "${s390_prefix}options" "$_conpath")
 
     if [[ -z $NETTYPE || -z $SUBCHANNELS || -z $_options ]]; then
         dwarning "Failed to get znet configuration via nmlci output. Now try sourcing ifcfg script."
@@ -532,22 +531,22 @@ kdump_get_remote_ip() {
 # initramfs accessing giving destination
 # $1: destination host
 kdump_install_net() {
-    local _destaddr _srcaddr _route _netdev _nm_show_cmd kdumpnic
+    local _destaddr _srcaddr _route _netdev _conpath kdumpnic
     local _static _proto _ip_conf _ip_opts _ifname_opts
-    local _znet_netdev _nm_show_cmd_znet
+    local _znet_netdev _znet_conpath
 
     _destaddr=$(kdump_get_remote_ip "$1")
     _route=$(kdump_get_ip_route "$_destaddr")
     _srcaddr=$(kdump_get_ip_route_field "$_route" "src")
     _netdev=$(kdump_get_ip_route_field "$_route" "dev")
-    _nm_show_cmd=$(get_nmcli_connection_show_cmd_by_ifname "$_netdev")
+    _conpath=$(get_nmcli_connection_apath_by_ifname "$_netdev")
     _netmac=$(kdump_get_mac_addr "$_netdev")
     kdumpnic=$(kdump_setup_ifname "$_netdev")
 
     _znet_netdev=$(find_online_znet_device)
     if [[ -n $_znet_netdev ]]; then
-        _nm_show_cmd_znet=$(get_nmcli_connection_show_cmd_by_ifname "$_znet_netdev")
-        if ! (kdump_setup_znet "$_znet_netdev" "$_nm_show_cmd_znet"); then
+        _znet_conpath=$(get_nmcli_connection_apath_by_ifname "$_znet_netdev")
+        if ! (kdump_setup_znet "$_znet_netdev" "$_znet_conpath"); then
             derror "Failed to set up znet"
             exit 1
         fi
@@ -577,7 +576,7 @@ kdump_install_net() {
     if kdump_is_bridge "$_netdev"; then
         kdump_setup_bridge "$_netdev"
     elif kdump_is_bond "$_netdev"; then
-        (kdump_setup_bond "$_netdev" "$_nm_show_cmd") || exit 1
+        (kdump_setup_bond "$_netdev" "$_conpath") || exit 1
     elif kdump_is_team "$_netdev"; then
         kdump_setup_team "$_netdev"
     elif kdump_is_vlan "$_netdev"; then
@@ -587,7 +586,7 @@ kdump_install_net() {
         echo "$_ifname_opts" >> "$_ip_conf"
     fi
 
-    kdump_setup_dns "$_netdev" "$_nm_show_cmd"
+    kdump_setup_dns "$_netdev" "$_conpath"
 
     if [[ ! -f ${initdir}/etc/cmdline.d/50neednet.conf ]]; then
         # network-manager module needs this parameter
