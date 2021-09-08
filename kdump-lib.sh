@@ -777,7 +777,7 @@ get_system_size()
     # replace '-' with '+0x' and '+' with '-0x'
     sum=$( echo $result | sed -e 's/-/K0x/g' | sed -e 's/+/-0x/g' | sed -e 's/K/+/g' )
     size=$(printf "%d\n" $(($sum)))
-    let size=$size/1024/1024/1024
+    size=$((size / 1024 / 1024 / 1024))
 
     echo $size
 }
@@ -803,7 +803,7 @@ get_recommend_size()
         size=${end: : -1}
         unit=${end: -1}
         if [[ $unit == 'T' ]]; then
-            let size=$size*1024
+            size=$((size * 1024))
         fi
         if [[ $mem_size -lt $size ]]; then
             echo $recommend
@@ -899,7 +899,7 @@ get_vmlinux_size()
     local size=0
 
     while read _type _offset _virtaddr _physaddr _fsize _msize _flg _aln; do
-        size=$(( $size + $_msize ))
+        size=$(( size + _msize ))
     done <<< $(readelf -l -W $1 | grep "^  LOAD" 2>/dev/stderr)
 
     echo $size
@@ -954,7 +954,7 @@ get_kernel_size()
     # Fallback to use iomem
     local _size=0
     for _seg in $(grep -E "Kernel (code|rodata|data|bss)" /proc/iomem | cut -d ":" -f 1); do
-	    _size=$(( $_size + 0x${_seg#*-} - 0x${_seg%-*} ))
+	    _size=$(( _size + 0x${_seg#*-} - 0x${_seg%-*} ))
     done
     echo $_size
 }
