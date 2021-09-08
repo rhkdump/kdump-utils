@@ -25,7 +25,7 @@ prepare_kernel_initrd() {
     prepare_kdump_bootinfo
 
     # $kernel is a variable from dracut
-    if [[ "$KDUMP_KERNELVER" != $kernel ]]; then
+    if [[ "$KDUMP_KERNELVER" != "$kernel" ]]; then
         dwarn "Using kernel version '$KDUMP_KERNELVER' for early kdump," \
             "but the initramfs is generated for kernel version '$kernel'"
     fi

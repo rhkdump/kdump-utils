@@ -78,11 +78,11 @@ save_core()
 {
 	coredir="/var/crash/$(date +"%Y-%m-%d-%H:%M")"
 
-	mkdir -p $coredir
+	mkdir -p "$coredir"
 	ddebug "cp --sparse=always /proc/vmcore $coredir/vmcore-incomplete"
-	cp --sparse=always /proc/vmcore $coredir/vmcore-incomplete
+	cp --sparse=always /proc/vmcore "$coredir/vmcore-incomplete"
 	if [[ $? == 0 ]]; then
-		mv $coredir/vmcore-incomplete $coredir/vmcore
+		mv "$coredir/vmcore-incomplete" "$coredir/vmcore"
 		dinfo "saved a vmcore to $coredir"
 	else
 		derror "failed to save a vmcore to $coredir"
@@ -93,9 +93,9 @@ save_core()
 	# https://fedorahosted.org/abrt/
 	if [[ -x /usr/bin/dumpoops ]]; then
 		ddebug "makedumpfile --dump-dmesg $coredir/vmcore $coredir/dmesg"
-		makedumpfile --dump-dmesg $coredir/vmcore $coredir/dmesg >/dev/null 2>&1
+		makedumpfile --dump-dmesg "$coredir/vmcore" "$coredir/dmesg" >/dev/null 2>&1
 		ddebug "dumpoops -d $coredir/dmesg"
-		dumpoops -d $coredir/dmesg >/dev/null 2>&1
+		dumpoops -d "$coredir/dmesg" >/dev/null 2>&1
 		if [[ $? == 0 ]]; then
 			dinfo "kernel oops has been collected by abrt tool"
 		fi
@@ -121,7 +121,7 @@ check_earlykdump_is_enabled()
 rebuild_kdump_initrd()
 {
 	ddebug "rebuild kdump initrd: $MKDUMPRD $TARGET_INITRD $KDUMP_KERNELVER"
-	$MKDUMPRD $TARGET_INITRD $KDUMP_KERNELVER
+	$MKDUMPRD "$TARGET_INITRD" "$KDUMP_KERNELVER"
 	if [[ $? != 0 ]]; then
 		derror "mkdumprd: failed to make kdump initrd"
 		return 1
@@ -136,8 +136,8 @@ rebuild_kdump_initrd()
 
 rebuild_initrd()
 {
-	if [[ ! -w $(dirname $TARGET_INITRD) ]];then
-		derror "$(dirname $TARGET_INITRD) does not have write permission. Cannot rebuild $TARGET_INITRD"
+	if [[ ! -w $(dirname "$TARGET_INITRD") ]];then
+		derror "$(dirname "$TARGET_INITRD") does not have write permission. Cannot rebuild $TARGET_INITRD"
 		return 1
 	fi
 
@@ -183,11 +183,11 @@ backup_default_initrd()
 	if [[ ! -e $DEFAULT_INITRD_BAK ]]; then
 		dinfo "Backing up $DEFAULT_INITRD before rebuild."
 		# save checksum to verify before restoring
-		sha1sum $DEFAULT_INITRD > $INITRD_CHECKSUM_LOCATION
-		cp $DEFAULT_INITRD $DEFAULT_INITRD_BAK
+		sha1sum "$DEFAULT_INITRD" > "$INITRD_CHECKSUM_LOCATION"
+		cp "$DEFAULT_INITRD" "$DEFAULT_INITRD_BAK"
 		if [[ $? -ne 0 ]]; then
 			dwarn "WARNING: failed to backup $DEFAULT_INITRD."
-			rm -f $DEFAULT_INITRD_BAK
+			rm -f "$DEFAULT_INITRD_BAK"
 		fi
 	fi
 }
@@ -210,7 +210,7 @@ restore_default_initrd()
 			dwarn "WARNING: checksum mismatch! Can't restore original initrd.."
 		else
 			rm -f $INITRD_CHECKSUM_LOCATION
-			mv $DEFAULT_INITRD_BAK $DEFAULT_INITRD
+			mv "$DEFAULT_INITRD_BAK" "$DEFAULT_INITRD"
 			if [[ $? -eq 0 ]]; then
 				derror "Restoring original initrd as fadump mode is disabled."
 				sync
@@ -226,7 +226,7 @@ check_config()
 		case "$config_opt" in
 		dracut_args)
 			if [[ $config_val == *--mount* ]]; then
-				if [[ $(echo $config_val | grep -o "\-\-mount" | wc -l) -ne 1 ]]; then
+				if [[ $(echo "$config_val" | grep -o "\-\-mount" | wc -l) -ne 1 ]]; then
 					derror "Multiple mount targets specified in one \"dracut_args\"."
 					return 1
 				fi
@@ -297,13 +297,13 @@ get_pcs_cluster_modified_files()
 	fi
 
 	if [[ -f $FENCE_KDUMP_CONFIG_FILE ]]; then
-		time_stamp=$(stat -c "%Y" $FENCE_KDUMP_CONFIG_FILE)
+		time_stamp=$(stat -c "%Y" "$FENCE_KDUMP_CONFIG_FILE")
 		if [[ "$time_stamp" -gt "$image_time" ]]; then
 			modified_files="$modified_files $FENCE_KDUMP_CONFIG_FILE"
 		fi
 	fi
 
-	echo $modified_files
+	echo "$modified_files"
 }
 
 setup_initrd()
@@ -314,7 +314,7 @@ setup_initrd()
 		return 1
 	fi
 
-	DEFAULT_INITRD_BAK="$KDUMP_BOOTDIR/.$(basename $DEFAULT_INITRD).default"
+	DEFAULT_INITRD_BAK="$KDUMP_BOOTDIR/.$(basename "$DEFAULT_INITRD").default"
 	if [[ $DEFAULT_DUMP_MODE == "fadump" ]]; then
 		TARGET_INITRD="$DEFAULT_INITRD"
 
@@ -357,7 +357,7 @@ check_files_modified()
 	fi
 	HOOKS="$HOOKS $POST_FILES $PRE_FILES"
 	CORE_COLLECTOR=$(kdump_get_conf_val core_collector | awk '{print $1}')
-	CORE_COLLECTOR=$(type -P $CORE_COLLECTOR)
+	CORE_COLLECTOR=$(type -P "$CORE_COLLECTOR")
 	# POST_FILES and PRE_FILES are already checked against executable, need not to check again.
 	EXTRA_BINS="$EXTRA_BINS $CHECK_FILES"
 	CHECK_FILES=$(kdump_get_conf_val extra_bins)
@@ -375,8 +375,8 @@ check_files_modified()
 			_module_file="$(modinfo --set-version "$KDUMP_KERNELVER" --filename "$_module" 2>/dev/null)"
 			if [[ $? -eq 0 ]]; then
 				files="$files $_module_file"
-				for _dep_modules in $(modinfo -F depends $_module | tr ',' ' '); do
-				    files="$files $(modinfo --set-version "$KDUMP_KERNELVER" --filename $_dep_modules 2>/dev/null)"
+				for _dep_modules in $(modinfo -F depends "$_module" | tr ',' ' '); do
+				    files="$files $(modinfo --set-version "$KDUMP_KERNELVER" --filename "$_dep_modules" 2>/dev/null)"
 				done
 			else
 				# If it's not a module nor builtin, give an error
@@ -394,13 +394,13 @@ check_files_modified()
 
 	for file in $files; do
 		if [[ -e "$file" ]]; then
-			time_stamp=$(stat -c "%Y" $file)
+			time_stamp=$(stat -c "%Y" "$file")
 			if [[ "$time_stamp" -gt "$image_time" ]]; then
 				modified_files="$modified_files $file"
 			fi
 			if [[ -L "$file" ]]; then
-				file=$(readlink -m $file)
-				time_stamp=$(stat -c "%Y" $file)
+				file=$(readlink -m "$file")
+				time_stamp=$(stat -c "%Y" "$file")
 				if [[ "$time_stamp" -gt "$image_time" ]]; then
 					modified_files="$modified_files $file"
 				fi
@@ -453,8 +453,8 @@ check_drivers_modified()
 	ddebug "Modules included in old initramfs: '$_old_drivers'"
 	for _driver in $_new_drivers; do
 		# Skip deprecated/invalid driver name or built-in module
-		_module_name=$(modinfo --set-version "$KDUMP_KERNELVER" -F name $_driver 2>/dev/null)
-		_module_filename=$(modinfo --set-version "$KDUMP_KERNELVER" -n $_driver 2>/dev/null)
+		_module_name=$(modinfo --set-version "$KDUMP_KERNELVER" -F name "$_driver" 2>/dev/null)
+		_module_filename=$(modinfo --set-version "$KDUMP_KERNELVER" -n "$_driver" 2>/dev/null)
 		if [[ $? -ne 0 ]] || [[ -z "$_module_name" ]] || [[ "$_module_filename" = *"(builtin)"* ]]; then
 			continue
 		fi
@@ -483,21 +483,21 @@ check_fs_modified()
 	fi
 
 	_target=$(get_block_dump_target)
-	_new_fstype=$(get_fs_type_from_target $_target)
+	_new_fstype=$(get_fs_type_from_target "$_target")
 	if [[ -z "$_target" ]] || [[ -z "$_new_fstype" ]];then
 		derror "Dump target is invalid"
 		return 2
 	fi
 
 	ddebug "_target=$_target _new_fstype=$_new_fstype"
-	_new_dev=$(kdump_get_persistent_dev $_target)
+	_new_dev=$(kdump_get_persistent_dev "$_target")
 	if [[ -z "$_new_dev" ]]; then
 		perror "Get persistent device name failed"
 		return 2
 	fi
 
-	_new_mntpoint="$(get_kdump_mntpoint_from_target $_target)"
-	_dracut_args=$(lsinitrd $TARGET_INITRD -f usr/lib/dracut/build-parameter.txt)
+	_new_mntpoint="$(get_kdump_mntpoint_from_target "$_target")"
+	_dracut_args=$(lsinitrd "$TARGET_INITRD" -f usr/lib/dracut/build-parameter.txt)
 	if [[ -z "$_dracut_args" ]];then
 		dwarn "Warning: No dracut arguments found in initrd"
 		return 0
@@ -505,13 +505,14 @@ check_fs_modified()
 
 	# if --mount argument present then match old and new target, mount
 	# point and file system. If any of them mismatches then rebuild
-	echo $_dracut_args | grep -q "\-\-mount"
+	echo "$_dracut_args" | grep -q "\-\-mount"
 	if [[ $? -eq 0 ]];then
-		set -- $(echo $_dracut_args | awk -F "--mount '" '{print $2}' | cut -d' ' -f1,2,3)
+		# shellcheck disable=SC2046
+		set -- $(echo "$_dracut_args" | awk -F "--mount '" '{print $2}' | cut -d' ' -f1,2,3)
 		_old_dev=$1
 		_old_mntpoint=$2
 		_old_fstype=$3
-		[[ $_new_dev = $_old_dev && $_new_mntpoint = $_old_mntpoint && $_new_fstype = $_old_fstype ]] && return 0
+		[[ $_new_dev = "$_old_dev" && $_new_mntpoint = "$_old_mntpoint" && $_new_fstype = "$_old_fstype" ]] && return 0
 	# otherwise rebuild if target device is not a root device
 	else
 		[[ "$_target" = "$(get_root_fs_device)" ]] && return 0
@@ -590,7 +591,7 @@ check_rebuild()
 	#check to see if dependent files has been modified
 	#since last build of the image file
 	if [[ -f $TARGET_INITRD ]]; then
-		image_time=$(stat -c "%Y" $TARGET_INITRD 2>/dev/null)
+		image_time=$(stat -c "%Y" "$TARGET_INITRD" 2>/dev/null)
 
 		#in case of fadump mode, check whether the default/target
 		#initrd is already built with dump capture capability
@@ -649,7 +650,7 @@ function remove_kdump_kernel_key()
 		return
 	fi
 
-	keyctl unlink $KDUMP_KEY_ID %:.ima
+	keyctl unlink "$KDUMP_KEY_ID" %:.ima
 }
 
 # Load the kdump kernel specified in /etc/sysconfig/kdump
@@ -682,9 +683,10 @@ load_kdump()
 	PS4='+ $(date "+%Y-%m-%d %H:%M:%S") ${BASH_SOURCE}@${LINENO}: '
 	set -x
 
+	# shellcheck disable=SC2086
 	$KEXEC $KEXEC_ARGS $standard_kexec_args \
 		--command-line="$KDUMP_COMMANDLINE" \
-		--initrd=$TARGET_INITRD $KDUMP_KERNEL
+		--initrd="$TARGET_INITRD" "$KDUMP_KERNEL"
 
 	ret=$?
 	set +x
@@ -709,7 +711,7 @@ check_ssh_config()
 			# remove inline comments after the end of a directive.
 			if [[ -f "$config_val" ]]; then
 				# canonicalize the path
-				SSH_KEY_LOCATION=$(/usr/bin/readlink -m $config_val)
+				SSH_KEY_LOCATION=$(/usr/bin/readlink -m "$config_val")
 			else
 				dwarn "WARNING: '$config_val' doesn't exist, using default value '$SSH_KEY_LOCATION'"
 			fi
@@ -726,7 +728,7 @@ check_ssh_config()
 	done <<< "$(kdump_read_conf)"
 
 	#make sure they've configured kdump.conf for ssh dumps
-	local SSH_TARGET=$(echo -n $DUMP_TARGET | sed -n '/.*@/p')
+	local SSH_TARGET=$(echo -n "$DUMP_TARGET" | sed -n '/.*@/p')
 	if [[ -z "$SSH_TARGET" ]]; then
 		return 1
 	fi
@@ -746,7 +748,7 @@ check_and_wait_network_ready()
 	local errmsg
 
 	while true; do
-		errmsg=$(ssh -i $SSH_KEY_LOCATION -o BatchMode=yes $DUMP_TARGET mkdir -p $SAVE_PATH 2>&1)
+		errmsg=$(ssh -i "$SSH_KEY_LOCATION" -o BatchMode=yes "$DUMP_TARGET" mkdir -p "$SAVE_PATH" 2>&1)
 		retval=$?
 
 		# ssh exits with the exit status of the remote command or with 255 if an error occurred
@@ -759,7 +761,7 @@ check_and_wait_network_ready()
 
 		# if server removes the authorized_keys or, no /root/.ssh/kdump_id_rsa
 		ddebug "$errmsg"
-		echo $errmsg | grep -q "Permission denied\|No such file or directory\|Host key verification failed"
+		echo "$errmsg" | grep -q "Permission denied\|No such file or directory\|Host key verification failed"
 		if [[ $? -eq 0 ]]; then
 			derror "Could not create $DUMP_TARGET:$SAVE_PATH, you probably need to run \"kdumpctl propagate\""
 			return 1
@@ -808,16 +810,16 @@ propagate_ssh_key()
 		dinfo "Using existing keys..."
 	else
 		dinfo "Generating new ssh keys... "
-		/usr/bin/ssh-keygen -t rsa -f $KEYFILE -N "" 2>&1 > /dev/null
+		/usr/bin/ssh-keygen -t rsa -f "$KEYFILE" -N "" 2>&1 > /dev/null
 		dinfo "done."
 	fi
 
 	#now find the target ssh user and server to contact.
-	SSH_USER=$(echo $DUMP_TARGET | cut -d\  -f2 | cut -d@ -f1)
-	SSH_SERVER=$(echo $DUMP_TARGET | sed -e's/\(.*@\)\(.*$\)/\2/')
+	SSH_USER=$(echo "$DUMP_TARGET" | cut -d@ -f1)
+	SSH_SERVER=$(echo "$DUMP_TARGET" | sed -e's/\(.*@\)\(.*$\)/\2/')
 
 	#now send the found key to the found server
-	ssh-copy-id -i $KEYFILE $SSH_USER@$SSH_SERVER
+	ssh-copy-id -i "$KEYFILE" "$SSH_USER@$SSH_SERVER"
 	RET=$?
 	if [[ $RET == 0 ]]; then
 		dinfo "$KEYFILE has been added to ~$SSH_USER/.ssh/authorized_keys on $SSH_SERVER"
@@ -836,7 +838,7 @@ show_reserved_mem()
     mem=$(</sys/kernel/kexec_crash_size)
     mem_mb=$((mem / 1024 / 1024))
 
-    dinfo "Reserved "$mem_mb"MB memory for crash kernel"
+    dinfo "Reserved ${mem_mb}MB memory for crash kernel"
 }
 
 check_current_fadump_status()
@@ -869,8 +871,8 @@ save_raw()
 		derror "raw partition $raw_target not found"
 		return 1
 	}
-	check_fs=$(lsblk --nodeps -npo FSTYPE $raw_target)
-	if [[ $(echo $check_fs | wc -w) -ne 0 ]]; then
+	check_fs=$(lsblk --nodeps -npo FSTYPE "$raw_target")
+	if [[ $(echo "$check_fs" | wc -w) -ne 0 ]]; then
 		dwarn "Warning: Detected '$check_fs' signature on $raw_target, data loss is expected."
 		return 0
 	fi
@@ -886,11 +888,11 @@ save_raw()
 		derror "failed to create $coredir"
 		return 1
 	}
-	if makedumpfile -R $coredir/vmcore <$raw_target >/dev/null 2>&1; then
+	if makedumpfile -R "$coredir/vmcore" < "$raw_target" >/dev/null 2>&1; then
 		# dump found
 		dinfo "Dump saved to $coredir/vmcore"
 		# wipe makedumpfile header
-		dd if=/dev/zero of=$raw_target bs=1b count=1 2>/dev/null
+		dd if=/dev/zero of="$raw_target" bs=1b count=1 2>/dev/null
 	else
 		rm -rf "$coredir"
 	fi
@@ -904,7 +906,7 @@ local_fs_dump_target()
 
 	_target=$(grep -E "^ext[234]|^xfs|^btrfs|^minix" /etc/kdump.conf)
 	if [[ $? -eq 0 ]]; then
-		echo $_target|awk '{print $2}'
+		echo "$_target" | awk '{print $2}'
 	fi
 }
 
@@ -919,7 +921,7 @@ path_to_be_relabeled()
 
 		_target=$(local_fs_dump_target)
 		if [[ -n "$_target" ]]; then
-			_mnt=$(get_mntpoint_from_target $_target)
+			_mnt=$(get_mntpoint_from_target "$_target")
 			if ! is_mounted "$_mnt"; then
 				return
 			fi
@@ -930,9 +932,9 @@ path_to_be_relabeled()
 
 	_path=$(get_save_path)
 	# if $_path is masked by other mount, we will not relabel it.
-	_rmnt=$(df $_mnt/$_path 2>/dev/null | tail -1 | awk '{ print $NF }')
+	_rmnt=$(df "$_mnt/$_path" 2>/dev/null | tail -1 | awk '{ print $NF }')
 	if [[ "$_rmnt" == "$_mnt" ]]; then
-		echo $_mnt/$_path
+		echo "$_mnt/$_path"
 	fi
 }
 

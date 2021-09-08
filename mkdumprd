@@ -60,9 +60,9 @@ add_dracut_sshkey() {
 to_mount() {
     local _target=$1 _fstype=$2 _options=$3 _sed_cmd _new_mntpoint _pdev
 
-    _new_mntpoint=$(get_kdump_mntpoint_from_target $_target)
-    _fstype="${_fstype:-$(get_fs_type_from_target $_target)}"
-    _options="${_options:-$(get_mntopt_from_target $_target)}"
+    _new_mntpoint=$(get_kdump_mntpoint_from_target "$_target")
+    _fstype="${_fstype:-$(get_fs_type_from_target "$_target")}"
+    _options="${_options:-$(get_mntopt_from_target "$_target")}"
     _options="${_options:-defaults}"
 
     if [[ "$_fstype" == "nfs"* ]]; then
@@ -72,8 +72,8 @@ to_mount() {
         _sed_cmd+='s/,clientaddr=[^,]*//;'
     else
         # for non-nfs _target converting to use udev persistent name
-        _pdev="$(kdump_get_persistent_dev $_target)"
-        if [[ -z "$_pdev" ]]; then
+        _pdev="$(kdump_get_persistent_dev "$_target")"
+        if [[ -z $_pdev ]]; then
             return 1
         fi
     fi
@@ -114,19 +114,19 @@ mkdir_save_path_ssh()
 {
     local _opt _dir
     _opt=(-i "$SSH_KEY_LOCATION" -o BatchMode=yes -o StrictHostKeyChecking=yes)
-    ssh -qn "${_opt[@]}" $1 mkdir -p $SAVE_PATH 2>&1 > /dev/null
+    ssh -qn "${_opt[@]}" "$1" mkdir -p "$SAVE_PATH" 2>&1 > /dev/null
     _ret=$?
     if [[ $_ret -ne 0 ]]; then
         perror_exit "mkdir failed on $1:$SAVE_PATH"
     fi
 
     #check whether user has write permission on $1:$SAVE_PATH
-    _dir=$(ssh -qn "${_opt[@]}" $1 mktemp -dqp $SAVE_PATH 2>/dev/null)
+    _dir=$(ssh -qn "${_opt[@]}" "$1" mktemp -dqp "$SAVE_PATH" 2>/dev/null)
     _ret=$?
     if [[ $_ret -ne 0 ]]; then
         perror_exit "Could not create temporary directory on $1:$SAVE_PATH. Make sure user has write permission on destination"
     fi
-    ssh -qn "${_opt[@]}" $1 rmdir $_dir
+    ssh -qn "${_opt[@]}" "$1" rmdir "$_dir"
 
     return 0
 }
@@ -168,7 +168,7 @@ check_size() {
             perror_exit "Check dump target size failed"
     fi
 
-    if [[ $avail -lt $memtotal ]]; then
+    if [[ "$avail" -lt "$memtotal" ]]; then
         dwarn "Warning: There might not be enough space to save a vmcore."
         dwarn "         The size of $2 should be greater than $memtotal kilo bytes."
     fi
@@ -206,9 +206,9 @@ mount_failure()
 check_user_configured_target()
 {
     local _target=$1 _cfg_fs_type=$2 _mounted
-    local _mnt=$(get_mntpoint_from_target $_target)
-    local _opt=$(get_mntopt_from_target $_target)
-    local _fstype=$(get_fs_type_from_target $_target)
+    local _mnt=$(get_mntpoint_from_target "$_target")
+    local _opt=$(get_mntopt_from_target "$_target")
+    local _fstype=$(get_fs_type_from_target "$_target")
 
     if [[ -n "$_fstype" ]]; then
         # In case of nfs4, nfs should be used instead, nfs* options is deprecated in kdump.conf
@@ -227,7 +227,7 @@ check_user_configured_target()
     if [[ -n "$_mnt" ]]; then
         if ! is_mounted "$_mnt"; then
             if [[ $_opt  = *",noauto"* ]]; then
-                mount $_mnt
+                mount "$_mnt"
                 [[ $? -ne 0 ]] && mount_failure "$_target" "$_mnt" "$_fstype"
                 _mounted=$_mnt
             else
@@ -236,8 +236,8 @@ check_user_configured_target()
         fi
     else
         _mnt=$MKDUMPRD_TMPMNT
-        mkdir -p $_mnt
-        mount $_target $_mnt -t $_fstype -o defaults
+        mkdir -p "$_mnt"
+        mount "$_target" "$_mnt" -t "$_fstype" -o defaults
         [[ $? -ne 0 ]] && mount_failure "$_target" "" "$_fstype"
         _mounted=$_mnt
     fi
@@ -251,7 +251,7 @@ check_user_configured_target()
 
     # Unmount it early, if function is interrupted and didn't reach here, the shell trap will clear it up anyway
     if [[ -n "$_mounted" ]]; then
-        umount -f -- $_mounted
+        umount -f -- "$_mounted"
     fi
 }
 
@@ -276,13 +276,14 @@ verify_core_collector() {
         _params="$_params vmcore dumpfile"
     fi
 
+    # shellcheck disable=SC2086
     if ! $_cmd --check-params $_params; then
         perror_exit "makedumpfile parameter check failed."
     fi
 }
 
 add_mount() {
-    local _mnt=$(to_mount $@)
+    local _mnt=$(to_mount "$@")
 
     if [[ $? -ne 0 ]]; then
         exit 1
@@ -299,15 +300,15 @@ handle_default_dump_target()
 
     is_user_configured_dump_target && return
 
-    check_save_path_fs $SAVE_PATH
+    check_save_path_fs "$SAVE_PATH"
 
-    _save_path=$(get_bind_mount_source $SAVE_PATH)
-    _target=$(get_target_from_path $_save_path)
-    _mntpoint=$(get_mntpoint_from_target $_target)
+    _save_path=$(get_bind_mount_source "$SAVE_PATH")
+    _target=$(get_target_from_path "$_save_path")
+    _mntpoint=$(get_mntpoint_from_target "$_target")
 
     SAVE_PATH=${_save_path##"$_mntpoint"}
     add_mount "$_target"
-    check_size fs $_target
+    check_size fs "$_target"
 }
 
 # $1: function name
@@ -317,8 +318,8 @@ for_each_block_target()
 
     for dev in $(get_kdump_targets); do
         [[ -b "$dev" ]] || continue
-        majmin=$(get_maj_min $dev)
-        check_block_and_slaves $1 $majmin && return 1
+        majmin=$(get_maj_min "$dev")
+        check_block_and_slaves "$1" "$majmin" && return 1
     done
 
     return 0
@@ -328,14 +329,14 @@ for_each_block_target()
 #return false if unresettable.
 is_unresettable()
 {
-    local path="/sys/$(udevadm info --query=all --path=/sys/dev/block/$1 | awk '/^P:/ {print $2}' | sed -e 's/\(cciss[0-9]\+\/\).*/\1/g' -e 's/\/block\/.*$//')/resettable"
+    local path="/sys/$(udevadm info --query=all --path="/sys/dev/block/$1" | awk '/^P:/ {print $2}' | sed -e 's/\(cciss[0-9]\+\/\).*/\1/g' -e 's/\/block\/.*$//')/resettable"
     local resettable=1
 
     if [[ -f "$path" ]]
     then
         resettable="$(<"$path")"
         [[ $resettable -eq 0 ]] && [[ "$OVERRIDE_RESETTABLE" -eq 0 ]] && {
-            local device=$(udevadm info --query=all --path=/sys/dev/block/$1 | awk -F= '/DEVNAME/{print $2}')
+            local device=$(udevadm info --query=all --path="/sys/dev/block/$1" | awk -F= '/DEVNAME/{print $2}')
             derror "Error: Can not save vmcore because device $device is unresettable"
             return 0
         }
@@ -387,7 +388,7 @@ fi
 keyfile=$(kdump_get_conf_val sshkey)
 if [[ -f "$keyfile" ]]; then
     # canonicalize the path
-    SSH_KEY_LOCATION=$(/usr/bin/readlink -m $keyfile)
+    SSH_KEY_LOCATION=$(/usr/bin/readlink -m "$keyfile")
 fi
 
 while read -r config_opt config_val;
@@ -403,21 +404,21 @@ do
         ;;
     raw)
         # checking raw disk writable
-        dd if=$config_val count=1 of=/dev/null > /dev/null 2>&1 || {
+        dd if="$config_val" count=1 of=/dev/null > /dev/null 2>&1 || {
             perror_exit "Bad raw disk $config_val"
         }
-        _praw=$(persistent_policy="by-id" kdump_get_persistent_dev $config_val)
-        if [[ -z "$_praw" ]]; then
+        _praw=$(persistent_policy="by-id" kdump_get_persistent_dev "$config_val")
+        if [[ -z $_praw ]]; then
             exit 1
         fi
         add_dracut_arg "--device" "$_praw"
-        check_size raw $config_val
+        check_size raw "$config_val"
         ;;
     ssh)
         if strstr "$config_val" "@";
         then
-            mkdir_save_path_ssh $config_val
-            check_size ssh $config_val
+            mkdir_save_path_ssh "$config_val"
+            check_size ssh "$config_val"
             add_dracut_sshkey "$SSH_KEY_LOCATION"
         else
             perror_exit "Bad ssh dump target $config_val"
@@ -451,7 +452,7 @@ fi
 if ! is_fadump_capable; then
     # The 2nd rootfs mount stays behind the normal dump target mount,
     # so it doesn't affect the logic of check_dump_fs_modified().
-    is_dump_to_rootfs && add_mount "$(to_dev_name $(get_root_fs_device))"
+    is_dump_to_rootfs && add_mount "$(to_dev_name "$(get_root_fs_device)")"
 
     add_dracut_arg "--no-hostonly-default-device"
 fi
