@@ -11,7 +11,7 @@ kdump_module_init() {
 check() {
     [[ $debug ]] && set -x
     #kdumpctl sets this explicitly
-    if [ -z "$IN_KDUMP" ] || [ ! -f /etc/kdump.conf ]
+    if [[ -z "$IN_KDUMP" ]] || [[ ! -f /etc/kdump.conf ]]
     then
         return 1
     fi
@@ -41,11 +41,11 @@ depends() {
         _dep="$_dep ssh-client"
     fi
 
-    if [ "$(uname -m)" = "s390x" ]; then
+    if [[ "$(uname -m)" = "s390x" ]]; then
         _dep="$_dep znet"
     fi
 
-    if [ -n "$( ls -A /sys/class/drm 2>/dev/null )" ] || [ -d /sys/module/hyperv_fb ]; then
+    if [[ -n "$( ls -A /sys/class/drm 2>/dev/null )" ]] || [[ -d /sys/module/hyperv_fb ]]; then
         add_opt_module drm
     fi
 
@@ -57,19 +57,19 @@ depends() {
 }
 
 kdump_is_bridge() {
-     [ -d /sys/class/net/"$1"/bridge ]
+     [[ -d /sys/class/net/"$1"/bridge ]]
 }
 
 kdump_is_bond() {
-     [ -d /sys/class/net/"$1"/bonding ]
+     [[ -d /sys/class/net/"$1"/bonding ]]
 }
 
 kdump_is_team() {
-     [ -f /usr/bin/teamnl ] && teamnl $1 ports &> /dev/null
+     [[ -f /usr/bin/teamnl ]] && teamnl $1 ports &> /dev/null
 }
 
 kdump_is_vlan() {
-     [ -f /proc/net/vlan/"$1" ]
+     [[ -f /proc/net/vlan/"$1" ]]
 }
 
 # $1: netdev name
@@ -78,7 +78,7 @@ source_ifcfg_file() {
 
     dwarning "Network Scripts are deprecated. You are encouraged to set up network by NetworkManager."
     ifcfg_file=$(get_ifcfg_filename $1)
-    if [ -f "${ifcfg_file}" ]; then
+    if [[ -f "${ifcfg_file}" ]]; then
         . ${ifcfg_file}
     else
         dwarning "The ifcfg file of $1 is not found!"
@@ -102,19 +102,19 @@ kdump_setup_dns() {
     else
         dwarning "Failed to get DNS info via nmcli output. Now try sourcing ifcfg script"
         source_ifcfg_file "$_netdev"
-        [ -n "$DNS1" ] && echo "nameserver=$DNS1" > "$_dnsfile"
-        [ -n "$DNS2" ] && echo "nameserver=$DNS2" >> "$_dnsfile"
+        [[ -n "$DNS1" ]] && echo "nameserver=$DNS1" > "$_dnsfile"
+        [[ -n "$DNS2" ]] && echo "nameserver=$DNS2" >> "$_dnsfile"
     fi
 
     while read -r content;
     do
         _nameserver=$(echo $content | grep ^nameserver)
-        [ -z "$_nameserver" ] && continue
+        [[ -z "$_nameserver" ]] && continue
 
         _dns=$(echo $_nameserver | cut -d' ' -f2)
-        [ -z "$_dns" ] && continue
+        [[ -z "$_dns" ]] && continue
 
-        if [ ! -f $_dnsfile ] || ! grep -q "$_dns" "$_dnsfile" ; then
+        if [[ ! -f $_dnsfile ]] || ! grep -q "$_dns" "$_dnsfile" ; then
             echo "nameserver=$_dns" >> "$_dnsfile"
         fi
     done < "/etc/resolv.conf"
@@ -243,11 +243,11 @@ kdump_static_ip() {
         _ipv6_flag="-6"
     fi
 
-    if [ -n "$_ipaddr" ]; then
+    if [[ -n "$_ipaddr" ]]; then
         _gateway=$(ip $_ipv6_flag route list dev $_netdev | \
                 awk '/^default /{print $3}' | head -n 1)
 
-        if [ "x" !=  "x"$_ipv6_flag ]; then
+        if [[ "x" !=  "x"$_ipv6_flag ]]; then
             # _ipaddr="2002::56ff:feb6:56d5/64", _netmask is the number after "/"
             _netmask=${_ipaddr#*\/}
             _srcaddr="[$_srcaddr]"
@@ -268,7 +268,7 @@ kdump_static_ip() {
     while read -r _route; do
         _target=$(echo $_route | cut -d ' ' -f1)
         _nexthop=$(echo $_route | cut -d ' ' -f3)
-        if [ "x" !=  "x"$_ipv6_flag ]; then
+        if [[ "x" !=  "x"$_ipv6_flag ]]; then
             _target="[$_target]"
             _nexthop="[$_nexthop]"
         fi
@@ -297,7 +297,7 @@ kdump_handle_mulitpath_route() {
             if [[ "$_weight" -gt "$_max_weight" ]]; then
                 _nexthop=$(echo "$_route" | cut -d ' ' -f3)
                 _max_weight=$_weight
-                if [ "x" !=  "x"$_ipv6_flag ]; then
+                if [[ "x" !=  "x"$_ipv6_flag ]]; then
                     _rule="rd.route=[$_target]:[$_nexthop]:$kdumpnic"
                 else
                     _rule="rd.route=$_target:$_nexthop:$kdumpnic"
@@ -322,7 +322,7 @@ kdump_get_mac_addr() {
 #of its slaves, we should use perm address
 kdump_get_perm_addr() {
     local addr=$(ethtool -P $1 | sed -e 's/Permanent address: //')
-    if [ -z "$addr" ] || [ "$addr" = "00:00:00:00:00:00" ]
+    if [[ -z "$addr" ]] || [[ "$addr" = "00:00:00:00:00:00" ]]
     then
         derror "Can't get the permanent address of $1"
     else
@@ -420,7 +420,7 @@ kdump_setup_team() {
     #Buggy version teamdctl outputs to stderr!
     #Try to use the latest version of teamd.
     teamdctl "$_netdev" config dump > ${initdir}/tmp/$$-$_netdev.conf
-    if [ $? -ne 0 ]
+    if [[ $? -ne 0 ]]
     then
         derror "teamdctl failed."
         exit 1
@@ -460,25 +460,25 @@ find_online_znet_device() {
 	local CCWGROUPBUS_DEVICEDIR="/sys/bus/ccwgroup/devices"
 	local NETWORK_DEVICES d ifname ONLINE
 
-	[ ! -d "$CCWGROUPBUS_DEVICEDIR" ] && return
+	[[ ! -d "$CCWGROUPBUS_DEVICEDIR" ]] && return
 	NETWORK_DEVICES=$(find $CCWGROUPBUS_DEVICEDIR)
 	for d in $NETWORK_DEVICES
 	do
-		[ ! -f "$d/online" ] && continue
+		[[ ! -f "$d/online" ]] && continue
 		read -r ONLINE < $d/online
-		if [ $ONLINE -ne 1 ]; then
+		if [[ $ONLINE -ne 1 ]]; then
 			continue
 		fi
 		# determine interface name, if there (only for qeth and if
 		# device is online)
-		if [ -f $d/if_name ]
+		if [[ -f $d/if_name ]]
 		then
 			read -r ifname < $d/if_name
-		elif [ -d $d/net ]
+		elif [[ -d $d/net ]]
 		then
 			ifname=$(ls $d/net/)
 		fi
-		[ -n "$ifname" ] && break
+		[[ -n "$ifname" ]] && break
 	done
 	echo -n "$ifname"
 }
@@ -533,7 +533,7 @@ kdump_get_remote_ip()
     local _remote=$(get_remote_host $1) _remote_temp
     if is_hostname $_remote; then
         _remote_temp=$(getent ahosts $_remote | grep -v : | head -n 1)
-        if [ -z "$_remote_temp" ]; then
+        if [[ -z "$_remote_temp" ]]; then
             _remote_temp=$(getent ahosts $_remote | head -n 1)
         fi
         _remote=$(echo $_remote_temp | cut -d' ' -f1)
@@ -568,7 +568,7 @@ kdump_install_net() {
     fi
 
     _static=$(kdump_static_ip $_netdev $_srcaddr $kdumpnic)
-    if [ -n "$_static" ]; then
+    if [[ -n "$_static" ]]; then
         _proto=none
     elif is_ipv6_address $_srcaddr; then
         _proto=auto6
@@ -583,7 +583,7 @@ kdump_install_net() {
     # so we have to avoid adding duplicates
     # We should also check /proc/cmdline for existing ip=xx arg.
     # For example, iscsi boot will specify ip=xxx arg in cmdline.
-    if [ ! -f $_ip_conf ] || ! grep -q $_ip_opts $_ip_conf &&\
+    if [[ ! -f $_ip_conf ]] || ! grep -q $_ip_opts $_ip_conf &&\
         ! grep -q "ip=[^[:space:]]*$_netdev" /proc/cmdline; then
         echo "$_ip_opts" >> $_ip_conf
     fi
@@ -606,7 +606,7 @@ kdump_install_net() {
 
     kdump_setup_dns "$_netdev" "$_nm_show_cmd"
 
-    if [ ! -f ${initdir}/etc/cmdline.d/50neednet.conf ]; then
+    if [[ ! -f ${initdir}/etc/cmdline.d/50neednet.conf ]]; then
         # network-manager module needs this parameter
         echo "rd.neednet" >> ${initdir}/etc/cmdline.d/50neednet.conf
     fi
@@ -618,8 +618,8 @@ kdump_install_net() {
     # the default gate way for network dump, eth1 in the fence kdump path will
     # call kdump_install_net again and we don't want eth1 to be the default
     # gateway.
-    if [ ! -f ${initdir}/etc/cmdline.d/60kdumpnic.conf ] &&
-       [ ! -f ${initdir}/etc/cmdline.d/70bootdev.conf ]; then
+    if [[ ! -f ${initdir}/etc/cmdline.d/60kdumpnic.conf ]] &&
+       [[ ! -f ${initdir}/etc/cmdline.d/70bootdev.conf ]]; then
         echo "kdumpnic=$kdumpnic" > ${initdir}/etc/cmdline.d/60kdumpnic.conf
         echo "bootdev=$kdumpnic" > ${initdir}/etc/cmdline.d/70bootdev.conf
     fi
@@ -627,21 +627,21 @@ kdump_install_net() {
 
 # install etc/kdump/pre.d and /etc/kdump/post.d
 kdump_install_pre_post_conf() {
-    if [ -d /etc/kdump/pre.d ]; then
+    if [[ -d /etc/kdump/pre.d ]]; then
         for file in /etc/kdump/pre.d/*; do
-            if [ -x "$file" ]; then
+            if [[ -x "$file" ]]; then
                 dracut_install $file
-            elif [ $file != "/etc/kdump/pre.d/*" ]; then
+            elif [[ $file != "/etc/kdump/pre.d/*" ]]; then
                echo "$file is not executable"
             fi
         done
     fi
 
-    if [ -d /etc/kdump/post.d ]; then
+    if [[ -d /etc/kdump/post.d ]]; then
         for file in /etc/kdump/post.d/*; do
-            if [ -x "$file" ]; then
+            if [[ -x "$file" ]]; then
                 dracut_install $file
-            elif [ $file != "/etc/kdump/post.d/*" ]; then
+            elif [[ $file != "/etc/kdump/post.d/*" ]]; then
                 echo "$file is not executable"
             fi
         done
@@ -670,7 +670,7 @@ default_dump_target_install_conf()
     echo "$_fstype $_target" >> ${initdir}/tmp/$$-kdump.conf
 
     # don't touch the path under root mount
-    if [ "$_mntpoint" != "/" ]; then
+    if [[ "$_mntpoint" != "/" ]]; then
         _save_path=${_save_path##"$_mntpoint"}
     fi
 
@@ -751,10 +751,10 @@ kdump_get_iscsi_initiator() {
     local _initiator
     local initiator_conf="/etc/iscsi/initiatorname.iscsi"
 
-    [ -f "$initiator_conf" ] || return 1
+    [[ -f "$initiator_conf" ]] || return 1
 
     while read -r _initiator; do
-        [ -z "${_initiator%%#*}" ] && continue # Skip comment lines
+        [[ -z "${_initiator%%#*}" ]] && continue # Skip comment lines
 
         case $_initiator in
             InitiatorName=*)
@@ -770,7 +770,7 @@ kdump_get_iscsi_initiator() {
 
 # Figure out iBFT session according to session type
 is_ibft() {
-    [ "$(kdump_iscsi_get_rec_val $1 "node.discovery_type")" = fw ]
+    [[ "$(kdump_iscsi_get_rec_val $1 "node.discovery_type")" = fw ]]
 }
 
 kdump_setup_iscsi_device() {
@@ -803,18 +803,18 @@ kdump_setup_iscsi_device() {
 
     # get and set username and password details
     username=$(kdump_iscsi_get_rec_val ${path} "node.session.auth.username")
-    [ "$username" == "<empty>" ] && username=""
+    [[ "$username" == "<empty>" ]] && username=""
     password=$(kdump_iscsi_get_rec_val ${path} "node.session.auth.password")
-    [ "$password" == "<empty>" ] && password=""
+    [[ "$password" == "<empty>" ]] && password=""
     username_in=$(kdump_iscsi_get_rec_val ${path} "node.session.auth.username_in")
-    [ -n "$username" ] && userpwd_str="$username:$password"
+    [[ -n "$username" ]] && userpwd_str="$username:$password"
 
     # get and set incoming username and password details
-    [ "$username_in" == "<empty>" ] && username_in=""
+    [[ "$username_in" == "<empty>" ]] && username_in=""
     password_in=$(kdump_iscsi_get_rec_val ${path} "node.session.auth.password_in")
-    [ "$password_in" == "<empty>" ] && password_in=""
+    [[ "$password_in" == "<empty>" ]] && password_in=""
 
-    [ -n "$username_in" ] && userpwd_in_str=":$username_in:$password_in"
+    [[ -n "$username_in" ]] && userpwd_in_str=":$username_in:$password_in"
 
     kdump_install_net "$tgt_ipaddr"
 
@@ -837,7 +837,7 @@ kdump_setup_iscsi_device() {
 
     # Setup initator
     initiator_str=$(kdump_get_iscsi_initiator)
-    [ $? -ne "0" ] && derror "Failed to get initiator name" && return 1
+    [[ $? -ne "0" ]] && derror "Failed to get initiator name" && return 1
 
     # If initiator details do not exist already, append.
     if ! grep -q "$initiator_str" $netroot_conf; then
@@ -878,7 +878,7 @@ get_alias() {
     do
             # in /etc/hosts, alias can come at the 2nd column
             entries=$(grep $ip /etc/hosts | awk '{ $1=""; print $0 }')
-            if [ $? -eq 0 ]; then
+            if [[ $? -eq 0 ]]; then
                     alias_set="$alias_set $entries"
             fi
     done
@@ -895,7 +895,7 @@ is_localhost() {
     hostnames="$hostnames $shortnames $aliasname"
 
     for name in ${hostnames}; do
-        if [ "$name" == "$nodename" ]; then
+        if [[ "$name" == "$nodename" ]]; then
             return 0
         fi
     done
@@ -928,7 +928,7 @@ get_pcs_fence_kdump_nodes() {
 
 # retrieves fence_kdump args from config file
 get_pcs_fence_kdump_args() {
-    if [ -f $FENCE_KDUMP_CONFIG_FILE ]; then
+    if [[ -f $FENCE_KDUMP_CONFIG_FILE ]]; then
         . $FENCE_KDUMP_CONFIG_FILE
         echo $FENCE_KDUMP_OPTS
     fi
@@ -966,7 +966,7 @@ kdump_configure_fence_kdump () {
         echo "fence_kdump_nodes $nodes" >> ${kdump_cfg_file}
 
         args=$(get_pcs_fence_kdump_args)
-        if [ -n "$args" ]; then
+        if [[ -n "$args" ]]; then
             echo "fence_kdump_args $args" >> ${kdump_cfg_file}
         fi
 
@@ -992,7 +992,7 @@ kdump_install_random_seed() {
 
     poolsize=$(</proc/sys/kernel/random/poolsize)
 
-    if [ ! -d ${initdir}/var/lib/ ]; then
+    if [[ ! -d ${initdir}/var/lib/ ]]; then
         mkdir -p ${initdir}/var/lib/
     fi
 
@@ -1004,7 +1004,7 @@ kdump_install_systemd_conf() {
     # Kdump turns out to require longer default systemd mount timeout
     # than 1st kernel(90s by default), we use default 300s for kdump.
     grep -r "^[[:space:]]*DefaultTimeoutStartSec=" ${initdir}/etc/systemd/system.conf* &>/dev/null
-    if [ $? -ne 0 ]; then
+    if [[ $? -ne 0 ]]; then
         mkdir -p ${initdir}/etc/systemd/system.conf.d
         echo "[Manager]" > ${initdir}/etc/systemd/system.conf.d/kdump.conf
         echo "DefaultTimeoutStartSec=300s" >> ${initdir}/etc/systemd/system.conf.d/kdump.conf

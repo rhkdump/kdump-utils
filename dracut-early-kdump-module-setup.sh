@@ -6,8 +6,8 @@ KDUMP_KERNEL=""
 KDUMP_INITRD=""
 
 check() {
-    if [ ! -f /etc/sysconfig/kdump ] || [ ! -f /lib/kdump/kdump-lib.sh ]\
-        || [ -n "${IN_KDUMP}" ]
+    if [[ ! -f /etc/sysconfig/kdump ]] || [[ ! -f /lib/kdump/kdump-lib.sh ]]\
+        || [[ -n "${IN_KDUMP}" ]]
     then
         return 1
     fi
@@ -25,7 +25,7 @@ prepare_kernel_initrd() {
     prepare_kdump_bootinfo
 
     # $kernel is a variable from dracut
-    if [ "$KDUMP_KERNELVER" != $kernel ]; then
+    if [[ "$KDUMP_KERNELVER" != $kernel ]]; then
         dwarn "Using kernel version '$KDUMP_KERNELVER' for early kdump," \
             "but the initramfs is generated for kernel version '$kernel'"
     fi
@@ -33,12 +33,12 @@ prepare_kernel_initrd() {
 
 install() {
     prepare_kernel_initrd
-    if [ ! -f "$KDUMP_KERNEL" ]; then
+    if [[ ! -f "$KDUMP_KERNEL" ]]; then
         derror "Could not find required kernel for earlykdump," \
             "earlykdump will not work!"
         return 1
     fi
-    if [ ! -f "$KDUMP_INITRD" ]; then
+    if [[ ! -f "$KDUMP_INITRD" ]]; then
         derror "Could not find required kdump initramfs for earlykdump," \
             "please ensure kdump initramfs is generated first," \
             "earlykdump will not work!"

@@ -2,7 +2,7 @@
 # Generate an initramfs image that isolates dump capture capability within
 # the default initramfs using zz-fadumpinit dracut module.
 
-if [ -f /etc/sysconfig/kdump ]; then
+if [[ -f /etc/sysconfig/kdump ]]; then
 	. /etc/sysconfig/kdump
 fi
 

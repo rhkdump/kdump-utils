@@ -6,7 +6,7 @@
 # Written by Cong Wang <amwang@redhat.com>
 #
 
-if [ -f /etc/sysconfig/kdump ]; then
+if [[ -f /etc/sysconfig/kdump ]]; then
 	. /etc/sysconfig/kdump
 fi
 
@@ -18,7 +18,7 @@ export IN_KDUMP=1
 
 #initiate the kdump logger
 dlog_init
-if [ $? -ne 0 ]; then
+if [[ $? -ne 0 ]]; then
 	echo "failed to initiate the kdump logger."
 	exit 1
 fi
@@ -73,7 +73,7 @@ to_mount() {
     else
         # for non-nfs _target converting to use udev persistent name
         _pdev="$(kdump_get_persistent_dev $_target)"
-        if [ -z "$_pdev" ]; then
+        if [[ -z "$_pdev" ]]; then
             return 1
         fi
     fi
@@ -116,14 +116,14 @@ mkdir_save_path_ssh()
     _opt=(-i "$SSH_KEY_LOCATION" -o BatchMode=yes -o StrictHostKeyChecking=yes)
     ssh -qn "${_opt[@]}" $1 mkdir -p $SAVE_PATH 2>&1 > /dev/null
     _ret=$?
-    if [ $_ret -ne 0 ]; then
+    if [[ $_ret -ne 0 ]]; then
         perror_exit "mkdir failed on $1:$SAVE_PATH"
     fi
 
     #check whether user has write permission on $1:$SAVE_PATH
     _dir=$(ssh -qn "${_opt[@]}" $1 mktemp -dqp $SAVE_PATH 2>/dev/null)
     _ret=$?
-    if [ $_ret -ne 0 ]; then
+    if [[ $_ret -ne 0 ]]; then
         perror_exit "Could not create temporary directory on $1:$SAVE_PATH. Make sure user has write permission on destination"
     fi
     ssh -qn "${_opt[@]}" $1 rmdir $_dir
@@ -164,11 +164,11 @@ check_size() {
             return
     esac
 
-    if [ $? -ne 0 ]; then
+    if [[ $? -ne 0 ]]; then
             perror_exit "Check dump target size failed"
     fi
 
-    if [ $avail -lt $memtotal ]; then
+    if [[ $avail -lt $memtotal ]]; then
         dwarn "Warning: There might not be enough space to save a vmcore."
         dwarn "         The size of $2 should be greater than $memtotal kilo bytes."
     fi
@@ -178,7 +178,7 @@ check_save_path_fs()
 {
     local _path=$1
 
-    if [ ! -d $_path ]; then
+    if [[ ! -d $_path ]]; then
         perror_exit "Dump path $_path does not exist."
     fi
 }
@@ -190,7 +190,7 @@ mount_failure()
     local _fstype=$3
     local msg="Failed to mount $_target"
 
-    if [ -n "$_mnt" ]; then
+    if [[ -n "$_mnt" ]]; then
         msg="$msg on $_mnt"
     fi
 
@@ -210,11 +210,11 @@ check_user_configured_target()
     local _opt=$(get_mntopt_from_target $_target)
     local _fstype=$(get_fs_type_from_target $_target)
 
-    if [ -n "$_fstype" ]; then
+    if [[ -n "$_fstype" ]]; then
         # In case of nfs4, nfs should be used instead, nfs* options is deprecated in kdump.conf
         [[ $_fstype = "nfs"* ]] && _fstype=nfs
 
-        if [ -n "$_cfg_fs_type" ] && [ "$_fstype" != "$_cfg_fs_type" ]; then
+        if [[ -n "$_cfg_fs_type" ]] && [[ "$_fstype" != "$_cfg_fs_type" ]]; then
             perror_exit "\"$_target\" have a wrong type config \"$_cfg_fs_type\", expected \"$_fstype\""
         fi
     else
@@ -224,11 +224,11 @@ check_user_configured_target()
 
     # For noauto mount, mount it inplace with default value.
     # Else use the temporary target directory
-    if [ -n "$_mnt" ]; then
+    if [[ -n "$_mnt" ]]; then
         if ! is_mounted "$_mnt"; then
             if [[ $_opt  = *",noauto"* ]]; then
                 mount $_mnt
-                [ $? -ne 0 ] && mount_failure "$_target" "$_mnt" "$_fstype"
+                [[ $? -ne 0 ]] && mount_failure "$_target" "$_mnt" "$_fstype"
                 _mounted=$_mnt
             else
                 perror_exit "Dump target \"$_target\" is neither mounted nor configured as \"noauto\""
@@ -238,19 +238,19 @@ check_user_configured_target()
         _mnt=$MKDUMPRD_TMPMNT
         mkdir -p $_mnt
         mount $_target $_mnt -t $_fstype -o defaults
-        [ $? -ne 0 ] && mount_failure "$_target" "" "$_fstype"
+        [[ $? -ne 0 ]] && mount_failure "$_target" "" "$_fstype"
         _mounted=$_mnt
     fi
 
     # For user configured target, use $SAVE_PATH as the dump path within the target
-    if [ ! -d "$_mnt/$SAVE_PATH" ]; then
+    if [[ ! -d "$_mnt/$SAVE_PATH" ]]; then
         perror_exit "Dump path \"$_mnt/$SAVE_PATH\" does not exist in dump target \"$_target\""
     fi
 
     check_size fs "$_target"
 
     # Unmount it early, if function is interrupted and didn't reach here, the shell trap will clear it up anyway
-    if [ -n "$_mounted" ]; then
+    if [[ -n "$_mounted" ]]; then
         umount -f -- $_mounted
     fi
 }
@@ -260,7 +260,7 @@ verify_core_collector() {
     local _cmd="${1%% *}"
     local _params="${1#* }"
 
-    if [ "$_cmd" != "makedumpfile" ]; then
+    if [[ "$_cmd" != "makedumpfile" ]]; then
         if is_raw_dump_target; then
             dwarn "Warning: specifying a non-makedumpfile core collector, you will have to recover the vmcore manually."
         fi
@@ -284,7 +284,7 @@ verify_core_collector() {
 add_mount() {
     local _mnt=$(to_mount $@)
 
-    if [ $? -ne 0 ]; then
+    if [[ $? -ne 0 ]]; then
         exit 1
     fi
 
@@ -316,7 +316,7 @@ for_each_block_target()
     local dev majmin
 
     for dev in $(get_kdump_targets); do
-        [ -b "$dev" ] || continue
+        [[ -b "$dev" ]] || continue
         majmin=$(get_maj_min $dev)
         check_block_and_slaves $1 $majmin && return 1
     done
@@ -331,10 +331,10 @@ is_unresettable()
     local path="/sys/$(udevadm info --query=all --path=/sys/dev/block/$1 | awk '/^P:/ {print $2}' | sed -e 's/\(cciss[0-9]\+\/\).*/\1/g' -e 's/\/block\/.*$//')/resettable"
     local resettable=1
 
-    if [ -f "$path" ]
+    if [[ -f "$path" ]]
     then
         resettable="$(<"$path")"
-        [ $resettable -eq 0 -a "$OVERRIDE_RESETTABLE" -eq 0 ] && {
+        [[ $resettable -eq 0 ]] && [[ "$OVERRIDE_RESETTABLE" -eq 0 ]] && {
             local device=$(udevadm info --query=all --path=/sys/dev/block/$1 | awk -F= '/DEVNAME/{print $2}')
             derror "Error: Can not save vmcore because device $device is unresettable"
             return 0
@@ -359,7 +359,7 @@ check_resettable()
     for_each_block_target is_unresettable
     _ret=$?
 
-    [ $_ret -eq 0 ] && return
+    [[ $_ret -eq 0 ]] && return
 
     return 1
 }
@@ -385,7 +385,7 @@ fi
 
 # firstly get right SSH_KEY_LOCATION
 keyfile=$(kdump_get_conf_val sshkey)
-if [ -f "$keyfile" ]; then
+if [[ -f "$keyfile" ]]; then
     # canonicalize the path
     SSH_KEY_LOCATION=$(/usr/bin/readlink -m $keyfile)
 fi
@@ -407,7 +407,7 @@ do
             perror_exit "Bad raw disk $config_val"
         }
         _praw=$(persistent_policy="by-id" kdump_get_persistent_dev $config_val)
-        if [ -z "$_praw" ]; then
+        if [[ -z "$_praw" ]]; then
             exit 1
         fi
         add_dracut_arg "--device" "$_praw"
@@ -438,7 +438,7 @@ done <<< "$(kdump_read_conf)"
 
 handle_default_dump_target
 
-if [ -n "$extra_modules" ]
+if [[ -n "$extra_modules" ]]
 then
     add_dracut_arg "--add-drivers" "$extra_modules"
 fi
