@@ -255,8 +255,7 @@ kdump_static_ip() {
             _gateway="[$_gateway]"
         else
             _prefix=$(cut -d'/' -f2 <<< "$_ipaddr")
-            _netmask=$(cal_netmask_by_prefix "$_prefix" "$_ipv6_flag")
-            if [[ "$?" -ne 0 ]]; then
+            if ! _netmask=$(cal_netmask_by_prefix "$_prefix" "$_ipv6_flag"); then
                 derror "Failed to calculate netmask for $_ipaddr"
                 exit 1
             fi
@@ -359,10 +358,7 @@ kdump_setup_bridge() {
         _dev=${_dev##*/}
         _kdumpdev=$_dev
         if kdump_is_bond "$_dev"; then
-            (kdump_setup_bond "$_dev" "$(get_nmcli_connection_show_cmd_by_ifname "$_dev")")
-            if [[ $? != 0 ]]; then
-                exit 1
-            fi
+            (kdump_setup_bond "$_dev" "$(get_nmcli_connection_show_cmd_by_ifname "$_dev")") || exit 1
         elif kdump_is_team "$_dev"; then
             kdump_setup_team "$_dev"
         elif kdump_is_vlan "$_dev"; then
@@ -420,9 +416,7 @@ kdump_setup_team() {
     echo " team=$_netdev:${_slaves%,}" >> "${initdir}/etc/cmdline.d/44team.conf"
     #Buggy version teamdctl outputs to stderr!
     #Try to use the latest version of teamd.
-    teamdctl "$_netdev" config dump > "${initdir}/tmp/$$-$_netdev.conf"
-    if [[ $? -ne 0 ]]
-    then
+    if ! teamdctl "$_netdev" config dump > "${initdir}/tmp/$$-$_netdev.conf"; then
         derror "teamdctl failed."
         exit 1
     fi
@@ -442,10 +436,7 @@ kdump_setup_vlan() {
         derror "Vlan over bridge is not supported!"
         exit 1
     elif kdump_is_bond "$_phydev"; then
-        (kdump_setup_bond "$_phydev" "$(get_nmcli_connection_show_cmd_by_ifname "$_phydev")")
-        if [[ $? != 0 ]]; then
-            exit 1
-        fi
+        (kdump_setup_bond "$_phydev" "$(get_nmcli_connection_show_cmd_by_ifname "$_phydev")") || exit 1
         echo " vlan=$(kdump_setup_ifname "$_netdev"):$_phydev" > "${initdir}/etc/cmdline.d/43vlan.conf"
     else
         _kdumpdev="$(kdump_setup_ifname "$_phydev")"
@@ -516,8 +507,8 @@ kdump_setup_znet() {
 
 kdump_get_ip_route()
 {
-    local _route=$(/sbin/ip -o route get to "$1" 2>&1)
-    if [[ $? != 0 ]]; then
+    local _route
+    if ! _route=$(/sbin/ip -o route get to "$1" 2>&1); then
         derror "Bad kdump network destination: $1"
         exit 1
     fi
@@ -561,8 +552,7 @@ kdump_install_net() {
     _znet_netdev=$(find_online_znet_device)
     if [[ -n "$_znet_netdev" ]]; then
         _nm_show_cmd_znet=$(get_nmcli_connection_show_cmd_by_ifname "$_znet_netdev")
-        (kdump_setup_znet "$_znet_netdev" "$_nm_show_cmd_znet")
-        if [[ $? != 0 ]]; then
+        if ! (kdump_setup_znet "$_znet_netdev" "$_nm_show_cmd_znet"); then
             derror "Failed to set up znet"
             exit 1
         fi
@@ -592,10 +582,7 @@ kdump_install_net() {
     if kdump_is_bridge "$_netdev"; then
         kdump_setup_bridge "$_netdev"
     elif kdump_is_bond "$_netdev"; then
-        (kdump_setup_bond "$_netdev" "$_nm_show_cmd")
-        if [[ $? != 0 ]]; then
-            exit 1
-        fi
+        (kdump_setup_bond "$_netdev" "$_nm_show_cmd") || exit 1
     elif kdump_is_team "$_netdev"; then
         kdump_setup_team "$_netdev"
     elif kdump_is_vlan "$_netdev"; then
@@ -837,8 +824,10 @@ kdump_setup_iscsi_device() {
     fi
 
     # Setup initator
-    initiator_str=$(kdump_get_iscsi_initiator)
-    [[ $? -ne "0" ]] && derror "Failed to get initiator name" && return 1
+    if ! initiator_str=$(kdump_get_iscsi_initiator); then
+        derror "Failed to get initiator name"
+        return 1
+    fi
 
     # If initiator details do not exist already, append.
     if ! grep -q "$initiator_str" "$netroot_conf"; then
@@ -878,8 +867,7 @@ get_alias() {
     for ip in $ips
     do
             # in /etc/hosts, alias can come at the 2nd column
-            entries=$(grep "$ip" /etc/hosts | awk '{ $1=""; print $0 }')
-            if [[ $? -eq 0 ]]; then
+            if entries=$(grep "$ip" /etc/hosts | awk '{ $1=""; print $0 }'); then
                     alias_set="$alias_set $entries"
             fi
     done
@@ -1004,8 +992,7 @@ kdump_install_random_seed() {
 kdump_install_systemd_conf() {
     # Kdump turns out to require longer default systemd mount timeout
     # than 1st kernel(90s by default), we use default 300s for kdump.
-    grep -r "^[[:space:]]*DefaultTimeoutStartSec=" "${initdir}/etc/systemd/system.conf"* &>/dev/null
-    if [[ $? -ne 0 ]]; then
+    if ! grep -q -r "^[[:space:]]*DefaultTimeoutStartSec=" "${initdir}/etc/systemd/system.conf"*; then
         mkdir -p "${initdir}/etc/systemd/system.conf.d"
         echo "[Manager]" > "${initdir}/etc/systemd/system.conf.d/kdump.conf"
         echo "DefaultTimeoutStartSec=300s" >> "${initdir}/etc/systemd/system.conf.d/kdump.conf"
