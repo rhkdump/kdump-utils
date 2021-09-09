@@ -364,6 +364,29 @@ kdump_install_nmconnections() {
     echo > "${initdir}/usr/libexec/nm-initrd-generator"
 }
 
+kdump_install_nm_netif_allowlist() {
+    local _netif _except_netif _netif_allowlist _netif_allowlist_nm_conf
+
+    for _netif in $1; do
+        _per_mac=$(kdump_get_perm_addr "$_netif")
+        if [[ "$_per_mac" != 'not set' ]]; then
+            _except_netif="mac:$_per_mac"
+        else
+            _except_netif="interface-name:$_netif"
+        fi
+        _netif_allowlist="${_netif_allowlist}except:${_except_netif};"
+    done
+
+    _netif_allowlist_nm_conf=$_DRACUT_KDUMP_NM_TMP_DIR/netif_allowlist_nm_conf
+    cat << EOF > "$_netif_allowlist_nm_conf"
+[device-others]
+match-device=${_netif_allowlist}
+managed=false
+EOF
+
+    inst "$_netif_allowlist_nm_conf" "/etc/NetworkManager/conf.d/10-kdump-netif_allowlist.conf"
+}
+
 kdump_setup_bridge() {
     local _netdev=$1
     local _dev
@@ -558,6 +581,7 @@ kdump_install_net() {
     if [[ -n "$_netifs" ]]; then
         kdump_install_nmconnections
         apply_nm_initrd_generator_timeouts
+        kdump_install_nm_netif_allowlist "$_netifs"
     fi
 }
 
