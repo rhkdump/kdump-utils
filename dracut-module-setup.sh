@@ -1,9 +1,20 @@
 #!/bin/bash
 
+_DRACUT_KDUMP_NM_TMP_DIR="/tmp/$$-DRACUT_KDUMP_NM"
+
+cleanup() {
+    rm -rf "$_DRACUT_KDUMP_NM_TMP_DIR"
+}
+
+# shellcheck disable=SC2154 # known issue of shellcheck https://github.com/koalaman/shellcheck/issues/1299
+trap 'ret=$?; cleanup; exit $ret;' EXIT
+
 kdump_module_init() {
     if ! [[ -d "${initdir}/tmp" ]]; then
         mkdir -p "${initdir}/tmp"
     fi
+
+    mkdir -p "$_DRACUT_KDUMP_NM_TMP_DIR"
 
     . /lib/kdump/kdump-lib.sh
 }
@@ -352,6 +363,71 @@ kdump_setup_ifname() {
     fi
 
     echo "$_ifname"
+}
+
+_clone_nmconnection() {
+    local _clone_output _name _unique_id
+
+    _unique_id=$1
+    _name=$(nmcli --get-values connection.id connection show "$_unique_id")
+    if _clone_output=$(nmcli connection clone --temporary uuid "$_unique_id" "$_name"); then
+        sed -E -n "s/.* \(.*\) cloned as.*\((.*)\)\.$/\1/p" <<< "$_clone_output"
+        return 0
+    fi
+
+    return 1
+}
+
+# Clone and modify NM connection profiles
+#
+# This function makes use of "nmcli clone" to automatically convert ifcfg-*
+# files to Networkmanager .nmconnection connection profiles and also modify the
+# properties of .nmconnection if necessary.
+clone_and_modify_nmconnection() {
+    local _dev _cloned_nmconnection_file_path _tmp_nmconnection_file_path _old_uuid _uuid
+
+    _dev=$1
+    _nmconnection_file_path=$2
+
+    _old_uuid=$(nmcli --get-values connection.uuid connection show filename "$_nmconnection_file_path")
+
+    if ! _uuid=$(_clone_nmconnection "$_old_uuid"); then
+        derror "Failed to clone $_old_uuid"
+        exit 1
+    fi
+
+    _cloned_nmconnection_file_path=$(nmcli --get-values UUID,FILENAME connection show | sed -n "s/^${_uuid}://p")
+    _tmp_nmconnection_file_path=$_DRACUT_KDUMP_NM_TMP_DIR/$(basename "$_nmconnection_file_path")
+    cp "$_cloned_nmconnection_file_path" "$_tmp_nmconnection_file_path"
+    # change uuid back to old value in case it's refered by other connection
+    # profile e.g. connection.master could be interface name of the master
+    # device or UUID of the master connection.
+    sed -i -E "s/(^uuid=).*$/\1${_old_uuid}/g" "$_tmp_nmconnection_file_path"
+    nmcli connection del "$_uuid" &> >(ddebug)
+    echo -n "$_tmp_nmconnection_file_path"
+}
+
+_install_nmconnection() {
+    local _src _nmconnection_name _dst
+
+    _src=$1
+    _nmconnection_name=$(basename "$_src")
+    _dst="/etc/NetworkManager/system-connections/$_nmconnection_name"
+    inst "$_src" "$_dst"
+}
+
+kdump_install_nmconnections() {
+    local _netif _nm_conn_path _cloned_nm_path
+
+    while IFS=: read -r _netif _nm_conn_path; do
+        [[ -v "unique_netifs[$_netif]" ]] || continue
+        if _cloned_nm_path=$(clone_and_modify_nmconnection "$_netif" "$_nm_conn_path"); then
+            _install_nmconnection "$_cloned_nm_path"
+        else
+            derror "Failed to install the .nmconnection for $_netif"
+            exit 1
+        fi
+    done <<< "$(nmcli -t -f device,filename connection show --active)"
 }
 
 kdump_setup_bridge() {
@@ -1030,6 +1106,7 @@ remove_cpu_online_rule() {
 }
 
 install() {
+    declare -A unique_netifs
     local arch
 
     kdump_module_init
