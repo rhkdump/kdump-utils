@@ -25,7 +25,7 @@ is_squash_available() {
         if [[ -z "$KDUMP_KERNELVER" ]]; then
             modprobe --dry-run $kmodule &>/dev/null || return 1
         else
-            modprobe -S $KDUMP_KERNELVER --dry-run $kmodule &>/dev/null || return 1
+            modprobe -S "$KDUMP_KERNELVER" --dry-run $kmodule &>/dev/null || return 1
         fi
     done
 }
@@ -79,10 +79,10 @@ get_user_configured_dump_disk()
     local _target
 
     _target=$(kdump_get_conf_val "ext[234]\|xfs\|btrfs\|minix\|raw")
-    [[ -n "$_target" ]] && echo $_target && return
+    [[ -n "$_target" ]] && echo "$_target" && return
 
     _target=$(get_dracut_args_target "$(kdump_get_conf_val "dracut_args")")
-    [[ -b "$_target" ]] && echo $_target
+    [[ -b "$_target" ]] && echo "$_target"
 }
 
 get_block_dump_target()
@@ -94,12 +94,12 @@ get_block_dump_target()
     fi
 
     _target=$(get_user_configured_dump_disk)
-    [[ -n "$_target" ]] && to_dev_name $_target && return
+    [[ -n "$_target" ]] && to_dev_name "$_target" && return
 
     # Get block device name from local save path
     _path=$(get_save_path)
-    _target=$(get_target_from_path $_path)
-    [[ -b "$_target" ]] && to_dev_name $_target
+    _target=$(get_target_from_path "$_path")
+    [[ -b "$_target" ]] && to_dev_name "$_target"
 }
 
 is_dump_to_rootfs()
@@ -114,7 +114,7 @@ get_failure_action_target()
     if is_dump_to_rootfs; then
         # Get rootfs device name
         _target=$(get_root_fs_device)
-        [[ -b "$_target" ]] && to_dev_name $_target && return
+        [[ -b "$_target" ]] && to_dev_name "$_target" && return
         # Then, must be nfs root
         echo "nfs"
     fi
@@ -158,27 +158,27 @@ get_kdump_targets()
 # part is the bind mounted directory which quotes by bracket "[]".
 get_bind_mount_source()
 {
-    local _mnt=$(df $1 | tail -1 | awk '{print $NF}')
+    local _mnt=$(df "$1" | tail -1 | awk '{print $NF}')
     local _path=${1#$_mnt}
 
-    local _src=$(get_mount_info SOURCE target $_mnt -f)
-    local _opt=$(get_mount_info OPTIONS target $_mnt -f)
-    local _fstype=$(get_mount_info FSTYPE target $_mnt -f)
+    local _src=$(get_mount_info SOURCE target "$_mnt" -f)
+    local _opt=$(get_mount_info OPTIONS target "$_mnt" -f)
+    local _fstype=$(get_mount_info FSTYPE target "$_mnt" -f)
 
     # bind mount in fstab
     if [[ -d "$_src" ]] && [[ "$_fstype" = none ]] && (echo "$_opt" | grep -q "\bbind\b"); then
-        echo $_src$_path && return
+        echo "$_src$_path" && return
     fi
 
     # direct mount
-    local _src_nofsroot=$(get_mount_info SOURCE target $_mnt -v -f)
-    if [[ $_src_nofsroot = $_src ]]; then
-        echo $_mnt$_path && return
+    local _src_nofsroot=$(get_mount_info SOURCE target "$_mnt" -v -f)
+    if [[ $_src_nofsroot = "$_src" ]]; then
+        echo "$_mnt$_path" && return
     fi
 
     local _fsroot=${_src#${_src_nofsroot}[}
     _fsroot=${_fsroot%]}
-    _mnt=$(get_mount_info TARGET source $_src_nofsroot -f)
+    _mnt=$(get_mount_info TARGET source "$_src_nofsroot" -f)
 
     # for btrfs, _fsroot will also contain the subvol value as well, strip it
     if [[ "$_fstype" = btrfs ]]; then
@@ -187,19 +187,19 @@ get_bind_mount_source()
         _subvol=${_subvol%,*}
         _fsroot=${_fsroot#$_subvol}
     fi
-    echo $_mnt$_fsroot$_path
+    echo "$_mnt$_fsroot$_path"
 }
 
 get_mntopt_from_target()
 {
-    get_mount_info OPTIONS source $1 -f
+    get_mount_info OPTIONS source "$1" -f
 }
 
 # Get the path where the target will be mounted in kdump kernel
 # $1: kdump target device
 get_kdump_mntpoint_from_target()
 {
-    local _mntpoint=$(get_mntpoint_from_target $1)
+    local _mntpoint=$(get_mntpoint_from_target "$1")
 
     # mount under /sysroot if dump to root disk or mount under
     # mount under /kdumproot if dump target is not mounted in first kernel
@@ -249,26 +249,26 @@ get_remote_host()
     _config_val=${_config_val%:/*}
     _config_val=${_config_val#[}
     _config_val=${_config_val%]}
-    echo $_config_val
+    echo "$_config_val"
 }
 
 is_hostname()
 {
-    local _hostname=$(echo $1 | grep ":")
+    local _hostname=$(echo "$1" | grep ":")
 
     if [[ -n "$_hostname" ]]; then
         return 1
     fi
-    echo $1 | grep -q "[a-zA-Z]"
+    echo "$1" | grep -q "[a-zA-Z]"
 }
 
 # Copied from "/etc/sysconfig/network-scripts/network-functions"
 get_hwaddr()
 {
-    if [[ -f "/sys/class/net/${1}/address" ]]; then
-        awk '{ print toupper($0) }' < /sys/class/net/${1}/address
-    elif [[ -d "/sys/class/net/${1}" ]]; then
-       LC_ALL= LANG= ip -o link show ${1} 2>/dev/null | \
+    if [[ -f "/sys/class/net/$1/address" ]]; then
+        awk '{ print toupper($0) }' < "/sys/class/net/$1/address"
+    elif [[ -d "/sys/class/net/$1" ]]; then
+       LC_ALL="" LANG="" ip -o link show "$1" 2>/dev/null | \
             awk '{ print toupper(gensub(/.*link\/[^ ]* ([[:alnum:]:]*).*/,
                                         "\\1", 1)); }'
     fi
@@ -484,14 +484,14 @@ remove_cmdline_param()
     local cmdline=$1
     shift
 
-    for arg in $@; do
+    for arg in "$@"; do
         cmdline=$(echo "$cmdline" | \
                  sed -e "s/\b$arg=[^ ]*//g" \
                  -e "s/^$arg\b//g" \
                  -e "s/[[:space:]]$arg\b//g" \
                  -e "s/\s\+/ /g")
     done
-    echo $cmdline
+    echo "$cmdline"
 }
 
 #
@@ -522,7 +522,7 @@ append_cmdline()
         cmdline="${cmdline} ${2}=${3}"
     fi
 
-    echo $cmdline
+    echo "$cmdline"
 }
 
 # This function check iomem and determines if we have more than
@@ -559,12 +559,12 @@ is_secure_boot_enforced()
     fi
 
     # Detect secure boot on x86 and arm64
-    secure_boot_file=$(find /sys/firmware/efi/efivars -name SecureBoot-* 2>/dev/null)
-    setup_mode_file=$(find /sys/firmware/efi/efivars -name SetupMode-* 2>/dev/null)
+    secure_boot_file=$(find /sys/firmware/efi/efivars -name "SecureBoot-*" 2>/dev/null)
+    setup_mode_file=$(find /sys/firmware/efi/efivars -name "SetupMode-*" 2>/dev/null)
 
     if [[ -f "$secure_boot_file" ]] && [[ -f "$setup_mode_file" ]]; then
-        secure_boot_byte=$(hexdump -v -e '/1 "%d\ "' $secure_boot_file|cut -d' ' -f 5)
-        setup_mode_byte=$(hexdump -v -e '/1 "%d\ "' $setup_mode_file|cut -d' ' -f 5)
+        secure_boot_byte=$(hexdump -v -e '/1 "%d\ "' "$secure_boot_file" | cut -d' ' -f 5)
+        setup_mode_byte=$(hexdump -v -e '/1 "%d\ "' "$setup_mode_file" | cut -d' ' -f 5)
 
         if [[ "$secure_boot_byte" = "1" ]] && [[ "$setup_mode_byte" = "0" ]]; then
             return 0
@@ -594,7 +594,7 @@ prepare_kexec_args()
         need_64bit_headers
         if [[ $? == 1 ]]
         then
-            found_elf_args=$(echo $kexec_args | grep elf32-core-headers)
+            found_elf_args=$(echo "$kexec_args" | grep elf32-core-headers)
             if [[ -n "$found_elf_args" ]]
             then
                 dwarn "Warning: elf32-core-headers overrides correct elf64 setting"
@@ -602,14 +602,14 @@ prepare_kexec_args()
                 kexec_args="$kexec_args --elf64-core-headers"
             fi
         else
-            found_elf_args=$(echo $kexec_args | grep elf64-core-headers)
+            found_elf_args=$(echo "$kexec_args" | grep elf64-core-headers)
             if [[ -z "$found_elf_args" ]]
             then
                 kexec_args="$kexec_args --elf32-core-headers"
             fi
         fi
     fi
-    echo $kexec_args
+    echo "$kexec_args"
 }
 
 #
@@ -641,7 +641,7 @@ prepare_kdump_bootinfo()
     for dir in $boot_dirlist; do
         for img in $boot_imglist; do
             if [[ -f "$dir/$img" ]]; then
-                KDUMP_KERNEL=$(echo $dir/$img | tr -s '/')
+                KDUMP_KERNEL=$(echo "$dir/$img" | tr -s '/')
                 break 2
             fi
         done
@@ -653,7 +653,7 @@ prepare_kdump_bootinfo()
     fi
 
     # Set KDUMP_BOOTDIR to where kernel image is stored
-    KDUMP_BOOTDIR=$(dirname $KDUMP_KERNEL)
+    KDUMP_BOOTDIR=$(dirname "$KDUMP_KERNEL")
 
     # Default initrd should just stay aside of kernel image, try to find it in KDUMP_BOOTDIR
     boot_initrdlist="initramfs-$KDUMP_KERNELVER.img initrd"
@@ -694,7 +694,7 @@ get_watchdog_drvs()
         # device/modalias will return driver of this device
         [[ -f "$_dir/device/modalias" ]] || continue
         _drv=$(< "$_dir/device/modalias")
-        _drv=$(modprobe --set-version "$KDUMP_KERNELVER" -R $_drv 2>/dev/null)
+        _drv=$(modprobe --set-version "$KDUMP_KERNELVER" -R "$_drv" 2>/dev/null)
         for i in $_drv; do
             if ! [[ " $_wdtdrvs " == *" $i "* ]]; then
                 _wdtdrvs="$_wdtdrvs $i"
@@ -702,7 +702,7 @@ get_watchdog_drvs()
         done
     done
 
-    echo $_wdtdrvs
+    echo "$_wdtdrvs"
 }
 
 #
@@ -711,7 +711,7 @@ get_watchdog_drvs()
 # Store the final result in global $KDUMP_COMMANDLINE.
 prepare_cmdline()
 {
-    local cmdline id
+    local cmdline id arg
 
     if [[ -z "$1" ]]; then
         cmdline=$(</proc/cmdline)
@@ -722,7 +722,9 @@ prepare_cmdline()
     # These params should always be removed
     cmdline=$(remove_cmdline_param "$cmdline" crashkernel panic_on_warn)
     # These params can be removed configurably
-    cmdline=$(remove_cmdline_param "$cmdline" "$2")
+    while read -r arg; do
+        cmdline=$(remove_cmdline_param "$cmdline" "$arg")
+    done <<< "$(echo "$2" | xargs -n 1 echo)"
 
     # Always remove "root=X", as we now explicitly generate all kinds
     # of dump target mount information including root fs.
@@ -766,20 +768,20 @@ prepare_cmdline()
     cmdline=$(remove_cmdline_param "$cmdline" trace_buf_size trace_event)
     cmdline="${cmdline} trace_buf_size=1"
 
-    echo ${cmdline}
+    echo "$cmdline"
 }
 
 #get system memory size in the unit of GB
 get_system_size()
 {
-    result=$(grep "System RAM" /proc/iomem | awk -F ":" '{ print $1 }' | tr [:lower:] [:upper:] | paste -sd+)
+    result=$(grep "System RAM" /proc/iomem | awk -F ":" '{ print $1 }' | tr "[:lower:]" "[:upper:]" | paste -sd+)
     result="+$result"
     # replace '-' with '+0x' and '+' with '-0x'
     sum=$(echo "$result" | sed -e 's/-/K0x/g' -e 's/+/-0x/g' -e 's/K/+/g')
     size=$(printf "%d\n" $(($sum)))
     size=$((size / 1024 / 1024 / 1024))
 
-    echo $size
+    echo "$size"
 }
 
 get_recommend_size()
@@ -795,15 +797,15 @@ get_recommend_size()
     fi
     IFS=','
     for i in $_ck_cmdline; do
-        end=$(echo $i | awk -F "-" '{ print $2 }' | awk -F ":" '{ print $1 }')
-        recommend=$(echo $i | awk -F "-" '{ print $2 }' | awk -F ":" '{ print $2 }')
+        end=$(echo "$i" | awk -F "-" '{ print $2 }' | awk -F ":" '{ print $1 }')
+        recommend=$(echo "$i" | awk -F "-" '{ print $2 }' | awk -F ":" '{ print $2 }')
         size=${end: : -1}
         unit=${end: -1}
         if [[ $unit == 'T' ]]; then
             size=$((size * 1024))
         fi
         if [[ $mem_size -lt $size ]]; then
-            echo $recommend
+            echo "$recommend"
             IFS="$OLDIFS"
             return
         fi
@@ -855,10 +857,10 @@ get_luks_crypt_dev()
 {
     [[ -b /dev/block/$1 ]] || return 1
 
-    local _type=$(eval "$(blkid -u filesystem,crypto -o export -- /dev/block/$1); echo \$TYPE")
-    [[ $_type == "crypto_LUKS" ]] && echo $1
+    local _type=$(eval "$(blkid -u filesystem,crypto -o export -- "/dev/block/$1"); echo \$TYPE")
+    [[ $_type == "crypto_LUKS" ]] && echo "$1"
 
-    for _x in /sys/dev/block/$1/slaves/*; do
+    for _x in "/sys/dev/block/$1/slaves/"*; do
         [[ -f $_x/dev ]] || continue
         [[ $_x/subsystem -ef /sys/class/block ]] || continue
         get_luks_crypt_dev "$(< "$_x/dev")"
@@ -888,7 +890,7 @@ get_all_kdump_crypt_dev()
 check_vmlinux()
 {
     # Use readelf to check if it's a valid ELF
-    readelf -h $1 &>/dev/null || return 1
+    readelf -h "$1" &>/dev/null || return 1
 }
 
 get_vmlinux_size()
@@ -910,14 +912,14 @@ try_decompress()
     # Try to find the header ($1) and decompress from here
     for pos in $(tr "$1\n$2" "\n$2=" < "$4" | grep -abo "^$2")
     do
-        if ! type -P $3 > /dev/null; then
+        if ! type -P "$3" > /dev/null; then
             ddebug "Signiature detected but '$3' is missing, skip this decompressor"
             break
         fi
 
         pos=${pos%%:*}
-        tail -c+$pos "$img" | $3 > $5 2> /dev/null
-        if check_vmlinux $5; then
+        tail "-c+$pos" "$img" | $3 > "$5" 2> /dev/null
+        if check_vmlinux "$5"; then
             ddebug "Kernel is extracted with '$3'"
             return 0
         fi
@@ -931,22 +933,22 @@ get_kernel_size()
 {
     # Prepare temp files:
     local img=$1 tmp=$(mktemp /tmp/vmlinux-XXX)
-    trap "rm -f $tmp" 0
+    trap 'rm -f "$tmp"' 0
 
     # Try to check if it's a vmlinux already
-    check_vmlinux $img && get_vmlinux_size $img && return 0
+    check_vmlinux "$img" && get_vmlinux_size "$img" && return 0
 
     # That didn't work, so retry after decompression.
-    try_decompress '\037\213\010' xy    gunzip    $img $tmp || \
-    try_decompress '\3757zXZ\000' abcde unxz      $img $tmp || \
-    try_decompress 'BZh'          xy    bunzip2   $img $tmp || \
-    try_decompress '\135\0\0\0'   xxx   unlzma    $img $tmp || \
-    try_decompress '\211\114\132' xy    'lzop -d' $img $tmp || \
-    try_decompress '\002!L\030'   xxx   'lz4 -d'  $img $tmp || \
-    try_decompress '(\265/\375'   xxx   unzstd    $img $tmp
+    try_decompress '\037\213\010' xy    gunzip    "$img" "$tmp" || \
+    try_decompress '\3757zXZ\000' abcde unxz      "$img" "$tmp" || \
+    try_decompress 'BZh'          xy    bunzip2   "$img" "$tmp" || \
+    try_decompress '\135\0\0\0'   xxx   unlzma    "$img" "$tmp" || \
+    try_decompress '\211\114\132' xy    'lzop -d' "$img" "$tmp" || \
+    try_decompress '\002!L\030'   xxx   'lz4 -d'  "$img" "$tmp" || \
+    try_decompress '(\265/\375'   xxx   unzstd    "$img" "$tmp"
 
     # Finally check for uncompressed images or objects:
-    [[ $? -eq 0 ]] && get_vmlinux_size $tmp && return 0
+    [[ $? -eq 0 ]] && get_vmlinux_size "$tmp" && return 0
 
     # Fallback to use iomem
     local _size=0 _seg
