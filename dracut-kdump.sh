@@ -1,7 +1,7 @@
 #!/bin/sh
 #
-# The main kdump routine in capture kernel
-#
+# The main kdump routine in capture kernel, bash may not be the
+# default shell. Any code added must be POSIX compliant.
 
 . /lib/dracut-lib.sh
 . /lib/kdump-logger.sh

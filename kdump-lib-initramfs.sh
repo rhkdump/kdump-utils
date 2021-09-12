@@ -1,7 +1,7 @@
 #!/bin/sh
 #
-# Function and variables used in initramfs environment, POSIX compatible
-#
+# The code in this file will be used in initramfs environment, bash may
+# not be the default shell. Any code added must be POSIX compliant.
 
 DEFAULT_PATH="/var/crash/"
 KDUMP_CONFIG_FILE="/etc/kdump.conf"

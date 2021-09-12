@@ -34,6 +34,8 @@
 # First of all you have to start with dlog_init() function which initializes
 # required variables. Don't call any other logging function before that one!
 #
+# The code in this file might be run in an environment without bash.
+# Any code added must be POSIX compliant.
 
 # Define vairables for the log levels in this module.
 kdump_stdloglvl=""
