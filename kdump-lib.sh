@@ -13,16 +13,16 @@ is_fadump_capable()
 {
     # Check if firmware-assisted dump is enabled
     # if no, fallback to kdump check
-    if [ -f $FADUMP_ENABLED_SYS_NODE ]; then
-        rc=`cat $FADUMP_ENABLED_SYS_NODE`
-        [ $rc -eq 1 ] && return 0
+    if [[ -f $FADUMP_ENABLED_SYS_NODE ]]; then
+        rc=$(cat $FADUMP_ENABLED_SYS_NODE)
+        [[ $rc -eq 1 ]] && return 0
     fi
     return 1
 }
 
 is_squash_available() {
     for kmodule in squashfs overlay loop; do
-        if [ -z "$KDUMP_KERNELVER" ]; then
+        if [[ -z "$KDUMP_KERNELVER" ]]; then
             modprobe --dry-run $kmodule &>/dev/null || return 1
         else
             modprobe -S $KDUMP_KERNELVER --dry-run $kmodule &>/dev/null || return 1
@@ -40,7 +40,7 @@ is_pcs_fence_kdump()
 {
     # no pcs or fence_kdump_send executables installed?
     type -P pcs > /dev/null || return 1
-    [ -x $FENCE_KDUMP_SEND ] || return 1
+    [[ -x $FENCE_KDUMP_SEND ]] || return 1
 
     # fence kdump not configured?
     (pcs cluster cib | grep 'type="fence_kdump"') &> /dev/null || return 1
@@ -49,7 +49,7 @@ is_pcs_fence_kdump()
 # Check if fence_kdump is configured using kdump options
 is_generic_fence_kdump()
 {
-    [ -x $FENCE_KDUMP_SEND ] || return 1
+    [[ -x $FENCE_KDUMP_SEND ]] || return 1
 
     [[ $(kdump_get_conf_val fence_kdump_nodes) ]]
 }
@@ -59,10 +59,10 @@ to_dev_name() {
 
     case "$dev" in
     UUID=*)
-        dev=`blkid -U "${dev#UUID=}"`
+        dev=$(blkid -U "${dev#UUID=}")
         ;;
     LABEL=*)
-        dev=`blkid -L "${dev#LABEL=}"`
+        dev=$(blkid -L "${dev#LABEL=}")
         ;;
     esac
     echo $dev
@@ -78,10 +78,10 @@ get_user_configured_dump_disk()
     local _target
 
     _target=$(kdump_get_conf_val "ext[234]\|xfs\|btrfs\|minix\|raw")
-    [ -n "$_target" ] && echo $_target && return
+    [[ -n "$_target" ]] && echo $_target && return
 
     _target=$(get_dracut_args_target "$(kdump_get_conf_val "dracut_args")")
-    [ -b "$_target" ] && echo $_target
+    [[ -b "$_target" ]] && echo $_target
 }
 
 get_block_dump_target()
@@ -93,12 +93,12 @@ get_block_dump_target()
     fi
 
     _target=$(get_user_configured_dump_disk)
-    [ -n "$_target" ] && echo $(to_dev_name $_target) && return
+    [[ -n "$_target" ]] && echo $(to_dev_name $_target) && return
 
     # Get block device name from local save path
     _path=$(get_save_path)
     _target=$(get_target_from_path $_path)
-    [ -b "$_target" ] && echo $(to_dev_name $_target)
+    [[ -b "$_target" ]] && echo $(to_dev_name $_target)
 }
 
 is_dump_to_rootfs()
@@ -113,7 +113,7 @@ get_failure_action_target()
     if is_dump_to_rootfs; then
         # Get rootfs device name
         _target=$(get_root_fs_device)
-        [ -b "$_target" ] && echo $(to_dev_name $_target) && return
+        [[ -b "$_target" ]] && echo $(to_dev_name $_target) && return
         # Then, must be nfs root
         echo "nfs"
     fi
@@ -126,7 +126,7 @@ get_kdump_targets()
     local kdump_targets
 
     _target=$(get_block_dump_target)
-    if [ -n "$_target" ]; then
+    if [[ -n "$_target" ]]; then
         kdump_targets=$_target
     elif is_ssh_dump_target; then
         kdump_targets="ssh"
@@ -136,7 +136,7 @@ get_kdump_targets()
 
     # Add the root device if dump_to_rootfs is specified.
     _root=$(get_failure_action_target)
-    if [ -n "$_root" -a "$kdump_targets" != "$_root" ]; then
+    if [[ -n "$_root" ]] && [[ "$kdump_targets" != "$_root" ]]; then
         kdump_targets="$kdump_targets $_root"
     fi
 
@@ -204,10 +204,10 @@ get_kdump_mntpoint_from_target()
     # mount under /kdumproot if dump target is not mounted in first kernel
     # mount under /kdumproot/$_mntpoint in other cases in 2nd kernel.
     # systemd will be in charge to umount it.
-    if [ -z "$_mntpoint" ];then
+    if [[ -z "$_mntpoint" ]];then
         _mntpoint="/kdumproot"
     else
-        if [ "$_mntpoint" = "/" ];then
+        if [[ "$_mntpoint" = "/" ]];then
             _mntpoint="/sysroot"
         else
             _mntpoint="/kdumproot/$_mntpoint"
@@ -223,10 +223,10 @@ kdump_get_persistent_dev() {
 
     case "$dev" in
     UUID=*)
-        dev=`blkid -U "${dev#UUID=}"`
+        dev=$(blkid -U "${dev#UUID=}")
         ;;
     LABEL=*)
-        dev=`blkid -L "${dev#LABEL=}"`
+        dev=$(blkid -L "${dev#LABEL=}")
         ;;
     esac
     echo $(get_persistent_dev "$dev")
@@ -253,9 +253,9 @@ get_remote_host()
 
 is_hostname()
 {
-    local _hostname=`echo $1 | grep ":"`
+    local _hostname=$(echo $1 | grep ":")
 
-    if [ -n "$_hostname" ]; then
+    if [[ -n "$_hostname" ]]; then
         return 1
     fi
     echo $1 | grep -q "[a-zA-Z]"
@@ -264,9 +264,9 @@ is_hostname()
 # Copied from "/etc/sysconfig/network-scripts/network-functions"
 get_hwaddr()
 {
-    if [ -f "/sys/class/net/${1}/address" ]; then
+    if [[ -f "/sys/class/net/${1}/address" ]]; then
         awk '{ print toupper($0) }' < /sys/class/net/${1}/address
-    elif [ -d "/sys/class/net/${1}" ]; then
+    elif [[ -d "/sys/class/net/${1}" ]]; then
        LC_ALL= LANG= ip -o link show ${1} 2>/dev/null | \
             awk '{ print toupper(gensub(/.*link\/[^ ]* ([[:alnum:]:]*).*/,
                                         "\\1", 1)); }'
@@ -347,7 +347,7 @@ get_ifcfg_by_name()
 
 is_nm_running()
 {
-    [ "$(LANG=C nmcli -t --fields running general status 2>/dev/null)" = "running" ]
+    [[ "$(LANG=C nmcli -t --fields running general status 2>/dev/null)" = "running" ]]
 }
 
 is_nm_handling()
@@ -371,7 +371,7 @@ get_ifcfg_nmcli()
         nm_name=$(LANG=C nmcli -t --fields name,device c show --active 2>/dev/null \
                   | grep "${1}" | head -1 | cut -d':' -f1)
         ifcfg_file=$(get_ifcfg_by_uuid "${nm_uuid}")
-        [ -z "${ifcfg_file}" ] && ifcfg_file=$(get_ifcfg_by_name "${nm_name}")
+        [[ -z "${ifcfg_file}" ]] && ifcfg_file=$(get_ifcfg_by_name "${nm_name}")
     fi
 
     echo -n "${ifcfg_file}"
@@ -383,15 +383,15 @@ get_ifcfg_legacy()
     local ifcfg_file
 
     ifcfg_file="/etc/sysconfig/network-scripts/ifcfg-${1}"
-    [ -f "${ifcfg_file}" ] && echo -n "${ifcfg_file}" && return
+    [[ -f "${ifcfg_file}" ]] && echo -n "${ifcfg_file}" && return
 
     ifcfg_file=$(get_ifcfg_by_name "${1}")
-    [ -f "${ifcfg_file}" ] && echo -n "${ifcfg_file}" && return
+    [[ -f "${ifcfg_file}" ]] && echo -n "${ifcfg_file}" && return
 
     local hwaddr=$(get_hwaddr "${1}")
-    if [ -n "$hwaddr" ]; then
+    if [[ -n "$hwaddr" ]]; then
         ifcfg_file=$(get_ifcfg_by_hwaddr "${hwaddr}")
-        [ -f "${ifcfg_file}" ] && echo -n "${ifcfg_file}" && return
+        [[ -f "${ifcfg_file}" ]] && echo -n "${ifcfg_file}" && return
     fi
 
     ifcfg_file=$(get_ifcfg_by_device "${1}")
@@ -405,7 +405,7 @@ get_ifcfg_filename() {
     local ifcfg_file
 
     ifcfg_file=$(get_ifcfg_nmcli "${1}")
-    if [ -z "${ifcfg_file}" ]; then
+    if [[ -z "${ifcfg_file}" ]]; then
         ifcfg_file=$(get_ifcfg_legacy "${1}")
     fi
 
@@ -432,11 +432,11 @@ is_dracut_mod_omitted() {
 is_wdt_active() {
     local active
 
-    [ -d /sys/class/watchdog ] || return 1
+    [[ -d /sys/class/watchdog ]] || return 1
     for dir in /sys/class/watchdog/*; do
-        [ -f "$dir/state" ] || continue
+        [[ -f "$dir/state" ]] || continue
         active=$(< "$dir/state")
-        [ "$active" =  "active" ] && return 0
+        [[ "$active" =  "active" ]] && return 0
     done
     return 1
 }
@@ -454,7 +454,7 @@ check_crash_mem_reserved()
     local mem_reserved
 
     mem_reserved=$(cat /sys/kernel/kexec_crash_size)
-    if [ $mem_reserved -eq 0 ]; then
+    if [[ $mem_reserved -eq 0 ]]; then
         derror "No memory reserved for crash kernel"
         return 1
     fi
@@ -464,7 +464,7 @@ check_crash_mem_reserved()
 
 check_kdump_feasibility()
 {
-    if [ ! -e /sys/kernel/kexec_crash_loaded ]; then
+    if [[ ! -e /sys/kernel/kexec_crash_loaded ]]; then
         derror "Kdump is not supported on this kernel"
         return 1
     fi
@@ -474,13 +474,13 @@ check_kdump_feasibility()
 
 check_current_kdump_status()
 {
-    if [ ! -f /sys/kernel/kexec_crash_loaded ];then
+    if [[ ! -f /sys/kernel/kexec_crash_loaded ]];then
         derror "Perhaps CONFIG_CRASH_DUMP is not enabled in kernel"
         return 1
     fi
 
-    rc=`cat /sys/kernel/kexec_crash_loaded`
-    if [ $rc == 1 ]; then
+    rc=$(cat /sys/kernel/kexec_crash_loaded)
+    if [[ $rc == 1 ]]; then
         return 0
     else
         return 1
@@ -496,11 +496,11 @@ remove_cmdline_param()
     shift
 
     for arg in $@; do
-        cmdline=`echo $cmdline | \
+        cmdline=$(echo "$cmdline" | \
                  sed -e "s/\b$arg=[^ ]*//g" \
                  -e "s/^$arg\b//g" \
                  -e "s/[[:space:]]$arg\b//g" \
-                 -e "s/\s\+/ /g"`
+                 -e "s/\s\+/ /g")
     done
     echo $cmdline
 }
@@ -529,7 +529,7 @@ append_cmdline()
     local newstr=${cmdline/$2/""}
 
     # unchanged str implies argument wasn't there
-    if [ "$cmdline" == "$newstr" ]; then
+    if [[ "$cmdline" == "$newstr" ]]; then
         cmdline="${cmdline} ${2}=${3}"
     fi
 
@@ -540,8 +540,8 @@ append_cmdline()
 # 4GB of ram available. Returns 1 if we do, 0 if we dont
 need_64bit_headers()
 {
-    return `tail -n 1 /proc/iomem | awk '{ split ($1, r, "-"); \
-    print (strtonum("0x" r[2]) > strtonum("0xffffffff")); }'`
+    return "$(tail -n 1 /proc/iomem | awk '{ split ($1, r, "-");
+        print (strtonum("0x" r[2]) > strtonum("0xffffffff")); }')"
 }
 
 # Check if secure boot is being enforced.
@@ -561,11 +561,11 @@ is_secure_boot_enforced()
     # On powerpc, secure boot is enforced if:
     #   host secure boot: /ibm,secure-boot/os-secureboot-enforcing DT property exists
     #   guest secure boot: /ibm,secure-boot >= 2
-    if [ -f /proc/device-tree/ibm,secureboot/os-secureboot-enforcing ]; then
+    if [[ -f /proc/device-tree/ibm,secureboot/os-secureboot-enforcing ]]; then
 		return 0
     fi
-    if [ -f /proc/device-tree/ibm,secure-boot ] && \
-       [ $(lsprop /proc/device-tree/ibm,secure-boot | tail -1) -ge 2 ]; then
+    if [[ -f /proc/device-tree/ibm,secure-boot ]] && \
+       [[ $(lsprop /proc/device-tree/ibm,secure-boot | tail -1) -ge 2 ]]; then
 		return 0
     fi
 
@@ -573,11 +573,11 @@ is_secure_boot_enforced()
     secure_boot_file=$(find /sys/firmware/efi/efivars -name SecureBoot-* 2>/dev/null)
     setup_mode_file=$(find /sys/firmware/efi/efivars -name SetupMode-* 2>/dev/null)
 
-    if [ -f "$secure_boot_file" ] && [ -f "$setup_mode_file" ]; then
+    if [[ -f "$secure_boot_file" ]] && [[ -f "$setup_mode_file" ]]; then
         secure_boot_byte=$(hexdump -v -e '/1 "%d\ "' $secure_boot_file|cut -d' ' -f 5)
         setup_mode_byte=$(hexdump -v -e '/1 "%d\ "' $setup_mode_file|cut -d' ' -f 5)
 
-        if [ "$secure_boot_byte" = "1" ] && [ "$setup_mode_byte" = "0" ]; then
+        if [[ "$secure_boot_byte" = "1" ]] && [[ "$setup_mode_byte" = "0" ]]; then
             return 0
         fi
     fi
@@ -599,22 +599,22 @@ prepare_kexec_args()
     local kexec_args=$1
     local found_elf_args
 
-    ARCH=`uname -m`
-    if [ "$ARCH" == "i686" -o "$ARCH" == "i386" ]
+    ARCH=$(uname -m)
+    if [[ "$ARCH" == "i686" ]] || [[ "$ARCH" == "i386" ]]
     then
         need_64bit_headers
-        if [ $? == 1 ]
+        if [[ $? == 1 ]]
         then
-            found_elf_args=`echo $kexec_args | grep elf32-core-headers`
-            if [ -n "$found_elf_args" ]
+            found_elf_args=$(echo $kexec_args | grep elf32-core-headers)
+            if [[ -n "$found_elf_args" ]]
             then
                 dwarn "Warning: elf32-core-headers overrides correct elf64 setting"
             else
                 kexec_args="$kexec_args --elf64-core-headers"
             fi
         else
-            found_elf_args=`echo $kexec_args | grep elf64-core-headers`
-            if [ -z "$found_elf_args" ]
+            found_elf_args=$(echo $kexec_args | grep elf64-core-headers)
+            if [[ -z "$found_elf_args" ]]
             then
                 kexec_args="$kexec_args --elf32-core-headers"
             fi
@@ -635,7 +635,7 @@ prepare_kdump_bootinfo()
     local boot_imglist boot_dirlist boot_initrdlist curr_kver="$(uname -r)"
     local machine_id
 
-    if [ -z "$KDUMP_KERNELVER" ]; then
+    if [[ -z "$KDUMP_KERNELVER" ]]; then
         KDUMP_KERNELVER="$(uname -r)"
     fi
 
@@ -645,20 +645,20 @@ prepare_kdump_bootinfo()
 
     # Use BOOT_IMAGE as reference if possible, strip the GRUB root device prefix in (hd0,gpt1) format
     local boot_img="$(cat /proc/cmdline | sed "s/^BOOT_IMAGE=\((\S*)\)\?\(\S*\) .*/\2/")"
-    if [ -n "$boot_img" ]; then
+    if [[ -n "$boot_img" ]]; then
         boot_imglist="$boot_img $boot_imglist"
     fi
 
     for dir in $boot_dirlist; do
         for img in $boot_imglist; do
-            if [ -f "$dir/$img" ]; then
+            if [[ -f "$dir/$img" ]]; then
                 KDUMP_KERNEL=$(echo $dir/$img | tr -s '/')
                 break 2
             fi
         done
     done
 
-    if ! [ -e "$KDUMP_KERNEL" ]; then
+    if ! [[ -e "$KDUMP_KERNEL" ]]; then
         derror "Failed to detect kdump kernel location"
         return 1
     fi
@@ -669,7 +669,7 @@ prepare_kdump_bootinfo()
     # Default initrd should just stay aside of kernel image, try to find it in KDUMP_BOOTDIR
     boot_initrdlist="initramfs-$KDUMP_KERNELVER.img initrd"
     for initrd in $boot_initrdlist; do
-        if [ -f "$KDUMP_BOOTDIR/$initrd" ]; then
+        if [[ -f "$KDUMP_BOOTDIR/$initrd" ]]; then
             defaut_initrd_base="$initrd"
             DEFAULT_INITRD="$KDUMP_BOOTDIR/$defaut_initrd_base"
             break
@@ -687,7 +687,7 @@ prepare_kdump_bootinfo()
         kdump_initrd_base=${defaut_initrd_base}kdump
     fi
 
-    # Place kdump initrd in `/var/lib/kdump` if `KDUMP_BOOTDIR` not writable
+    # Place kdump initrd in $(/var/lib/kdump) if $(KDUMP_BOOTDIR) not writable
     if [[ ! -w "$KDUMP_BOOTDIR" ]];then
         var_target_initrd_dir="/var/lib/kdump"
         mkdir -p "$var_target_initrd_dir"
@@ -724,7 +724,7 @@ prepare_cmdline()
 {
     local cmdline id
 
-    if [ -z "$1" ]; then
+    if [[ -z "$1" ]]; then
         cmdline=$(cat /proc/cmdline)
     else
         cmdline="$1"
@@ -754,7 +754,7 @@ prepare_cmdline()
     cmdline="${cmdline} $3"
 
     id=$(get_bootcpu_apicid)
-    if [ ! -z ${id} ] ; then
+    if [[ ! -z ${id} ]] ; then
         cmdline=$(append_cmdline "${cmdline}" disable_cpu_apicid ${id})
     fi
 
@@ -803,7 +803,7 @@ get_recommend_size()
     last_unit=""
 
     start=${_ck_cmdline: :1}
-    if [ $mem_size -lt $start ]; then
+    if [[ $mem_size -lt $start ]]; then
         echo "0M"
         return
     fi
@@ -813,10 +813,10 @@ get_recommend_size()
         recommend=$(echo $i | awk -F "-" '{ print $2 }' | awk -F ":" '{ print $2 }')
         size=${end: : -1}
         unit=${end: -1}
-        if [ $unit == 'T' ]; then
+        if [[ $unit == 'T' ]]; then
             let size=$size*1024
         fi
-        if [ $mem_size -lt $size ]; then
+        if [[ $mem_size -lt $size ]]; then
             echo $recommend
             IFS="$OLDIFS"
             return
@@ -826,28 +826,28 @@ get_recommend_size()
 }
 
 # return recommended size based on current system RAM size
-# $1: kernel version, if not set, will defaults to `uname -r`
+# $1: kernel version, if not set, will defaults to $(uname -r)
 kdump_get_arch_recommend_size()
 {
     local kernel=$1 arch
 
-    if ! [ -r "/proc/iomem" ] ; then
+    if ! [[ -r "/proc/iomem" ]] ; then
         echo "Error, can not access /proc/iomem."
         return 1
     fi
 
-    [ -z "$kernel" ] && kernel=$(uname -r)
+    [[ -z "$kernel" ]] && kernel=$(uname -r)
     ck_cmdline=$(cat "/usr/lib/modules/$kernel/crashkernel.default" 2>/dev/null)
 
-    if [ -n "$ck_cmdline" ]; then
+    if [[ -n "$ck_cmdline" ]]; then
         ck_cmdline=${ck_cmdline#crashkernel=}
     else
         arch=$(lscpu | grep Architecture | awk -F ":" '{ print $2 }' | tr '[:lower:]' '[:upper:]')
-        if [ "$arch" = "X86_64" ] || [ "$arch" = "S390X" ]; then
+        if [[ "$arch" = "X86_64" ]] || [[ "$arch" = "S390X" ]]; then
             ck_cmdline="1G-4G:160M,4G-64G:192M,64G-1T:256M,1T-:512M"
-        elif [ "$arch" = "AARCH64" ]; then
+        elif [[ "$arch" = "AARCH64" ]]; then
             ck_cmdline="2G-:448M"
-        elif [ "$arch" = "PPC64LE" ]; then
+        elif [[ "$arch" = "PPC64LE" ]]; then
             if is_fadump_capable; then
                 ck_cmdline="4G-16G:768M,16G-64G:1G,64G-128G:2G,128G-1T:4G,1T-2T:6G,2T-4T:12G,4T-8T:20G,8T-16T:36G,16T-32T:64G,32T-64T:128G,64T-:180G"
             else
@@ -923,7 +923,7 @@ try_decompress()
     # "grep" that report the byte offset of the line instead of the pattern.
 
     # Try to find the header ($1) and decompress from here
-    for pos in `tr "$1\n$2" "\n$2=" < "$4" | grep -abo "^$2"`
+    for pos in $(tr "$1\n$2" "\n$2=" < "$4" | grep -abo "^$2")
     do
         if ! type -P $3 > /dev/null; then
             ddebug "Signiature detected but '$3' is missing, skip this decompressor"
