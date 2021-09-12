@@ -176,7 +176,7 @@ get_bind_mount_source()
         echo $_mnt$_path && return
     fi
 
-    local _fsroot=${_src#$_src_nofsroot[}
+    local _fsroot=${_src#${_src_nofsroot}[}
     _fsroot=${_fsroot%]}
     _mnt=$(get_mount_info TARGET source $_src_nofsroot -f)
 
@@ -621,14 +621,14 @@ prepare_kexec_args()
 #
 prepare_kdump_bootinfo()
 {
-    local boot_imglist boot_dirlist boot_initrdlist curr_kver="$(uname -r)"
+    local boot_imglist boot_dirlist boot_initrdlist
     local machine_id
 
     if [[ -z "$KDUMP_KERNELVER" ]]; then
         KDUMP_KERNELVER="$(uname -r)"
     fi
 
-    read machine_id < /etc/machine-id
+    read -r machine_id < /etc/machine-id
     boot_dirlist=${KDUMP_BOOTDIR:-"/boot /boot/efi /efi /"}
     boot_imglist="$KDUMP_IMG-$KDUMP_KERNELVER$KDUMP_IMG_EXT $machine_id/$KDUMP_KERNELVER/$KDUMP_IMG"
 
@@ -743,8 +743,8 @@ prepare_cmdline()
     cmdline="${cmdline} $3"
 
     id=$(get_bootcpu_apicid)
-    if [[ ! -z ${id} ]] ; then
-        cmdline=$(append_cmdline "${cmdline}" disable_cpu_apicid ${id})
+    if [[ -n ${id} ]] ; then
+        cmdline=$(append_cmdline "$cmdline" disable_cpu_apicid "$id")
     fi
 
     # If any watchdog is used, set it's pretimeout to 0. pretimeout let
@@ -775,7 +775,7 @@ get_system_size()
     result=$(grep "System RAM" /proc/iomem | awk -F ":" '{ print $1 }' | tr [:lower:] [:upper:] | paste -sd+)
     result="+$result"
     # replace '-' with '+0x' and '+' with '-0x'
-    sum=$( echo $result | sed -e 's/-/K0x/g' | sed -e 's/+/-0x/g' | sed -e 's/K/+/g' )
+    sum=$(echo "$result" | sed -e 's/-/K0x/g' -e 's/+/-0x/g' -e 's/K/+/g')
     size=$(printf "%d\n" $(($sum)))
     size=$((size / 1024 / 1024 / 1024))
 
@@ -787,9 +787,6 @@ get_recommend_size()
     local mem_size=$1
     local _ck_cmdline=$2
     local OLDIFS="$IFS"
-
-    last_sz=""
-    last_unit=""
 
     start=${_ck_cmdline: :1}
     if [[ $mem_size -lt $start ]]; then
@@ -845,7 +842,7 @@ kdump_get_arch_recommend_size()
         fi
     fi
 
-    ck_cmdline=$(echo $ck_cmdline | sed -e 's/-:/-102400T:/g')
+    ck_cmdline=${ck_cmdline//-:/-102400T:}
     sys_mem=$(get_system_size)
 
     get_recommend_size "$sys_mem" "$ck_cmdline"
@@ -896,11 +893,11 @@ check_vmlinux()
 
 get_vmlinux_size()
 {
-    local size=0
+    local size=0 _msize
 
-    while read _type _offset _virtaddr _physaddr _fsize _msize _flg _aln; do
+    while read -r _msize; do
         size=$(( size + _msize ))
-    done <<< $(readelf -l -W $1 | grep "^  LOAD" 2>/dev/stderr)
+    done <<< "$(readelf -l -W "$1" | awk '/^  LOAD/{print $6}' 2>/dev/stderr)"
 
     echo $size
 }
@@ -952,9 +949,9 @@ get_kernel_size()
     [[ $? -eq 0 ]] && get_vmlinux_size $tmp && return 0
 
     # Fallback to use iomem
-    local _size=0
-    for _seg in $(grep -E "Kernel (code|rodata|data|bss)" /proc/iomem | cut -d ":" -f 1); do
-	    _size=$(( _size + 0x${_seg#*-} - 0x${_seg%-*} ))
-    done
+    local _size=0 _seg
+    while read -r _seg; do
+        _size=$(( _size + 0x${_seg#*-} - 0x${_seg%-*} ))
+    done <<< "$(grep -E "Kernel (code|rodata|data|bss)" /proc/iomem | cut -d ":" -f 1)"
     echo $_size
 }
