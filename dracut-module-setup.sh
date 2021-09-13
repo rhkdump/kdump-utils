@@ -445,6 +445,9 @@ kdump_setup_vlan() {
     elif kdump_is_bond "$_phydev"; then
         (kdump_setup_bond "$_phydev" "$(get_nmcli_connection_apath_by_ifname "$_phydev")") || exit 1
         echo " vlan=$(kdump_setup_ifname "$_netdev"):$_phydev" > "${initdir}/etc/cmdline.d/43vlan.conf"
+    elif kdump_is_team "$_phydev"; then
+        (kdump_setup_team "$_phydev") || exit 1
+        echo " vlan=$(kdump_setup_ifname "$_netdev"):$_phydev" > "${initdir}/etc/cmdline.d/43vlan.conf"
     else
         _kdumpdev="$(kdump_setup_ifname "$_phydev")"
         echo " vlan=$(kdump_setup_ifname "$_netdev"):$_kdumpdev ifname=$_kdumpdev:$_netmac" > "${initdir}/etc/cmdline.d/43vlan.conf"
