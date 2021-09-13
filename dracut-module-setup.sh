@@ -1034,7 +1034,6 @@ install() {
     inst "/usr/bin/printf" "/sbin/printf"
     inst "/usr/bin/logger" "/sbin/logger"
     inst "/usr/bin/chmod" "/sbin/chmod"
-    inst "/lib/kdump/kdump-lib.sh" "/lib/kdump-lib.sh"
     inst "/lib/kdump/kdump-lib-initramfs.sh" "/lib/kdump-lib-initramfs.sh"
     inst "/lib/kdump/kdump-logger.sh" "/lib/kdump-logger.sh"
     inst "$moddir/kdump.sh" "/usr/bin/kdump.sh"
