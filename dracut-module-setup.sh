@@ -1029,6 +1029,7 @@ install() {
     inst "/bin/head" "/bin/head"
     inst "/bin/awk" "/bin/awk"
     inst "/bin/sed" "/bin/sed"
+    inst "/bin/stat" "/bin/stat"
     inst "/sbin/makedumpfile" "/sbin/makedumpfile"
     inst "/sbin/vmcore-dmesg" "/sbin/vmcore-dmesg"
     inst "/usr/bin/printf" "/sbin/printf"

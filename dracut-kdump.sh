@@ -366,7 +366,7 @@ dump_raw()
     dinfo "saving to raw disk $_raw"
 
     if ! $(echo -n $CORE_COLLECTOR|grep -q makedumpfile); then
-        _src_size=`ls -l /proc/vmcore | cut -d' ' -f5`
+        _src_size=$(stat --format %s /proc/vmcore)
         _src_size_mb=$(($_src_size / 1048576))
         /kdumpscripts/monitor_dd_progress $_src_size_mb &
     fi
