@@ -14,9 +14,8 @@ EARLY_KEXEC_ARGS=""
 . /lib/kdump-lib.sh
 . /lib/kdump-logger.sh
 
-#initiate the kdump logger
-dlog_init
-if [ $? -ne 0 ]; then
+# initiate the kdump logger
+if ! dlog_init; then
         echo "failed to initiate the kdump logger."
         exit 1
 fi
@@ -30,8 +29,7 @@ prepare_parameters()
 
 early_kdump_load()
 {
-    check_kdump_feasibility
-    if [ $? -ne 0 ]; then
+    if ! check_kdump_feasibility; then
         return 1
     fi
 
@@ -40,8 +38,7 @@ early_kdump_load()
         return 1
     fi
 
-    check_current_kdump_status
-    if [ $? == 0 ]; then
+    if check_current_kdump_status; then
         return 1
     fi
 
@@ -61,10 +58,9 @@ early_kdump_load()
 	--command-line=$EARLY_KDUMP_CMDLINE --initrd=$EARLY_KDUMP_INITRD \
 	$EARLY_KDUMP_KERNEL"
 
-    $KEXEC ${EARLY_KEXEC_ARGS} $standard_kexec_args \
+    if $KEXEC $EARLY_KEXEC_ARGS $standard_kexec_args \
         --command-line="$EARLY_KDUMP_CMDLINE" \
-        --initrd=$EARLY_KDUMP_INITRD $EARLY_KDUMP_KERNEL
-    if [ $? == 0 ]; then
+        --initrd=$EARLY_KDUMP_INITRD $EARLY_KDUMP_KERNEL; then
         dinfo "kexec: loaded early-kdump kernel"
         return 0
     else
