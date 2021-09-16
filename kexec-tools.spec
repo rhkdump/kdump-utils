@@ -5,7 +5,7 @@
 
 Name: kexec-tools
 Version: 2.0.22
-Release: 7%{?dist}
+Release: 8%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -382,6 +382,64 @@ done
 %endif
 
 %changelog
+* Thu Sep 16 2021 Kairui Song <kasong@redhat.com> - 2.0.22-8
+- 92-crashkernel.install: fix exit code
+- dracut-early-kdump.sh: make it POSIX compatible
+- Add header comment for POSIX compliant scripts
+- mkdumprd: allow using dash
+- kdump-logger.sh: make it POSIX compatible
+- kdump-lib.sh: reformat with shfmt
+- kdump-lib.sh: declare and assign separately
+- kdump-lib.sh: fix variable quoting issue
+- kdump-lib.sh: fix a few ambiguous or redundant code
+- kdump-lib.sh: fix arithmetic operation syntax
+- kdump-lib.sh: remove useless echo and cat
+- kdump-lib.sh: rework nmcli related functions
+- kdump-lib.sh: replace '[ ]' with '[[ ]]' and get rid of legacy ``
+- kdump-lib-initramfs.sh: make it POSIX compatible
+- dracut-kdump.sh: reformat with shfmt
+- dracut-kdump.sh: make it POSIX compatible
+- dracut-kdump.sh: POSIX doesn't support pipefail
+- dracut-kdump.sh: Use stat instead of ls to get vmcore size
+- dracut-kdump.sh: simplify dump_ssh
+- dracut-kdump.sh: remove add_dump_code
+- dracut-kdump.sh: don't put KDUMP_SCRIPT_DIR in PATH
+- kdump-lib-initramfs.sh: move dump related functions to kdump.sh
+- Merge kdump-error-handler.sh into kdump.sh
+- kdump-lib-initramfs.sh: prepare to be a POSIX compatible lib
+- bash scripts: reformat with shfmt
+- bash scripts: declare and assign separately
+- bash scripts: fix redundant exit code check
+- bash scripts: fix variable quoting issue
+- bash scripts: replace '[ ]' with '[[ ]]' for bash scripts
+- bash scripts: use $(...) notation instead of legacy `...`
+- bash scripts: always use "read -r"
+- bash scripts: get rid of unnecessary sed calls
+- bash scripts: get rid of expr and let
+- bash scripts: remove useless cat
+- dracut-module-setup.sh: remove surrounding $() for subshell
+- dracut-module-setup.sh: make iscsi check fail early if cd failed
+- dracut-module-setup.sh: fix a loop over ls issue
+- dracut-module-setup.sh: fix a ambiguous variable reference
+- dracut-module-setup.sh: use "*" to expend array as string
+- dracut-module-setup.sh: fix _bondoptions wrong references
+- dracut-module-setup.sh: remove an unused variable
+- dracut-module-setup.sh: rework kdump_get_ip_route_field
+- mkfadumprd: make _dracut_isolate_args an array
+- mkdumprd: use array to store ssh arguments in mkdir_save_path_ssh
+- mkdumprd: remove an awk call in get_fs_size
+- mkdumprd: fix multiple issues with get_ssh_size
+- mkdumprd: remove some redundant echo
+- mkdumprd: make dracut_args an array again
+- mkdumprd: use kdump_get_conf_val to read config values
+- kdumpctl: refine grep usage
+- kdumpctl: fix fragile loops over find output
+- kdumpctl: use kdump_get_conf_val to read config values
+- kdump-lib.sh: use kdump_get_conf_val to read config values
+- kdump-lib.sh: add a config value retrive helper
+- kdump-lib.sh: add a config format and read helper
+- Add a .editorconfig file
+
 * Tue Aug 31 2021 Adam Williamson <awilliam@redhat.com> - 2.0.22-7
 - Don't exit 1 from 92-crashkernel.install if zipl is absent (#1993505)
 
