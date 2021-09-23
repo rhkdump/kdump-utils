@@ -467,62 +467,48 @@ kdump_setup_vlan() {
     _save_kdump_netifs "$_parent_netif"
 }
 
-# find online znet device
-# return ifname (_netdev)
-# code reaped from the list_configured function of
-# https://github.com/hreinecke/s390-tools/blob/master/zconf/znetconf
-find_online_znet_device() {
-    local CCWGROUPBUS_DEVICEDIR="/sys/bus/ccwgroup/devices"
-    local NETWORK_DEVICES d ifname ONLINE
-
-    [[ ! -d $CCWGROUPBUS_DEVICEDIR ]] && return
-    NETWORK_DEVICES=$(find $CCWGROUPBUS_DEVICEDIR)
-    for d in $NETWORK_DEVICES; do
-        [[ ! -f "$d/online" ]] && continue
-        read -r ONLINE < "$d/online"
-        if [[ $ONLINE -ne 1 ]]; then
-            continue
-        fi
-        # determine interface name, if there (only for qeth and if
-        # device is online)
-        if [[ -f $d/if_name ]]; then
-            read -r ifname < "$d/if_name"
-        elif [[ -d $d/net ]]; then
-            ifname=$(ls "$d/net/")
-        fi
-        [[ -n $ifname ]] && break
-    done
-    echo -n "$ifname"
+_find_znet_nmconnection() {
+    LANG=C grep -s -E -i -l \
+        "^s390-subchannels=([0-9]\.[0-9]\.[a-f0-9]+;){0,2}" \
+        "$1"/*.nmconnection | LC_ALL=C sed -e "$2"
 }
 
-# setup s390 znet cmdline
-# $1: netdev (ifname)
-# $2: nmcli connection path
+# setup s390 znet
+#
+# Note part of code is extracted from ccw_init provided by s390utils
 kdump_setup_znet() {
-    local _netdev="$1"
-    local _conpath="$2"
-    local s390_prefix="802-3-ethernet.s390-"
-    local _options=""
-    local NETTYPE
-    local SUBCHANNELS
+    local _config_file _unique_name _NM_conf_dir
+    local __sed_discard_ignored_files='/\(~\|\.bak\|\.old\|\.orig\|\.rpmnew\|\.rpmorig\|\.rpmsave\)$/d'
 
-    NETTYPE=$(get_nmcli_field_by_conpath "${s390_prefix}nettype" "$_conpath")
-    SUBCHANNELS=$(get_nmcli_field_by_conpath "${s390_prefix}subchannels" "$_conpath")
-    _options=$(get_nmcli_field_by_conpath "${s390_prefix}options" "$_conpath")
-
-    if [[ -z $NETTYPE || -z $SUBCHANNELS || -z $_options ]]; then
-        dwarning "Failed to get znet configuration via nmlci output. Now try sourcing ifcfg script."
-        source_ifcfg_file "$_netdev"
-        for i in $OPTIONS; do
-            _options=${_options},$i
-        done
+    if [[ "$(uname -m)" != "s390x" ]]; then
+        return
     fi
 
-    if [[ -z $NETTYPE || -z $SUBCHANNELS || -z $_options ]]; then
-        exit 1
+    _NM_conf_dir="/etc/NetworkManager/system-connections"
+
+    _config_file=$(_find_znet_nmconnection "$initdir/$_NM_conf_dir" "$__sed_discard_ignored_files")
+    if [[ -n "$_config_file" ]]; then
+        ddebug "$_config_file has already contained the znet config"
+        return
     fi
 
-    echo "rd.znet=${NETTYPE},${SUBCHANNELS},${_options} rd.znet_ifname=$_netdev:${SUBCHANNELS}" > "${initdir}/etc/cmdline.d/30znet.conf"
+    _config_file=$(LANG=C grep -s -E -i -l \
+        "^[[:space:]]*SUBCHANNELS=['\"]?([0-9]\.[0-9]\.[a-f0-9]+,){0,2}" \
+        /etc/sysconfig/network-scripts/ifcfg-* \
+        | LC_ALL=C sed -e "$__sed_discard_ignored_files")
+
+    if [[ -z "$_config_file" ]]; then
+        _config_file=$(_find_znet_nmconnection "$_NM_conf_dir" "$__sed_discard_ignored_files")
+    fi
+
+    if [[ -n "$_config_file" ]]; then
+        _unique_name=$(cat /proc/sys/kernel/random/uuid)
+        nmcli connection clone --temporary "$_config_file" "$_unique_name" &> >(ddebug)
+        nmcli connection modify --temporary "$_unique_name" connection.autoconnect false
+        inst "/run/NetworkManager/system-connections/${_unique_name}.nmconnection" "${_NM_conf_dir}/${_unique_name}.nmconnection"
+        nmcli connection del "$_unique_name" &> >(ddebug)
+    fi
+
 }
 
 kdump_get_remote_ip() {
@@ -542,21 +528,11 @@ kdump_get_remote_ip() {
 # $1: destination host
 kdump_collect_netif_usage() {
     local _destaddr _srcaddr _route _netdev
-    local _znet_netdev _znet_conpath
 
     _destaddr=$(kdump_get_remote_ip "$1")
     _route=$(kdump_get_ip_route "$_destaddr")
     _srcaddr=$(kdump_get_ip_route_field "$_route" "src")
     _netdev=$(kdump_get_ip_route_field "$_route" "dev")
-
-    _znet_netdev=$(find_online_znet_device)
-    if [[ -n $_znet_netdev ]]; then
-        _znet_conpath=$(get_nmcli_connection_apath_by_ifname "$_znet_netdev")
-        if ! (kdump_setup_znet "$_znet_netdev" "$_znet_conpath"); then
-            derror "Failed to set up znet"
-            exit 1
-        fi
-    fi
 
     if kdump_is_bridge "$_netdev"; then
         kdump_setup_bridge "$_netdev"
@@ -594,6 +570,7 @@ kdump_install_net() {
     if [[ -n "$_netifs" ]]; then
         kdump_install_nmconnections
         apply_nm_initrd_generator_timeouts
+        kdump_setup_znet
         kdump_install_nm_netif_allowlist "$_netifs"
         kdump_install_nic_driver "$_netifs"
     fi
