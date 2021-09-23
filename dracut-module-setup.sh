@@ -237,26 +237,6 @@ kdump_get_perm_addr() {
     fi
 }
 
-# Prefix kernel assigned names with "kdump-". EX: eth0 -> kdump-eth0
-# Because kernel assigned names are not persistent between 1st and 2nd
-# kernel. We could probably end up with eth0 being eth1, eth0 being
-# eth1, and naming conflict happens.
-kdump_setup_ifname() {
-    local _ifname
-
-    # If ifname already has 'kdump-' prefix, we must be switching from
-    # fadump to kdump. Skip prefixing 'kdump-' in this case as adding
-    # another prefix may truncate the ifname. Since an ifname with
-    # 'kdump-' is already persistent, this should be fine.
-    if [[ $1 =~ eth* ]] && [[ ! $1 =~ ^kdump-* ]]; then
-        _ifname="kdump-$1"
-    else
-        _ifname="$1"
-    fi
-
-    echo "$_ifname"
-}
-
 apply_nm_initrd_generator_timeouts() {
     local _timeout_conf
 
@@ -304,6 +284,19 @@ _clone_nmconnection() {
     return 1
 }
 
+_match_nmconnection_by_mac() {
+    local _unique_id _dev _mac _mac_field
+
+    _unique_id=$1
+    _dev=$2
+
+    _mac=$(kdump_get_perm_addr "$_dev")
+    [[ $_mac != 'not set' ]] || return
+    _mac_field=$(nmcli --get-values connection.type connection show "$_unique_id").mac-address
+    nmcli connection modify --temporary "$_unique_id" "$_mac_field" "$_mac" &> >(ddebug)
+    nmcli connection modify --temporary "$_unique_id" "connection.interface-name" "" &> >(ddebug)
+}
+
 # Clone and modify NM connection profiles
 #
 # This function makes use of "nmcli clone" to automatically convert ifcfg-*
@@ -325,6 +318,10 @@ clone_and_modify_nmconnection() {
     use_ipv4_or_ipv6 "$_dev" "$_uuid"
 
     nmcli connection modify --temporary uuid "$_uuid" connection.wait-device-timeout 60000 &> >(ddebug)
+    # For physical NIC i.e. non-user created NIC, ask NM to match a
+    # connection profile based on MAC address
+    _match_nmconnection_by_mac "$_uuid" "$_dev"
+
     _cloned_nmconnection_file_path=$(nmcli --get-values UUID,FILENAME connection show | sed -n "s/^${_uuid}://p")
     _tmp_nmconnection_file_path=$_DRACUT_KDUMP_NM_TMP_DIR/$(basename "$_nmconnection_file_path")
     cp "$_cloned_nmconnection_file_path" "$_tmp_nmconnection_file_path"
@@ -528,19 +525,6 @@ kdump_setup_znet() {
     echo "rd.znet=${NETTYPE},${SUBCHANNELS},${_options} rd.znet_ifname=$_netdev:${SUBCHANNELS}" > "${initdir}/etc/cmdline.d/30znet.conf"
 }
 
-kdump_get_ip_route() {
-    local _route
-    if ! _route=$(/sbin/ip -o route get to "$1" 2>&1); then
-        derror "Bad kdump network destination: $1"
-        exit 1
-    fi
-    echo "$_route"
-}
-
-kdump_get_ip_route_field() {
-    echo "$1" | sed -n -e "s/^.*\<$2\>\s\+\(\S\+\).*$/\1/p"
-}
-
 kdump_get_remote_ip() {
     local _remote _remote_temp
     _remote=$(get_remote_host "$1")
@@ -557,14 +541,13 @@ kdump_get_remote_ip() {
 # Collect netifs needed by kdump
 # $1: destination host
 kdump_collect_netif_usage() {
-    local _destaddr _srcaddr _route _netdev kdumpnic
+    local _destaddr _srcaddr _route _netdev
     local _znet_netdev _znet_conpath
 
     _destaddr=$(kdump_get_remote_ip "$1")
     _route=$(kdump_get_ip_route "$_destaddr")
     _srcaddr=$(kdump_get_ip_route_field "$_route" "src")
     _netdev=$(kdump_get_ip_route_field "$_route" "dev")
-    kdumpnic=$(kdump_setup_ifname "$_netdev")
 
     _znet_netdev=$(find_online_znet_device)
     if [[ -n $_znet_netdev ]]; then
@@ -591,8 +574,8 @@ kdump_collect_netif_usage() {
         echo "rd.neednet" >> "${initdir}/etc/cmdline.d/50neednet.conf"
     fi
 
-    if [[ ! -f ${initdir}/etc/cmdline.d/60kdumpnic.conf ]]; then
-        echo "kdumpnic=$kdumpnic" > "${initdir}/etc/cmdline.d/60kdumpnic.conf"
+    if [[ ! -f ${initdir}/etc/cmdline.d/60kdumpip.conf ]]; then
+        echo "kdump_remote_ip=$_destaddr" > "${initdir}/etc/cmdline.d/60kdumpip.conf"
     fi
 
     if is_ipv6_address "$_srcaddr"; then

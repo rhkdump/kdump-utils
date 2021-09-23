@@ -484,25 +484,28 @@ save_vmcore_dmesg_ssh()
 
 get_host_ip()
 {
-	if is_nfs_dump_target || is_ssh_dump_target; then
-		kdumpnic=$(getarg kdumpnic=)
-		if [ -z "$kdumpnic" ]; then
-			derror "failed to get kdumpnic!"
-			return 1
-		fi
-		if ! kdumphost=$(ip addr show dev "$kdumpnic" | grep '[ ]*inet'); then
-			derror "wrong kdumpnic: $kdumpnic"
-			return 1
-		fi
-		kdumphost=$(echo "$kdumphost" | head -n 1 | awk '{print $2}')
-		kdumphost="${kdumphost%%/*}"
-		if [ -z "$kdumphost" ]; then
-			derror "wrong kdumpnic: $kdumpnic"
-			return 1
-		fi
-		HOST_IP=$kdumphost
+
+	if ! is_nfs_dump_target && ! is_ssh_dump_target; then
+		return 0
 	fi
-	return 0
+
+	_kdump_remote_ip=$(getarg kdump_remote_ip=)
+
+	if [ -z "$_kdump_remote_ip" ]; then
+		derror "failed to get remote IP address!"
+		return 1
+	fi
+	_route=$(kdump_get_ip_route "$_kdump_remote_ip")
+	_netdev=$(kdump_get_ip_route_field "$_route" "dev")
+
+	if ! _kdumpip=$(ip addr show dev "$_netdev" | grep '[ ]*inet'); then
+		derror "Failed to get IP of $_netdev"
+		return 1
+	fi
+
+	_kdumpip=$(echo "$_kdumpip" | head -n 1 | awk '{print $2}')
+	_kdumpip="${_kdumpip%%/*}"
+	HOST_IP=$_kdumpip
 }
 
 read_kdump_confs()

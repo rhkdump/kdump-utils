@@ -163,3 +163,17 @@ is_lvm2_thinp_device()
 
 	[ -n "$_lvm2_thin_device" ]
 }
+
+kdump_get_ip_route()
+{
+	if ! _route=$(/sbin/ip -o route get to "$1" 2>&1); then
+		derror "Bad kdump network destination: $1"
+		exit 1
+	fi
+	echo "$_route"
+}
+
+kdump_get_ip_route_field()
+{
+	echo "$1" | sed -n -e "s/^.*\<$2\>\s\+\(\S\+\).*$/\1/p"
+}
