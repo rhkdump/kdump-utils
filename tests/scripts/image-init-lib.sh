@@ -23,7 +23,7 @@ is_mounted()
 clean_up()
 {
 	for _mnt in ${MNTS[@]}; do
-		is_mounted $_mnt && $SUDO umount -f $_mnt
+		is_mounted $_mnt && $SUDO umount -f -R $_mnt
 	done
 
 	for _dev in ${DEVS[@]}; do
@@ -81,6 +81,17 @@ get_mountable_dev() {
 	fi
 }
 
+# get the separate boot partition
+# return the 2nd partition as boot partition
+get_mount_boot() {
+	local dev=$1 _second_part=${dev}p2
+
+	if [[ $(lsblk -f $_second_part -n -o LABEL 2> /dev/null) == boot ]]; then
+		echo $_second_part
+	fi
+}
+
+
 prepare_loop() {
 	[ -n "$(lsmod | grep "^loop")" ] && return
 
@@ -133,7 +144,7 @@ image_lock()
 # Mount a device, will umount it automatially when shell exits
 mount_image() {
 	local image=$1 fmt
-	local dev mnt mnt_dev
+	local dev mnt mnt_dev boot root
 
 	# Lock the image just in case user run this script in parrel
 	image_lock $image
@@ -166,12 +177,20 @@ mount_image() {
 
 	$SUDO mount $mnt_dev $mnt
 	[ $? -ne 0 ] && perror_exit "failed to mount device '$mnt_dev'"
+	boot=$(get_mount_boot "$dev")
+	if [[ -n "$boot" ]]; then
+		root=$(get_image_mount_root $image)
+		$SUDO mount $boot $root/boot
+		[ $? -ne 0 ] && perror_exit "failed to mount the bootable partition for device '$mnt_dev'"
+	fi
 }
 
 get_image_mount_root() {
 	local image=$1
 	local root=${MNTS[$image]}
 
+	# Starting from Fedora 36, the root node is /root/root of the last partition
+	[ -d "$root/root/root" ] && root=$root/root
 	echo $root
 
 	if [ -z "$root" ]; then
@@ -213,7 +232,7 @@ run_in_image() {
 
 inst_in_image() {
 	local image=$1 src=$2 dst=$3
-	local root=${MNTS[$image]}
+	local root=$(get_image_mount_root $1)
 
 	$SUDO cp $src $root/$dst
 }
