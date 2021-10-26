@@ -70,8 +70,8 @@ to_mount()
 
 	if [[ $_fstype == "nfs"* ]]; then
 		_pdev=$_target
-		_sed_cmd+='s/,addr=[^,]*//;'
-		_sed_cmd+='s/,proto=[^,]*//;'
+		_sed_cmd+='s/,\(mount\)\?addr=[^,]*//g;'
+		_sed_cmd+='s/,\(mount\)\?proto=[^,]*//g;'
 		_sed_cmd+='s/,clientaddr=[^,]*//;'
 	else
 		# for non-nfs _target converting to use udev persistent name
