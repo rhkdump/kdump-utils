@@ -686,7 +686,8 @@ kdump_install_conf() {
                 fi
                 ;;
             kdump_pre | kdump_post | extra_bins)
-                dracut_install "$_val"
+                # shellcheck disable=SC2086
+                dracut_install $_val
                 ;;
             core_collector)
                 dracut_install "${_val%%[[:blank:]]*}"
