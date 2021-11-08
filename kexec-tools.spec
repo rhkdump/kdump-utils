@@ -4,8 +4,8 @@
 %global mkdf_shortver %(c=%{mkdf_ver}; echo ${c:0:7})
 
 Name: kexec-tools
-Version: 2.0.22
-Release: 8%{?dist}
+Version: 2.0.23
+Release: 1%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -375,6 +375,13 @@ done
 %endif
 
 %changelog
+* Mon Nov 18 2021 Coiby <coxu@redhat.com> - 2.0.23-1
+- Update kexec-tools to 2.0.23
+- Rebase makedumpfile to 1.7.0
+- fix broken extra_bins when installing multiple binaries
+- mkdumprd: drop mountaddr/mountproto nfs mount options
+- selftest: kill VM reliably by recursively kill children processes
+
 * Thu Sep 16 2021 Kairui Song <kasong@redhat.com> - 2.0.22-8
 - 92-crashkernel.install: fix exit code
 - dracut-early-kdump.sh: make it POSIX compatible
