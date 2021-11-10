@@ -71,7 +71,7 @@ Requires: dracut-squash >= 050
 Requires: ethtool
 Recommends: grubby
 BuildRequires: make
-BuildRequires: zlib-devel elfutils-devel glib2-devel bzip2-devel ncurses-devel bison flex lzo-devel snappy-devel
+BuildRequires: zlib-devel elfutils-devel glib2-devel bzip2-devel ncurses-devel bison flex lzo-devel snappy-devel libzstd-devel
 BuildRequires: pkgconfig intltool gettext
 BuildRequires: systemd-rpm-macros
 BuildRequires: automake autoconf libtool
@@ -151,7 +151,7 @@ cp %{SOURCE34} .
 make
 %ifarch %{ix86} x86_64 ppc64 s390x ppc64le aarch64
 make -C eppic-%{eppic_ver}/libeppic
-make -C makedumpfile-%{mkdf_ver} LINKTYPE=dynamic USELZO=on USESNAPPY=on
+make -C makedumpfile-%{mkdf_ver} LINKTYPE=dynamic USELZO=on USESNAPPY=on USEZSTD=on
 make -C makedumpfile-%{mkdf_ver} LDFLAGS="$LDFLAGS -I../eppic-%{eppic_ver}/libeppic -L../eppic-%{eppic_ver}/libeppic" eppic_makedumpfile.so
 %endif
 
