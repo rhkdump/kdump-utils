@@ -26,6 +26,12 @@ understand how this configuration file affects the behavior of kdump.
 
 .SH OPTIONS
 
+.B auto_reset_crashkernel <yes|no>
+.RS
+determine whether to reset kernel crashkernel to new default value
+or not when kexec-tools updates the default crashkernel value and
+existing kernels using the old default kernel crashkernel value
+
 .B raw <partition>
 .RS
 Will dd /proc/vmcore into <partition>.  Use persistent device names for
