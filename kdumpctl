@@ -1280,6 +1280,17 @@ get_default_crashkernel()
 	kdump_get_arch_recommend_crashkernel "$_dump_mode"
 }
 
+# Read kernel cmdline parameter for a specific kernel
+# $1: kernel path, DEFAULT or kernel path, ALL not accepted
+# $2: kernel cmldine parameter
+get_grub_kernel_boot_parameter()
+{
+	local _kernel_path=$1 _para=$2
+
+	[[ $_kernel_path == ALL ]] && derror "kernel_path=ALL invalid for get_grub_kernel_boot_parameter" && return 1
+	grubby --info="$_kernel_path" | sed -En -e "/^args=.*$/{s/^.*(\s|\")${_para}=(\S*).*\"$/\2/p;q}"
+}
+
 reset_crashkernel()
 {
 	local kernel=$1 entry crashkernel_default
