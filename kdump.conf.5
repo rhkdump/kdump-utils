@@ -118,8 +118,11 @@ All files under /etc/kdump/post.d are collectively sorted
 and executed in lexical order, before binary or script
 specified kdump_post parameter is executed.
 .PP
-Note that scripts written for use with this directive must use
-the /bin/bash interpreter.
+Note that scripts written for use with this directive must use the /bin/bash
+interpreter. And since these scripts run in kdump enviroment, the reference to
+the storage or network device in the scripts should adhere to the section
+'Supported dump target types and requirements' in kexec-kdump-howto.txt.
+
 .RE
 
 .B kdump_pre <binary | script>
@@ -139,8 +142,11 @@ kdump_pre parameter is executed.
 Even if the binary or script in /etc/kdump/pre.d directory
 returns non 0 exit status, the processing is continued.
 .PP
-Note that scripts written for this directive must use
-the /bin/bash interpreter.
+Note that scripts written for use with this directive must use the /bin/bash
+interpreter. And since these scripts run in kdump enviroment, the reference to
+the storage or network device in the scripts should adhere to the section
+'Supported dump target types and requirements' in kexec-kdump-howto.txt.
+
 .RE
 
 .B extra_bins <binaries | shell scripts>

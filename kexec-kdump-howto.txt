@@ -621,6 +621,9 @@ If /etc/kdump/post.d directory exist, All files in the directory are
 collectively sorted and executed in lexical order, before binary or script
 specified kdump_post parameter is executed.
 
+In these scripts, the reference to the storage or network device should adhere
+to the section 'Supported dump target types and requirements'
+
 Kdump Pre-Capture Executable
 ----------------------------
 
@@ -633,6 +636,9 @@ sorted and executed in lexical order, after binary or script specified
 kdump_pre parameter is executed.
 Even if the binary or script in /etc/kdump/pre.d directory returns non 0
 exit status, the processing is continued.
+
+In these scripts, the reference to the storage or network device should adhere
+to the section 'Supported dump target types and requirements'
 
 Extra Binaries
 --------------
