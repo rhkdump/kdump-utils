@@ -1273,6 +1273,13 @@ do_estimate()
 	fi
 }
 
+get_default_crashkernel()
+{
+	local _dump_mode=$1
+
+	kdump_get_arch_recommend_crashkernel "$_dump_mode"
+}
+
 reset_crashkernel()
 {
 	local kernel=$1 entry crashkernel_default
@@ -1360,6 +1367,9 @@ main()
 		;;
 	estimate)
 		do_estimate
+		;;
+	get-default-crashkernel)
+		get_default_crashkernel "$2"
 		;;
 	reset-crashkernel)
 		reset_crashkernel "$2"
