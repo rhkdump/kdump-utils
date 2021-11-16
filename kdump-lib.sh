@@ -822,40 +822,52 @@ get_recommend_size()
 	IFS="$OLDIFS"
 }
 
+# get default crashkernel
+# $1 dump mode, if not specified, dump_mode will be judged by is_fadump_capable
+kdump_get_arch_recommend_crashkernel()
+{
+	local _arch _ck_cmdline _dump_mode
+
+	if [[ -z "$1" ]]; then
+		if is_fadump_capable; then
+			_dump_mode=fadump
+		else
+			_dump_mode=kdump
+		fi
+	else
+		_dump_mode=$1
+	fi
+
+	_arch=$(uname -m)
+
+	if [[ $_arch == "x86_64" ]] || [[ $_arch == "s390x" ]]; then
+		_ck_cmdline="1G-4G:192M,4G-64G:256M,64G-:512M"
+	elif [[ $_arch == "aarch64" ]]; then
+		_ck_cmdline="2G-:448M"
+	elif [[ $_arch == "ppc64le" ]]; then
+		if [[ $_dump_mode == "fadump" ]]; then
+			_ck_cmdline="4G-16G:768M,16G-64G:1G,64G-128G:2G,128G-1T:4G,1T-2T:6G,2T-4T:12G,4T-8T:20G,8T-16T:36G,16T-32T:64G,32T-64T:128G,64T-:180G"
+		else
+			_ck_cmdline="2G-4G:384M,4G-16G:512M,16G-64G:1G,64G-128G:2G,128G-:4G"
+		fi
+	fi
+
+	_ck_cmdline=${_ck_cmdline//-:/-102400T:}
+	echo -n "$_ck_cmdline"
+}
+
 # return recommended size based on current system RAM size
 # $1: kernel version, if not set, will defaults to $(uname -r)
 kdump_get_arch_recommend_size()
 {
-	local kernel=$1 arch
+	local _ck_cmdline
 
 	if ! [[ -r "/proc/iomem" ]]; then
 		echo "Error, can not access /proc/iomem."
 		return 1
 	fi
-
-	[[ -z $kernel ]] && kernel=$(uname -r)
-	ck_cmdline=$(cat "/usr/lib/modules/$kernel/crashkernel.default" 2> /dev/null)
-
-	if [[ -n $ck_cmdline ]]; then
-		ck_cmdline=${ck_cmdline#crashkernel=}
-	else
-		arch=$(lscpu | grep Architecture | awk -F ":" '{ print $2 }' | tr '[:lower:]' '[:upper:]')
-		if [[ $arch == "X86_64" ]] || [[ $arch == "S390X" ]]; then
-			ck_cmdline="1G-4G:192M,4G-64G:256M,64G-:512M"
-		elif [[ $arch == "AARCH64" ]]; then
-			ck_cmdline="2G-:448M"
-		elif [[ $arch == "PPC64LE" ]]; then
-			if is_fadump_capable; then
-				ck_cmdline="4G-16G:768M,16G-64G:1G,64G-128G:2G,128G-1T:4G,1T-2T:6G,2T-4T:12G,4T-8T:20G,8T-16T:36G,16T-32T:64G,32T-64T:128G,64T-:180G"
-			else
-				ck_cmdline="2G-4G:384M,4G-16G:512M,16G-64G:1G,64G-128G:2G,128G-:4G"
-			fi
-		fi
-	fi
-
-	ck_cmdline=${ck_cmdline//-:/-102400T:}
 	sys_mem=$(get_system_size)
-
+	_ck_cmdline=$(kdump_get_arch_recommend_crashkernel)
 	get_recommend_size "$sys_mem" "$ck_cmdline"
 }
 
