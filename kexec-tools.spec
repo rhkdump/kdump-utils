@@ -63,6 +63,7 @@ Source201: dracut-fadump-module-setup.sh
 
 %ifarch ppc64 ppc64le
 Requires(post): servicelog
+Recommends: keyutils
 %endif
 Requires(pre): coreutils sed zlib
 Requires: dracut >= 050
