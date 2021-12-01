@@ -265,7 +265,7 @@ mv $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/* $RPM_BUILD_ROOT/%{d
 touch /etc/kdump.conf
 
 %ifarch ppc64 ppc64le
-servicelog_notify --remove --command=/usr/lib/kdump/kdump-migrate-action.sh
+servicelog_notify --remove --command=/usr/lib/kdump/kdump-migrate-action.sh 2>/dev/null
 servicelog_notify --add --command=/usr/lib/kdump/kdump-migrate-action.sh --match='refcode="#MIGRATE" and serviceable=0' --type=EVENT --method=pairs_stdin
 %endif
 
