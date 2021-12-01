@@ -1355,38 +1355,194 @@ _get_current_running_kernel_path()
 	fi
 }
 
-reset_crashkernel()
+_update_grub()
 {
-	local kernel=$1 entry crashkernel_default
-	local grub_etc_default="/etc/default/grub"
-
-	[[ -z $kernel ]] && kernel=$(uname -r)
-	crashkernel_default=$(cat "/usr/lib/modules/$kernel/crashkernel.default" 2> /dev/null)
-
-	if [[ -z $crashkernel_default ]]; then
-		derror "$kernel doesn't have a crashkernel.default"
-		exit 1
-	fi
+	local _kernel_path=$1 _crashkernel=$2 _dump_mode=$3 _fadump_val=$4
 
 	if is_atomic; then
 		if rpm-ostree kargs | grep -q "crashkernel="; then
-			rpm-ostree kargs --replace="crashkernel=$crashkernel_default"
+			rpm-ostree kargs --replace="crashkernel=$_crashkernel"
 		else
-			rpm-ostree kargs --append="crashkernel=$crashkernel_default"
+			rpm-ostree kargs --append="crashkernel=$_crashkernel"
 		fi
 	else
-		entry=$(grubby --info ALL | grep "^kernel=.*$kernel")
-		entry=${entry#kernel=}
-		entry=${entry#\"}
-		entry=${entry%\"}
+		[[ -f /etc/zipl.conf ]] && zipl_arg="--zipl"
+		grubby --args "crashkernel=$_crashkernel" --update-kernel "$_kernel_path" $zipl_arg
+		if [[ $_dump_mode == kdump ]]; then
+			grubby --remove-args="fadump" --update-kernel "$_kernel_path"
+		else
+			grubby --args="fadump=$_fadump_val" --update-kernel "$_kernel_path"
+		fi
+	fi
+	[[ $zipl_arg ]] && zipl > /dev/null
+}
 
-		if [[ -f $grub_etc_default ]]; then
-			sed -i -e "s/^\(GRUB_CMDLINE_LINUX=.*\)crashkernel=[^\ \"]*\([\ \"].*\)$/\1$crashkernel_default\2/" "$grub_etc_default"
+_valid_grubby_kernel_path()
+{
+	[[ -n "$1" ]] && grubby --info="$1" > /dev/null 2>&1
+}
+
+_get_all_kernels_from_grubby()
+{
+	local _kernels _line _kernel_path _grubby_kernel_path=$1
+
+	for _line in $(grubby --info "$_grubby_kernel_path" | grep "^kernel="); do
+		_kernel_path=$(_filter_grubby_kernel_str "$_line")
+		_kernels="$_kernels $_kernel_path"
+	done
+	echo -n "$_kernels"
+}
+
+GRUB_ETC_DEFAULT="/etc/default/grub"
+# modify the kernel command line parameter in default grub conf
+#
+# $1: the name of the kernel command line parameter
+# $2: new value. If empty, the parameter would be removed
+_update_kernel_cmdline_in_grub_etc_default()
+{
+	local _para=$1 _val=$2 _para_val _regex
+
+	if [[ -n $_val ]]; then
+		_para_val="$_para=$_val"
+	fi
+
+	_regex='^(GRUB_CMDLINE_LINUX=.*)([[:space:]"])'"$_para"'=[^[:space:]"]*(.*)$'
+	if grep -q -E "$_regex" "$GRUB_ETC_DEFAULT"; then
+		sed -i -E 's/'"$_regex"'/\1\2'"$_para_val"'\3/' "$GRUB_ETC_DEFAULT"
+	elif [[ -n $_para_val ]]; then
+		# If the kernel parameter doesn't exist, put it in the first
+		sed -i -E 's/^(GRUB_CMDLINE_LINUX=")/\1'"$_para_val"' /' "$GRUB_ETC_DEFAULT"
+	fi
+}
+
+reset_crashkernel()
+{
+	local _opt _val _dump_mode _fadump_val _reboot _grubby_kernel_path _kernel _kernels
+	local _old_crashkernel _new_crashkernel _new_dump_mode _crashkernel_changed
+	local _new_fadump_val _old_fadump_val _what_is_updated
+
+	for _opt in "$@"; do
+		case "$_opt" in
+			--fadump=*)
+				_val=${_opt#*=}
+				if _dump_mode=$(get_dump_mode_by_fadump_val $_val); then
+					_fadump_val=$_val
+				else
+					derror "failed to determine dump mode"
+					exit
+				fi
+				;;
+			--kernel=*)
+				_val=${_opt#*=}
+				if ! _valid_grubby_kernel_path $_val; then
+					derror "Invalid $_opt, please specify a valid kernel path, ALL or DEFAULT"
+					exit
+				fi
+				_grubby_kernel_path=$_val
+				;;
+			--reboot)
+				_reboot=yes
+				;;
+			*)
+				derror "$_opt not recognized"
+				exit 1
+				;;
+		esac
+	done
+
+	# 1. CoreOS uses "rpm-ostree kargs" instead of grubby to manage kernel command
+	#    line. --kernel=ALL doesn't make sense for CoreOS.
+	# 2. CoreOS doesn't support POWER so the dump mode is always kdump.
+	# 3. "rpm-ostree kargs" would prompt the user to reboot the system after
+	#    modifying the kernel command line so there is no need for kexec-tools
+	#    to repeat it.
+	if is_atomic; then
+		_old_crashkernel=$(rpm-ostree kargs | sed -n -E 's/.*(^|\s)crashkernel=(\S*).*/\2/p')
+		_new_dump_mode=kdump
+		_new_crashkernel=$(kdump_get_arch_recommend_crashkernel "$_new_dump_mode")
+		if [[ $_old_crashkernel != "$_new_crashkernel" ]]; then
+			_update_grub "" "$_new_crashkernel" "$_new_dump_mode" ""
+			if [[ $_reboot == yes ]]; then
+				systemctl reboot
+			fi
+		fi
+		return
+	fi
+
+	# For non-ppc64le systems, the dump mode is always kdump since only ppc64le
+	# has FADump.
+	if [[ -z $_dump_mode && $(uname -m) != ppc64le ]]; then
+		_dump_mode=kdump
+		_fadump_val=off
+	fi
+
+	# If the dump mode is determined, we can also know the default crashkernel value
+	if [[ -n $_dump_mode ]]; then
+		_crashkernel=$(kdump_get_arch_recommend_crashkernel "$_dump_mode")
+	fi
+
+	# If --kernel-path=ALL, update GRUB_CMDLINE_LINUX in /etc/default/grub.
+	#
+	# An exception case is when the ppc64le user doesn't specify the fadump value.
+	# In this case, the dump mode would be determined by parsing the kernel
+	# command line of the kernel(s) to be updated thus don't update GRUB_CMDLINE_LINUX.
+	#
+	# The following code has been simplified because of what has been done early,
+	#   - set the dump mode as kdump for non-ppc64le cases
+	#   - retrieved the default crashkernel value for given dump mode
+	if [[ $_grubby_kernel_path == ALL && -n $_dump_mode ]]; then
+		_update_kernel_cmdline_in_grub_etc_default crashkernel "$_crashkernel"
+		# remove the fadump if fadump is disabled
+		[[ $_fadump_val == off ]] && _fadump_val=""
+		_update_kernel_cmdline_in_grub_etc_default fadump "$_fadump_val"
+	fi
+
+	# If kernel-path not specified, either
+	#  - use KDUMP_KERNELVER if it's defined
+	#  - use current running kernel
+	if [[ -z $_grubby_kernel_path ]]; then
+		if [[ -z $KDUMP_KERNELVER ]] ||
+			! _kernel_path=$(_find_kernel_path_by_release "$KDUMP_KERNELVER"); then
+					if ! _kernel_path=$(_get_current_running_kernel_path); then
+						derror "no running kernel found"
+						exit 1
+					fi
+		fi
+		_kernels=$_kernel_path
+	else
+		_kernels=$(_get_all_kernels_from_grubby "$_grubby_kernel_path")
+	fi
+
+	for _kernel in $_kernels; do
+		if [[ -z $_dump_mode ]]; then
+			_new_dump_mode=$(get_dump_mode_by_kernel "$_kernel")
+			_new_crashkernel=$(kdump_get_arch_recommend_crashkernel "$_new_dump_mode")
+			_new_fadump_val=$(get_grub_kernel_boot_parameter "$_kernel" fadump)
+		else
+			_new_dump_mode=$_dump_mode
+			_new_crashkernel=$_crashkernel
+			_new_fadump_val=$_fadump_val
 		fi
 
-		[[ -f /etc/zipl.conf ]] && zipl_arg="--zipl"
-		grubby --args "$crashkernel_default" --update-kernel "$entry" $zipl_arg
-		[[ $zipl_arg ]] && zipl > /dev/null
+		_old_crashkernel=$(get_grub_kernel_boot_parameter "$_kernel" crashkernel)
+		_old_fadump_val=$(get_grub_kernel_boot_parameter "$_kernel" fadump)
+		if [[ $_old_crashkernel != "$_new_crashkernel" || $_old_fadump_val != "$_new_fadump_val" ]]; then
+			_update_grub "$_kernel" "$_new_crashkernel" "$_new_dump_mode" "$_new_fadump_val"
+			if [[ $_reboot != yes ]]; then
+				if [[ $_old_crashkernel != "$_new_crashkernel" ]]; then
+					_what_is_updated="Updated crashkernel=$_new_crashkernel"
+				else
+					# This case happens only when switching between fadump=on and fadump=nocma
+					_what_is_updated="Updated fadump=$_new_fadump_val"
+				fi
+				dwarn "$_what_is_updated for kernel=$_kernel. Please reboot the system for the change to take effect."
+			fi
+			_crashkernel_changed=yes
+		fi
+	done
+
+	if [[ $_reboot == yes && $_crashkernel_changed == yes ]]; then
+		reboot
 	fi
 }
 
@@ -1447,7 +1603,8 @@ main()
 		get_default_crashkernel "$2"
 		;;
 	reset-crashkernel)
-		reset_crashkernel "$2"
+		shift
+		reset_crashkernel "$@"
 		;;
 	*)
 		dinfo $"Usage: $0 {estimate|start|stop|status|restart|reload|rebuild|reset-crashkernel|propagate|showmem}"

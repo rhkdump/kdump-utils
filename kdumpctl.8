@@ -50,14 +50,19 @@ Estimate a suitable crashkernel value for current machine. This is a
 best-effort estimate. It will print a recommanded crashkernel value
 based on current kdump setup, and list some details of memory usage.
 .TP
-.I reset-crashkernel [KERNEL]
-Reset crashkernel value to default value. kdumpctl will try to read
-from /usr/lib/modules/<KERNEL>/crashkernel.default and reset specified
-kernel's crashkernel cmdline value. If no kernel is
-specified, will reset current running kernel's crashkernel value.
-If /usr/lib/modules/<KERNEL>/crashkernel.default doesn't exist, will
-simply exit return 1.
+.I reset-crashkernel [--kernel=path_to_kernel] [--reboot]
+Reset crashkernel to default value recommended by kexec-tools. If no kernel
+is specified, will reset KDUMP_KERNELVER if it's defined in /etc/sysconfig/kdump
+or current running kernel's crashkernel value if KDUMP_KERNELVER is empty. You can
+also specify --kernel=ALL and --kernel=DEFAULT which have the same meaning as
+grubby's kernel-path=ALL and kernel-path=DEFAULT. ppc64le supports FADump and
+supports an additonal [--fadump=[on|off|nocma]] parameter to toggle FADump
+on/off.
 
+Note: The memory requirements for kdump varies heavily depending on the
+used hardware and system configuration. Thus the recommended
+crashkernel might not work for your specific setup. Please test if
+kdump works after resetting the crashkernel value.
 
 .SH "SEE ALSO"
 .BR kdump.conf (5),
