@@ -1546,6 +1546,36 @@ reset_crashkernel()
 	fi
 }
 
+# shellcheck disable=SC2154 # false positive when dereferencing an array
+reset_crashkernel_after_update()
+{
+	local _kernel _crashkernel _dump_mode _fadump_val _old_default_crashkernel _new_default_crashkernel
+	declare -A _crashkernel_vals
+
+	_crashkernel_vals[old_kdump]=$(cat /tmp/old_default_crashkernel 2> /dev/null)
+	_crashkernel_vals[old_fadump]=$(cat /tmp/old_default_crashkernel_fadump 2> /dev/null)
+	_crashkernel_vals[new_kdump]=$(get_default_crashkernel kdump)
+	_crashkernel_vals[new_fadump]=$(get_default_crashkernel fadump)
+
+	for _kernel in $(_get_all_kernels_from_grubby); do
+		_crashkernel=$(get_grub_kernel_boot_parameter "$_kernel" crashkernel)
+		if [[ $_crashkernel == auto ]]; then
+			reset_crashkernel "--kernel=$_kernel"
+		elif [[ -n $_crashkernel ]]; then
+			_dump_mode=$(get_dump_mode_by_kernel "$_kernel")
+			_old_default_crashkernel=${_crashkernel_vals[old_${_dump_mode}]}
+			_new_default_crashkernel=${_crashkernel_vals[new_${_dump_mode}]}
+			if [[ $_crashkernel == "$_old_default_crashkernel" ]] &&
+				[[ $_new_default_crashkernel != "$_old_default_crashkernel" ]]; then
+				_fadump_val=$(get_grub_kernel_boot_parameter "$_kernel" fadump)
+				if _update_grub "$_kernel" "$_new_default_crashkernel" "$_dump_mode" "$_fadump_val"; then
+					echo "For kernel=$_kernel, crashkernel=$_new_default_crashkernel now."
+				fi
+			fi
+		fi
+	done
+}
+
 if [[ ! -f $KDUMP_CONFIG_FILE ]]; then
 	derror "Error: No kdump config file found!"
 	exit 1
@@ -1605,6 +1635,11 @@ main()
 	reset-crashkernel)
 		shift
 		reset_crashkernel "$@"
+		;;
+	reset-crashkernel-after-update)
+		if [[ $(kdump_get_conf_val auto_reset_crashkernel) != no ]]; then
+			reset_crashkernel_after_update
+		fi
 		;;
 	*)
 		dinfo $"Usage: $0 {estimate|start|stop|status|restart|reload|rebuild|reset-crashkernel|propagate|showmem}"
