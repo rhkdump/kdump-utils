@@ -1291,6 +1291,40 @@ get_grub_kernel_boot_parameter()
 	grubby --info="$_kernel_path" | sed -En -e "/^args=.*$/{s/^.*(\s|\")${_para}=(\S*).*\"$/\2/p;q}"
 }
 
+# get dump mode by fadump value
+# return
+#  - fadump, if fadump=on or fadump=nocma
+#  - kdump, if fadump=off or empty fadump, return kdump
+#  - error if otherwise
+get_dump_mode_by_fadump_val()
+{
+	local _fadump_val=$1
+
+	if [[ -z $_fadump_val ]] || [[ $_fadump_val == off ]]; then
+		echo -n kdump
+	elif [[ $_fadump_val == on ]] || [[ $_fadump_val == nocma ]]; then
+		echo -n fadump
+	else
+		derror "invalid fadump=$_fadump_val"
+		return 1
+	fi
+}
+
+# get dump mode of a specific kernel
+# based on its fadump kernel cmdline parameter
+get_dump_mode_by_kernel()
+{
+	local _kernel_path=$1 _fadump_val _dump_mode
+
+	_fadump_val=$(get_grub_kernel_boot_parameter "$_kernel_path" fadump)
+	if _dump_mode=$(get_dump_mode_by_fadump_val "$_fadump_val"); then
+		echo -n "$_dump_mode"
+	else
+		derror "failed to get dump mode for kernel $_kernel_path"
+		exit
+	fi
+}
+
 reset_crashkernel()
 {
 	local kernel=$1 entry crashkernel_default
