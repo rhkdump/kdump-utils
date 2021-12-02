@@ -1576,6 +1576,32 @@ reset_crashkernel_after_update()
 	done
 }
 
+reset_crashkernel_for_installed_kernel()
+{
+	local _installed_kernel _running_kernel _crashkernel _crashkernel_running
+	local _dump_mode_running _fadump_val_running
+
+	if ! _installed_kernel=$(_find_kernel_path_by_release "$1"); then
+		exit 1
+	fi
+
+	if ! _running_kernel=$(_get_current_running_kernel_path); then
+		derror "Couldn't find current running kernel"
+		exit
+	fi
+
+	_crashkernel=$(get_grub_kernel_boot_parameter "$_installed_kernel" crashkernel)
+	_crashkernel_running=$(get_grub_kernel_boot_parameter "$_running_kernel" crashkernel)
+	_dump_mode_running=$(get_dump_mode_by_kernel "$_running_kernel")
+	_fadump_val_running=$(get_grub_kernel_boot_parameter "$_kernel" fadump)
+
+	if [[ $_crashkernel != "$_crashkernel_running" ]]; then
+		if _update_grub "$_installed_kernel" "$_crashkernel_running" "$_dump_mode_running" "$_fadump_val_running"; then
+			echo "kexec-tools has reset $_installed_kernel to use the new default crashkernel value $_crashkernel_running"
+		fi
+	fi
+}
+
 if [[ ! -f $KDUMP_CONFIG_FILE ]]; then
 	derror "Error: No kdump config file found!"
 	exit 1
@@ -1639,6 +1665,11 @@ main()
 	reset-crashkernel-after-update)
 		if [[ $(kdump_get_conf_val auto_reset_crashkernel) != no ]]; then
 			reset_crashkernel_after_update
+		fi
+		;;
+	reset-crashkernel-for-installed_kernel)
+		if [[ $(kdump_get_conf_val auto_reset_crashkernel) != no ]]; then
+			reset_crashkernel_for_installed_kernel "$2"
 		fi
 		;;
 	*)
