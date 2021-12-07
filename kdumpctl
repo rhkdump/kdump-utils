@@ -1325,6 +1325,36 @@ get_dump_mode_by_kernel()
 	fi
 }
 
+_filter_grubby_kernel_str()
+{
+	local _grubby_kernel_str=$1
+	echo -n "$_grubby_kernel_str" | sed -n -e 's/^kernel="\(.*\)"/\1/p'
+}
+
+_find_kernel_path_by_release()
+{
+	local _release="$1" _grubby_kernel_str _kernel_path
+	_grubby_kernel_str=$(grubby --info ALL | grep "^kernel=.*$_release")
+	_kernel_path=$(_filter_grubby_kernel_str "$_grubby_kernel_str")
+	if [[ -z $_kernel_path ]]; then
+		derror "kernel $_release doesn't exist"
+		return 1
+	fi
+	echo -n "$_kernel_path"
+}
+
+_get_current_running_kernel_path()
+{
+	local _release _path
+
+	_release=$(uname -r)
+	if _path=$(_find_kernel_path_by_release "$_release"); then
+		echo -n "$_path"
+	else
+		return 1
+	fi
+}
+
 reset_crashkernel()
 {
 	local kernel=$1 entry crashkernel_default
