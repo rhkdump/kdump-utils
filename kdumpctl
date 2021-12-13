@@ -1370,9 +1370,9 @@ reset_crashkernel()
 
 	if is_atomic; then
 		if rpm-ostree kargs | grep -q "crashkernel="; then
-			rpm-ostree --replace="crashkernel=$crashkernel_default"
+			rpm-ostree kargs --replace="crashkernel=$crashkernel_default"
 		else
-			rpm-ostree --append="crashkernel=$crashkernel_default"
+			rpm-ostree kargs --append="crashkernel=$crashkernel_default"
 		fi
 	else
 		entry=$(grubby --info ALL | grep "^kernel=.*$kernel")
