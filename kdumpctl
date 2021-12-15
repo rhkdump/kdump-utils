@@ -1576,6 +1576,11 @@ reset_crashkernel_after_update()
 	done
 }
 
+_is_osbuild()
+{
+	[[ $(sed -n -E 's/.*(^|\s)container=(\S*).*/\2/p' < /proc/1/environ) == bwrap-osbuild ]]
+}
+
 reset_crashkernel_for_installed_kernel()
 {
 	local _installed_kernel _running_kernel _crashkernel _crashkernel_running
@@ -1583,6 +1588,11 @@ reset_crashkernel_for_installed_kernel()
 
 	if ! _installed_kernel=$(_find_kernel_path_by_release "$1"); then
 		exit 1
+	fi
+
+	if _is_osbuild && ! grep -q crashkernel= /etc/kernel/cmdline; then
+		reset_crashkernel "--kernel=$_installed_kernel"
+		return
 	fi
 
 	if ! _running_kernel=$(_get_current_running_kernel_path); then
