@@ -72,32 +72,6 @@ determine_dump_mode()
 	ddebug "DEFAULT_DUMP_MODE=$DEFAULT_DUMP_MODE"
 }
 
-save_core()
-{
-	coredir="/var/crash/$(date +"%Y-%m-%d-%H:%M")"
-
-	mkdir -p "$coredir"
-	ddebug "cp --sparse=always /proc/vmcore $coredir/vmcore-incomplete"
-	if cp --sparse=always /proc/vmcore "$coredir/vmcore-incomplete"; then
-		mv "$coredir/vmcore-incomplete" "$coredir/vmcore"
-		dinfo "saved a vmcore to $coredir"
-	else
-		derror "failed to save a vmcore to $coredir"
-	fi
-
-	# pass the dmesg to Abrt tool if exists, in order
-	# to collect the kernel oops message.
-	# https://fedorahosted.org/abrt/
-	if [[ -x /usr/bin/dumpoops ]]; then
-		ddebug "makedumpfile --dump-dmesg $coredir/vmcore $coredir/dmesg"
-		makedumpfile --dump-dmesg "$coredir/vmcore" "$coredir/dmesg" > /dev/null 2>&1
-		ddebug "dumpoops -d $coredir/dmesg"
-		if dumpoops -d "$coredir/dmesg" > /dev/null 2>&1; then
-			dinfo "kernel oops has been collected by abrt tool"
-		fi
-	fi
-}
-
 rebuild_fadump_initrd()
 {
 	if ! $MKFADUMPRD "$DEFAULT_INITRD_BAK" "$TARGET_INITRD" --kver "$KDUMP_KERNELVER"; then
@@ -1346,12 +1320,7 @@ main()
 
 	case "$1" in
 	start)
-		if [[ -s /proc/vmcore ]]; then
-			save_core
-			reboot
-		else
-			start
-		fi
+		start
 		;;
 	stop)
 		stop
