@@ -140,7 +140,7 @@ for test_case in $testcases; do
 
 	if [ $console -eq 1 ]; then
 		run_test_sync $script | tee $(get_test_console_file $script)
-		[ -n "$(jobs -p)" ] && kill $(jobs -p)
+		[ -n "$(jobs -p)" ] && wait $(jobs -p)
 	else
 		$(run_test_sync $script > $(get_test_console_file $script)) &
 		watch_test_outputs $test_outputs
