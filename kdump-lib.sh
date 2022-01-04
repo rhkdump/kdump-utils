@@ -2,8 +2,11 @@
 #
 # Kdump common variables and functions
 #
-
-. /usr/lib/kdump/kdump-lib-initramfs.sh
+if [[ ${__SOURCED__:+x} ]]; then
+	. ./kdump-lib-initramfs.sh
+else
+	. /lib/kdump/kdump-lib-initramfs.sh
+fi
 
 FADUMP_ENABLED_SYS_NODE="/sys/kernel/fadump_enabled"
 

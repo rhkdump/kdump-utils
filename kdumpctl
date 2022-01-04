@@ -32,8 +32,14 @@ fi
 
 [[ $dracutbasedir ]] || dracutbasedir=/usr/lib/dracut
 . $dracutbasedir/dracut-functions.sh
-. /lib/kdump/kdump-lib.sh
-. /lib/kdump/kdump-logger.sh
+
+if [[ ${__SOURCED__:+x} ]]; then
+	KDUMP_LIB_PATH=.
+else
+	KDUMP_LIB_PATH=/lib/kdump
+fi
+. $KDUMP_LIB_PATH/kdump-lib.sh
+. $KDUMP_LIB_PATH/kdump-logger.sh
 
 #initiate the kdump logger
 if ! dlog_init; then
@@ -1676,11 +1682,6 @@ reset_crashkernel_for_installed_kernel()
 	fi
 }
 
-if [[ ! -f $KDUMP_CONFIG_FILE ]]; then
-	derror "Error: No kdump config file found!"
-	exit 1
-fi
-
 main()
 {
 	# Determine if the dump mode is kdump or fadump
@@ -1752,6 +1753,15 @@ main()
 		;;
 	esac
 }
+
+if [[ ${__SOURCED__:+x} ]]; then
+	return
+fi
+
+if [[ ! -f $KDUMP_CONFIG_FILE ]]; then
+	derror "Error: No kdump config file found!"
+	exit 1
+fi
 
 # Other kdumpctl instances will block in queue, until this one exits
 single_instance_lock
