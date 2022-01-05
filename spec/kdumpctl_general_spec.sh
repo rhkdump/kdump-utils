@@ -45,4 +45,30 @@ Describe 'kdumpctl'
 			The error should include "kernel_path=ALL invalid"
 		End
 	End
+
+	Describe 'get_dump_mode_by_fadump_val()'
+
+		Context 'when given valid fadump values'
+			Parameters
+				"#1" on fadump
+				"#2" nocma fadump
+				"#3" "" kdump
+				"#4" off kdump
+			End
+			It "should return the dump mode correctly"
+				When call get_dump_mode_by_fadump_val "$2"
+				The output should equal "$3"
+				The status should be success
+			End
+		End
+
+		It 'should complain given invalid fadump value'
+			When call get_dump_mode_by_fadump_val /boot/vmlinuz
+			The status should be failure
+			The error should include 'invalid fadump'
+		End
+
+	End
+
+
 End
