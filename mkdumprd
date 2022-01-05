@@ -431,6 +431,10 @@ done <<< "$(kdump_read_conf)"
 
 handle_default_dump_target
 
+if ! have_compression_in_dracut_args; then
+	add_dracut_arg "--compress" "zstd"
+fi
+
 if [[ -n $extra_modules ]]; then
 	add_dracut_arg "--add-drivers" "$extra_modules"
 fi
