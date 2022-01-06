@@ -108,7 +108,7 @@ get_block_dump_target()
 
 is_dump_to_rootfs()
 {
-	[[ $(kdump_get_conf_val "failure_action|default") == dump_to_rootfs ]]
+	[[ $(kdump_get_conf_val 'failure_action\|default') == dump_to_rootfs ]]
 }
 
 get_failure_action_target()
