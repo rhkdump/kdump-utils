@@ -1590,7 +1590,7 @@ reset_crashkernel_for_installed_kernel()
 		exit 1
 	fi
 
-	if _is_osbuild && ! grep -q crashkernel= /etc/kernel/cmdline; then
+	if _is_osbuild && ! grep -qs crashkernel= /etc/kernel/cmdline; then
 		reset_crashkernel "--kernel=$_installed_kernel"
 		return
 	fi

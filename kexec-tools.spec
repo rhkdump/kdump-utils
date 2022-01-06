@@ -261,7 +261,7 @@ mv $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/* $RPM_BUILD_ROOT/%{d
 
 %pre
 # save the old default crashkernel values to /tmp/ when upgrading the package
-if ! grep -q "ostree" /proc/cmdline && [ $1 == 2 ] && grep -q get-default-crashkernel /usr/bin/kdumpctl; then
+if ! grep -qs "ostree" /proc/cmdline && [ $1 == 2 ] && grep -q get-default-crashkernel /usr/bin/kdumpctl; then
   kdumpctl get-default-crashkernel kdump > /tmp/old_default_crashkernel 2>/dev/null
 %ifarch ppc64 ppc64le
   kdumpctl get-default-crashkernel fadump > /tmp/old_default_crashkernel_fadump 2>/dev/null
@@ -303,7 +303,7 @@ fi
 
 # try to reset kernel crashkernel value to new default value when upgrading
 # the package
-if ! grep -q "ostree" /proc/cmdline && [ $1 == 2 ]; then
+if ! grep -qs "ostree" /proc/cmdline && [ $1 == 2 ]; then
   kdumpctl reset-crashkernel-after-update
   rm /tmp/old_default_crashkernel 2>/dev/null
 %ifarch ppc64 ppc64le
