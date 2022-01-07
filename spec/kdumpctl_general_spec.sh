@@ -174,4 +174,29 @@ Describe 'kdumpctl'
 		End
 	End
 
+	Describe 'parse_config()'
+		bad_kdump_conf=$(mktemp -t bad_kdump_conf.XXXXXXXXXX)
+		cleanup() {
+			rm -f "$bad_kdump_conf"
+		}
+		AfterAll 'cleanup'
+
+		It 'should not be happy with unkown option in kdump.conf'
+			KDUMP_CONFIG_FILE="$bad_kdump_conf"
+			echo blabla > "$bad_kdump_conf"
+			When call parse_config
+			The status should be failure
+			The stderr should include 'Invalid kdump config option blabla'
+		End
+
+		It 'should be happy with the default kdump.conf'
+		 # shellcheck disable=SC2034
+			# override the KDUMP_CONFIG_FILE variable
+			KDUMP_CONFIG_FILE=./kdump.conf
+			When call parse_config
+			The status should be success
+		End
+
+	End
+
 End
