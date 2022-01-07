@@ -209,7 +209,7 @@ check_config()
 		ext[234] | minix | btrfs | xfs | nfs | ssh)
 			config_opt=_target
 			;;
-		sshkey | path | core_collector | kdump_post | kdump_pre | extra_bins | extra_modules | failure_action | default | final_action | force_rebuild | force_no_rebuild | fence_kdump_args | fence_kdump_nodes) ;;
+		sshkey | path | core_collector | kdump_post | kdump_pre | extra_bins | extra_modules | failure_action | default | final_action | force_rebuild | force_no_rebuild | fence_kdump_args | fence_kdump_nodes | auto_reset_crashkernel) ;;
 
 		net | options | link_delay | disk_timeout | debug_mem_level | blacklist)
 			derror "Deprecated kdump config option: $config_opt. Refer to kdump.conf manpage for alternatives."
