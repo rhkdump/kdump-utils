@@ -188,7 +188,6 @@ SYSCONFIG=$RPM_SOURCE_DIR/kdump.sysconfig.%{_target_cpu}
 install -m 644 $SYSCONFIG $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/kdump
 
 install -m 755 %{SOURCE7} $RPM_BUILD_ROOT/usr/sbin/mkdumprd
-install -m 755 %{SOURCE32} $RPM_BUILD_ROOT/usr/sbin/mkfadumprd
 install -m 644 %{SOURCE8} $RPM_BUILD_ROOT%{_sysconfdir}/kdump.conf
 install -m 644 kexec/kexec.8 $RPM_BUILD_ROOT%{_mandir}/man8/kexec.8
 install -m 644 %{SOURCE12} $RPM_BUILD_ROOT%{_mandir}/man8/mkdumprd.8
@@ -197,6 +196,7 @@ install -m 755 %{SOURCE20} $RPM_BUILD_ROOT%{_prefix}/lib/kdump/kdump-lib.sh
 install -m 755 %{SOURCE23} $RPM_BUILD_ROOT%{_prefix}/lib/kdump/kdump-lib-initramfs.sh
 install -m 755 %{SOURCE31} $RPM_BUILD_ROOT%{_prefix}/lib/kdump/kdump-logger.sh
 %ifarch ppc64 ppc64le
+install -m 755 %{SOURCE32} $RPM_BUILD_ROOT/usr/sbin/mkfadumprd
 install -m 755 %{SOURCE35} $RPM_BUILD_ROOT%{_prefix}/lib/kdump/kdump-migrate-action.sh
 install -m 755 %{SOURCE36} $RPM_BUILD_ROOT%{_prefix}/lib/kdump/kdump-restart.sh
 %endif
@@ -352,8 +352,10 @@ done
 %ifarch %{ix86} x86_64 ppc64 s390x ppc64le aarch64
 /usr/sbin/makedumpfile
 %endif
-/usr/sbin/mkdumprd
+%ifarch ppc64 ppc64le
 /usr/sbin/mkfadumprd
+%endif
+/usr/sbin/mkdumprd
 /usr/sbin/vmcore-dmesg
 %{_bindir}/*
 %{_datadir}/kdump
