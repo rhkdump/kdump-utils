@@ -31,6 +31,11 @@ is_squash_available()
 	done
 }
 
+is_zstd_command_available()
+{
+	[[ -x "$(command -v zstd)" ]]
+}
+
 perror_exit()
 {
 	derror "$@"

@@ -70,7 +70,7 @@ Requires: dracut >= 050
 Requires: dracut-network >= 050
 Requires: dracut-squash >= 050
 Requires: ethtool
-Requires: zstd
+Recommends: zstd
 Recommends: grubby
 BuildRequires: make
 BuildRequires: zlib-devel elfutils-devel glib2-devel bzip2-devel ncurses-devel bison flex lzo-devel snappy-devel libzstd-devel

@@ -432,7 +432,12 @@ done <<< "$(kdump_read_conf)"
 handle_default_dump_target
 
 if ! have_compression_in_dracut_args; then
-	add_dracut_arg "--compress" "zstd"
+	# Here zstd is set as the default compression method. If squash module
+	# is available for dracut, libzstd will be used by mksquashfs. If
+	# squash module is unavailable, command zstd will be used instead.
+	if is_squash_available || is_zstd_command_available; then
+		add_dracut_arg "--compress" "zstd"
+	fi
 fi
 
 if [[ -n $extra_modules ]]; then

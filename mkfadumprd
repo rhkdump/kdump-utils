@@ -62,8 +62,11 @@ if is_squash_available; then
 	_dracut_isolate_args+=(--add squash)
 fi
 
+# Same as setting zstd in mkdumprd
 if ! have_compression_in_dracut_args; then
-	_dracut_isolate_args+=(--compress zstd)
+	if is_squash_available || is_zstd_command_available; then
+		_dracut_isolate_args+=(--compress zstd)
+	fi
 fi
 
 if ! dracut --force --quiet "${_dracut_isolate_args[@]}" "$@" "$TARGET_INITRD"; then
