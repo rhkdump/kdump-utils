@@ -72,6 +72,7 @@ Requires: dracut-squash >= 050
 Requires: ethtool
 Recommends: zstd
 Recommends: grubby
+Recommends: hostname
 BuildRequires: make
 BuildRequires: zlib-devel elfutils-devel glib2-devel bzip2-devel ncurses-devel bison flex lzo-devel snappy-devel libzstd-devel
 BuildRequires: pkgconfig intltool gettext
