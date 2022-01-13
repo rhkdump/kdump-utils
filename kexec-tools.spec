@@ -5,7 +5,7 @@
 
 Name: kexec-tools
 Version: 2.0.23
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -399,6 +399,34 @@ done
 %endif
 
 %changelog
+* Thu Jan 13 2022 Coiby <coxu@redhat.com> - 2.0.23-2
+- fix "kdump: Invalid kdump config option auto_reset_crashkernel" error
+- use grep -s to suppress error messages about nonexistent or unreadable files
+- kdump-lib.sh: Escape '|' for 'failure_action|default' in is_dump_to_rootfs
+- Set zstd as the default compression method for kdump initrd
+- (origin/auto_reset_crashkernel, auto_reset_crashkernel) update crashkernel-howto
+- set up kernel crashkernel for osbuild in kernel hook
+- reset kernel crashkernel for the special case where the kernel is updated right after kexec-tools
+- try to reset kernel crashkernel when kexec-tools updates the default crashkernel value
+- introduce the auto_reset_crashkernel option to kdump.conf
+- rewrite reset_crashkernel to support fadump and to used by RPM scriptlet
+- fix incorrect usage of rpm-ostree to update kernel command line parameters
+- add helper functions to get kernel path by kernel release and the path of current running kernel
+- add helper functions to get dump mode
+- add a helper function to read kernel cmdline parameter from grubby --info
+- provide kdumpctl get-default-crashkernel for kdump_anaconda_addon and RPM scriptlet
+- factor out kdump_get_arch_recommend_crashkernel
+- update default crashkernel value
+- kdumpctl: remove some legacy code
+- dracut-early-kdump-module-setup.sh: install xargs and kdump-lib-initramfs.sh
+- ppc64/ppc64le: drop cpu online rule in 40-redhat.rules in kdump initramfs
+- kdump/ppc64: suppress the error message "Could not find a registered notification tool" from servicelog_notify
+- add keytuils as a weak dependency for POWER
+- Document/kexec-kdump-howto.txt: improve notes for kdump_pre and kdump_post scripts
+- sysconfig: make kexec_file_load as default option on ppc64le
+- sysconfig: make kexec_file_load as default option on aarch64
+- Enable zstd compression for makedumpfile in kexec-tools.spec
+
 * Mon Nov 18 2021 Coiby <coxu@redhat.com> - 2.0.23-1
 - Update kexec-tools to 2.0.23
 - Rebase makedumpfile to 1.7.0
