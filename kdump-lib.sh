@@ -5,8 +5,6 @@
 
 . /usr/lib/kdump/kdump-lib-initramfs.sh
 
-FENCE_KDUMP_CONFIG_FILE="/etc/sysconfig/fence_kdump"
-FENCE_KDUMP_SEND="/usr/libexec/fence_kdump_send"
 FADUMP_ENABLED_SYS_NODE="/sys/kernel/fadump_enabled"
 
 is_fadump_capable()

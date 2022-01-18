@@ -5,6 +5,8 @@
 
 DEFAULT_PATH="/var/crash/"
 KDUMP_CONFIG_FILE="/etc/kdump.conf"
+FENCE_KDUMP_CONFIG_FILE="/etc/sysconfig/fence_kdump"
+FENCE_KDUMP_SEND="/usr/libexec/fence_kdump_send"
 
 # Read kdump config in well formated style
 kdump_read_conf()
