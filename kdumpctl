@@ -1576,9 +1576,19 @@ reset_crashkernel_after_update()
 	done
 }
 
+# read the value of an environ variable from given environ file path
+#
+# The environment variable entries in /proc/[pid]/environ are separated
+# by null bytes instead of by spaces.
+read_proc_environ_var()
+{
+	local _environ_path=$1 _var=$2
+	sed -n -E "s/.*(^|\x00)${_var}=([^\x00]*).*/\2/p" < "$_environ_path"
+}
+
 _is_osbuild()
 {
-	[[ $(sed -n -E 's/.*(^|\s)container=(\S*).*/\2/p' < /proc/1/environ) == bwrap-osbuild ]]
+	[[ $(read_proc_environ_var container /proc/1/environ) == bwrap-osbuild ]]
 }
 
 reset_crashkernel_for_installed_kernel()
@@ -1590,8 +1600,10 @@ reset_crashkernel_for_installed_kernel()
 		exit 1
 	fi
 
-	if _is_osbuild && ! grep -qs crashkernel= /etc/kernel/cmdline; then
-		reset_crashkernel "--kernel=$_installed_kernel"
+	if _is_osbuild; then
+		if ! grep -qs crashkernel= /etc/kernel/cmdline; then
+			reset_crashkernel "--kernel=$_installed_kernel"
+		fi
 		return
 	fi
 
