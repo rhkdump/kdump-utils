@@ -5,7 +5,7 @@
 
 Name: kexec-tools
 Version: 2.0.23
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -400,6 +400,9 @@ done
 %endif
 
 %changelog
+* Thu Jan 20 2022 Fedora Release Engineering <releng@fedoraproject.org> - 2.0.23-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_36_Mass_Rebuild
+
 * Thu Jan 13 2022 Coiby <coxu@redhat.com> - 2.0.23-2
 - fix "kdump: Invalid kdump config option auto_reset_crashkernel" error
 - use grep -s to suppress error messages about nonexistent or unreadable files
