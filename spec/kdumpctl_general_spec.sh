@@ -70,5 +70,41 @@ Describe 'kdumpctl'
 
 	End
 
+	Describe "read_proc_environ_var()"
+		environ_test_file=$(mktemp -t spec_test_environ_test_file.XXXXXXXXXX)
+		cleanup() {
+			rm -rf "$environ_test_file"
+		}
+		AfterAll 'cleanup'
+		echo -ne "container=bwrap-osbuild\x00SSH_AUTH_SOCK=/tmp/ssh-XXXXXXEbw33A/agent.1794\x00SSH_AGENT_PID=1929\x00env=test_env" >"$environ_test_file"
+		Parameters
+			container bwrap-osbuild
+			SSH_AUTH_SOCK /tmp/ssh-XXXXXXEbw33A/agent.1794
+			env test_env
+			not_exist ""
+		End
+		It 'should read the environ variable value as expected'
+			When call read_proc_environ_var "$1" "$environ_test_file"
+			The output should equal "$2"
+			The status should be success
+		End
+	End
+
+	Describe "_is_osbuild()"
+		environ_test_file=$(mktemp -t spec_test_environ_test_file.XXXXXXXXXX)
+		# shellcheck disable=SC2034
+		# override the _OSBUILD_ENVIRON_PATH variable
+		_OSBUILD_ENVIRON_PATH="$environ_test_file"
+		Parameters
+			'container=bwrap-osbuild' success
+			'' failure
+		End
+		It 'should be able to tell if it is the osbuild environment'
+			echo -ne "$1" >"$environ_test_file"
+			When call _is_osbuild
+			The status should be "$2"
+			The stderr should equal ""
+		End
+	End
 
 End
