@@ -857,7 +857,6 @@ kdump_get_arch_recommend_crashkernel()
 		fi
 	fi
 
-	_ck_cmdline=${_ck_cmdline//-:/-102400T:}
 	echo -n "$_ck_cmdline"
 }
 
@@ -873,6 +872,7 @@ kdump_get_arch_recommend_size()
 	fi
 	sys_mem=$(get_system_size)
 	_ck_cmdline=$(kdump_get_arch_recommend_crashkernel)
+	_ck_cmdline=${_ck_cmdline//-:/-102400T:}
 	get_recommend_size "$sys_mem" "$ck_cmdline"
 }
 
