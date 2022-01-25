@@ -103,6 +103,7 @@ Requires:       systemd-udev%{?_isa}
 #
 # Patches 401 through 500 are meant for s390 kexec-tools enablement
 #
+Patch401: ./kexec-tools-2.0.23-s390_handle_R_390_PLT32DBL_reloc_entries_in_machine_apply_elf_rel_.patch
 
 #
 # Patches 501 through 600 are meant for ARM kexec-tools enablement
@@ -125,6 +126,8 @@ component of the kernel's kexec feature.
 mkdir -p -m755 kcp
 tar -z -x -v -f %{SOURCE9}
 tar -z -x -v -f %{SOURCE19}
+
+%patch401 -p1
 
 %ifarch ppc
 %define archdef ARCH=ppc
