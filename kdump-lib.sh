@@ -864,16 +864,16 @@ kdump_get_arch_recommend_crashkernel()
 # $1: kernel version, if not set, will defaults to $(uname -r)
 kdump_get_arch_recommend_size()
 {
-	local _ck_cmdline
+	local _ck_cmdline _sys_mem
 
 	if ! [[ -r "/proc/iomem" ]]; then
 		echo "Error, can not access /proc/iomem."
 		return 1
 	fi
-	sys_mem=$(get_system_size)
+	_sys_mem=$(get_system_size)
 	_ck_cmdline=$(kdump_get_arch_recommend_crashkernel)
 	_ck_cmdline=${_ck_cmdline//-:/-102400T:}
-	get_recommend_size "$sys_mem" "$ck_cmdline"
+	get_recommend_size "$_sys_mem" "$_ck_cmdline"
 }
 
 # Print all underlying crypt devices of a block device
