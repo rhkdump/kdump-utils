@@ -5,7 +5,7 @@
 
 Name: kexec-tools
 Version: 2.0.23
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -405,6 +405,16 @@ done
 %endif
 
 %changelog
+* Wed Jan 26 2022 Coiby <coxu@redhat.com> - 2.0.23-4
+- fix broken kdump_get_arch_recommend_size
+- remove the upper bound of 102400T for the range in default crashkernel
+- fix the error of parsing the container environ variable for osbuild
+- s390: handle R_390_PLT32DBL reloc entries in machine_apply_elf_rel()
+- Revert "Remove trace_buf_size and trace_event from the kernel bootparameters of the kdump kernel"
+- spec: only install mkfadumprd for ppc
+- selftest: Add early kdump test
+- selftest: run-test.sh: wait for subprocess instead of kill it
+
 * Thu Jan 20 2022 Fedora Release Engineering <releng@fedoraproject.org> - 2.0.23-3
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_36_Mass_Rebuild
 
