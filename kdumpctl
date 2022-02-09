@@ -1382,6 +1382,11 @@ _valid_grubby_kernel_path()
 	[[ -n "$1" ]] && grubby --info="$1" > /dev/null 2>&1
 }
 
+# return all the kernel paths given a grubby kernel-path
+#
+# $1: kernel path accepted by grubby, e.g. DEFAULT, ALL,
+#     /boot/vmlinuz-`uname -r`
+# return: kernel paths separated by space
 _get_all_kernels_from_grubby()
 {
 	local _kernels _line _kernel_path _grubby_kernel_path=$1
@@ -1557,7 +1562,7 @@ reset_crashkernel_after_update()
 	_crashkernel_vals[new_kdump]=$(get_default_crashkernel kdump)
 	_crashkernel_vals[new_fadump]=$(get_default_crashkernel fadump)
 
-	for _kernel in $(_get_all_kernels_from_grubby); do
+	for _kernel in $(_get_all_kernels_from_grubby ALL); do
 		_crashkernel=$(get_grub_kernel_boot_parameter "$_kernel" crashkernel)
 		if [[ $_crashkernel == auto ]]; then
 			reset_crashkernel "--kernel=$_kernel"
