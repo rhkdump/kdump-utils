@@ -305,19 +305,6 @@ then
 	mv /etc/sysconfig/kdump.new /etc/sysconfig/kdump
 fi
 
-# try to reset kernel crashkernel value to new default value when upgrading
-# the package
-if ! grep -qs "ostree" /proc/cmdline && [ $1 == 2 ]; then
-  kdumpctl reset-crashkernel-after-update
-  rm /tmp/old_default_crashkernel 2>/dev/null
-%ifarch ppc64 ppc64le
-  rm /tmp/old_default_crashkernel_fadump 2>/dev/null
-%endif
-  # dnf would complain about the exit code not being 0. To keep it happy,
-  # always return 0
-  :
-fi
-
 
 %postun
 %systemd_postun_with_restart kdump.service
@@ -349,6 +336,21 @@ do
 		rm -f $i
 	fi
 done
+
+%posttrans
+# try to reset kernel crashkernel value to new default value when upgrading
+# the package
+if ! grep -qs "ostree" /proc/cmdline && [ $1 == 1 ]; then
+  kdumpctl reset-crashkernel-after-update
+  rm /tmp/old_default_crashkernel 2>/dev/null
+%ifarch ppc64 ppc64le
+  rm /tmp/old_default_crashkernel_fadump 2>/dev/null
+%endif
+  # dnf would complain about the exit code not being 0. To keep it happy,
+  # always return 0
+  :
+fi
+
 
 %files
 /usr/sbin/kexec
