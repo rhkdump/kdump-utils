@@ -5,7 +5,7 @@
 
 Name: kexec-tools
 Version: 2.0.23
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -405,6 +405,10 @@ done
 %endif
 
 %changelog
+* Mon Feb 14 2022 Coiby <coxu@redhat.com> - 2.0.23-5
+- fix incorrect usage of _get_all_kernels_from_grubby
+- fix the mistake of swapping function parameters of read_proc_environ_var
+
 * Wed Jan 26 2022 Coiby <coxu@redhat.com> - 2.0.23-4
 - fix broken kdump_get_arch_recommend_size
 - remove the upper bound of 102400T for the range in default crashkernel
