@@ -1399,25 +1399,49 @@ _get_all_kernels_from_grubby()
 }
 
 GRUB_ETC_DEFAULT="/etc/default/grub"
-# modify the kernel command line parameter in default grub conf
+# Update a kernel parameter in default grub conf
+#
+# If a value is specified, it will be inserted in the end. Otherwise it
+# would remove given kernel parameter.
+#
+# Note this function doesn't address the following cases,
+# 1. The kernel ignores everything on the command line after a '--'. So
+#    simply adding the new entry to the end will fail if the cmdline
+#    contains a --.
+# 2. If the value for a parameter contains spaces it can be quoted using
+#    double quotes, for example param="value with spaces". This will
+#    break the [^[:space:]\"] regex for the value.
+# 3. Dashes and underscores in the parameter name are equivalent. So
+#    some_parameter and some-parameter are identical.
+# 4. Some parameters, e.g. efivar_ssdt, can be given multiple times.
+# 5. Some kernel parameters, e.g. quiet, doesn't have value
 #
 # $1: the name of the kernel command line parameter
-# $2: new value. If empty, the parameter would be removed
-_update_kernel_cmdline_in_grub_etc_default()
+# $2: new value. If empty, given parameter would be removed
+_update_kernel_arg_in_grub_etc_default()
 {
-	local _para=$1 _val=$2 _para_val _regex
+	local _para=$1 _val=$2 _para_val
 
 	if [[ -n $_val ]]; then
 		_para_val="$_para=$_val"
 	fi
 
-	_regex='^(GRUB_CMDLINE_LINUX=.*)([[:space:]"])'"$_para"'=[^[:space:]"]*(.*)$'
-	if grep -q -E "$_regex" "$GRUB_ETC_DEFAULT"; then
-		sed -i -E 's/'"$_regex"'/\1\2'"$_para_val"'\3/' "$GRUB_ETC_DEFAULT"
-	elif [[ -n $_para_val ]]; then
-		# If the kernel parameter doesn't exist, put it in the first
-		sed -i -E 's/^(GRUB_CMDLINE_LINUX=")/\1'"$_para_val"' /' "$GRUB_ETC_DEFAULT"
-	fi
+	# Update the command line /etc/default/grub, i.e.
+	# on the line that starts with 'GRUB_CMDLINE_LINUX=',
+	#       1) remove $para=$val if the it's the first arg
+	#       2) remove all occurences of $para=$val
+	#       3) insert $_para_val to end
+	#       4) remove duplicate spaces left over by 1) or 2) or 3)
+	#       5) remove space at the beginning of the string left over by 1) or 2) or 3)
+	#       6) remove space at the end of the string left over by 1) or 2) or 3)
+	sed -i -E "/^GRUB_CMDLINE_LINUX=/ {
+         s/\"${_para}=[^[:space:]\"]*/\"/g;
+         s/[[:space:]]+${_para}=[^[:space:]\"]*/ /g;
+         s/\"$/ ${_para_val}\"/
+         s/[[:space:]]+/ /g;
+         s/(\")[[:space:]]+/\1/g;
+         s/[[:space:]]+(\")/\1/g;
+         }" "$GRUB_ETC_DEFAULT"
 }
 
 reset_crashkernel()
@@ -1496,10 +1520,12 @@ reset_crashkernel()
 	#   - set the dump mode as kdump for non-ppc64le cases
 	#   - retrieved the default crashkernel value for given dump mode
 	if [[ $_grubby_kernel_path == ALL && -n $_dump_mode ]]; then
-		_update_kernel_cmdline_in_grub_etc_default crashkernel "$_crashkernel"
+		_update_kernel_arg_in_grub_etc_default crashkernel "$_crashkernel"
 		# remove the fadump if fadump is disabled
-		[[ $_fadump_val == off ]] && _fadump_val=""
-		_update_kernel_cmdline_in_grub_etc_default fadump "$_fadump_val"
+		if [[ $_fadump_val == off ]]; then
+			_fadump_val=""
+		fi
+		_update_kernel_arg_in_grub_etc_default fadump "$_fadump_val"
 	fi
 
 	# If kernel-path not specified, either
