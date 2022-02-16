@@ -1444,6 +1444,16 @@ _update_kernel_arg_in_grub_etc_default()
          }" "$GRUB_ETC_DEFAULT"
 }
 
+# Read the kernel arg in default grub conf.
+
+# Note reading a kernel parameter that doesn't have a value isn't supported.
+#
+# $1: the name of the kernel command line parameter
+_read_kernel_arg_in_grub_etc_default()
+{
+	sed -n -E "s/^GRUB_CMDLINE_LINUX=.*[[:space:]\"]${1}=([^[:space:]\"]*).*$/\1/p" "$GRUB_ETC_DEFAULT"
+}
+
 reset_crashkernel()
 {
 	local _opt _val _dump_mode _fadump_val _reboot _grubby_kernel_path _kernel _kernels
@@ -1577,6 +1587,34 @@ reset_crashkernel()
 	fi
 }
 
+# update the crashkernel value in GRUB_ETC_DEFAULT if necessary
+#
+# called by reset_crashkernel_after_update and inherit its array variable
+# _crashkernel_vals
+update_crashkernel_in_grub_etc_default_after_update()
+{
+	local _crashkernel _fadump_val
+	local _dump_mode _old_default_crashkernel _new_default_crashkernel
+
+	_crashkernel=$(_read_kernel_arg_in_grub_etc_default crashkernel)
+
+	if [[ -z $_crashkernel ]]; then
+		return
+	fi
+
+	_fadump_val=$(_read_kernel_arg_in_grub_etc_default fadump)
+	_dump_mode=$(get_dump_mode_by_fadump_val "$_fadump_val")
+
+	_old_default_crashkernel=${_crashkernel_vals[old_${_dump_mode}]}
+	_new_default_crashkernel=${_crashkernel_vals[new_${_dump_mode}]}
+
+	if [[ $_crashkernel == auto ]] ||
+		  [[ $_crashkernel == "$_old_default_crashkernel" &&
+		     $_new_default_crashkernel != "$_old_default_crashkernel" ]]; then
+			_update_kernel_arg_in_grub_etc_default crashkernel "$_new_default_crashkernel"
+	fi
+}
+
 # shellcheck disable=SC2154 # false positive when dereferencing an array
 reset_crashkernel_after_update()
 {
@@ -1605,6 +1643,8 @@ reset_crashkernel_after_update()
 			fi
 		fi
 	done
+
+	update_crashkernel_in_grub_etc_default_after_update
 }
 
 # read the value of an environ variable from given environ file path
