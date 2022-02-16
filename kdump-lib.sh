@@ -885,7 +885,8 @@ get_luks_crypt_dev()
 
 	[[ -b /dev/block/$1 ]] || return 1
 
-	_type=$(eval "$(blkid -u filesystem,crypto -o export -- "/dev/block/$1"); echo \$TYPE")
+	_type=$(blkid -u filesystem,crypto -o export -- "/dev/block/$1" | \
+		sed -n -E "s/^TYPE=(.*)$/\1/p")
 	[[ $_type == "crypto_LUKS" ]] && echo "$1"
 
 	for _x in "/sys/dev/block/$1/slaves/"*; do
