@@ -14,7 +14,7 @@ In most cases, you should use
 .B systemctl
 to start / stop / enable kdump service instead. However,
 .B kdumpctl
-provides more details for debug and a helper to setup ssh key authentication.
+provides more details for debugging and a helper to set up ssh key authentication.
 
 .SH COMMANDS
 .TP
@@ -26,14 +26,14 @@ Stop the service.
 .TP
 .I status
 Prints the current status of kdump service.
-It returns non-zero value if kdump is not operational.
+It returns a non-zero value if kdump is not operational.
 .TP
 .I restart
 Is equal to
 .I start; stop
 .TP
 .I reload
-reload crash kernel image and initramfs without triggering a rebuild.
+reload the crash kernel image and initramfs without triggering a rebuild.
 .TP
 .I rebuild
 rebuild the crash kernel initramfs.
@@ -43,20 +43,23 @@ Helps to setup key authentication for ssh storage since it's
 impossible to use password authentication during kdump.
 .TP
 .I showmem
-Prints the size of reserved memory for crash kernel in megabytes.
+Prints the size of reserved memory for the crash kernel in megabytes.
 .TP
 .I estimate
-Estimate a suitable crashkernel value for current machine. This is a
-best-effort estimate. It will print a recommanded crashkernel value
-based on current kdump setup, and list some details of memory usage.
+Estimate a suitable crashkernel value for the current machine. This is a
+best-effort estimate. It will print a recommended crashkernel value
+based on the current kdump setup, and list some details of memory usage.
+.TP
+.I get-default-crashkernel
+Return the default crashkernel value provided by kexec-tools.
 .TP
 .I reset-crashkernel [--kernel=path_to_kernel] [--reboot]
 Reset crashkernel to default value recommended by kexec-tools. If no kernel
 is specified, will reset KDUMP_KERNELVER if it's defined in /etc/sysconfig/kdump
-or current running kernel's crashkernel value if KDUMP_KERNELVER is empty. You can
+or the current running kernel's crashkernel value if KDUMP_KERNELVER is empty. You can
 also specify --kernel=ALL and --kernel=DEFAULT which have the same meaning as
 grubby's kernel-path=ALL and kernel-path=DEFAULT. ppc64le supports FADump and
-supports an additonal [--fadump=[on|off|nocma]] parameter to toggle FADump
+supports an additional [--fadump=[on|off|nocma]] parameter to toggle FADump
 on/off.
 
 Note: The memory requirements for kdump varies heavily depending on the
