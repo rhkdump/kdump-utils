@@ -17,7 +17,7 @@ Latest kexec-tools provides "kdumpctl get-default-crashkernel" to retrieve
 the default crashkernel value,
 
 	$ echo $(kdumpctl get-default-crashkernel)
-	1G-4G:192M,4G-64G:256M,64G-102400T:512M
+	1G-4G:192M,4G-64G:256M,64G-:512M
 
 It will be taken as the default value of 'crashkernel=', you can use
 this value as a reference for setting crashkernel value manually.
