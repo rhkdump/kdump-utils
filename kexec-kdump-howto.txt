@@ -44,7 +44,7 @@ ia64 and ppc64.
 If you're reading this document, you should already have kexec-tools
 installed. If not, you install it via the following command:
 
-    # yum install kexec-tools
+    # dnf install kexec-tools
 
 Now load a kernel with kexec:
 
@@ -66,23 +66,31 @@ How to configure kdump
 Again, we assume if you're reading this document, you should already have
 kexec-tools installed. If not, you install it via the following command:
 
-    # yum install kexec-tools
+    # dnf install kexec-tools
 
 To be able to do much of anything interesting in the way of debug analysis,
 you'll also need to install the kernel-debuginfo package, of the same arch
 as your running kernel, and the crash utility:
 
-    # yum --enablerepo=\*debuginfo install kernel-debuginfo.$(uname -m) crash
+    # dnf --enablerepo=\*debuginfo install kernel-debuginfo.$(uname -m) crash
 
-Next up, we need to modify some boot parameters to reserve a chunk of memory for
-the capture kernel. With the help of grubby, it's very easy to append
-"crashkernel=128M" to the end of your kernel boot parameters. Note that the X
-values are such that X = the amount of memory to reserve for the capture kernel.
-And based on arch and system configuration, one might require more than 128M to
-be reserved for kdump. One need to experiment and test kdump, if 128M is not
-sufficient, try reserving more memory.
+Next up, we need to reserve a chunk of memory for the capture kernel. To use
+the default crashkernel value, you can kdumpctl:
 
-   # grubby --args="crashkernel=128M" --update-kernel=/boot/vmlinuz-`uname -r`
+    # kdumpctl reset-crashkernel --kernel=/boot/vmlinuz-`uname -r`
+
+If the default value does not work for your setup you can use
+
+  # grubby --args="crashkernel=256M" --update-kernel=/boot/vmlinuz-`uname -r`
+
+to specify a larger value, in this case 256M. You need to experiment to
+find the best value that works for your setup. To begin with
+
+  # kdumpctl estimate
+
+gives you an estimation for the crashkernel value based on the currently
+running kernel. For more details, please refer to the "Estimate crashkernel"
+section in /usr/share/doc/kexec-tools/crashkernel-howto.txt.
 
 Note that there is an alternative form in which to specify a crashkernel
 memory reservation, in the event that more control is needed over the size and
@@ -135,7 +143,7 @@ in /var/crash/<YYYY-MM-DD-HH:MM>/vmcore), then the system rebooted back into
 your normal kernel.
 
 Once back to your normal kernel, you can use the previously installed crash
-kernel in conjunction with the previously installed kernel-debuginfo to
+utility in conjunction with the previously installed kernel-debuginfo to
 perform postmortem analysis:
 
     # crash /usr/lib/debug/lib/modules/2.6.17-1.2621.el5/vmlinux
