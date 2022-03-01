@@ -39,7 +39,7 @@ kernel are one and the same on ppc64.
 If you're reading this document, you should already have kexec-tools
 installed. If not, you install it via the following command:
 
-    # yum install kexec-tools
+    # dnf install kexec-tools
 
 Fadump Operational Flow:
 
@@ -82,7 +82,7 @@ How to configure fadump:
 Again, we assume if you're reading this document, you should already have
 kexec-tools installed. If not, you install it via the following command:
 
-    # yum install kexec-tools
+    # dnf install kexec-tools
 
 Make the kernel to be configured with FADump as the default boot entry, if
 it isn't already:
@@ -94,20 +94,24 @@ anything interesting in the way of debug analysis, you'll also need to install
 the kernel-debuginfo package, of the same arch as your running kernel, and the
 crash utility:
 
-    # yum --enablerepo=\*debuginfo install kernel-debuginfo.$(uname -m) crash
+    # dnf --enablerepo=\*debuginfo install kernel-debuginfo.$(uname -m) crash
 
-Next up, we need to modify some boot parameters to enable firmware assisted
-dump. With the help of grubby, it's very easy to append "fadump=on" to the end
-of your kernel boot parameters. To reserve the appropriate amount of memory
-for boot memory preservation, pass 'crashkernel=X' kernel cmdline parameter.
-For the recommended value of X, see 'FADump Memory Requirements' section.
+Next up, we can enable firmware assisted dump and reserve the memory for boot
+memory preservation as specified in in the table of 'FADump Memory Requirements'
+section:
+
+   # kdumpctl reset-crashkernel --fadump=on
+
+Alternatively, you can use grubby to reserve custom amount of memory:
 
    # grubby --args="fadump=on crashkernel=6G" --update-kernel=/boot/vmlinuz-`uname -r`
 
 By default, FADump reserved memory will be initialized as CMA area to make the
 memory available through CMA allocator on the production kernel. We can opt out
 of this, making reserved memory unavailable to production kernel, by booting the
-linux kernel with 'fadump=nocma' instead of 'fadump=on'.
+linux kernel with 'fadump=nocma' instead of 'fadump=on':
+
+   # kdumpctl reset-crashkernel --fadump=nocma
 
 The term 'boot memory' means size of the low memory chunk that is required for
 a kernel to boot successfully when booted with restricted memory.  By default,
@@ -350,6 +354,6 @@ Remove "crashkernel=" from kernel cmdline parameters:
 
 If KDump is to be used as the dump capturing mechanism, reset the crashkernel parameter:
 
-   # kdumpctl reset-crashkernel `uname -r`
+   # kdumpctl reset-crashkernel --fadump=off
 
 Reboot the system for the settings to take effect.
