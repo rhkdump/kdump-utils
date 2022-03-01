@@ -458,7 +458,3 @@ if ! is_fadump_capable; then
 fi
 
 dracut "${dracut_args[@]}" "$@"
-
-_rc=$?
-sync
-exit $_rc

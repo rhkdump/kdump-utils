@@ -79,6 +79,7 @@ rebuild_fadump_initrd()
 		return 1
 	fi
 
+	sync -f "$TARGET_INITRD"
 	return 0
 }
 
@@ -100,6 +101,7 @@ rebuild_kdump_initrd()
 		dwarn "Tips: If early kdump is enabled, also require rebuilding the system initramfs to make the changes take effect for early kdump."
 	fi
 
+	sync -f "$TARGET_INITRD"
 	return 0
 }
 
@@ -180,7 +182,7 @@ restore_default_initrd()
 			rm -f $INITRD_CHECKSUM_LOCATION
 			if mv "$DEFAULT_INITRD_BAK" "$DEFAULT_INITRD"; then
 				derror "Restoring original initrd as fadump mode is disabled."
-				sync
+				sync -f "$DEFAULT_INITRD"
 			fi
 		fi
 	fi
