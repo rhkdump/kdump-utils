@@ -20,8 +20,8 @@ Environment=NEWROOT=/sysroot
 Type=oneshot
 ExecStart=/bin/kdump.sh
 StandardInput=null
-StandardOutput=syslog
-StandardError=syslog+console
+StandardOutput=journal
+StandardError=journal+console
 KillMode=process
 RemainAfterExit=yes
 
