@@ -86,7 +86,6 @@ rebuild_fadump_initrd()
 check_earlykdump_is_enabled()
 {
 	grep -q -w "rd.earlykdump" /proc/cmdline
-	return $?
 }
 
 rebuild_kdump_initrd()
@@ -117,8 +116,6 @@ rebuild_initrd()
 	else
 		rebuild_kdump_initrd
 	fi
-
-	return $?
 }
 
 #$1: the files to be checked with IFS=' '
@@ -584,7 +581,6 @@ check_rebuild()
 
 	dinfo "Rebuilding $TARGET_INITRD"
 	rebuild_initrd
-	return $?
 }
 
 # On ppc64le LPARs, the keys trusted by firmware do not end up in
@@ -815,8 +811,6 @@ check_current_status()
 	else
 		check_current_kdump_status
 	fi
-
-	return $?
 }
 
 save_raw()
@@ -945,7 +939,6 @@ check_dump_feasibility()
 	fi
 
 	check_kdump_feasibility
-	return $?
 }
 
 start_fadump()
@@ -967,8 +960,6 @@ start_dump()
 	else
 		load_kdump
 	fi
-
-	return $?
 }
 
 check_failure_action_config()
@@ -1077,7 +1068,7 @@ reload()
 
 	if [[ $DEFAULT_DUMP_MODE == "fadump" ]]; then
 		reload_fadump
-		return $?
+		return
 	else
 		if ! stop_kdump; then
 			derror "Stopping kdump: [FAILED]"
@@ -1141,7 +1132,7 @@ reload_fadump()
 		# to handle such scenario.
 		if stop_fadump; then
 			start_fadump
-			return $?
+			return
 		fi
 	fi
 
@@ -1180,7 +1171,6 @@ rebuild()
 
 	dinfo "Rebuilding $TARGET_INITRD"
 	rebuild_initrd
-	return $?
 }
 
 do_estimate()
@@ -1787,5 +1777,3 @@ single_instance_lock
 	exec 9<&-
 	main "$@"
 )
-
-exit $?
