@@ -27,6 +27,8 @@ standard_kexec_args="-d -p"
 # Some default values in case /etc/sysconfig/kdump doesn't include
 KDUMP_COMMANDLINE_REMOVE="hugepages hugepagesz slub_debug"
 
+declare -A OPT
+
 if [[ -f /etc/sysconfig/kdump ]]; then
 	. /etc/sysconfig/kdump
 fi
@@ -185,9 +187,29 @@ restore_default_initrd()
 	fi
 }
 
-check_config()
+_set_config()
 {
-	local -A _opt_rec
+	local opt=$1
+	local val=$2
+
+	if [[ -z $val ]]; then
+		derror "Invalid kdump config value for option '$opt'"
+		return 1
+	fi
+
+	if [[ -n ${OPT[$opt]} ]]; then
+		if [[ $opt == _target ]]; then
+			derror "More than one dump targets specified"
+		else
+			derror "Duplicated kdump config value of option $opt"
+		fi
+		return 1
+	fi
+	OPT[$opt]="$val"
+}
+
+parse_config()
+{
 	while read -r config_opt config_val; do
 		case "$config_opt" in
 		dracut_args)
@@ -196,7 +218,7 @@ check_config()
 					derror 'Multiple mount targets specified in one "dracut_args".'
 					return 1
 				fi
-				config_opt=_target
+				_set_config _target "$(get_dracut_args_target "$config_val")" || return 1
 			fi
 			;;
 		raw)
@@ -240,20 +262,7 @@ check_config()
 			;;
 		esac
 
-		if [[ -z $config_val ]]; then
-			derror "Invalid kdump config value for option '$config_opt'"
-			return 1
-		fi
-
-		if [[ -n ${_opt_rec[$config_opt]} ]]; then
-			if [[ $config_opt == _target ]]; then
-				derror "More than one dump targets specified"
-			else
-				derror "Duplicated kdump config value of option $config_opt"
-			fi
-			return 1
-		fi
-		_opt_rec[$config_opt]="$config_val"
+		_set_config "$config_opt" "$config_val" || return 1
 	done <<< "$(kdump_read_conf)"
 
 	check_failure_action_config || return 1
@@ -321,8 +330,8 @@ check_files_modified()
 	#also rebuild when Pacemaker cluster conf is changed and fence kdump is enabled.
 	modified_files=$(get_pcs_cluster_modified_files)
 
-	EXTRA_BINS=$(kdump_get_conf_val kdump_post)
-	CHECK_FILES=$(kdump_get_conf_val kdump_pre)
+	EXTRA_BINS=${OPT[kdump_post]}
+	CHECK_FILES=${OPT[kdump_pre]}
 	HOOKS="/etc/kdump/post.d/ /etc/kdump/pre.d/"
 	if [[ -d /etc/kdump/post.d ]]; then
 		for file in /etc/kdump/post.d/*; do
@@ -339,17 +348,17 @@ check_files_modified()
 		done
 	fi
 	HOOKS="$HOOKS $POST_FILES $PRE_FILES"
-	CORE_COLLECTOR=$(kdump_get_conf_val core_collector | awk '{print $1}')
+	CORE_COLLECTOR=$(echo "${OPT[core_collector]}" | awk '{print $1}')
 	CORE_COLLECTOR=$(type -P "$CORE_COLLECTOR")
 	# POST_FILES and PRE_FILES are already checked against executable, need not to check again.
 	EXTRA_BINS="$EXTRA_BINS $CHECK_FILES"
-	CHECK_FILES=$(kdump_get_conf_val extra_bins)
+	CHECK_FILES=${OPT[extra_bins]}
 	EXTRA_BINS="$EXTRA_BINS $CHECK_FILES"
 	files="$KDUMP_CONFIG_FILE $KDUMP_KERNEL $EXTRA_BINS $CORE_COLLECTOR"
 	[[ -e /etc/fstab ]] && files="$files /etc/fstab"
 
 	# Check for any updated extra module
-	EXTRA_MODULES="$(kdump_get_conf_val extra_modules)"
+	EXTRA_MODULES="${OPT[extra_modules]}"
 	if [[ -n $EXTRA_MODULES ]]; then
 		if [[ -e /lib/modules/$KDUMP_KERNELVER/modules.dep ]]; then
 			files="$files /lib/modules/$KDUMP_KERNELVER/modules.dep"
@@ -541,14 +550,14 @@ check_rebuild()
 
 	setup_initrd || return 1
 
-	force_no_rebuild=$(kdump_get_conf_val force_no_rebuild)
+	force_no_rebuild=${OPT[force_no_rebuild]}
 	force_no_rebuild=${force_no_rebuild:-0}
 	if [[ $force_no_rebuild != "0" ]] && [[ $force_no_rebuild != "1" ]]; then
 		derror "Error: force_no_rebuild value is invalid"
 		return 1
 	fi
 
-	force_rebuild=$(kdump_get_conf_val force_rebuild)
+	force_rebuild=${OPT[force_rebuild]}
 	force_rebuild=${force_rebuild:-0}
 	if [[ $force_rebuild != "0" ]] && [[ $force_rebuild != "1" ]]; then
 		derror "Error: force_rebuild value is invalid"
@@ -751,7 +760,7 @@ propagate_ssh_key()
 {
 	local SSH_USER SSH_SERVER
 
-	check_config || return 1
+	parse_config || return 1
 
 	if [[ -z $DUMP_TARGET ]] ; then
 		derror "No ssh destination defined in $KDUMP_CONFIG_FILE."
@@ -825,7 +834,7 @@ save_raw()
 		dwarn "Warning: Detected '$check_fs' signature on $raw_target, data loss is expected."
 		return 0
 	fi
-	kdump_dir=$(kdump_get_conf_val path)
+	kdump_dir=${OPT[path]}
 	if [[ -z ${kdump_dir} ]]; then
 		coredir="/var/crash/$(date +"%Y-%m-%d-%H:%M")"
 	else
@@ -911,7 +920,7 @@ check_fence_kdump_config()
 
 	hostname=$(hostname)
 	ipaddrs=$(hostname -I)
-	nodes=$(kdump_get_conf_val "fence_kdump_nodes")
+	nodes=${OPT[fence_kdump_nodes]}
 
 	for node in $nodes; do
 		if [[ $node == "$hostname" ]]; then
@@ -964,8 +973,8 @@ check_failure_action_config()
 	local failure_action
 	local option="failure_action"
 
-	default_option=$(kdump_get_conf_val default)
-	failure_action=$(kdump_get_conf_val failure_action)
+	default_option=${OPT[default]}
+	failure_action=${OPT[failure_action]}
 
 	if [[ -z $failure_action ]] && [[ -z $default_option ]]; then
 		return 0
@@ -994,7 +1003,7 @@ check_final_action_config()
 {
 	local final_action
 
-	final_action=$(kdump_get_conf_val final_action)
+	final_action=${OPT[final_action]}
 	if [[ -z $final_action ]]; then
 		return 0
 	else
@@ -1017,7 +1026,7 @@ start()
 		return 1
 	fi
 
-	if ! check_config; then
+	if ! parse_config; then
 		derror "Starting kdump: [FAILED]"
 		return 1
 	fi
@@ -1153,7 +1162,7 @@ stop()
 
 rebuild()
 {
-	check_config || return 1
+	parse_config || return 1
 	check_and_wait_network_ready || return 1
 
 	setup_initrd || return 1
