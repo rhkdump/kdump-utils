@@ -663,7 +663,7 @@ load_kdump()
 
 check_ssh_config()
 {
-	local SSH_TARGET
+	local target
 
 	while read -r config_opt config_val; do
 		case "$config_opt" in
@@ -687,11 +687,14 @@ check_ssh_config()
 		esac
 	done <<< "$(kdump_read_conf)"
 
-	#make sure they've configured kdump.conf for ssh dumps
-	SSH_TARGET=$(echo -n "$DUMP_TARGET" | sed -n '/.*@/p')
-	if [[ -z $SSH_TARGET ]]; then
+	[[ -n $DUMP_TARGET ]] || return 1
+	[[ $DUMP_TARGET =~ .*@.* ]] || return 1
+	target=$(ssh -G "$DUMP_TARGET" | sed  -n -e "s/^hostname[[:space:]]\+\([^[:space:]]*\).*$/\1/p")
+	if [[ ${DUMP_TARGET#*@} != "$target" ]]; then
+		derror "Invalid ssh destination $DUMP_TARGET provided."
 		return 1
 	fi
+
 	return 0
 }
 
