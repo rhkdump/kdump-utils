@@ -9,7 +9,6 @@ KDUMP_LOG_PATH="/var/log"
 MKDUMPRD="/sbin/mkdumprd -f"
 MKFADUMPRD="/sbin/mkfadumprd"
 DRACUT_MODULES_FILE="/usr/lib/dracut/modules.txt"
-SSH_KEY_LOCATION=$DEFAULT_SSHKEY
 INITRD_CHECKSUM_LOCATION="/boot/.fadump_initrd_checksum"
 DUMP_TARGET=""
 DEFAULT_INITRD=""
@@ -238,9 +237,10 @@ parse_config()
 				derror "Invalid kdump config value for option '$config_opt'"
 				return 1
 			elif [[ -f $config_val ]]; then
-				SSH_KEY_LOCATION=$(/usr/bin/readlink -m "$config_val")
+				config_val=$(/usr/bin/readlink -m "$config_val")
 			else
-				dwarn "WARNING: '$config_val' doesn't exist, using default value '$SSH_KEY_LOCATION'"
+				dwarn "WARNING: '$config_val' doesn't exist, using default value '$DEFAULT_SSHKEY'"
+				config_val=$DEFAULT_SSHKEY
 			fi
 			;;
 		path | core_collector | kdump_post | kdump_pre | extra_bins | extra_modules | failure_action | default | final_action | force_rebuild | force_no_rebuild | fence_kdump_args | fence_kdump_nodes | auto_reset_crashkernel) ;;
@@ -262,6 +262,7 @@ parse_config()
 	done <<< "$(kdump_read_conf)"
 
 	OPT[path]=${OPT[path]:-$DEFAULT_PATH}
+	OPT[sshkey]=${OPT[sshkey]:-$DEFAULT_SSHKEY}
 
 	check_failure_action_config || return 1
 	check_final_action_config || return 1
@@ -718,7 +719,7 @@ check_and_wait_network_ready()
 
 	start_time=$(date +%s)
 	while true; do
-		errmsg=$(ssh -i "$SSH_KEY_LOCATION" -o BatchMode=yes "$DUMP_TARGET" mkdir -p "${OPT[path]}" 2>&1)
+		errmsg=$(ssh -i "${OPT[sshkey]}" -o BatchMode=yes "$DUMP_TARGET" mkdir -p "${OPT[path]}" 2>&1)
 		retval=$?
 
 		# ssh exits with the exit status of the remote command or with 255 if an error occurred
@@ -766,7 +767,7 @@ propagate_ssh_key()
 		exit 1
 	fi
 
-	local KEYFILE=$SSH_KEY_LOCATION
+	local KEYFILE=${OPT[sshkey]}
 
 	#Check to see if we already created key, if not, create it.
 	if [[ -f $KEYFILE ]]; then
