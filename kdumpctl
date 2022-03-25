@@ -850,27 +850,22 @@ save_raw()
 	return 0
 }
 
-local_fs_dump_target()
+is_local_target()
 {
-	local _target
-
-	if _target=$(grep -E "^ext[234]|^xfs|^btrfs|^minix" /etc/kdump.conf); then
-		echo "$_target" | awk '{print $2}'
-	fi
+	[[ ${OPT[_fstype]} =~ ^ext[234]|^xfs|^btrfs|^minix ]]
 }
 
 path_to_be_relabeled()
 {
-	local _path _target _mnt="/" _rmnt
+	local _path _mnt="/" _rmnt
 
 	if is_user_configured_dump_target; then
 		if is_mount_in_dracut_args; then
 			return
 		fi
 
-		_target=$(local_fs_dump_target)
-		if [[ -n $_target ]]; then
-			_mnt=$(get_mntpoint_from_target "$_target")
+		if is_local_target; then
+			_mnt=$(get_mntpoint_from_target "${OPT[_target]}")
 			if ! is_mounted "$_mnt"; then
 				return
 			fi
