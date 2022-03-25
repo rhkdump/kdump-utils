@@ -1270,7 +1270,7 @@ do_estimate()
 		done
 	fi
 
-	if [[ $reserved_size -le $recommended_size ]]; then
+	if [[ $reserved_size -lt $recommended_size ]]; then
 		echo "WARNING: Current crashkernel size is lower than recommended size $((recommended_size / size_mb))M."
 	fi
 }
