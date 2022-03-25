@@ -9,7 +9,6 @@ KDUMP_LOG_PATH="/var/log"
 MKDUMPRD="/sbin/mkdumprd -f"
 MKFADUMPRD="/sbin/mkfadumprd"
 DRACUT_MODULES_FILE="/usr/lib/dracut/modules.txt"
-SAVE_PATH=/var/crash
 SSH_KEY_LOCATION=$DEFAULT_SSHKEY
 INITRD_CHECKSUM_LOCATION="/boot/.fadump_initrd_checksum"
 DUMP_TARGET=""
@@ -244,10 +243,7 @@ parse_config()
 				dwarn "WARNING: '$config_val' doesn't exist, using default value '$SSH_KEY_LOCATION'"
 			fi
 			;;
-		path)
-			SAVE_PATH=$config_val
-			;;
-		core_collector | kdump_post | kdump_pre | extra_bins | extra_modules | failure_action | default | final_action | force_rebuild | force_no_rebuild | fence_kdump_args | fence_kdump_nodes | auto_reset_crashkernel) ;;
+		path | core_collector | kdump_post | kdump_pre | extra_bins | extra_modules | failure_action | default | final_action | force_rebuild | force_no_rebuild | fence_kdump_args | fence_kdump_nodes | auto_reset_crashkernel) ;;
 
 		net | options | link_delay | disk_timeout | debug_mem_level | blacklist)
 			derror "Deprecated kdump config option: $config_opt. Refer to kdump.conf manpage for alternatives."
@@ -264,6 +260,8 @@ parse_config()
 
 		_set_config "$config_opt" "$config_val" || return 1
 	done <<< "$(kdump_read_conf)"
+
+	OPT[path]=${OPT[path]:-$DEFAULT_PATH}
 
 	check_failure_action_config || return 1
 	check_final_action_config || return 1
@@ -720,21 +718,21 @@ check_and_wait_network_ready()
 
 	start_time=$(date +%s)
 	while true; do
-		errmsg=$(ssh -i "$SSH_KEY_LOCATION" -o BatchMode=yes "$DUMP_TARGET" mkdir -p "$SAVE_PATH" 2>&1)
+		errmsg=$(ssh -i "$SSH_KEY_LOCATION" -o BatchMode=yes "$DUMP_TARGET" mkdir -p "${OPT[path]}" 2>&1)
 		retval=$?
 
 		# ssh exits with the exit status of the remote command or with 255 if an error occurred
 		if [[ $retval -eq 0 ]]; then
 			return 0
 		elif [[ $retval -ne 255 ]]; then
-			derror "Could not create $DUMP_TARGET:$SAVE_PATH, you should check the privilege on server side"
+			derror "Could not create $DUMP_TARGET:${OPT[path]}, you should check the privilege on server side"
 			return 1
 		fi
 
 		# if server removes the authorized_keys or, no /root/.ssh/kdump_id_rsa
 		ddebug "$errmsg"
 		if echo "$errmsg" | grep -q "Permission denied\|No such file or directory\|Host key verification failed"; then
-			derror "Could not create $DUMP_TARGET:$SAVE_PATH, you probably need to run \"kdumpctl propagate\""
+			derror "Could not create $DUMP_TARGET:${OPT[path]}, you probably need to run \"kdumpctl propagate\""
 			return 1
 		fi
 
@@ -752,7 +750,7 @@ check_and_wait_network_ready()
 		sleep 1
 	done
 
-	dinfo "Could not create $DUMP_TARGET:$SAVE_PATH, ipaddr is not ready yet. You should check network connection"
+	dinfo "Could not create $DUMP_TARGET:${OPT[path]}, ipaddr is not ready yet. You should check network connection"
 	return 1
 }
 
@@ -820,7 +818,6 @@ check_current_status()
 
 save_raw()
 {
-	local kdump_dir
 	local raw_target
 
 	raw_target=$(kdump_get_conf_val raw)
@@ -834,13 +831,8 @@ save_raw()
 		dwarn "Warning: Detected '$check_fs' signature on $raw_target, data loss is expected."
 		return 0
 	fi
-	kdump_dir=${OPT[path]}
-	if [[ -z ${kdump_dir} ]]; then
-		coredir="/var/crash/$(date +"%Y-%m-%d-%H:%M")"
-	else
-		coredir="${kdump_dir}/$(date +"%Y-%m-%d-%H:%M")"
-	fi
 
+	coredir="${OPT[path]}/$(date +"%Y-%m-%d-%H:%M")"
 	mkdir -p "$coredir"
 	[[ -d $coredir ]] || {
 		derror "failed to create $coredir"
