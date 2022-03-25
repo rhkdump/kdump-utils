@@ -10,7 +10,6 @@ MKDUMPRD="/sbin/mkdumprd -f"
 MKFADUMPRD="/sbin/mkfadumprd"
 DRACUT_MODULES_FILE="/usr/lib/dracut/modules.txt"
 INITRD_CHECKSUM_LOCATION="/boot/.fadump_initrd_checksum"
-DUMP_TARGET=""
 DEFAULT_INITRD=""
 DEFAULT_INITRD_BAK=""
 KDUMP_INITRD=""
@@ -196,7 +195,7 @@ _set_config()
 	fi
 
 	if [[ -n ${OPT[$opt]} ]]; then
-		if [[ $opt == _target ]]; then
+		if [[ $opt == _target ]] || [[ $opt == _fstype ]]; then
 			derror "More than one dump targets specified"
 		else
 			derror "Duplicated kdump config value of option $opt"
@@ -216,6 +215,7 @@ parse_config()
 					derror 'Multiple mount targets specified in one "dracut_args".'
 					return 1
 				fi
+				_set_config _fstype "$(get_dracut_args_fstype "$config_val")" || return 1
 				_set_config _target "$(get_dracut_args_target "$config_val")" || return 1
 			fi
 			;;
@@ -223,14 +223,12 @@ parse_config()
 			if [[ -d "/proc/device-tree/ibm,opal/dump" ]]; then
 				dwarn "WARNING: Won't capture opalcore when 'raw' dump target is used."
 			fi
+			_set_config _fstype "$config_opt" || return 1
 			config_opt=_target
 			;;
-		ext[234] | minix | btrfs | xfs | nfs )
+		ext[234] | minix | btrfs | xfs | nfs | ssh)
+			_set_config _fstype "$config_opt" || return 1
 			config_opt=_target
-			;;
-		ssh)
-			config_opt=_target
-			DUMP_TARGET=$config_val
 			;;
 		sshkey)
 			if [[ -z $config_val ]]; then
@@ -691,12 +689,12 @@ check_ssh_config()
 {
 	local target
 
-	[[ -n $DUMP_TARGET ]] || return 0
+	[[ "${OPT[_fstype]}" == ssh ]] || return 0
 
-	[[ $DUMP_TARGET =~ .*@.* ]] || return 1
-	target=$(ssh -G "$DUMP_TARGET" | sed  -n -e "s/^hostname[[:space:]]\+\([^[:space:]]*\).*$/\1/p")
-	if [[ ${DUMP_TARGET#*@} != "$target" ]]; then
-		derror "Invalid ssh destination $DUMP_TARGET provided."
+	target=$(ssh -G "${OPT[_target]}" | sed  -n -e "s/^hostname[[:space:]]\+\([^[:space:]]*\).*$/\1/p")
+	[[ ${OPT[_target]} =~ .*@.* ]] || return 1
+	if [[ ${OPT[_target]#*@} != "$target" ]]; then
+		derror "Invalid ssh destination ${OPT[_target]} provided."
 		return 1
 	fi
 
@@ -715,25 +713,25 @@ check_and_wait_network_ready()
 	local retval
 	local errmsg
 
-	[[ -n $DUMP_TARGET ]] || return 0
+	[[ "${OPT[_fstype]}" == ssh ]] || return 0
 
 	start_time=$(date +%s)
 	while true; do
-		errmsg=$(ssh -i "${OPT[sshkey]}" -o BatchMode=yes "$DUMP_TARGET" mkdir -p "${OPT[path]}" 2>&1)
+		errmsg=$(ssh -i "${OPT[sshkey]}" -o BatchMode=yes "${OPT[_target]}" mkdir -p "${OPT[path]}" 2>&1)
 		retval=$?
 
 		# ssh exits with the exit status of the remote command or with 255 if an error occurred
 		if [[ $retval -eq 0 ]]; then
 			return 0
 		elif [[ $retval -ne 255 ]]; then
-			derror "Could not create $DUMP_TARGET:${OPT[path]}, you should check the privilege on server side"
+			derror "Could not create ${OPT[_target]}:${OPT[path]}, you should check the privilege on server side"
 			return 1
 		fi
 
 		# if server removes the authorized_keys or, no /root/.ssh/kdump_id_rsa
 		ddebug "$errmsg"
 		if echo "$errmsg" | grep -q "Permission denied\|No such file or directory\|Host key verification failed"; then
-			derror "Could not create $DUMP_TARGET:${OPT[path]}, you probably need to run \"kdumpctl propagate\""
+			derror "Could not create ${OPT[_target]}:${OPT[path]}, you probably need to run \"kdumpctl propagate\""
 			return 1
 		fi
 
@@ -751,7 +749,7 @@ check_and_wait_network_ready()
 		sleep 1
 	done
 
-	dinfo "Could not create $DUMP_TARGET:${OPT[path]}, ipaddr is not ready yet. You should check network connection"
+	dinfo "Could not create ${OPT[_target]}:${OPT[path]}, ipaddr is not ready yet. You should check network connection"
 	return 1
 }
 
@@ -761,7 +759,7 @@ propagate_ssh_key()
 
 	parse_config || return 1
 
-	if [[ -z $DUMP_TARGET ]] ; then
+	if [[ ${OPT[_fstype]} != ssh ]] ; then
 		derror "No ssh destination defined in $KDUMP_CONFIG_FILE."
 		derror "Please verify that $KDUMP_CONFIG_FILE contains 'ssh <user>@<host>' and that it is properly formatted."
 		exit 1
@@ -778,9 +776,9 @@ propagate_ssh_key()
 		dinfo "done."
 	fi
 
-	SSH_USER=${DUMP_TARGET%@*}
-	SSH_SERVER=${DUMP_TARGET#*@}
-	if ssh-copy-id -i "$KEYFILE" "$DUMP_TARGET"; then
+	SSH_USER=${OPT[_target]%@*}
+	SSH_SERVER=${OPT[_target]#*@}
+	if ssh-copy-id -i "$KEYFILE" "${OPT[_target]}"; then
 		dinfo "$KEYFILE has been added to ~$SSH_USER/.ssh/authorized_keys on $SSH_SERVER"
 		return 0
 	else
