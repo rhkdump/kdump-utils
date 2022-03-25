@@ -734,7 +734,7 @@ check_and_wait_network_ready()
 
 		cur=$(date +%s)
 		diff=$((cur - start_time))
-		# 60s time out
+		# time out after 180s
 		if [[ $diff -gt 180 ]]; then
 			break
 		fi
