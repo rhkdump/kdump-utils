@@ -755,35 +755,32 @@ check_ssh_target()
 
 propagate_ssh_key()
 {
+	local SSH_USER SSH_SERVER
+
 	if ! check_ssh_config; then
-		derror "No ssh config specified in $KDUMP_CONFIG_FILE.  Can't propagate"
+		derror "No ssh destination defined in $KDUMP_CONFIG_FILE."
+		derror "Please verify that $KDUMP_CONFIG_FILE contains 'ssh <user>@<host>' and that it is properly formatted."
 		exit 1
 	fi
 
 	local KEYFILE=$SSH_KEY_LOCATION
-	local errmsg="Failed to propagate ssh key"
 
 	#Check to see if we already created key, if not, create it.
 	if [[ -f $KEYFILE ]]; then
 		dinfo "Using existing keys..."
 	else
 		dinfo "Generating new ssh keys... "
-		/usr/bin/ssh-keygen -t rsa -f "$KEYFILE" -N "" 2>&1 > /dev/null
+		/usr/bin/ssh-keygen -t rsa -f "$KEYFILE" -N "" &> /dev/null
 		dinfo "done."
 	fi
 
-	#now find the target ssh user and server to contact.
-	SSH_USER=$(echo "$DUMP_TARGET" | cut -d@ -f1)
-	SSH_SERVER=$(echo "$DUMP_TARGET" | sed -e's/\(.*@\)\(.*$\)/\2/')
-
-	#now send the found key to the found server
-	ssh-copy-id -i "$KEYFILE" "$SSH_USER@$SSH_SERVER"
-	RET=$?
-	if [[ $RET == 0 ]]; then
+	SSH_USER=${DUMP_TARGET%@*}
+	SSH_SERVER=${DUMP_TARGET#*@}
+	if ssh-copy-id -i "$KEYFILE" "$DUMP_TARGET"; then
 		dinfo "$KEYFILE has been added to ~$SSH_USER/.ssh/authorized_keys on $SSH_SERVER"
 		return 0
 	else
-		derror "$errmsg, $KEYFILE failed in transfer to $SSH_SERVER"
+		derror "Failed to propagate ssh key, could not transfer $KEYFILE to $SSH_SERVER"
 		exit 1
 	fi
 }
