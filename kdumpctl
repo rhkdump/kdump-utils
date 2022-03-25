@@ -205,10 +205,27 @@ check_config()
 			fi
 			config_opt=_target
 			;;
-		ext[234] | minix | btrfs | xfs | nfs | ssh)
+		ext[234] | minix | btrfs | xfs | nfs )
 			config_opt=_target
 			;;
-		sshkey | path | core_collector | kdump_post | kdump_pre | extra_bins | extra_modules | failure_action | default | final_action | force_rebuild | force_no_rebuild | fence_kdump_args | fence_kdump_nodes | auto_reset_crashkernel) ;;
+		ssh)
+			config_opt=_target
+			DUMP_TARGET=$config_val
+			;;
+		sshkey)
+			if [[ -z $config_val ]]; then
+				derror "Invalid kdump config value for option '$config_opt'"
+				return 1
+			elif [[ -f $config_val ]]; then
+				SSH_KEY_LOCATION=$(/usr/bin/readlink -m "$config_val")
+			else
+				dwarn "WARNING: '$config_val' doesn't exist, using default value '$SSH_KEY_LOCATION'"
+			fi
+			;;
+		path)
+			SAVE_PATH=$config_val
+			;;
+		core_collector | kdump_post | kdump_pre | extra_bins | extra_modules | failure_action | default | final_action | force_rebuild | force_no_rebuild | fence_kdump_args | fence_kdump_nodes | auto_reset_crashkernel) ;;
 
 		net | options | link_delay | disk_timeout | debug_mem_level | blacklist)
 			derror "Deprecated kdump config option: $config_opt. Refer to kdump.conf manpage for alternatives."
@@ -242,6 +259,7 @@ check_config()
 	check_failure_action_config || return 1
 	check_final_action_config || return 1
 	check_fence_kdump_config || return 1
+	check_ssh_config || return 1
 
 	return 0
 }
@@ -665,29 +683,8 @@ check_ssh_config()
 {
 	local target
 
-	while read -r config_opt config_val; do
-		case "$config_opt" in
-		sshkey)
-			# remove inline comments after the end of a directive.
-			if [[ -f $config_val ]]; then
-				# canonicalize the path
-				SSH_KEY_LOCATION=$(/usr/bin/readlink -m "$config_val")
-			else
-				dwarn "WARNING: '$config_val' doesn't exist, using default value '$SSH_KEY_LOCATION'"
-			fi
-			;;
-		path)
-			SAVE_PATH=$config_val
-			;;
-		ssh)
-			DUMP_TARGET=$config_val
-			;;
-		*) ;;
+	[[ -n $DUMP_TARGET ]] || return 0
 
-		esac
-	done <<< "$(kdump_read_conf)"
-
-	[[ -n $DUMP_TARGET ]] || return 1
 	[[ $DUMP_TARGET =~ .*@.* ]] || return 1
 	target=$(ssh -G "$DUMP_TARGET" | sed  -n -e "s/^hostname[[:space:]]\+\([^[:space:]]*\).*$/\1/p")
 	if [[ ${DUMP_TARGET#*@} != "$target" ]]; then
@@ -709,6 +706,8 @@ check_and_wait_network_ready()
 	local diff
 	local retval
 	local errmsg
+
+	[[ -n $DUMP_TARGET ]] || return 0
 
 	start_time=$(date +%s)
 	while true; do
@@ -748,16 +747,13 @@ check_and_wait_network_ready()
 	return 1
 }
 
-check_ssh_target()
-{
-	check_and_wait_network_ready
-}
-
 propagate_ssh_key()
 {
 	local SSH_USER SSH_SERVER
 
-	if ! check_ssh_config; then
+	check_config || return 1
+
+	if [[ -z $DUMP_TARGET ]] ; then
 		derror "No ssh destination defined in $KDUMP_CONFIG_FILE."
 		derror "Please verify that $KDUMP_CONFIG_FILE contains 'ssh <user>@<host>' and that it is properly formatted."
 		exit 1
@@ -1040,11 +1036,9 @@ start()
 		return 0
 	fi
 
-	if check_ssh_config; then
-		if ! check_ssh_target; then
-			derror "Starting kdump: [FAILED]"
-			return 1
-		fi
+	if ! check_and_wait_network_ready; then
+		derror "Starting kdump: [FAILED]"
+		return 1
 	fi
 
 	if ! check_rebuild; then
@@ -1160,12 +1154,7 @@ stop()
 rebuild()
 {
 	check_config || return 1
-
-	if check_ssh_config; then
-		if ! check_ssh_target; then
-			return 1
-		fi
-	fi
+	check_and_wait_network_ready || return 1
 
 	setup_initrd || return 1
 
