@@ -22,7 +22,7 @@ if ! dlog_init; then
 	exit 1
 fi
 
-SSH_KEY_LOCATION="/root/.ssh/kdump_id_rsa"
+SSH_KEY_LOCATION=$DEFAULT_SSHKEY
 SAVE_PATH=$(get_save_path)
 OVERRIDE_RESETTABLE=0
 
