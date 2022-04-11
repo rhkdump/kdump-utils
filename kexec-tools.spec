@@ -4,8 +4,8 @@
 %global mkdf_shortver %(c=%{mkdf_ver}; echo ${c:0:7})
 
 Name: kexec-tools
-Version: 2.0.23
-Release: 5%{?dist}
+Version: 2.0.24
+Release: 1%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -103,7 +103,6 @@ Requires:       systemd-udev%{?_isa}
 #
 # Patches 401 through 500 are meant for s390 kexec-tools enablement
 #
-Patch401: ./kexec-tools-2.0.23-s390_handle_R_390_PLT32DBL_reloc_entries_in_machine_apply_elf_rel_.patch
 
 #
 # Patches 501 through 600 are meant for ARM kexec-tools enablement
@@ -127,7 +126,6 @@ mkdir -p -m755 kcp
 tar -z -x -v -f %{SOURCE9}
 tar -z -x -v -f %{SOURCE19}
 
-%patch401 -p1
 
 %ifarch ppc
 %define archdef ARCH=ppc
@@ -407,6 +405,28 @@ fi
 %endif
 
 %changelog
+* Mon Apr 11 2022 Coiby <coxu@redhat.com> - 2.0.24-1
+- Update kexec-tools to 2.0.24
+- kdumpctl: remove kdump_get_conf_val in save_raw
+- kdumpctl: drop DUMP_TARGET variable
+- kdumpctl: drop SSH_KEY_LOCATION variable
+- kdumpctl: drop SAVE_PATH variable
+- kdumpctl: reduce file operations on kdump.conf
+- kdumpctl: merge check_ssh_config into check_config
+- kdumpctl: simplify propagate_ssh_key
+- kdumpctl: forbid aliases from ssh config
+- kdumpctl: fix comment in check_and_wait_network_ready
+- kdump-lib-initramfs: merge definitions for default ssh key
+- kdumpctl: remove unnecessary uses of $?
+- kdump-lib: fix typo in variable name
+- kdump-capture.service: switch to journal for stdout
+- kdumpctl/estimate: Fix unnecessary warning
+- kdumpctl: sync the $TARGET_INITRD after rebuild
+- try to update the crashkernel in GRUB_ETC_DEFAULT after kexec-tools updates the default crashkernel value
+- address the case where there are multiple values for the same kernel arg
+- update kernel crashkernel in posttrans RPM scriptlet when updating kexec-tools
+- kdump-lib.sh: Check the output of blkid with sed instead of eval
+
 * Mon Feb 14 2022 Coiby <coxu@redhat.com> - 2.0.23-5
 - fix incorrect usage of _get_all_kernels_from_grubby
 - fix the mistake of swapping function parameters of read_proc_environ_var
