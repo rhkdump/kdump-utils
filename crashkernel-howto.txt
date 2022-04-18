@@ -37,10 +37,10 @@ Users can override the value during Anaconda installation manually.
 Auto update of crashkernel boot parameter
 =========================================
 
-A new release of kexec-tools could update the default crashkernel value.
-By default, kexec-tools would reset crashkernel to the new default value if it
-detects old default crashkernel value is used by installed kernels. If you don't
-want kexec-tools to update the old default crashkernel to the new default
+A new release of kexec-tools could update the default crashkernel value.  By
+default, kexec-tools would reset crashkernel to the new default value if it
+detects the old default crashkernel value is used by installed kernels. If you
+don't want kexec-tools to update the old default crashkernel to the new default
 crashkernel, you can change auto_reset_crashkernel to no in kdump.conf.
 
 Supported Bootloaders
@@ -67,19 +67,18 @@ value properly, `kdumpctl` also provides a sub-command:
 
 	`kdumpctl reset-crashkernel [--kernel=path_to_kernel] [--reboot]`
 
-This command will read from the `crashkernel.default` file and reset
-bootloader's kernel cmdline to the default value. It will also update bootloader
-config if the bootloader has a standalone config file. User will have to reboot
-the machine after this command to make it take effect if --reboot is not specified.
-For ppc64le, an optional "[--fadump=[on|off|nocma]]" can also be specified to toggle
-FADump on/off.
+This command will reset the bootloader's kernel cmdline to the default value.
+It will also update bootloader config if the bootloader has a standalone config
+file. User will have to reboot the machine after this command to make it take
+effect if --reboot is not specified. For more details, please refer to the
+reset-crashkernel command in `man kdumpctl`.
 
 Reset manually
 --------------
 
 To reset the crashkernel value manually, it's recommended to use utils like
 `grubby`. A one liner script for resetting `crashkernel=` value of all installed
-kernels to current boot kernel's crashkernel.default` is:
+kernels to the default value is:
 
 	grubby --update-kernel ALL --args "crashkernel=$(kdumpctl get-default-crashkernel)"
 
@@ -98,7 +97,7 @@ triggering kdump:
 The output will be like this:
 
 ```
-      Encrypted kdump target requires extra memory, assuming using the keyslot with minimun memory requirement
+      Encrypted kdump target requires extra memory, assuming using the keyslot with minimum memory requirement
 
       Reserved crashkernel:    256M
       Recommended crashkernel: 655M
