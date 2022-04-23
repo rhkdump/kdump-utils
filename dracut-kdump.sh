@@ -15,6 +15,8 @@ fi
 
 KDUMP_PATH="/var/crash"
 KDUMP_LOG_FILE="/run/initramfs/kexec-dmesg.log"
+KDUMP_LOG_DEST=""
+KDUMP_LOG_OP=""
 CORE_COLLECTOR=""
 DEFAULT_CORE_COLLECTOR="makedumpfile -l --message-level 7 -d 31"
 DMESG_COLLECTOR="/sbin/vmcore-dmesg"
@@ -113,12 +115,19 @@ get_kdump_confs()
 # store the kexec kernel log to a file.
 save_log()
 {
+	# LOG_OP is empty when log can't be saved, eg. raw target
+	[ -n "$KDUMP_LOG_OP" ] || return
+
 	dmesg -T > $KDUMP_LOG_FILE
 
 	if command -v journalctl > /dev/null; then
 		journalctl -ab >> $KDUMP_LOG_FILE
 	fi
 	chmod 600 $KDUMP_LOG_FILE
+
+	dinfo "saving the $KDUMP_LOG_FILE to $KDUMP_LOG_DEST/"
+
+	eval "$KDUMP_LOG_OP"
 }
 
 # $1: dump path, must be a mount point
@@ -159,6 +168,9 @@ dump_fs()
 	save_opalcore_fs "$_dump_fs_path"
 
 	dinfo "saving vmcore"
+	KDUMP_LOG_DEST=$_dump_fs_path/
+	KDUMP_LOG_OP="mv '$KDUMP_LOG_FILE' '$KDUMP_LOG_DEST/'"
+
 	$CORE_COLLECTOR /proc/vmcore "$_dump_fs_path/vmcore-incomplete"
 	_dump_exitcode=$?
 	if [ $_dump_exitcode -eq 0 ]; then
@@ -167,12 +179,6 @@ dump_fs()
 		dinfo "saving vmcore complete"
 	else
 		derror "saving vmcore failed, exitcode:$_dump_exitcode"
-	fi
-
-	dinfo "saving the $KDUMP_LOG_FILE to $_dump_fs_path/"
-	save_log
-	mv "$KDUMP_LOG_FILE" "$_dump_fs_path/"
-	if [ $_dump_exitcode -ne 0 ]; then
 		return 1
 	fi
 
@@ -395,7 +401,11 @@ dump_ssh()
 	ssh -q $_ssh_opt "$2" mkdir -p "$_ssh_dir" || return 1
 
 	save_vmcore_dmesg_ssh "$DMESG_COLLECTOR" "$_ssh_dir" "$_ssh_opt" "$2"
+
 	dinfo "saving vmcore"
+
+	KDUMP_LOG_DEST=$2:$_ssh_dir/
+	KDUMP_LOG_OP="scp -q $_ssh_opt '$KDUMP_LOG_FILE' '$_scp_address:$_ssh_dir/'"
 
 	save_opalcore_ssh "$_ssh_dir" "$_ssh_opt" "$2" "$_scp_address"
 
@@ -419,12 +429,6 @@ dump_ssh()
 		fi
 	else
 		derror "saving vmcore failed, exitcode:$_ret"
-	fi
-
-	dinfo "saving the $KDUMP_LOG_FILE to $2:$_ssh_dir/"
-	save_log
-	if ! scp -q $_ssh_opt $KDUMP_LOG_FILE "$_scp_address:$_ssh_dir/"; then
-		derror "saving log file failed, _exitcode:$_ret"
 	fi
 
 	return $_ret
@@ -575,6 +579,8 @@ DUMP_RETVAL=$?
 if ! do_kdump_post $DUMP_RETVAL; then
 	derror "kdump_post script exited with non-zero status!"
 fi
+
+save_log
 
 if [ $DUMP_RETVAL -ne 0 ]; then
 	exit 1
