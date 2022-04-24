@@ -1,6 +1,6 @@
 %global eppic_ver e8844d3793471163ae4a56d8f95897be9e5bd554
 %global eppic_shortver %(c=%{eppic_ver}; echo ${c:0:7})
-%global mkdf_ver 1.7.0
+%global mkdf_ver 1.7.1
 %global mkdf_shortver %(c=%{mkdf_ver}; echo ${c:0:7})
 
 Name: kexec-tools
@@ -220,8 +220,8 @@ install -m 755 -D %{SOURCE33} $RPM_BUILD_ROOT%{_prefix}/lib/kernel/install.d/92-
 
 %ifarch %{ix86} x86_64 ppc64 s390x ppc64le aarch64
 install -m 755 makedumpfile-%{mkdf_ver}/makedumpfile $RPM_BUILD_ROOT/usr/sbin/makedumpfile
-install -m 644 makedumpfile-%{mkdf_ver}/makedumpfile.8.gz $RPM_BUILD_ROOT/%{_mandir}/man8/makedumpfile.8.gz
-install -m 644 makedumpfile-%{mkdf_ver}/makedumpfile.conf.5.gz $RPM_BUILD_ROOT/%{_mandir}/man5/makedumpfile.conf.5.gz
+install -m 644 makedumpfile-%{mkdf_ver}/makedumpfile.8 $RPM_BUILD_ROOT/%{_mandir}/man8/makedumpfile.8
+install -m 644 makedumpfile-%{mkdf_ver}/makedumpfile.conf.5 $RPM_BUILD_ROOT/%{_mandir}/man5/makedumpfile.conf.5
 install -m 644 makedumpfile-%{mkdf_ver}/makedumpfile.conf $RPM_BUILD_ROOT/%{_sysconfdir}/makedumpfile.conf.sample
 install -m 755 makedumpfile-%{mkdf_ver}/eppic_makedumpfile.so $RPM_BUILD_ROOT/%{_libdir}/eppic_makedumpfile.so
 mkdir -p $RPM_BUILD_ROOT/usr/share/makedumpfile/eppic_scripts/
