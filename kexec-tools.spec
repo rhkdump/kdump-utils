@@ -5,7 +5,7 @@
 
 Name: kexec-tools
 Version: 2.0.24
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -405,6 +405,13 @@ fi
 %endif
 
 %changelog
+* Mon May 23 2022 Coiby <coxu@redhat.com> - 2.0.24-3
+- Update makedumpfile to 1.7.1
+- unit tests: add tests for get_system_size and get_recommend_size
+- improve get_recommend_size
+- fix a calculation error in get_system_size
+- logger: save log after all kdump progress finished
+
 * Sun Apr 24 2022 Coiby <coxu@redhat.com> - 2.0.24-2
 - remove the upper bound of default crashkernel value example
 - update fadump-howto
