@@ -5,7 +5,7 @@
 
 Name: kexec-tools
 Version: 2.0.24
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -405,6 +405,21 @@ fi
 %endif
 
 %changelog
+* Apr 24 2022 Coiby <coxu@redhat.com> - 2.0.24-2
+- remove the upper bound of default crashkernel value example
+- update fadump-howto
+- update kexec-kdump-howto
+- update crashkernel-howto
+- add man documentation for kdumpctl get-default-crashkernel
+- unit tests: add check_config with with the default kdump.conf
+- unit tests: add tests for kdump_get_conf_val in kdump-lib-initramfs.sh
+- unit tests: add tests for "kdumpctl reset-crashkernel"
+- unit tests: add tests for _{update,read}_kernel_arg_in_grub_etc_default in kdumpctl
+- unit tests: add tests for kdumpctl read_proc_environ_var and _is_osbuild
+- unit tests: add tests for get_dump_mode_by_fadump_val
+- unit tests: add tests for get_grub_kernel_boot_parameter
+- unit tests: prepare for kdumpctl and kdump-lib.sh to be unit-tested
+
 * Mon Apr 11 2022 Coiby <coxu@redhat.com> - 2.0.24-1
 - Update kexec-tools to 2.0.24
 - kdumpctl: remove kdump_get_conf_val in save_raw
@@ -472,7 +487,7 @@ fi
 - sysconfig: make kexec_file_load as default option on aarch64
 - Enable zstd compression for makedumpfile in kexec-tools.spec
 
-* Mon Nov 18 2021 Coiby <coxu@redhat.com> - 2.0.23-1
+* Thu Nov 18 2021 Coiby <coxu@redhat.com> - 2.0.23-1
 - Update kexec-tools to 2.0.23
 - Rebase makedumpfile to 1.7.0
 - fix broken extra_bins when installing multiple binaries
