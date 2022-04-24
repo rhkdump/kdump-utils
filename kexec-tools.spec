@@ -405,7 +405,7 @@ fi
 %endif
 
 %changelog
-* Apr 24 2022 Coiby <coxu@redhat.com> - 2.0.24-2
+* Sun Apr 24 2022 Coiby <coxu@redhat.com> - 2.0.24-2
 - remove the upper bound of default crashkernel value example
 - update fadump-howto
 - update kexec-kdump-howto
