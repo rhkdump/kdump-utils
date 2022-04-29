@@ -259,7 +259,7 @@ create_image_from_base_image() {
 	if [ "$image_fmt" != "raw" ]; then
 		if fmt_is_qcow2 "$image_fmt"; then
 			echo "Source image is qcow2, using snapshot..."
-			qemu-img create -f qcow2 -b $image $output
+			qemu-img create -f qcow2 -b $image -F qcow2 $output
 		else
 			perror_exit "Unrecognized base image format '$image_mnt'"
 		fi
