@@ -42,7 +42,7 @@ all: $(TEST_ROOT)/output/test-base-image
 # to rebuild the rpm, currently use rpmbuild to have better control over the rpm building process
 #
 $(KEXEC_TOOLS_RPM): $(KEXEC_TOOLS_SRC)
-	sh -c "cd .. && fedpkg sources"
+	sh -c "cd .. && fedpkg --release f$(RELEASE) sources"
 	@echo Rebuilding RPM due to modification of sources: $?
 	rpmbuild $(RPMDEFINE) -ba $(REPO)/$(SPEC)
 
