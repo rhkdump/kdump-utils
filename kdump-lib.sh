@@ -788,17 +788,12 @@ prepare_cmdline()
 	echo "$cmdline"
 }
 
-#get system memory size in the unit of GB
+PROC_IOMEM=/proc/iomem
+#get system memory size i.e. memblock.memory.total_size in the unit of GB
 get_system_size()
 {
-	result=$(grep "System RAM" /proc/iomem | awk -F ":" '{ print $1 }' | tr "[:lower:]" "[:upper:]" | paste -sd+)
-	result="+$result"
-	# replace '-' with '+0x' and '+' with '-0x'
-	sum=$(echo "$result" | sed -e 's/-/K0x/g' -e 's/+/-0x/g' -e 's/K/+/g')
-	size=$(printf "%d\n" $((sum)))
-	size=$((size / 1024 / 1024 / 1024))
-
-	echo "$size"
+	sum=$(sed -n "s/\s*\([0-9a-fA-F]\+\)-\([0-9a-fA-F]\+\) : System RAM$/+ 0x\2 - 0x\1 + 1/p" $PROC_IOMEM)
+	echo $(( (sum) / 1024 / 1024 / 1024))
 }
 
 get_recommend_size()
