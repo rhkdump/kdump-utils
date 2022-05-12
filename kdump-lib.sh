@@ -796,33 +796,40 @@ get_system_size()
 	echo $(( (sum) / 1024 / 1024 / 1024))
 }
 
+# Return the recommended size for the reserved crashkernel memory
+# depending on the system memory size.
+#
+# This functions is expected to be consistent with the parse_crashkernel_mem()
+# in kernel i.e. how kernel allocates the kdump memory given the crashkernel
+# parameter crashkernel=range1:size1[,range2:size2,…] and the system memory
+# size.
 get_recommend_size()
 {
 	local mem_size=$1
 	local _ck_cmdline=$2
-	local OLDIFS="$IFS"
+	local range start start_unit end end_unit size
 
-	start=${_ck_cmdline::1}
-	if [[ $mem_size -lt $start ]]; then
-		echo "0M"
-		return
-	fi
-	IFS=','
-	for i in $_ck_cmdline; do
-		end=$(echo "$i" | awk -F "-" '{ print $2 }' | awk -F ":" '{ print $1 }')
-		recommend=$(echo "$i" | awk -F "-" '{ print $2 }' | awk -F ":" '{ print $2 }')
-		size=${end::-1}
-		unit=${end: -1}
-		if [[ $unit == 'T' ]]; then
-			size=$((size * 1024))
-		fi
-		if [[ $mem_size -lt $size ]]; then
-			echo "$recommend"
-			IFS="$OLDIFS"
+	while read -r -d , range; do
+		# need to use non-default IFS as double spaces are used as a
+		# single delimiter while commas aren't...
+		IFS=, read start start_unit end end_unit size <<< \
+			"$(echo "$range" | sed -n "s/\([0-9]\+\)\([GT]\?\)-\([0-9]*\)\([GT]\?\):\([0-9]\+[MG]\)/\1,\2,\3,\4,\5/p")"
+
+		# aka. 102400T
+		end=${end:-104857600}
+		[[ "$end_unit" == T ]] && end=$((end * 1024))
+		[[ "$start_unit" == T ]] && start=$((start * 1024))
+
+		if [[ $mem_size -ge $start ]] && [[ $mem_size -lt $end ]]; then
+			echo "$size"
 			return
 		fi
-	done
-	IFS="$OLDIFS"
+
+		# append a ',' as read expects the 'file' to end with a delimiter
+	done <<< "$_ck_cmdline,"
+
+	# no matching range found
+	echo "0M"
 }
 
 # get default crashkernel
