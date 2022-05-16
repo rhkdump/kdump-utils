@@ -17,7 +17,7 @@ KDUMP_COMMANDLINE=""
 # This variable lets us remove arguments from the current kdump commandline
 # as taken from either KDUMP_COMMANDLINE above, or from /proc/cmdline
 # NOTE: some arguments such as crashkernel will always be removed
-KDUMP_COMMANDLINE_REMOVE="hugepages hugepagesz slub_debug quiet log_buf_len swiotlb cma hugetlb_cma"
+KDUMP_COMMANDLINE_REMOVE="hugepages hugepagesz slub_debug quiet log_buf_len swiotlb cma hugetlb_cma ignition.firstboot"
 
 # This variable lets us append arguments to the current kdump commandline
 # after processed by KDUMP_COMMANDLINE_REMOVE
