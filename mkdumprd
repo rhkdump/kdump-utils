@@ -27,7 +27,7 @@ SAVE_PATH=$(get_save_path)
 OVERRIDE_RESETTABLE=0
 
 extra_modules=""
-dracut_args=(--add kdumpbase --quiet --hostonly --hostonly-cmdline --hostonly-i18n --hostonly-mode strict -o "plymouth resume ifcfg earlykdump")
+dracut_args=(--add kdumpbase --quiet --hostonly --hostonly-cmdline --hostonly-i18n --hostonly-mode strict --hostonly-nics '' -o "plymouth resume ifcfg earlykdump")
 
 MKDUMPRD_TMPDIR="$(mktemp -d -t mkdumprd.XXXXXX)"
 [ -d "$MKDUMPRD_TMPDIR" ] || perror_exit "dracut: mktemp -p -d -t dracut.XXXXXX failed."
