@@ -884,7 +884,8 @@ kdump_get_arch_recommend_crashkernel()
 	if [[ $_arch == "x86_64" ]] || [[ $_arch == "s390x" ]]; then
 		_ck_cmdline="1G-4G:192M,4G-64G:256M,64G-:512M"
 	elif [[ $_arch == "aarch64" ]]; then
-		_ck_cmdline="2G-:448M"
+		# For 4KB page size, the formula is based on x86 plus extra = 64M
+		_ck_cmdline="1G-4G:256M,4G-64G:320M,64G-:576M"
 	elif [[ $_arch == "ppc64le" ]]; then
 		if [[ $_dump_mode == "fadump" ]]; then
 			_ck_cmdline="4G-16G:768M,16G-64G:1G,64G-128G:2G,128G-1T:4G,1T-2T:6G,2T-4T:12G,4T-8T:20G,8T-16T:36G,16T-32T:64G,32T-64T:128G,64T-:180G"
