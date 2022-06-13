@@ -633,8 +633,36 @@ prepare_kexec_args()
 	echo "$kexec_args"
 }
 
+# prepare_kdump_kernel <kdump_kernelver>
+# This function return kdump_kernel given a kernel version.
+prepare_kdump_kernel()
+{
+	local kdump_kernelver=$1
+	local dir img boot_dirlist boot_imglist kdump_kernel machine_id
+	read -r machine_id < /etc/machine-id
+
+	boot_dirlist=${KDUMP_BOOTDIR:-"/boot /boot/efi /efi /"}
+	boot_imglist="$KDUMP_IMG-$kdump_kernelver$KDUMP_IMG_EXT $machine_id/$kdump_kernelver/$KDUMP_IMG"
+
+	# Use BOOT_IMAGE as reference if possible, strip the GRUB root device prefix in (hd0,gpt1) format
+	boot_img="$(sed "s/^BOOT_IMAGE=\((\S*)\)\?\(\S*\) .*/\2/" /proc/cmdline)"
+	if [[ "$boot_img" == *"$kdump_kernelver" ]]; then
+		boot_imglist="$boot_img $boot_imglist"
+	fi
+
+	for dir in $boot_dirlist; do
+		for img in $boot_imglist; do
+			if [[ -f "$dir/$img" ]]; then
+				kdump_kernel=$(echo "$dir/$img" | tr -s '/')
+				break 2
+			fi
+		done
+	done
+	echo "$kdump_kernel"
+}
+
 #
-# Detect initrd and kernel location, results are stored in global enviromental variables:
+# Detect initrd and kernel location, results are stored in global environmental variables:
 # KDUMP_BOOTDIR, KDUMP_KERNELVER, KDUMP_KERNEL, DEFAULT_INITRD, and KDUMP_INITRD
 #
 # Expectes KDUMP_BOOTDIR, KDUMP_IMG, KDUMP_IMG_EXT, KDUMP_KERNELVER to be loaded from config already
@@ -642,35 +670,38 @@ prepare_kexec_args()
 #
 prepare_kdump_bootinfo()
 {
-	local boot_img boot_imglist boot_dirlist boot_initrdlist
-	local machine_id dir img default_initrd_base var_target_initrd_dir
+	local boot_initrdlist nondebug_kernelver debug_kernelver
+	local default_initrd_base var_target_initrd_dir
 
 	if [[ -z $KDUMP_KERNELVER ]]; then
-		KDUMP_KERNELVER="$(uname -r)"
+		KDUMP_KERNELVER=$(uname -r)
+		nondebug_kernelver=$(sed -n -e 's/\(.*\)+debug$/\1/p' <<< "$KDUMP_KERNELVER")
 	fi
 
-	read -r machine_id < /etc/machine-id
-	boot_dirlist=${KDUMP_BOOTDIR:-"/boot /boot/efi /efi /"}
-	boot_imglist="$KDUMP_IMG-$KDUMP_KERNELVER$KDUMP_IMG_EXT $machine_id/$KDUMP_KERNELVER/$KDUMP_IMG"
-
-	# Use BOOT_IMAGE as reference if possible, strip the GRUB root device prefix in (hd0,gpt1) format
-	boot_img="$(sed "s/^BOOT_IMAGE=\((\S*)\)\?\(\S*\) .*/\2/" /proc/cmdline)"
-	if [[ -n $boot_img ]]; then
-		boot_imglist="$boot_img $boot_imglist"
+	# Use nondebug kernel if possible, because debug kernel will consume more memory and may oom.
+	if [[ -n $nondebug_kernelver ]]; then
+		dinfo "Trying to use $nondebug_kernelver."
+		debug_kernelver=$KDUMP_KERNELVER
+		KDUMP_KERNELVER=$nondebug_kernelver
 	fi
 
-	for dir in $boot_dirlist; do
-		for img in $boot_imglist; do
-			if [[ -f "$dir/$img" ]]; then
-				KDUMP_KERNEL=$(echo "$dir/$img" | tr -s '/')
-				break 2
-			fi
-		done
-	done
+	KDUMP_KERNEL=$(prepare_kdump_kernel "$KDUMP_KERNELVER")
+
+	if ! [[ -e $KDUMP_KERNEL ]]; then
+		if [[ -n $debug_kernelver ]]; then
+			dinfo "Fallback to using debug kernel"
+			KDUMP_KERNELVER=$debug_kernelver
+			KDUMP_KERNEL=$(prepare_kdump_kernel "$KDUMP_KERNELVER")
+		fi
+	fi
 
 	if ! [[ -e $KDUMP_KERNEL ]]; then
 		derror "Failed to detect kdump kernel location"
 		return 1
+	fi
+
+	if [[ "$KDUMP_KERNEL" == *"+debug" ]]; then
+		dwarn "Using debug kernel, you may need to set a larger crashkernel than the default value."
 	fi
 
 	# Set KDUMP_BOOTDIR to where kernel image is stored
