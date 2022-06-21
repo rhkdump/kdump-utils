@@ -644,6 +644,11 @@ prepare_kdump_kernel()
 	boot_dirlist=${KDUMP_BOOTDIR:-"/boot /boot/efi /efi /"}
 	boot_imglist="$KDUMP_IMG-$kdump_kernelver$KDUMP_IMG_EXT $machine_id/$kdump_kernelver/$KDUMP_IMG"
 
+	# The kernel of OSTree based systems is not in the standard locations.
+	if is_ostree; then
+		boot_dirlist="$(echo /boot/ostree/*) $boot_dirlist"
+	fi
+
 	# Use BOOT_IMAGE as reference if possible, strip the GRUB root device prefix in (hd0,gpt1) format
 	boot_img="$(grep -P -o '^BOOT_IMAGE=(\S+)' /proc/cmdline | sed "s/^BOOT_IMAGE=\((\S*)\)\?\(\S*\)/\2/")"
 	if [[ "$boot_img" == *"$kdump_kernelver" ]]; then
