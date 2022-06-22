@@ -248,7 +248,7 @@ kdump_get_persistent_dev()
 	echo $(get_persistent_dev "$dev")
 }
 
-is_atomic()
+is_ostree()
 {
 	grep -q "ostree" /proc/cmdline
 }

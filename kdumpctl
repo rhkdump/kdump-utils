@@ -1342,7 +1342,7 @@ _update_grub()
 {
 	local _kernel_path=$1 _crashkernel=$2 _dump_mode=$3 _fadump_val=$4
 
-	if is_atomic; then
+	if is_ostree; then
 		if rpm-ostree kargs | grep -q "crashkernel="; then
 			rpm-ostree kargs --replace="crashkernel=$_crashkernel"
 		else
@@ -1472,13 +1472,13 @@ reset_crashkernel()
 		esac
 	done
 
-	# 1. CoreOS uses "rpm-ostree kargs" instead of grubby to manage kernel command
-	#    line. --kernel=ALL doesn't make sense for CoreOS.
-	# 2. CoreOS doesn't support POWER so the dump mode is always kdump.
+	# 1. OSTree systems use "rpm-ostree kargs" instead of grubby to manage kernel command
+	#    line. --kernel=ALL doesn't make sense for OStree.
+	# 2. We don't have any OSTree POWER systems so the dump mode is always kdump.
 	# 3. "rpm-ostree kargs" would prompt the user to reboot the system after
 	#    modifying the kernel command line so there is no need for kexec-tools
 	#    to repeat it.
-	if is_atomic; then
+	if is_ostree; then
 		_old_crashkernel=$(rpm-ostree kargs | sed -n -E 's/.*(^|\s)crashkernel=(\S*).*/\2/p')
 		_new_dump_mode=kdump
 		_new_crashkernel=$(kdump_get_arch_recommend_crashkernel "$_new_dump_mode")
