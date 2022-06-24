@@ -250,7 +250,7 @@ kdump_get_persistent_dev()
 
 is_ostree()
 {
-	grep -q "ostree" /proc/cmdline
+	test -f /run/ostree-booted
 }
 
 # get ip address or hostname from nfs/ssh config value
