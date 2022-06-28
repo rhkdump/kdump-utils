@@ -49,9 +49,16 @@ fi
 
 single_instance_lock()
 {
-	local rc timeout=5
+	local rc timeout=5 lockfile
 
-	if ! exec 9> /var/lock/kdump; then
+	if [[ -d /run/lock ]]; then
+		lockfile=/run/lock/kdump
+	else
+		# when updating package using virt-customize, /run/lock doesn't exist
+		lockfile=/tmp/kdump.lock
+	fi
+
+	if ! exec 9> $lockfile; then
 		derror "Create file lock failed"
 		exit 1
 	fi

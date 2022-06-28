@@ -269,6 +269,8 @@ if ! grep -qs "ostree" /proc/cmdline && [ $1 == 2 ] && grep -q get-default-crash
   kdumpctl get-default-crashkernel fadump > /tmp/old_default_crashkernel_fadump 2>/dev/null
 %endif
 fi
+# don't block package update
+:
 
 %post
 # Initial installation
