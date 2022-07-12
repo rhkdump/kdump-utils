@@ -82,6 +82,8 @@ kernels to the default value is:
 
 	grubby --update-kernel ALL --args "crashkernel=$(kdumpctl get-default-crashkernel)"
 
+NOTE: On s390x you also need to run zipl for the change to take effect.
+
 Estimate crashkernel
 ====================
 
