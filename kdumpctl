@@ -1361,7 +1361,7 @@ _get_current_running_kernel_path()
 	fi
 }
 
-_update_grub()
+_update_kernel_cmdline()
 {
 	local _kernel_path=$1 _crashkernel=$2 _dump_mode=$3 _fadump_val=$4
 
@@ -1372,15 +1372,14 @@ _update_grub()
 			rpm-ostree kargs --append="crashkernel=$_crashkernel"
 		fi
 	else
-		[[ -f /etc/zipl.conf ]] && zipl_arg="--zipl"
-		grubby --args "crashkernel=$_crashkernel" --update-kernel "$_kernel_path" $zipl_arg
+		grubby --args "crashkernel=$_crashkernel" --update-kernel "$_kernel_path"
 		if [[ $_dump_mode == kdump ]]; then
 			grubby --remove-args="fadump" --update-kernel "$_kernel_path"
 		else
 			grubby --args="fadump=$_fadump_val" --update-kernel "$_kernel_path"
 		fi
 	fi
-	[[ $zipl_arg ]] && zipl > /dev/null
+	[[ -f /etc/zipl.conf ]] && zipl > /dev/null
 }
 
 _valid_grubby_kernel_path()
@@ -1510,7 +1509,7 @@ reset_crashkernel()
 		_new_dump_mode=kdump
 		_new_crashkernel=$(kdump_get_arch_recommend_crashkernel "$_new_dump_mode")
 		if [[ $_old_crashkernel != "$_new_crashkernel" ]]; then
-			_update_grub "" "$_new_crashkernel" "$_new_dump_mode" ""
+			_update_kernel_cmdline "" "$_new_crashkernel" "$_new_dump_mode" ""
 			if [[ $_reboot == yes ]]; then
 				systemctl reboot
 			fi
@@ -1578,7 +1577,7 @@ reset_crashkernel()
 		_old_crashkernel=$(get_grub_kernel_boot_parameter "$_kernel" crashkernel)
 		_old_fadump_val=$(get_grub_kernel_boot_parameter "$_kernel" fadump)
 		if [[ $_old_crashkernel != "$_new_crashkernel" || $_old_fadump_val != "$_new_fadump_val" ]]; then
-			_update_grub "$_kernel" "$_new_crashkernel" "$_new_dump_mode" "$_new_fadump_val"
+			_update_kernel_cmdline "$_kernel" "$_new_crashkernel" "$_new_dump_mode" "$_new_fadump_val"
 			if [[ $_reboot != yes ]]; then
 				if [[ $_old_crashkernel != "$_new_crashkernel" ]]; then
 					_what_is_updated="Updated crashkernel=$_new_crashkernel"
@@ -1647,7 +1646,7 @@ reset_crashkernel_after_update()
 			if [[ $_crashkernel == "$_old_default_crashkernel" ]] &&
 				[[ $_new_default_crashkernel != "$_old_default_crashkernel" ]]; then
 				_fadump_val=$(get_grub_kernel_boot_parameter "$_kernel" fadump)
-				if _update_grub "$_kernel" "$_new_default_crashkernel" "$_dump_mode" "$_fadump_val"; then
+				if _update_kernel_cmdline "$_kernel" "$_new_default_crashkernel" "$_dump_mode" "$_fadump_val"; then
 					echo "For kernel=$_kernel, crashkernel=$_new_default_crashkernel now."
 				fi
 			fi
@@ -1703,7 +1702,7 @@ reset_crashkernel_for_installed_kernel()
 	_fadump_val_running=$(get_grub_kernel_boot_parameter "$_kernel" fadump)
 
 	if [[ $_crashkernel != "$_crashkernel_running" ]]; then
-		if _update_grub "$_installed_kernel" "$_crashkernel_running" "$_dump_mode_running" "$_fadump_val_running"; then
+		if _update_kernel_cmdline "$_installed_kernel" "$_crashkernel_running" "$_dump_mode_running" "$_fadump_val_running"; then
 			echo "kexec-tools has reset $_installed_kernel to use the new default crashkernel value $_crashkernel_running"
 		fi
 	fi
