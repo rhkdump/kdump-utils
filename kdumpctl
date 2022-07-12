@@ -1428,6 +1428,10 @@ _update_kernel_arg_in_grub_etc_default()
 {
 	local _para=$1 _val=$2 _para_val
 
+	if [[ $(uname -m) == s390x ]]; then
+		return
+	fi
+
 	if [[ -n $_val ]]; then
 		_para_val="$_para=$_val"
 	fi
