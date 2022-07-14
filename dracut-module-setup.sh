@@ -1013,7 +1013,9 @@ kdump_install_systemd_conf() {
 remove_cpu_online_rule() {
     local file=${initdir}/usr/lib/udev/rules.d/40-redhat.rules
 
-    sed -i '/SUBSYSTEM=="cpu"/d' "$file"
+    if [[ -f $file ]]; then
+        sed -i '/SUBSYSTEM=="cpu"/d' "$file"
+    fi
 }
 
 install() {
