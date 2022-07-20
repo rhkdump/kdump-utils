@@ -433,7 +433,7 @@ if ! is_fadump_capable; then
 	# If /boot is not on a separate partition, the fips dracut module will
 	# link /sysroot/boot to /boot. So we need to mount the root partition
 	# to /sysroot beforehand.
-	if [[ $(cat /proc/sys/crypto/fips_enabled 2> /dev/null) == 1  ]]; then
+	if [[ $(cat /proc/sys/crypto/fips_enabled 2> /dev/null) == 1 ]]; then
 		_boot_source=$(findmnt -n -o SOURCE --target /boot)
 		if mountpoint -q /boot; then
 			dracut_args+=(--add-device "$_boot_source")
@@ -445,7 +445,7 @@ fi
 
 # Use kdump managed dracut profile.
 [[ $kdump_dracut_confdir ]] || kdump_dracut_confdir=/lib/kdump/dracut.conf.d
-if [[ "$(dracut --help)" == *--add-confdir* ]] && [[ -d "$kdump_dracut_confdir" ]]; then
+if [[ "$(dracut --help)" == *--add-confdir* ]] && [[ -d $kdump_dracut_confdir ]]; then
 	dracut_args+=("--add-confdir" "$kdump_dracut_confdir")
 else
 	dracut_args+=(--add kdumpbase)
