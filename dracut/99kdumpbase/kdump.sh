@@ -606,7 +606,7 @@ kdump_test_set_status() {
     [ -n "$KDUMP_TEST_STATUS" ] || return
 
     case "$_status" in
-        success|fail) ;;
+        success | fail) ;;
         *)
             derror "Unknown test status $_status"
             return 1
@@ -622,7 +622,7 @@ kdump_test_set_status() {
         ssh -q $_ssh_opts "$_ssh_host" "echo $_status kdump_test_id=$KDUMP_TEST_ID > $KDUMP_TEST_STATUS" \
             || return 1
     else
-	_target=$(echo "$DUMP_INSTRUCTION" | awk '{print $2}')
+        _target=$(echo "$DUMP_INSTRUCTION" | awk '{print $2}')
 
         mkdir -p "$_target/$KDUMP_PATH" || return 1
         echo "$_status kdump_test_id=$KDUMP_TEST_ID" > "$_target/$KDUMP_TEST_STATUS"
