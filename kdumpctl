@@ -59,8 +59,10 @@ _get_dracut_arg()
 	local shortopt longopt n tmp
 	local -a _opt _ret
 
-	shortopt=$1; shift
-	longopt=$1; shift
+	shortopt=$1
+	shift
+	longopt=$1
+	shift
 	n=0
 
 	if [[ -n $shortopt ]]; then
@@ -80,13 +82,14 @@ _get_dracut_arg()
 	eval set -- "$tmp"
 	while :; do
 		case $1 in
-			"$shortopt"|"$longopt")
-				_ret+=("$2"); shift
-				n=$((n+1))
-				;;
-			--|*)
-				break
-				;;
+		"$shortopt" | "$longopt")
+			_ret+=("$2")
+			shift
+			n=$((n + 1))
+			;;
+		-- | *)
+			break
+			;;
 		esac
 		shift
 	done
@@ -176,11 +179,11 @@ rebuild_kdump_initrd()
 
 check_and_generate_vconsole_conf()
 {
-	if [[ ! -e /etc/vconsole.conf  ]]; then
+	if [[ ! -e /etc/vconsole.conf ]]; then
 		dwarn "/etc/vconsole.conf does not exist, trying to set keymap to us to reduce the initramfs size."
 		if has_command localectl; then
 			if localectl list-keymaps | grep -q "^us$"; then
-				localectl set-keymap us 2>/dev/null
+				localectl set-keymap us 2> /dev/null
 			fi
 		fi
 	fi
@@ -645,11 +648,13 @@ is_system_modified()
 		$_func
 		ret=$?
 		# return immediately if an error occurred.
-		[[ $ret -eq "$CONF_ERROR" ]] && return "$ret"
-		[[ $ret -eq "$CONF_MODIFY" ]] && { conf_status="$CONF_MODIFY"; }
+		[[ $ret -eq $CONF_ERROR ]] && return "$ret"
+		[[ $ret -eq $CONF_MODIFY ]] && {
+			conf_status="$CONF_MODIFY"
+		}
 	done
 
-    return $conf_status
+	return $conf_status
 }
 
 # need_initrd_rebuild - check whether the initrd needs to be rebuild
@@ -749,9 +754,9 @@ check_ssh_config()
 {
 	local target
 
-	[[ "${OPT[_fstype]}" == ssh ]] || return 0
+	[[ ${OPT[_fstype]} == ssh ]] || return 0
 
-	target=$(ssh -G "${OPT[_target]}" | sed  -n -e "s/^hostname[[:space:]]\+\([^[:space:]]*\).*$/\1/p")
+	target=$(ssh -G "${OPT[_target]}" | sed -n -e "s/^hostname[[:space:]]\+\([^[:space:]]*\).*$/\1/p")
 
 	if [[ ${OPT[_target]} != *@* ]]; then
 		derror "Please verify that $KDUMP_CONFIG_FILE contains 'ssh <user>@<host>' and that it is properly formatted."
@@ -778,7 +783,7 @@ check_and_wait_network_ready()
 	local retval
 	local errmsg
 
-	[[ "${OPT[_fstype]}" == ssh ]] || return 0
+	[[ ${OPT[_fstype]} == ssh ]] || return 0
 
 	start_time=$(date +%s)
 	while true; do
@@ -824,7 +829,7 @@ propagate_ssh_key()
 
 	parse_config || return 1
 
-	if [[ ${OPT[_fstype]} != ssh ]] ; then
+	if [[ ${OPT[_fstype]} != ssh ]]; then
 		derror "No ssh destination defined in $KDUMP_CONFIG_FILE."
 		derror "Please verify that $KDUMP_CONFIG_FILE contains 'ssh <user>@<host>' and that it is properly formatted."
 		exit 1
@@ -983,10 +988,12 @@ check_dump_feasibility()
 
 fadump_bootargs_append()
 {
-	if [[ -f "$FADUMP_APPEND_ARGS_SYS_NODE" ]]; then
+	if [[ -f $FADUMP_APPEND_ARGS_SYS_NODE ]]; then
 		local output
 
-		if output=$( { echo "${FADUMP_COMMANDLINE_APPEND}" > "$FADUMP_APPEND_ARGS_SYS_NODE" ; } 2>&1); then
+		if output=$({
+			echo "${FADUMP_COMMANDLINE_APPEND}" > "$FADUMP_APPEND_ARGS_SYS_NODE"
+		} 2>&1); then
 			output=$(cat "$FADUMP_APPEND_ARGS_SYS_NODE")
 			dinfo "fadump: additional parameters for capture kernel: '$output'"
 		else
@@ -1071,15 +1078,15 @@ start()
 	setup_initrd || return
 	need_initrd_rebuild
 	case "$?" in
-		0)
-			# Nothing to do
-			;;
-		1)
-			rebuild_initrd || return
-			;;
-		*)
-			return
-			;;
+	0)
+		# Nothing to do
+		;;
+	1)
+		rebuild_initrd || return
+		;;
+	*)
+		return
+		;;
 	esac
 	start_dump || return
 
@@ -1248,7 +1255,7 @@ get_kernel_size()
 		try_decompress '\211\114\132' xy 'lzop -d' "$img" "$tmp" ||
 		try_decompress '\002!L\030' xxx 'lz4 -d' "$img" "$tmp" ||
 		try_decompress '(\265/\375' xxx unzstd "$img" "$tmp"; then
-			get_vmlinux_size "$tmp" && return 0
+		get_vmlinux_size "$tmp" && return 0
 	fi
 
 	# Fallback to use iomem
@@ -1270,15 +1277,15 @@ do_estimate()
 	setup_initrd
 	is_system_modified
 	case "$?" in
-		0)
-			# Nothing to do
-			;;
-		1)
-			rebuild_initrd || return
-			;;
-		*)
-			return
-			;;
+	0)
+		# Nothing to do
+		;;
+	1)
+		rebuild_initrd || return
+		;;
+	*)
+		return
+		;;
 	esac
 
 	kdump_mods="$(lsinitrd "$TARGET_INITRD" -f /usr/lib/dracut/hostonly-kernel-modules.txt | tr '\n' ' ')"
@@ -1452,18 +1459,18 @@ _update_kernel_cmdline()
 	_new="$4"
 
 	# _new = "" removes a _param, so _new = _old = "" is fine
-	[[ -n "$_new" ]] && [[ "$_old" == "$_new" ]] && return 1
+	[[ -n $_new ]] && [[ $_old == "$_new" ]] && return 1
 
 	if is_ostree; then
-		if [[ -z "$_new" ]]; then
+		if [[ -z $_new ]]; then
 			rpm-ostree kargs --delete="$_param=$_old"
-		elif [[ -n "$_old" ]]; then
+		elif [[ -n $_old ]]; then
 			rpm-ostree kargs --replace="$_param=$_new"
 		else
 			rpm-ostree kargs --append="$_param=$_new"
 		fi
 	elif has_command grubby; then
-		if [[ -n "$_new" ]]; then
+		if [[ -n $_new ]]; then
 			grubby --update-kernel "$_kernel" --args "$_param=$_new"
 		else
 			grubby --update-kernel "$_kernel" --remove-args "$_param"
@@ -1481,7 +1488,7 @@ _update_kernel_cmdline()
 
 _valid_grubby_kernel_path()
 {
-	[[ -n "$1" ]] && grubby --info="$1" > /dev/null 2>&1
+	[[ -n $1 ]] && grubby --info="$1" > /dev/null 2>&1
 }
 
 # return all the kernel paths given a grubby kernel-path
@@ -1510,36 +1517,36 @@ reset_crashkernel()
 
 	for _opt in "$@"; do
 		case "$_opt" in
-			--fadump=*)
-				if [[ $(uname -m) != ppc64le ]]; then
-					derror "Option --fadump only valid on PPC"
-					exit 1
-				fi
-				_opt_fadump=${_opt#*=}
-				if ! _dump_mode=$(get_dump_mode_by_fadump_val "$_opt_fadump"); then
-					derror "failed to determine dump mode"
-					exit
-				fi
-				;;
-			--kernel=*)
-				_val=${_opt#*=}
-				if ! _valid_grubby_kernel_path "$_val"; then
-					derror "Invalid $_opt, please specify a valid kernel path, ALL or DEFAULT"
-					exit
-				fi
-				_grubby_kernel_path=$_val
-				;;
-			--reboot)
-				# --reboot option was deprecated with
-				# kdump-utils v1.0.45. Keep the code for now to
-				# not break any user setup.
-				dwarn "Option --reboot is deprecated and will be removed in the future."
-				_reboot=yes
-				;;
-			*)
-				derror "$_opt not recognized"
+		--fadump=*)
+			if [[ $(uname -m) != ppc64le ]]; then
+				derror "Option --fadump only valid on PPC"
 				exit 1
-				;;
+			fi
+			_opt_fadump=${_opt#*=}
+			if ! _dump_mode=$(get_dump_mode_by_fadump_val "$_opt_fadump"); then
+				derror "failed to determine dump mode"
+				exit
+			fi
+			;;
+		--kernel=*)
+			_val=${_opt#*=}
+			if ! _valid_grubby_kernel_path "$_val"; then
+				derror "Invalid $_opt, please specify a valid kernel path, ALL or DEFAULT"
+				exit
+			fi
+			_grubby_kernel_path=$_val
+			;;
+		--reboot)
+			# --reboot option was deprecated with
+			# kdump-utils v1.0.45. Keep the code for now to
+			# not break any user setup.
+			dwarn "Option --reboot is deprecated and will be removed in the future."
+			_reboot=yes
+			;;
+		*)
+			derror "$_opt not recognized"
+			exit 1
+			;;
 		esac
 	done
 
@@ -1574,13 +1581,13 @@ reset_crashkernel()
 	for _kernel in $_kernels; do
 		_has_changed=""
 		if [[ $(uname -m) == ppc64le ]]; then
-			if [[ -n "$_opt_fadump" ]]; then
+			if [[ -n $_opt_fadump ]]; then
 				_new_ck=$(kdump_get_arch_recommend_crashkernel "$_dump_mode")
 				_old_fadump=$(get_grub_kernel_boot_parameter "$_kernel" fadump)
 				_new_fadump="$_opt_fadump"
-				[[ "$_new_fadump" == off ]] && _new_fadump=""
+				[[ $_new_fadump == off ]] && _new_fadump=""
 				if _update_kernel_cmdline "$_kernel" fadump "$_old_fadump" "$_new_fadump"; then
-					if [[ -n "$_new_fadump" ]]; then
+					if [[ -n $_new_fadump ]]; then
 						_has_changed="Updated fadump=$_new_fadump"
 					else
 						_has_changed="Removed fadump"
@@ -1598,7 +1605,7 @@ reset_crashkernel()
 		if _update_kernel_cmdline "$_kernel" crashkernel "$_old_ck" "$_new_ck"; then
 			_has_changed="Updated crashkernel=$_new_ck"
 		fi
-		if [[ -n "$_has_changed" ]]; then
+		if [[ -n $_has_changed ]]; then
 			_needs_reboot=1
 			dwarn "$_has_changed for kernel=$_kernel. Please reboot the system for the change to take effect."
 		fi
@@ -1636,7 +1643,6 @@ _update_crashkernel()
 		dinfo "$_msg"
 	fi
 }
-
 
 # shellcheck disable=SC2154 # false positive when dereferencing an array
 reset_crashkernel_after_update()
@@ -1695,7 +1701,8 @@ reset_crashkernel_for_installed_kernel()
 	_update_crashkernel "$_installed_kernel"
 }
 
-_should_reset_crashkernel() {
+_should_reset_crashkernel()
+{
 	[[ $(kdump_get_conf_val auto_reset_crashkernel) != no ]] && systemctl is-enabled kdump &> /dev/null
 }
 
@@ -1705,7 +1712,7 @@ set_kdump_test_id()
 
 	KDUMP_COMMANDLINE_APPEND+=" $_id "
 
-	if ! reload >& /dev/null; then
+	if ! reload >&/dev/null; then
 		derror "Set kdump test id fail."
 		exit 1
 	fi
@@ -1719,23 +1726,24 @@ set_vmcore_creation_status()
 	local _kdump_test_id
 	_dir=$(dirname "$VMCORE_CREATION_STATUS")
 
-	[[ -d "$_dir" ]] || mkdir -p "$_dir"
-	[[ -w "$_dir" ]] || chmod +w "$_dir"
+	[[ -d $_dir ]] || mkdir -p "$_dir"
+	[[ -w $_dir ]] || chmod +w "$_dir"
 
 	case "$_status" in
-		pending)
-			_kdump_test_id="kdump_test_id=$(date +%s-%N)"
-			set_kdump_test_id "$_kdump_test_id"
-			echo  "$_status $_kdump_test_id" > "$VMCORE_CREATION_STATUS"
-			;;
-		success | fail | manual)
-			sed -E -i "s/^\w+/$_status/" "$VMCORE_CREATION_STATUS"
-			;;
-		clear)
-			rm -f "$VMCORE_CREATION_STATUS"
-			;;
-		*)
-			return
+	pending)
+		_kdump_test_id="kdump_test_id=$(date +%s-%N)"
+		set_kdump_test_id "$_kdump_test_id"
+		echo "$_status $_kdump_test_id" > "$VMCORE_CREATION_STATUS"
+		;;
+	success | fail | manual)
+		sed -E -i "s/^\w+/$_status/" "$VMCORE_CREATION_STATUS"
+		;;
+	clear)
+		rm -f "$VMCORE_CREATION_STATUS"
+		;;
+	*)
+		return
+		;;
 	esac
 	sync -f "$_dir"
 }
@@ -1743,7 +1751,7 @@ set_vmcore_creation_status()
 fetch_status()
 {
 	local _test_id="$1" _mnt
-	local  _status
+	local _status
 
 	is_raw_dump_target && return 2
 
@@ -1751,10 +1759,12 @@ fetch_status()
 
 	if is_nfs_dump_target || is_local_target; then
 		_mnt=$(get_mntpoint_from_target "${OPT[_target]}")
-		if [[ -z "$_mnt" ]] || ! is_mounted "$_mnt"; then
+		if [[ -z $_mnt ]] || ! is_mounted "$_mnt"; then
 			mkdir -p "$TMPMNT"
-			mount "${OPT[_target]}" "$TMPMNT" -t "${OPT[_fstype]}" -o defaults || \
-				{ dwarn "Failed to mount ${OPT[_target]}" && return 2; }
+			mount "${OPT[_target]}" "$TMPMNT" -t "${OPT[_fstype]}" -o defaults ||
+				{
+					dwarn "Failed to mount ${OPT[_target]}" && return 2
+				}
 			_mnt="$TMPMNT"
 		fi
 		_status="$_mnt/$_status"
@@ -1771,21 +1781,22 @@ fetch_status()
 			"$_scp_address:$_status" \
 			"$KDUMP_TMPDIR"
 		case "$?" in
-			0)
-				# success
-				;;
-			1)
-				# file not found
-				return 1
-				;;
-			255)
-				# no connection to host
-				return 2
+		0)
+			# success
+			;;
+		1)
+			# file not found
+			return 1
+			;;
+		255)
+			# no connection to host
+			return 2
+			;;
 		esac
 		_status="$KDUMP_TMPDIR/vmcore-creation.status"
 	fi
 
-	[[ -f "$_status" ]] || return 1
+	[[ -f $_status ]] || return 1
 	grep -q "success" "$_status" && return 0 || return 1
 }
 
@@ -1795,21 +1806,23 @@ check_vmcore_creation_status()
 
 	[[ ${VMCORE_CREATION_NOTIFICATION,,} == "yes" ]] || return
 
-	[[ "$DEFAULT_DUMP_MODE" == "kdump" ]] || return
+	[[ $DEFAULT_DUMP_MODE == "kdump" ]] || return
 
-	if [[ ! -s "$VMCORE_CREATION_STATUS" ]]; then
+	if [[ ! -s $VMCORE_CREATION_STATUS ]]; then
 		dwarn "Notice: No vmcore creation test performed!"
 		return
 	fi
 
-	[[ "${#OPT[@]}" -eq 0 ]] && { parse_config || return; }
+	[[ ${#OPT[@]} -eq 0 ]] && {
+		parse_config || return
+	}
 
 	read -r _status _test_id < "$VMCORE_CREATION_STATUS"
 	_test_id=${_test_id#*=}
 	_timestamp=${_test_id%-*}
 	_status_date=$(date -d "@$_timestamp")
 
-	if [[ "$_status" == "pending" ]]; then
+	if [[ $_status == "pending" ]]; then
 		fetch_status "$_test_id"
 		case "$?" in
 		0)
@@ -1826,18 +1839,18 @@ check_vmcore_creation_status()
 	fi
 
 	case "$_status" in
-		success)
-			dinfo "Notice: Last successful vmcore creation on $_status_date"
-			;;
-		fail)
-			dwarn "Notice: Last NOT successful vmcore creation on $_status_date"
-			;;
-		manual)
-			dwarn "Notice: Require manual check for kdump test of $_status_date"
-			;;
-		*)
-			derror "Unknown test status: $_status"
-			;;
+	success)
+		dinfo "Notice: Last successful vmcore creation on $_status_date"
+		;;
+	fail)
+		dwarn "Notice: Last NOT successful vmcore creation on $_status_date"
+		;;
+	manual)
+		dwarn "Notice: Require manual check for kdump test of $_status_date"
+		;;
+	*)
+		derror "Unknown test status: $_status"
+		;;
 	esac
 }
 
@@ -1848,18 +1861,18 @@ kdump_test()
 		exit 1
 	fi
 
-	if [[ ! "$DEFAULT_DUMP_MODE" == "kdump" ]]; then
+	if [[ $DEFAULT_DUMP_MODE != "kdump" ]]; then
 		derror "Only kdump is supported for test."
 		exit 1
 	fi
 
-	if [[ ! "$1" == "--force" ]]; then
+	if [[ $1 != "--force" ]]; then
 		read -r -p "DANGER!!! Will perform a kdump test by crashing the system, proceed? (y/N): " input
 		case $input in
-		[Yy] )
+		[Yy])
 			dinfo "Start kdump test..."
 			;;
-		* )
+		*)
 			dinfo "Operation cancelled."
 			exit 0
 			;;

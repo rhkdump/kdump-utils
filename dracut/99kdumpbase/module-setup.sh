@@ -340,7 +340,7 @@ _install_nmconnections_before_ovs() {
             derror "Failed to install the .nmconnection for $_nic_name"
             exit 1
         fi
-    done <<<"$(nmcli --get-values filename,ACTIVE connection show | grep "no$")"
+    done <<< "$(nmcli --get-values filename,ACTIVE connection show | grep "no$")"
 }
 
 kdump_install_nmconnections() {
