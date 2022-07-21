@@ -5,7 +5,7 @@
 
 Name: kexec-tools
 Version: 2.0.24
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -405,6 +405,15 @@ fi
 %endif
 
 %changelog
+* Thu Jul 21 2022 Coiby <coxu@redhat.com> - 2.0.24-4
+- Checking the existence of 40-redhat.rules before modifying
+- kdump-lib: Add the CoreOS kernel dir to the boot_dirlist
+- kdump-lib: attempt to fix BOOT_IMAGE detection
+- kdump-lib: change how ostree based systems are detected
+- kdump-lib: clear up references to Atomic/CoreOS
+- crashkernel: optimize arm64 reserved size if PAGE_SIZE=4k
+- kdump-lib: use non-debug kernels first
+
 * Mon May 23 2022 Coiby <coxu@redhat.com> - 2.0.24-3
 - Update makedumpfile to 1.7.1
 - unit tests: add tests for get_system_size and get_recommend_size
