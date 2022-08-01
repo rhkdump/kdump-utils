@@ -11,10 +11,7 @@ Summary: The kexec/kdump userspace component
 
 Source0: http://kernel.org/pub/linux/utils/kernel/kexec/%{name}-%{version}.tar.xz
 Source1: kdumpctl
-Source2: kdump.sysconfig
-Source3: kdump.sysconfig.x86_64
-Source4: kdump.sysconfig.i386
-Source5: kdump.sysconfig.ppc64
+Source3: gen-kdump-sysconfig.sh
 Source7: mkdumprd
 Source8: kdump.conf
 Source9: https://github.com/makedumpfile/makedumpfile/archive/%{mkdf_ver}/makedumpfile-%{mkdf_shortver}.tar.gz
@@ -25,18 +22,15 @@ Source13: 98-kexec.rules
 Source14: 98-kexec.rules.ppc64
 Source15: kdump.conf.5
 Source16: kdump.service
-Source18: kdump.sysconfig.s390x
 Source19: https://github.com/lucchouina/eppic/archive/%{eppic_ver}/eppic-%{eppic_shortver}.tar.gz
 Source20: kdump-lib.sh
 Source21: kdump-in-cluster-environment.txt
 Source22: kdump-dep-generator.sh
 Source23: kdump-lib-initramfs.sh
-Source24: kdump.sysconfig.ppc64le
 Source25: kdumpctl.8
 Source26: live-image-kdump-howto.txt
 Source27: early-kdump-howto.txt
 Source28: kdump-udev-throttler
-Source29: kdump.sysconfig.aarch64
 Source30: 60-kdump.install
 Source31: kdump-logger.sh
 Source32: mkfadumprd
@@ -152,6 +146,9 @@ cp %{SOURCE26} .
 cp %{SOURCE27} .
 cp %{SOURCE34} .
 
+# Generate sysconfig file
+%{SOURCE3} %{_target_cpu} > kdump.sysconfig
+
 make
 %ifarch %{ix86} x86_64 ppc64 s390x ppc64le aarch64
 make -C eppic-%{eppic_ver}/libeppic
@@ -183,13 +180,9 @@ install -m 755 build/sbin/vmcore-dmesg $RPM_BUILD_ROOT/usr/sbin/vmcore-dmesg
 install -m 644 build/man/man8/kexec.8  $RPM_BUILD_ROOT%{_mandir}/man8/
 install -m 644 build/man/man8/vmcore-dmesg.8  $RPM_BUILD_ROOT%{_mandir}/man8/
 
-SYSCONFIG=$RPM_SOURCE_DIR/kdump.sysconfig.%{_target_cpu}
-[ -f $SYSCONFIG ] || SYSCONFIG=$RPM_SOURCE_DIR/kdump.sysconfig.%{_arch}
-[ -f $SYSCONFIG ] || SYSCONFIG=$RPM_SOURCE_DIR/kdump.sysconfig
-install -m 644 $SYSCONFIG $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/kdump
-
 install -m 755 %{SOURCE7} $RPM_BUILD_ROOT/usr/sbin/mkdumprd
 install -m 644 %{SOURCE8} $RPM_BUILD_ROOT%{_sysconfdir}/kdump.conf
+install -m 644 kdump.sysconfig $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/kdump
 install -m 644 kexec/kexec.8 $RPM_BUILD_ROOT%{_mandir}/man8/kexec.8
 install -m 644 %{SOURCE12} $RPM_BUILD_ROOT%{_mandir}/man8/mkdumprd.8
 install -m 644 %{SOURCE25} $RPM_BUILD_ROOT%{_mandir}/man8/kdumpctl.8
