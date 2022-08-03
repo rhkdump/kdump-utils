@@ -4,8 +4,8 @@
 %global mkdf_shortver %(c=%{mkdf_ver}; echo ${c:0:7})
 
 Name: kexec-tools
-Version: 2.0.24
-Release: 4%{?dist}
+Version: 2.0.25
+Release: 1%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -416,6 +416,15 @@ fi
 %endif
 
 %changelog
+* Wed Aug 03 2022 Coiby <coxu@redhat.com> - 2.0.25-1
+- Update kexec-tools to 2.0.25
+- remind the users to run zipl after calling grubby on s390x
+- remove useless --zipl when calling grubby to update kernel command line
+- skip updating /etc/default/grub for s390x
+- use /run/ostree-booted to tell if scriptlet is running on OSTree system
+- Allow to update kexec-tools using virt-customize for cloud base image
+- KDUMP_COMMANDLINE: remove irqpoll parameter on aws aarch64 platform
+
 * Thu Jul 21 2022 Coiby <coxu@redhat.com> - 2.0.24-4
 - Checking the existence of 40-redhat.rules before modifying
 - kdump-lib: Add the CoreOS kernel dir to the boot_dirlist
