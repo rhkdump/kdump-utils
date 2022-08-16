@@ -18,6 +18,6 @@ systemd_dir=/usr/lib/systemd/system
 kdump_wants=$dest_dir/kdump.service.wants
 
 if is_ssh_dump_target; then
-	mkdir -p $kdump_wants
-	ln -sf $systemd_dir/network-online.target $kdump_wants/
+	mkdir -p "$kdump_wants"
+	ln -sf $systemd_dir/network-online.target "$kdump_wants"/
 fi
