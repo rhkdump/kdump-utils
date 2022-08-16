@@ -141,12 +141,12 @@ dlog_init()
 
 	kdump_maxloglvl=0
 	for _dlog_lvl in $kdump_stdloglvl $kdump_sysloglvl $kdump_kmsgloglvl; do
-		[ $_dlog_lvl -gt $kdump_maxloglvl ] && kdump_maxloglvl=$_dlog_lvl
+		[ "$_dlog_lvl" -gt "$kdump_maxloglvl" ] && kdump_maxloglvl=$_dlog_lvl
 	done
 	readonly kdump_maxloglvl
 	export kdump_maxloglvl
 
-	if [ $kdump_stdloglvl -lt 4 ] && [ $kdump_kmsgloglvl -lt 4 ] && [ $kdump_sysloglvl -lt 4 ]; then
+	if [ "$kdump_stdloglvl" -lt 4 ] && [ "$kdump_kmsgloglvl" -lt 4 ] && [ "$kdump_sysloglvl" -lt 4 ]; then
 		unset ddebug
 		ddebug()
 		{
@@ -154,7 +154,7 @@ dlog_init()
 		}
 	fi
 
-	if [ $kdump_stdloglvl -lt 3 ] && [ $kdump_kmsgloglvl -lt 3 ] && [ $kdump_sysloglvl -lt 3 ]; then
+	if [ "$kdump_stdloglvl" -lt 3 ] && [ "$kdump_kmsgloglvl" -lt 3 ] && [ "$kdump_sysloglvl" -lt 3 ]; then
 		unset dinfo
 		dinfo()
 		{
@@ -162,7 +162,7 @@ dlog_init()
 		}
 	fi
 
-	if [ $kdump_stdloglvl -lt 2 ] && [ $kdump_kmsgloglvl -lt 2 ] && [ $kdump_sysloglvl -lt 2 ]; then
+	if [ "$kdump_stdloglvl" -lt 2 ] && [ "$kdump_kmsgloglvl" -lt 2 ] && [ "$kdump_sysloglvl" -lt 2 ]; then
 		unset dwarn
 		dwarn()
 		{
@@ -175,7 +175,7 @@ dlog_init()
 		}
 	fi
 
-	if [ $kdump_stdloglvl -lt 1 ] && [ $kdump_kmsgloglvl -lt 1 ] && [ $kdump_sysloglvl -lt 1 ]; then
+	if [ "$kdump_stdloglvl" -lt 1 ] && [ "$kdump_kmsgloglvl" -lt 1 ] && [ "$kdump_sysloglvl" -lt 1 ]; then
 		unset derror
 		derror()
 		{
@@ -269,17 +269,17 @@ _dlvl2syslvl()
 #   - @c DEBUG to @c debug
 _do_dlog()
 {
-	[ "$1" -le $kdump_stdloglvl ] && printf -- 'kdump: %s\n' "$2" >&2
+	[ "$1" -le "$kdump_stdloglvl" ] && printf -- 'kdump: %s\n' "$2" >&2
 
-	if [ "$1" -le $kdump_sysloglvl ]; then
+	if [ "$1" -le "$kdump_sysloglvl" ]; then
 		if [ "$_dlogfd" ]; then
-			printf -- "<%s>%s\n" "$(($(_dlvl2syslvl "$1") & 7))" "$2" 1>&$_dlogfd
+			printf -- "<%s>%s\n" "$(($(_dlvl2syslvl "$1") & 7))" "$2" 1>&"$_dlogfd"
 		else
 			logger -t "kdump[$$]" -p "$(_lvl2syspri "$1")" -- "$2"
 		fi
 	fi
 
-	[ "$1" -le $kdump_kmsgloglvl ] &&
+	[ "$1" -le "$kdump_kmsgloglvl" ] &&
 		echo "<$(_dlvl2syslvl "$1")>kdump[$$] $2" > /dev/kmsg
 }
 
