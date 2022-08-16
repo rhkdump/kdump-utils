@@ -245,7 +245,7 @@ get_kdump_mntpoint_from_target()
 	fi
 
 	# strip duplicated "/"
-	echo $_mntpoint | tr -s "/"
+	echo "$_mntpoint" | tr -s "/"
 }
 
 kdump_get_persistent_dev()
