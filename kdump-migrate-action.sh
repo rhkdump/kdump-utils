@@ -1,7 +1,6 @@
 #!/bin/sh
 
-systemctl is-active kdump
-if [ $? -ne 0 ]; then
+if ! systemctl is-active kdump; then
 	exit 0
 fi
 
