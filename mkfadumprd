@@ -22,7 +22,7 @@ fi
 
 MKFADUMPRD_TMPDIR="$(mktemp -d -t mkfadumprd.XXXXXX)"
 [ -d "$MKFADUMPRD_TMPDIR" ] || perror_exit "mkfadumprd: mktemp -d -t mkfadumprd.XXXXXX failed."
-# shellcheck disable=SC2154
+# shellcheck disable=SC2154 # known issue of shellcheck https://github.com/koalaman/shellcheck/issues/1299
 trap '
     ret=$?;
     [[ -d $MKFADUMPRD_TMPDIR ]] && rm --one-file-system -rf -- "$MKFADUMPRD_TMPDIR";
