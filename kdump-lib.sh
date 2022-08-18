@@ -8,9 +8,13 @@ else
 	. /lib/kdump/kdump-lib-initramfs.sh
 fi
 
+# shellcheck disable=SC2034
 FADUMP_ENABLED_SYS_NODE="/sys/kernel/fadump/enabled"
 FADUMP_REGISTER_SYS_NODE="/sys/kernel/fadump/registered"
+# shellcheck disable=SC2034
 FADUMP_APPEND_ARGS_SYS_NODE="/sys/kernel/fadump/bootargs_append"
+# shellcheck disable=SC2034
+FENCE_KDUMP_CONFIG_FILE="/etc/sysconfig/fence_kdump"
 
 is_uki()
 {
@@ -663,8 +667,10 @@ prepare_kdump_bootinfo()
 	if [[ ! -w $KDUMP_BOOTDIR ]]; then
 		var_target_initrd_dir="/var/lib/kdump"
 		mkdir -p "$var_target_initrd_dir"
+		# shellcheck disable=SC2034 # KDUMP_INITRD is used by kdumpctl
 		KDUMP_INITRD="$var_target_initrd_dir/$kdump_initrd_base"
 	else
+		# shellcheck disable=SC2034 # KDUMP_INITRD is used by kdumpctl
 		KDUMP_INITRD="$KDUMP_BOOTDIR/$kdump_initrd_base"
 	fi
 }
