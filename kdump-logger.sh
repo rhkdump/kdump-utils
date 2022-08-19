@@ -97,8 +97,11 @@ dlog_init()
 		kdump_stdloglvl=0
 		kdump_kmsgloglvl=0
 	else
+		# shellcheck disable=SC2153 # KDUMP_*LOGLVL is read from /etc/kdump/sysconfig by file that source kdump-logger.sh
 		kdump_stdloglvl=$KDUMP_STDLOGLVL
+		# shellcheck disable=SC2153
 		kdump_sysloglvl=$KDUMP_SYSLOGLVL
+		# shellcheck disable=SC2153
 		kdump_kmsgloglvl=$KDUMP_KMSGLOGLVL
 	fi
 
