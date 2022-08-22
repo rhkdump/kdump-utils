@@ -119,6 +119,7 @@ dlog_init()
 	# Skip initialization if it's already done.
 	[ -n "$kdump_maxloglvl" ] && return 0
 
+	[ -n "$BASH" ] || UID=$(id -u)
 	if [ "$UID" -ne 0 ]; then
 		kdump_kmsgloglvl=0
 		kdump_sysloglvl=0
@@ -130,9 +131,15 @@ dlog_init()
 			systemctl --quiet is-active systemd-journald.socket 1> /dev/null 2>&1; then
 			readonly _systemdcatfile="/var/tmp/systemd-cat"
 			mkfifo "$_systemdcatfile" 1> /dev/null 2>&1
-			readonly _dlogfd=15
 			systemd-cat -t 'kdump' --level-prefix=true < "$_systemdcatfile" &
-			exec 15> "$_systemdcatfile"
+			if [ -n "$BASH" ]; then
+				readonly _dlogfd=15
+				# shellcheck disable=SC3023 # this if branch only run by bash
+				exec 15> "$_systemdcatfile"
+			else
+				readonly _dlogfd=9
+				exec 9> "$_systemdcatfile"
+			fi
 		elif ! [ -S /dev/log ] && [ -w /dev/log ] || ! command -v logger > /dev/null; then
 			# We cannot log to syslog, so turn this facility off.
 			kdump_kmsgloglvl=$kdump_sysloglvl
