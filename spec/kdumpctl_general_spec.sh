@@ -1,4 +1,6 @@
 #!/bin/bash
+# shellcheck disable=SC2286
+
 Describe 'kdumpctl'
 	Include ./kdumpctl
 
