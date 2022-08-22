@@ -997,6 +997,7 @@ _crashkernel_add()
 # get default crashkernel
 # $1 dump mode, if not specified, dump_mode will be judged by is_fadump_capable
 # $2 kernel-release, if not specified, got by _get_kdump_kernel_version
+# shellcheck disable=SC2120 # kdumpctl will call this func with an argument
 kdump_get_arch_recommend_crashkernel()
 {
 	local _arch _ck_cmdline _dump_mode
