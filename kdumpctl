@@ -691,6 +691,7 @@ load_kdump()
 	# and release it.
 	exec 12>&2
 	exec 2>> $KDUMP_LOG_PATH/kdump.log
+	chmod 600 $KDUMP_LOG_PATH/kdump.log
 	PS4='+ $(date "+%Y-%m-%d %H:%M:%S") ${BASH_SOURCE}@${LINENO}: '
 	set -x
 
