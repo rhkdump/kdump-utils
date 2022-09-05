@@ -1242,12 +1242,12 @@ do_estimate()
 	for _dev in $(get_all_kdump_crypt_dev); do
 		_crypt_info=$(cryptsetup luksDump "/dev/block/$_dev")
 		[[ $(echo "$_crypt_info" | sed -n "s/^Version:\s*\(.*\)/\1/p") == "2" ]] || continue
-		for _mem in $(echo "$_crypt_info" | sed -n "s/\sMemory:\s*\(.*\)/\1/p" | sort -n); do
+		for _mem in $(echo "$_crypt_info" | sed -n "s/\sMemory:\s*\(.*\)/\1/p" | sort -n -r); do
 			crypt_size=$((crypt_size + _mem * 1024))
 			break
 		done
 	done
-	[[ $crypt_size -ne 0 ]] && echo -e "Encrypted kdump target requires extra memory, assuming using the keyslot with minimun memory requirement\n"
+	[[ $crypt_size -ne 0 ]] && echo -e "Encrypted kdump target requires extra memory, assuming using the keyslot with maximum memory requirement\n"
 
 	estimated_size=$((kernel_size + mod_size + initrd_size + runtime_size + crypt_size))
 	if [[ $baseline_size -gt $estimated_size ]]; then
