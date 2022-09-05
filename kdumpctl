@@ -1193,7 +1193,7 @@ do_estimate()
 	local kdump_mods
 	local -A large_mods
 	local baseline
-	local kernel_size mod_size initrd_size baseline_size runtime_size reserved_size estimated_size recommended_size
+	local kernel_size mod_size initrd_size baseline_size runtime_size reserved_size estimated_size recommended_size _cryptsetup_overhead
 	local size_mb=$((1024 * 1024))
 
 	setup_initrd
@@ -1247,7 +1247,17 @@ do_estimate()
 			break
 		done
 	done
-	[[ $crypt_size -ne 0 ]] && echo -e "Encrypted kdump target requires extra memory, assuming using the keyslot with maximum memory requirement\n"
+
+	if [[ $crypt_size -ne 0 ]]; then
+		if [[ $(uname -m) == aarch64 ]]; then
+			_cryptsetup_overhead=50
+		else
+			_cryptsetup_overhead=20
+		fi
+
+		crypt_size=$((crypt_size + _cryptsetup_overhead * size_mb))
+		echo -e "Encrypted kdump target requires extra memory, assuming using the keyslot with maximum memory requirement\n"
+	fi
 
 	estimated_size=$((kernel_size + mod_size + initrd_size + runtime_size + crypt_size))
 	if [[ $baseline_size -gt $estimated_size ]]; then
