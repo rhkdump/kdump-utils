@@ -7,7 +7,7 @@ KERNEL_IMAGE="$4"
 
 case "$COMMAND" in
 add)
-	kdumpctl reset-crashkernel-for-installed_kernel "$KERNEL_VERSION"
+	kdumpctl _reset-crashkernel-for-installed_kernel "$KERNEL_VERSION"
 	exit 0
 	;;
 esac

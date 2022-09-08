@@ -1764,12 +1764,12 @@ main()
 		shift
 		reset_crashkernel "$@"
 		;;
-	reset-crashkernel-after-update)
+	_reset-crashkernel-after-update)
 		if [[ $(kdump_get_conf_val auto_reset_crashkernel) != no ]]; then
 			reset_crashkernel_after_update
 		fi
 		;;
-	reset-crashkernel-for-installed_kernel)
+	_reset-crashkernel-for-installed_kernel)
 		if [[ $(kdump_get_conf_val auto_reset_crashkernel) != no ]]; then
 			reset_crashkernel_for_installed_kernel "$2"
 		fi

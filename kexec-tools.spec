@@ -342,7 +342,7 @@ done
 #  2. "[ $1 == 1 ]" in posttrans scriptlet means both install and upgrade. The
 #     former case is used to set up crashkernel for osbuild
 if [ ! -f /run/ostree-booted ] && [ $1 == 1 ]; then
-  kdumpctl reset-crashkernel-after-update
+  kdumpctl _reset-crashkernel-after-update
   rm /tmp/old_default_crashkernel 2>/dev/null
 %ifarch ppc64 ppc64le
   rm /tmp/old_default_crashkernel_fadump 2>/dev/null
