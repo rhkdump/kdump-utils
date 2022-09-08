@@ -365,6 +365,24 @@ kdump_setup_ifname() {
     echo "$_ifname"
 }
 
+use_ipv4_or_ipv6() {
+    local _netif=$1 _uuid=$2
+
+    if [[ -v "ipv4_usage[$_netif]" ]]; then
+        nmcli connection modify --temporary "$_uuid" ipv4.may-fail no &> >(ddebug)
+    fi
+
+    if [[ -v "ipv6_usage[$_netif]" ]]; then
+        nmcli connection modify --temporary "$_uuid" ipv6.may-fail no &> >(ddebug)
+    fi
+
+    if [[ -v "ipv4_usage[$_netif]" ]] && [[ ! -v "ipv6_usage[$_netif]" ]]; then
+        nmcli connection modify --temporary "$_uuid" ipv6.method disabled &> >(ddebug)
+    elif [[ ! -v "ipv4_usage[$_netif]" ]] && [[ -v "ipv6_usage[$_netif]" ]]; then
+        nmcli connection modify --temporary "$_uuid" ipv4.method disabled &> >(ddebug)
+    fi
+}
+
 _clone_nmconnection() {
     local _clone_output _name _unique_id
 
@@ -395,6 +413,8 @@ clone_and_modify_nmconnection() {
         derror "Failed to clone $_old_uuid"
         exit 1
     fi
+
+    use_ipv4_or_ipv6 "$_dev" "$_uuid"
 
     _cloned_nmconnection_file_path=$(nmcli --get-values UUID,FILENAME connection show | sed -n "s/^${_uuid}://p")
     _tmp_nmconnection_file_path=$_DRACUT_KDUMP_NM_TMP_DIR/$(basename "$_nmconnection_file_path")
@@ -1106,7 +1126,7 @@ remove_cpu_online_rule() {
 }
 
 install() {
-    declare -A unique_netifs
+    declare -A unique_netifs ipv4_usage ipv6_usage
     local arch
 
     kdump_module_init
