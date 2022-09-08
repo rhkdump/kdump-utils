@@ -1597,6 +1597,12 @@ reset_crashkernel()
 	fi
 }
 
+# to tell if it's package install other than upgrade
+_is_package_install()
+{
+	[[ -f /tmp/kexec_tools_package_install ]]
+}
+
 # update the crashkernel value in GRUB_ETC_DEFAULT if necessary
 #
 # called by reset_crashkernel_after_update and inherit its array variable
@@ -1605,6 +1611,10 @@ update_crashkernel_in_grub_etc_default_after_update()
 {
 	local _crashkernel _fadump_val
 	local _dump_mode _old_default_crashkernel _new_default_crashkernel
+
+	if _is_package_install; then
+		return
+	fi
 
 	_crashkernel=$(_read_kernel_arg_in_grub_etc_default crashkernel)
 
@@ -1680,6 +1690,12 @@ reset_crashkernel_for_installed_kernel()
 {
 	local _installed_kernel _running_kernel _crashkernel _crashkernel_running
 	local _dump_mode_running _fadump_val_running
+
+	# During package install, only try to reset crashkernel for osbuild
+	# thus to avoid calling grubby when installing os via anaconda
+	if _is_package_install && ! _is_osbuild; then
+		return
+	fi
 
 	if ! _installed_kernel=$(_find_kernel_path_by_release "$1"); then
 		exit 1

@@ -265,6 +265,11 @@ if [ ! -f /run/ostree-booted ] && [ $1 == 2 ] && grep -q get-default-crashkernel
   kdumpctl get-default-crashkernel fadump > /tmp/old_default_crashkernel_fadump 2>/dev/null
 %endif
 fi
+# indicate it's package install so kdumpctl later will only reset crashkernel
+# value for osbuild.
+if [ $1 == 1 ]; then
+  touch /tmp/kexec_tools_package_install
+fi
 # don't block package update
 :
 
