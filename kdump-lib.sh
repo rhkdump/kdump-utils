@@ -680,7 +680,13 @@ prepare_kdump_bootinfo()
 
 	if [[ -z $KDUMP_KERNELVER ]]; then
 		KDUMP_KERNELVER=$(uname -r)
-		nondebug_kernelver=$(sed -n -e 's/\(.*\)+debug$/\1/p' <<< "$KDUMP_KERNELVER")
+
+		# Fadump uses the regular bootloader, unlike kdump. So, use the same version
+		# for default kernel and capture kernel unless specified explicitly with
+		# KDUMP_KERNELVER option.
+		if ! is_fadump_capable; then
+			nondebug_kernelver=$(sed -n -e 's/\(.*\)+debug$/\1/p' <<< "$KDUMP_KERNELVER")
+		fi
 	fi
 
 	# Use nondebug kernel if possible, because debug kernel will consume more memory and may oom.
