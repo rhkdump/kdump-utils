@@ -224,7 +224,7 @@ parse_config()
 		case "$config_opt" in
 		dracut_args)
 			if [[ $config_val == *--mount* ]]; then
-				if [[ $(echo "$config_val" | grep -o "\-\-mount" | wc -l) -ne 1 ]]; then
+				if [[ $(echo "$config_val" | grep -o -- "--mount" | wc -l) -ne 1 ]]; then
 					derror 'Multiple mount targets specified in one "dracut_args".'
 					return 1
 				fi
@@ -506,7 +506,7 @@ check_fs_modified()
 
 	# if --mount argument present then match old and new target, mount
 	# point and file system. If any of them mismatches then rebuild
-	if echo "$_dracut_args" | grep -q "\-\-mount"; then
+	if echo "$_dracut_args" | grep -q -- "--mount"; then
 		# shellcheck disable=SC2046
 		set -- $(echo "$_dracut_args" | awk -F "--mount '" '{print $2}' | cut -d' ' -f1,2,3)
 		_old_dev=$1

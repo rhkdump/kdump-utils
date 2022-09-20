@@ -63,13 +63,13 @@ is_fs_type_virtiofs()
 # If $1 contains dracut_args "--mount", return <filesystem type>
 get_dracut_args_fstype()
 {
-	echo $1 | grep "\-\-mount" | sed "s/.*--mount .\(.*\)/\1/" | cut -d' ' -f3
+	echo "$1" | sed -n "s/.*--mount .\(.*\)/\1/p" | cut -d' ' -f3
 }
 
 # If $1 contains dracut_args "--mount", return <device>
 get_dracut_args_target()
 {
-	echo $1 | grep "\-\-mount" | sed "s/.*--mount .\(.*\)/\1/" | cut -d' ' -f1
+	echo "$1" | sed -n "s/.*--mount .\(.*\)/\1/p" | cut -d' ' -f1
 }
 
 get_save_path()
