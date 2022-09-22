@@ -365,6 +365,22 @@ kdump_setup_ifname() {
     echo "$_ifname"
 }
 
+apply_nm_initrd_generator_timeouts() {
+    local _timeout_conf
+
+    _timeout_conf=$_DRACUT_KDUMP_NM_TMP_DIR/timeout_conf
+    cat << EOF > "$_timeout_conf"
+[device-95-kdump]
+carrier-wait-timeout=30000
+
+[connection-95-kdump]
+ipv4.dhcp-timeout=90
+ipv6.dhcp-timeout=90
+EOF
+
+    inst "$_timeout_conf" "/etc/NetworkManager/conf.d/95-kdump-timeouts.conf"
+}
+
 use_ipv4_or_ipv6() {
     local _netif=$1 _uuid=$2
 
@@ -416,6 +432,7 @@ clone_and_modify_nmconnection() {
 
     use_ipv4_or_ipv6 "$_dev" "$_uuid"
 
+    nmcli connection modify --temporary uuid "$_uuid" connection.wait-device-timeout 60000 &> >(ddebug)
     _cloned_nmconnection_file_path=$(nmcli --get-values UUID,FILENAME connection show | sed -n "s/^${_uuid}://p")
     _tmp_nmconnection_file_path=$_DRACUT_KDUMP_NM_TMP_DIR/$(basename "$_nmconnection_file_path")
     cp "$_cloned_nmconnection_file_path" "$_tmp_nmconnection_file_path"
