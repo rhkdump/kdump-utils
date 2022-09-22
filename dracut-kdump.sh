@@ -482,6 +482,26 @@ save_vmcore_dmesg_ssh()
 	fi
 }
 
+wait_online_network()
+{
+	# In some cases, network may still not be ready because nm-online is called
+	# with "-s" which means to wait for NetworkManager startup to complete, rather
+	# than waiting for network connectivity specifically. Wait 10mins more for the
+	# network to be truely ready in these cases.
+	_loop=0
+	while [ $_loop -lt 600 ]; do
+		sleep 1
+		_loop=$((_loop + 1))
+		if _route=$(kdump_get_ip_route "$1" 2> /dev/null); then
+			printf "%s" "$_route"
+			return
+		fi
+	done
+
+	derror "Oops. The network still isn't ready after waiting 10mins."
+	exit 1
+}
+
 get_host_ip()
 {
 
@@ -495,7 +515,11 @@ get_host_ip()
 		derror "failed to get remote IP address!"
 		return 1
 	fi
-	_route=$(kdump_get_ip_route "$_kdump_remote_ip")
+
+	if ! _route=$(wait_online_network "$_kdump_remote_ip"); then
+		return 1
+	fi
+
 	_netdev=$(kdump_get_ip_route_field "$_route" "dev")
 
 	if ! _kdumpip=$(ip addr show dev "$_netdev" | grep '[ ]*inet'); then
