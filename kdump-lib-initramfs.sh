@@ -55,6 +55,11 @@ is_fs_type_nfs()
 	[ "$1" = "nfs" ] || [ "$1" = "nfs4" ]
 }
 
+is_fs_type_virtiofs()
+{
+	[ "$1" = "virtiofs" ]
+}
+
 # If $1 contains dracut_args "--mount", return <filesystem type>
 get_dracut_args_fstype()
 {
@@ -110,6 +115,23 @@ is_raw_dump_target()
 	[ -n "$(kdump_get_conf_val raw)" ]
 }
 
+is_virtiofs_dump_target()
+{
+	if [ -n "$(kdump_get_conf_val virtiofs)" ]; then
+		return 0
+	fi
+
+	if is_fs_type_virtiofs "$(get_dracut_args_fstype "$(kdump_get_conf_val dracut_args)")"; then
+		return 0
+	fi
+
+	if is_fs_type_virtiofs "$(get_fs_type_from_target "$(get_target_from_path "$(get_save_path)")")"; then
+		return 0
+	fi
+
+	return 1
+}
+
 is_nfs_dump_target()
 {
 	if [ -n "$(kdump_get_conf_val nfs)" ]; then
@@ -129,5 +151,5 @@ is_nfs_dump_target()
 
 is_fs_dump_target()
 {
-	[ -n "$(kdump_get_conf_val "ext[234]\|xfs\|btrfs\|minix")" ]
+	[ -n "$(kdump_get_conf_val "ext[234]\|xfs\|btrfs\|minix\|virtiofs")" ]
 }

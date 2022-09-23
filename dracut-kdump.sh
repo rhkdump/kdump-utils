@@ -519,7 +519,7 @@ read_kdump_confs()
 				DUMP_INSTRUCTION="dump_fs $config_val"
 			fi
 			;;
-		ext[234] | xfs | btrfs | minix | nfs)
+		ext[234] | xfs | btrfs | minix | nfs | virtiofs)
 			config_val=$(get_mntpoint_from_target "$config_val")
 			DUMP_INSTRUCTION="dump_fs $config_val"
 			;;

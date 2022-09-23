@@ -673,7 +673,7 @@ kdump_install_conf() {
                 _pdev=$(persistent_policy="by-id" kdump_get_persistent_dev "$_val")
                 sed -i -e "s#^${_opt}[[:space:]]\+$_val#$_opt $_pdev#" "${initdir}/tmp/$$-kdump.conf"
                 ;;
-            ext[234] | xfs | btrfs | minix)
+            ext[234] | xfs | btrfs | minix | virtiofs)
                 _pdev=$(kdump_get_persistent_dev "$_val")
                 sed -i -e "s#^${_opt}[[:space:]]\+$_val#$_opt $_pdev#" "${initdir}/tmp/$$-kdump.conf"
                 ;;

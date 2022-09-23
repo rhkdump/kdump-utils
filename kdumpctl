@@ -239,7 +239,7 @@ parse_config()
 			_set_config _fstype "$config_opt" || return 1
 			config_opt=_target
 			;;
-		ext[234] | minix | btrfs | xfs | nfs | ssh)
+		ext[234] | minix | btrfs | xfs | nfs | ssh | virtiofs)
 			_set_config _fstype "$config_opt" || return 1
 			config_opt=_target
 			;;
@@ -478,8 +478,8 @@ check_fs_modified()
 	fi
 
 	# No need to check in case of raw target.
-	# Currently we do not check also if ssh/nfs target is specified
-	if is_ssh_dump_target || is_nfs_dump_target || is_raw_dump_target; then
+	# Currently we do not check also if ssh/nfs/virtiofs target is specified
+	if is_ssh_dump_target || is_nfs_dump_target || is_raw_dump_target || is_virtiofs_dump_target; then
 		return 0
 	fi
 

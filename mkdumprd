@@ -391,7 +391,7 @@ while read -r config_opt config_val; do
 	extra_modules)
 		extra_modules="$extra_modules $config_val"
 		;;
-	ext[234] | xfs | btrfs | minix | nfs)
+	ext[234] | xfs | btrfs | minix | nfs | virtiofs)
 		check_user_configured_target "$config_val" "$config_opt"
 		add_mount "$config_val" "$config_opt"
 		;;

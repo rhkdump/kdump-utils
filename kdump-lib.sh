@@ -81,35 +81,31 @@ to_dev_name()
 
 is_user_configured_dump_target()
 {
-	[[ $(kdump_get_conf_val "ext[234]\|xfs\|btrfs\|minix\|raw\|nfs\|ssh") ]] || is_mount_in_dracut_args
-}
-
-get_user_configured_dump_disk()
-{
-	local _target
-
-	_target=$(kdump_get_conf_val "ext[234]\|xfs\|btrfs\|minix\|raw")
-	[[ -n $_target ]] && echo "$_target" && return
-
-	_target=$(get_dracut_args_target "$(kdump_get_conf_val "dracut_args")")
-	[[ -b $_target ]] && echo "$_target"
+	[[ $(kdump_get_conf_val "ext[234]\|xfs\|btrfs\|minix\|raw\|nfs\|ssh\|virtiofs") ]] || is_mount_in_dracut_args
 }
 
 get_block_dump_target()
 {
-	local _target _path
+	local _target _fstype
 
 	if is_ssh_dump_target || is_nfs_dump_target; then
 		return
 	fi
 
-	_target=$(get_user_configured_dump_disk)
+	_target=$(kdump_get_conf_val "ext[234]\|xfs\|btrfs\|minix\|raw\|virtiofs")
 	[[ -n $_target ]] && to_dev_name "$_target" && return
 
-	# Get block device name from local save path
-	_path=$(get_save_path)
-	_target=$(get_target_from_path "$_path")
-	[[ -b $_target ]] && to_dev_name "$_target"
+	_target=$(get_dracut_args_target "$(kdump_get_conf_val "dracut_args")")
+	[[ -b $_target ]] && to_dev_name "$_target" && return
+
+	_fstype=$(get_dracut_args_fstype "$(kdump_get_conf_val "dracut_args")")
+	is_fs_type_virtiofs "$_fstype" && echo "$_target" && return
+
+	_target=$(get_target_from_path "$(get_save_path)")
+	[[ -b $_target ]] && to_dev_name "$_target" && return
+
+	_fstype=$(get_fs_type_from_target "$_target")
+	is_fs_type_virtiofs "$_fstype" && echo "$_target" && return
 }
 
 is_dump_to_rootfs()
@@ -125,6 +121,7 @@ get_failure_action_target()
 		# Get rootfs device name
 		_target=$(get_root_fs_device)
 		[[ -b $_target ]] && to_dev_name "$_target" && return
+		is_fs_type_virtiofs "$(get_fs_type_from_target "$_target")" && echo "$_target" && return
 		# Then, must be nfs root
 		echo "nfs"
 	fi
