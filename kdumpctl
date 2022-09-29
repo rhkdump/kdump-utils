@@ -1626,6 +1626,10 @@ update_crashkernel_in_grub_etc_default_after_update()
 		return
 	fi
 
+	if [[ $(uname -m) == s390x ]]; then
+		return
+	fi
+
 	_crashkernel=$(_read_kernel_arg_in_grub_etc_default crashkernel)
 
 	if [[ -z $_crashkernel ]]; then
