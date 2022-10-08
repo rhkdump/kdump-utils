@@ -174,9 +174,15 @@ dump_fs()
 	$CORE_COLLECTOR /proc/vmcore "$_dump_fs_path/vmcore-incomplete"
 	_dump_exitcode=$?
 	if [ $_dump_exitcode -eq 0 ]; then
-		mv "$_dump_fs_path/vmcore-incomplete" "$_dump_fs_path/vmcore"
-		sync
-		dinfo "saving vmcore complete"
+		sync -f "$_dump_fs_path/vmcore-incomplete"
+		_sync_exitcode=$?
+		if [ $_sync_exitcode -eq 0 ]; then
+			mv "$_dump_fs_path/vmcore-incomplete" "$_dump_fs_path/vmcore"
+			dinfo "saving vmcore complete"
+		else
+			derror "sync vmcore failed, exitcode:$_sync_exitcode"
+			return 1
+		fi
 	else
 		derror "saving vmcore failed, exitcode:$_dump_exitcode"
 		return 1
