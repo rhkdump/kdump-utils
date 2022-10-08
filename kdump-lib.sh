@@ -37,6 +37,12 @@ is_zstd_command_available()
 	[[ -x "$(command -v zstd)" ]]
 }
 
+dracut_have_option()
+{
+	local _option=$1
+	! dracut "$_option" 2>&1 | grep -q "unrecognized option"
+}
+
 perror_exit()
 {
 	derror "$@"
@@ -448,8 +454,7 @@ is_wdt_active()
 
 have_compression_in_dracut_args()
 {
-	[[ "$(kdump_get_conf_val dracut_args)" =~ \
-		(^|[[:space:]])--(gzip|bzip2|lzma|xz|lzo|lz4|zstd|no-compress|compress)([[:space:]]|$) ]]
+	[[ "$(kdump_get_conf_val dracut_args)" =~ (^|[[:space:]])--(gzip|bzip2|lzma|xz|lzo|lz4|zstd|no-compress|compress|squash-compressor)([[:space:]]|$) ]]
 }
 
 # If "dracut_args" contains "--mount" information, use it
