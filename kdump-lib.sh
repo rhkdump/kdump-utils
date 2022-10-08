@@ -119,6 +119,12 @@ is_dump_to_rootfs()
 	[[ $(kdump_get_conf_val 'failure_action\|default') == dump_to_rootfs ]]
 }
 
+is_lvm2_thinp_dump_target()
+{
+	_target=$(get_block_dump_target)
+	[ -n "$_target" ] && is_lvm2_thinp_device "$_target"
+}
+
 get_failure_action_target()
 {
 	local _target

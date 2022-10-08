@@ -153,3 +153,12 @@ is_fs_dump_target()
 {
 	[ -n "$(kdump_get_conf_val "ext[234]\|xfs\|btrfs\|minix\|virtiofs")" ]
 }
+
+is_lvm2_thinp_device()
+{
+	_device_path=$1
+	_lvm2_thin_device=$(lvm lvs -S 'lv_layout=sparse && lv_layout=thin' \
+		--nosuffix --noheadings -o vg_name,lv_name "$_device_path" 2> /dev/null)
+
+	[ -n "$_lvm2_thin_device" ]
+}
