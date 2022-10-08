@@ -390,6 +390,7 @@ check_files_modified()
 
 	# HOOKS is mandatory and need to check the modification time
 	files="$files $HOOKS"
+	is_lvm2_thinp_dump_target && files="$files $LVM_CONF"
 	check_exist "$files" && check_executable "$EXTRA_BINS" || return 2
 
 	for file in $files; do
