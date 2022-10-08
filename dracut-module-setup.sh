@@ -40,6 +40,14 @@ depends() {
         _dep="$_dep ssh-client"
     fi
 
+    if is_lvm2_thinp_dump_target; then
+        if dracut --list-modules | grep -q lvmthinpool-monitor; then
+            add_opt_module lvmthinpool-monitor
+        else
+            dwarning "Required lvmthinpool-monitor modules is missing! Please upgrade dracut >= 057."
+        fi
+    fi
+
     if [[ "$(uname -m)" == "s390x" ]]; then
         _dep="$_dep znet"
     fi
