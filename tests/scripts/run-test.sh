@@ -85,8 +85,7 @@ for test_case in $testcases; do
 	results[$test_case]="<Test Skipped>"
 
 	testdir=$TESTCASEDIR/$test_case
-	script_num=$(ls -1 $testdir | wc -l)
-	scripts=$(ls -r -1 $testdir | tr '\n' ' ')
+	scripts=$(ls -r -1 $testdir | egrep "\.sh$" | tr '\n' ' ')
 	test_outputs=""
 	read main_script aux_script <<< "$scripts"
 
