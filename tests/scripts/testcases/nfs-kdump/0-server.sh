@@ -16,12 +16,13 @@ on_build() {
 	img_run_cmd "echo dhcp-range=192.168.77.50,192.168.77.100,255.255.255.0,12h >> /etc/dnsmasq.conf"
 	img_run_cmd "systemctl enable dnsmasq"
 
-	img_run_cmd 'echo DEVICE="eth0" > /etc/sysconfig/network-scripts/ifcfg-eth0'
-	img_run_cmd 'echo BOOTPROTO="none" >> /etc/sysconfig/network-scripts/ifcfg-eth0'
-	img_run_cmd 'echo ONBOOT="yes" >> /etc/sysconfig/network-scripts/ifcfg-eth0'
-	img_run_cmd 'echo PREFIX="24" >> /etc/sysconfig/network-scripts/ifcfg-eth0'
-	img_run_cmd 'echo IPADDR="192.168.77.1" >> /etc/sysconfig/network-scripts/ifcfg-eth0'
-	img_run_cmd 'echo TYPE="Ethernet" >> /etc/sysconfig/network-scripts/ifcfg-eth0'
+	img_run_cmd 'echo [connection] > /etc/NetworkManager/system-connections/eth0.nmconnection'
+	img_run_cmd 'echo type=ethernet >> /etc/NetworkManager/system-connections/eth0.nmconnection'
+	img_run_cmd 'echo interface-name=eth0 >> /etc/NetworkManager/system-connections/eth0.nmconnection'
+	img_run_cmd 'echo [ipv4] >> /etc/NetworkManager/system-connections/eth0.nmconnection'
+	img_run_cmd 'echo address1=192.168.77.1/24 >> /etc/NetworkManager/system-connections/eth0.nmconnection'
+	img_run_cmd 'echo method=manual >> /etc/NetworkManager/system-connections/eth0.nmconnection'
+	img_run_cmd 'chmod 600 /etc/NetworkManager/system-connections/eth0.nmconnection'
 
 	img_add_qemu_cmd "-nic socket,listen=:8010,mac=52:54:00:12:34:56"
 }
