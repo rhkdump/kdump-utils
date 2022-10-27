@@ -1,11 +1,11 @@
 %global eppic_ver e8844d3793471163ae4a56d8f95897be9e5bd554
 %global eppic_shortver %(c=%{eppic_ver}; echo ${c:0:7})
-%global mkdf_ver 1.7.1
+%global mkdf_ver 1.7.2
 %global mkdf_shortver %(c=%{mkdf_ver}; echo ${c:0:7})
 
 Name: kexec-tools
 Version: 2.0.25
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -413,6 +413,22 @@ fi
 %endif
 
 %changelog
+* Thu Oct 27 2022 Coiby <coxu@redhat.com> - 2.0.25-1
+- Update makedumpfile to 1.7.2
+- Skip reading /etc/defaut/grub for s390x
+- Include the memory overhead cost of cryptsetup when estimating the memory requirement for LUKS-encrypted target
+- Choosing the most memory-consuming key slot when estimating the memory requirement for LUKS-encrypted target
+- Fix grep warnings "grep: warning: stray \ before -"
+- Only try to reset crashkernel for osbuild during package install
+- Prefix reset-crashkernel-{for-installed_kernel,after-update} with underscore
+- Seperate dracut and dracut-squash compressor for zstd
+- Fix the sync issue for dump_fs
+- virtiofs support for kexec-tools
+- fadump: avoid non-debug kernel use for fadump case
+- mkdumprd: Improve error messages on non-existing NFS target directories
+- kdumpctl: make the kdump.log root-readable-only
+- sysconfig: use a simple generator script to maintain
+
 * Wed Aug 03 2022 Coiby <coxu@redhat.com> - 2.0.25-1
 - Update kexec-tools to 2.0.25
 - remind the users to run zipl after calling grubby on s390x
