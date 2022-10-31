@@ -40,14 +40,16 @@ touch "$MKFADUMPRD_TMPDIR/fadump.initramfs"
 ddebug "rebuild fadump initrd: $FADUMP_INITRD $DEFAULT_INITRD $KDUMP_KERNELVER"
 # Don't use squash for capture image or default image as it negatively impacts
 # compression ratio and increases the size of the initramfs image.
-if ! $MKDUMPRD "$FADUMP_INITRD" -i "$MKFADUMPRD_TMPDIR/fadump.initramfs" /etc/fadump.initramfs --omit squash; then
+# Don't compress the capture image as uncompressed image is needed immediately.
+# Also, early microcode would not be needed here.
+if ! $MKDUMPRD "$FADUMP_INITRD" -i "$MKFADUMPRD_TMPDIR/fadump.initramfs" /etc/fadump.initramfs --omit squash --no-compress --no-early-microcode; then
 	perror_exit "mkfadumprd: failed to build image with dump capture support"
 fi
 
-### Unpack the initramfs having dump capture capability
+### Unpack the initramfs having dump capture capability retaining previous file modification time.
+# This helps in saving space by hardlinking identical files.
 mkdir -p "$MKFADUMPRD_TMPDIR/fadumproot"
-if ! (pushd "$MKFADUMPRD_TMPDIR/fadumproot" > /dev/null && lsinitrd --unpack "$FADUMP_INITRD" &&
-	popd > /dev/null); then
+if ! cpio -id --preserve-modification-time --quiet -D "$MKFADUMPRD_TMPDIR/fadumproot" < "$FADUMP_INITRD"; then
 	derror "mkfadumprd: failed to unpack '$MKFADUMPRD_TMPDIR'"
 	exit 1
 fi
