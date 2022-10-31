@@ -38,7 +38,9 @@ FADUMP_INITRD="$MKFADUMPRD_TMPDIR/fadump.img"
 # this file tells the initrd is fadump enabled
 touch "$MKFADUMPRD_TMPDIR/fadump.initramfs"
 ddebug "rebuild fadump initrd: $FADUMP_INITRD $DEFAULT_INITRD $KDUMP_KERNELVER"
-if ! $MKDUMPRD "$FADUMP_INITRD" -i "$MKFADUMPRD_TMPDIR/fadump.initramfs" /etc/fadump.initramfs; then
+# Don't use squash for capture image or default image as it negatively impacts
+# compression ratio and increases the size of the initramfs image.
+if ! $MKDUMPRD "$FADUMP_INITRD" -i "$MKFADUMPRD_TMPDIR/fadump.initramfs" /etc/fadump.initramfs --omit squash; then
 	perror_exit "mkfadumprd: failed to build image with dump capture support"
 fi
 
@@ -57,10 +59,6 @@ _dracut_isolate_args=(
 	-i "$MKFADUMPRD_TMPDIR/fadumproot/usr/lib/dracut/hostonly-kernel-modules.txt"
 	/usr/lib/dracut/fadump-kernel-modules.txt
 )
-
-if is_squash_available; then
-	_dracut_isolate_args+=(--add squash)
-fi
 
 # Same as setting zstd in mkdumprd
 if ! have_compression_in_dracut_args; then
