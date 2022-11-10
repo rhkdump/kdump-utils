@@ -479,8 +479,9 @@ check_fs_modified()
 	fi
 
 	# No need to check in case of raw target.
-	# Currently we do not check also if ssh/nfs/virtiofs target is specified
-	if is_ssh_dump_target || is_nfs_dump_target || is_raw_dump_target || is_virtiofs_dump_target; then
+	# Currently we do not check also if ssh/nfs/virtiofs/thinp target is specified
+	if is_ssh_dump_target || is_nfs_dump_target || is_raw_dump_target ||
+		is_virtiofs_dump_target || is_lvm2_thinp_dump_target; then
 		return 0
 	fi
 
