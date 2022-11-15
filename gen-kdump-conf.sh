@@ -1,3 +1,11 @@
+#!/bin/bash
+# $1: target arch
+
+SED_EXP=""
+
+generate()
+{
+	sed "$SED_EXP" << EOF
 # This file contains a series of commands to perform (in order) in the kdump
 # kernel after a kernel crash in the crash kernel(1st kernel) has happened.
 #
@@ -192,3 +200,32 @@ core_collector makedumpfile -l --message-level 7 -d 31
 #dracut_args --omit-drivers "cfg80211 snd" --add-drivers "ext2 ext3"
 #fence_kdump_args -p 7410 -f auto -c 0 -i 10
 #fence_kdump_nodes node1 node2
+EOF
+}
+
+update_param()
+{
+	SED_EXP="${SED_EXP}s/^$1.*$/$1 $2/;"
+}
+
+case "$1" in
+aarch64) ;;
+
+i386) ;;
+
+ppc64) ;;
+
+ppc64le) ;;
+
+s390x)
+	update_param core_collector \
+		"makedumpfile -c --message-level 7 -d 31"
+	;;
+x86_64) ;;
+
+*)
+	echo "Warning: Unknown architecture '$1', using default kdump.conf template."
+	;;
+esac
+
+generate

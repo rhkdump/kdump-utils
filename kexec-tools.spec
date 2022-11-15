@@ -12,8 +12,8 @@ Summary: The kexec/kdump userspace component
 Source0: http://kernel.org/pub/linux/utils/kernel/kexec/%{name}-%{version}.tar.xz
 Source1: kdumpctl
 Source3: gen-kdump-sysconfig.sh
+Source4: gen-kdump-conf.sh
 Source7: mkdumprd
-Source8: kdump.conf
 Source9: https://github.com/makedumpfile/makedumpfile/archive/%{mkdf_ver}/makedumpfile-%{mkdf_shortver}.tar.gz
 Source10: kexec-kdump-howto.txt
 Source11: fadump-howto.txt
@@ -147,6 +147,7 @@ cp %{SOURCE34} .
 
 # Generate sysconfig file
 %{SOURCE3} %{_target_cpu} > kdump.sysconfig
+%{SOURCE4} %{_target_cpu} > kdump.conf
 
 make
 %ifarch %{ix86} x86_64 ppc64 s390x ppc64le aarch64
@@ -180,7 +181,7 @@ install -m 644 build/man/man8/kexec.8  $RPM_BUILD_ROOT%{_mandir}/man8/
 install -m 644 build/man/man8/vmcore-dmesg.8  $RPM_BUILD_ROOT%{_mandir}/man8/
 
 install -m 755 %{SOURCE7} $RPM_BUILD_ROOT/usr/sbin/mkdumprd
-install -m 644 %{SOURCE8} $RPM_BUILD_ROOT%{_sysconfdir}/kdump.conf
+install -m 644 kdump.conf $RPM_BUILD_ROOT%{_sysconfdir}/kdump.conf
 install -m 644 kdump.sysconfig $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/kdump
 install -m 644 kexec/kexec.8 $RPM_BUILD_ROOT%{_mandir}/man8/kexec.8
 install -m 644 %{SOURCE12} $RPM_BUILD_ROOT%{_mandir}/man8/mkdumprd.8
