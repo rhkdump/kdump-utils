@@ -1657,6 +1657,10 @@ reset_crashkernel_after_update()
 	local _kernel _crashkernel _dump_mode _fadump_val _old_default_crashkernel _new_default_crashkernel
 	declare -A _crashkernel_vals
 
+	if _is_package_install; then
+		return
+	fi
+
 	_crashkernel_vals[old_kdump]=$(cat /tmp/old_default_crashkernel 2> /dev/null)
 	_crashkernel_vals[old_fadump]=$(cat /tmp/old_default_crashkernel_fadump 2> /dev/null)
 	_crashkernel_vals[new_kdump]=$(get_default_crashkernel kdump)
