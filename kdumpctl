@@ -1061,7 +1061,7 @@ start()
 		return 1
 	fi
 
-	if check_current_status; then
+	if [[ $DEFAULT_DUMP_MODE == "kdump" ]] && check_current_kdump_status; then
 		dwarn "Kdump already running: [WARNING]"
 		return 0
 	fi
