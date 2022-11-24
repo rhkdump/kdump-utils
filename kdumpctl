@@ -1353,7 +1353,7 @@ _filter_grubby_kernel_str()
 _find_kernel_path_by_release()
 {
 	local _release="$1" _grubby_kernel_str _kernel_path
-	_grubby_kernel_str=$(grubby --info ALL | grep "^kernel=.*$_release")
+	_grubby_kernel_str=$(grubby --info ALL | grep "^kernel=.*$_release\"$")
 	_kernel_path=$(_filter_grubby_kernel_str "$_grubby_kernel_str")
 	if [[ -z $_kernel_path ]]; then
 		derror "kernel $_release doesn't exist"
