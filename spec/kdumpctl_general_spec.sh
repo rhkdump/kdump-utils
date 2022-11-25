@@ -178,6 +178,7 @@ Describe 'kdumpctl'
 		bad_kdump_conf=$(mktemp -t bad_kdump_conf.XXXXXXXXXX)
 		cleanup() {
 			rm -f "$bad_kdump_conf"
+			rm -f kdump.conf
 		}
 		AfterAll 'cleanup'
 
@@ -189,8 +190,11 @@ Describe 'kdumpctl'
 			The stderr should include 'Invalid kdump config option blabla'
 		End
 
+		Parameters:value aarch64 ppc64le s390x x86_64
+
 		It 'should be happy with the default kdump.conf'
-		 # shellcheck disable=SC2034
+			./gen-kdump-conf.sh "$1" > kdump.conf
+			# shellcheck disable=SC2034
 			# override the KDUMP_CONFIG_FILE variable
 			KDUMP_CONFIG_FILE=./kdump.conf
 			When call parse_config
