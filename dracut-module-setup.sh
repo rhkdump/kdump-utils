@@ -809,7 +809,7 @@ kdump_check_iscsi_targets() {
     # If our prerequisites are not met, fail anyways.
     type -P iscsistart > /dev/null || return 1
 
-    kdump_check_setup_iscsi() (
+    kdump_check_setup_iscsi() {
         local _dev
         _dev=$1
 
@@ -819,7 +819,7 @@ kdump_check_iscsi_targets() {
             cd ..
         done
         [[ -d iscsi_session ]] && kdump_setup_iscsi_device "$PWD"
-    )
+    }
 
     [[ $hostonly ]] || [[ $mount_needs ]] && {
         for_each_host_dev_and_slaves_all kdump_check_setup_iscsi
