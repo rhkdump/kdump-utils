@@ -62,11 +62,9 @@ _dracut_isolate_args=(
 	/usr/lib/dracut/fadump-kernel-modules.txt
 )
 
-# Same as setting zstd in mkdumprd
+# Use zstd compression method, if available
 if ! have_compression_in_dracut_args; then
-	if is_squash_available && dracut_have_option "--squash-compressor"; then
-		_dracut_isolate_args+=(--squash-compressor zstd)
-	elif is_zstd_command_available; then
+	if is_zstd_command_available; then
 		_dracut_isolate_args+=(--compress zstd)
 	fi
 fi
