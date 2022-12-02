@@ -1,0 +1,31 @@
+#!/usr/bin/bash
+
+COMMAND="$1"
+KERNEL_VERSION="$2"
+
+if ! [[ ${KERNEL_INSTALL_MACHINE_ID-x} ]]; then
+    exit 0
+fi
+
+# Currently, fadump is supported only in environments with
+# writable /boot directory.
+if [[ ! -w "/boot" ]]; then
+    exit 0
+fi
+
+FADUMP_INITRD="/boot/.initramfs-${KERNEL_VERSION}.img.default"
+FADUMP_INITRD_CHECKSUM="$FADUMP_INITRD.checksum"
+
+ret=0
+case "$COMMAND" in
+    add)
+        # Do nothing, fadump initramfs is strictly host only
+        # and managed by kdump service
+        ;;
+    remove)
+        rm -f -- "$FADUMP_INITRD"
+        rm -f -- "$FADUMP_INITRD_CHECKSUM"
+        ret=$?
+        ;;
+esac
+exit $ret

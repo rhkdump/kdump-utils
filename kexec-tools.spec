@@ -38,6 +38,7 @@ Source33: 92-crashkernel.install
 Source34: crashkernel-howto.txt
 Source35: kdump-migrate-action.sh
 Source36: kdump-restart.sh
+Source37: 60-fadump.install
 
 #######################################
 # These are sources for mkdumpramfs
@@ -204,6 +205,7 @@ install -m 644 %{SOURCE13} $RPM_BUILD_ROOT%{_udevrulesdir}/98-kexec.rules
 %endif
 %ifarch ppc64 ppc64le
 install -m 644 %{SOURCE14} $RPM_BUILD_ROOT%{_udevrulesdir}/98-kexec.rules
+install -m 755 -D %{SOURCE37} $RPM_BUILD_ROOT%{_prefix}/lib/kernel/install.d/60-fadump.install
 %endif
 install -m 644 %{SOURCE15} $RPM_BUILD_ROOT%{_mandir}/man5/kdump.conf.5
 install -m 644 %{SOURCE16} $RPM_BUILD_ROOT%{_unitdir}/kdump.service
@@ -366,6 +368,7 @@ fi
 %endif
 %ifarch ppc64 ppc64le
 /usr/sbin/mkfadumprd
+%{_prefix}/lib/kernel/install.d/60-fadump.install
 %endif
 /usr/sbin/mkdumprd
 /usr/sbin/vmcore-dmesg
