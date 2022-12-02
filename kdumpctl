@@ -9,9 +9,9 @@ KDUMP_LOG_PATH="/var/log"
 MKDUMPRD="/sbin/mkdumprd -f"
 MKFADUMPRD="/sbin/mkfadumprd"
 DRACUT_MODULES_FILE="/usr/lib/dracut/modules.txt"
-INITRD_CHECKSUM_LOCATION="/boot/.fadump_initrd_checksum"
 DEFAULT_INITRD=""
 DEFAULT_INITRD_BAK=""
+INITRD_CHECKSUM_LOCATION=""
 KDUMP_INITRD=""
 TARGET_INITRD=""
 FADUMP_REGISTER_SYS_NODE="/sys/kernel/fadump_registered"
@@ -166,7 +166,8 @@ backup_default_initrd()
 		sha1sum "$DEFAULT_INITRD" > "$INITRD_CHECKSUM_LOCATION"
 		if ! cp "$DEFAULT_INITRD" "$DEFAULT_INITRD_BAK"; then
 			dwarn "WARNING: failed to backup $DEFAULT_INITRD."
-			rm -f "$DEFAULT_INITRD_BAK"
+			rm -f -- "$INITRD_CHECKSUM_LOCATION"
+			rm -f -- "$DEFAULT_INITRD_BAK"
 		fi
 	fi
 }
@@ -317,6 +318,7 @@ setup_initrd()
 	fi
 
 	DEFAULT_INITRD_BAK="$KDUMP_BOOTDIR/.$(basename "$DEFAULT_INITRD").default"
+	INITRD_CHECKSUM_LOCATION="$DEFAULT_INITRD_BAK.checksum"
 	if [[ $DEFAULT_DUMP_MODE == "fadump" ]]; then
 		TARGET_INITRD="$DEFAULT_INITRD"
 
