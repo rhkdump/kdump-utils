@@ -1,6 +1,6 @@
 #!/bin/bash
 
-_DRACUT_KDUMP_NM_TMP_DIR="/tmp/$$-DRACUT_KDUMP_NM"
+_DRACUT_KDUMP_NM_TMP_DIR="$DRACUT_TMPDIR/$$-DRACUT_KDUMP_NM"
 
 _save_kdump_netifs() {
     unique_netifs[$1]=1
@@ -9,13 +9,6 @@ _save_kdump_netifs() {
 _get_kdump_netifs() {
     echo -n "${!unique_netifs[@]}"
 }
-
-cleanup() {
-    rm -rf "$_DRACUT_KDUMP_NM_TMP_DIR"
-}
-
-# shellcheck disable=SC2154 # known issue of shellcheck https://github.com/koalaman/shellcheck/issues/1299
-trap 'ret=$?; cleanup; exit $ret;' EXIT
 
 kdump_module_init() {
     if ! [[ -d "${initdir}/tmp" ]]; then
