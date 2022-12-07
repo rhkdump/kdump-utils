@@ -5,7 +5,7 @@
 
 Name: kexec-tools
 Version: 2.0.25
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -417,6 +417,13 @@ fi
 %endif
 
 %changelog
+* Wed Dec 07 2022 Coiby <coxu@redhat.com> - 2.0.25-4
+- dracut-module-setup.sh: stop overwriting dracut's trap handler
+- fadump: avoid status check while starting in fadump mode
+- fadump: add a kernel install hook to clean up fadump initramfs
+- fadump: fix default initrd backup and restore logic
+- fadump: use 'zstd' as the default compression method
+
 * Fri Nov 25 2022 Coiby <coxu@redhat.com> - 2.0.25-3
 - kdumpctl: Optimize _find_kernel_path_by_release regex string
 - unit tests: adapt check_config to gen-kdump-conf.sh
