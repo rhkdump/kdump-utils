@@ -381,6 +381,14 @@ _get_nic_driver() {
     ethtool -i "$1" | sed -n -E "s/driver: (.*)/\1/p"
 }
 
+_get_hpyerv_physical_driver() {
+    local _physical_nic
+
+    _physical_nic=$(find /sys/class/net/"$1"/ -name 'lower_*' | sed -En "s/\/.*lower_(.*)/\1/p")
+    [[ -n $_physical_nic ]] || return
+    _get_nic_driver "$_physical_nic"
+}
+
 kdump_install_nic_driver() {
     local _netif _driver _drivers
 
@@ -400,6 +408,11 @@ kdump_install_nic_driver() {
         elif [[ $_driver == "team" ]]; then
             # install the team mode drivers like team_mode_roundrobin.ko as well
             _driver='=drivers/net/team'
+        elif [[ $_driver == "hv_netvsc" ]]; then
+            # A Hyper-V VM may have accelerated networking
+            # https://learn.microsoft.com/en-us/azure/virtual-network/accelerated-networking-overview
+            # Install the driver of physical NIC as well
+            _drivers+=("$(_get_hpyerv_physical_driver "$_netif")")
         fi
 
         _drivers+=("$_driver")
