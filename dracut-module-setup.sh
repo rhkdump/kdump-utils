@@ -387,6 +387,7 @@ kdump_install_nic_driver() {
     _drivers=()
 
     for _netif in $1; do
+        [[ $_netif == lo ]] && continue
         _driver=$(_get_nic_driver "$_netif")
         if [[ -z $_driver ]]; then
             derror "Failed to get the driver of $_netif"
@@ -404,6 +405,7 @@ kdump_install_nic_driver() {
         _drivers+=("$_driver")
     done
 
+    [[ -n ${_drivers[*]} ]] || return
     instmods "${_drivers[@]}"
 }
 
