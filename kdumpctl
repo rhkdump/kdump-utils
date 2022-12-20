@@ -1611,10 +1611,13 @@ reset_crashkernel()
 	fi
 }
 
-# to tell if it's package install other than upgrade
-_is_package_install()
+_is_bootloader_installed()
 {
-	[[ -f /tmp/kexec_tools_package_install ]]
+	if [[ $(uname -r) == s390x ]]; then
+		test -f /etc/zipl.conf
+	else
+		test -f /boot/grub2/grub.cfg
+	fi
 }
 
 # update the crashkernel value in GRUB_ETC_DEFAULT if necessary
@@ -1625,10 +1628,6 @@ update_crashkernel_in_grub_etc_default_after_update()
 {
 	local _crashkernel _fadump_val
 	local _dump_mode _old_default_crashkernel _new_default_crashkernel
-
-	if _is_package_install; then
-		return
-	fi
 
 	if [[ $(uname -m) == s390x ]]; then
 		return
@@ -1659,7 +1658,7 @@ reset_crashkernel_after_update()
 	local _kernel _crashkernel _dump_mode _fadump_val _old_default_crashkernel _new_default_crashkernel
 	declare -A _crashkernel_vals
 
-	if _is_package_install; then
+	if ! _is_bootloader_installed; then
 		return
 	fi
 
@@ -1715,7 +1714,7 @@ reset_crashkernel_for_installed_kernel()
 
 	# During package install, only try to reset crashkernel for osbuild
 	# thus to avoid calling grubby when installing os via anaconda
-	if _is_package_install && ! _is_osbuild; then
+	if ! _is_bootloader_installed && ! _is_osbuild; then
 		return
 	fi
 
