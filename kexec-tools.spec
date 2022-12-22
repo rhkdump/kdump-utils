@@ -4,8 +4,8 @@
 %global mkdf_shortver %(c=%{mkdf_ver}; echo ${c:0:7})
 
 Name: kexec-tools
-Version: 2.0.25
-Release: 4%{?dist}
+Version: 2.0.26
+Release: 1%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -412,6 +412,12 @@ fi
 %endif
 
 %changelog
+* Thu Dec 22 2022 Coiby <coxu@redhat.com> - 2.0.26-1
+- Update kexec-tools to 2.0.25
+- Don't try to update crashkernel when bootloader is not installed
+- dracut-module-setup.sh: also install the driver of physical NIC for Hyper-V VM with accelerated networking
+- dracut-module-setup.sh: skip installing driver for the loopback interface
+
 * Wed Dec 07 2022 Coiby <coxu@redhat.com> - 2.0.25-4
 - dracut-module-setup.sh: stop overwriting dracut's trap handler
 - fadump: avoid status check while starting in fadump mode
