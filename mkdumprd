@@ -420,6 +420,15 @@ while read -r config_opt config_val; do
 		verify_core_collector "$config_val"
 		;;
 	dracut_args)
+
+		# When users specify nfs dumping via dracut_args, kexec-tools won't
+		# mount nfs fs beforehand thus nfsv4-related drivers won't be installed
+		# because we call dracut with --hostonly-mode strict. So manually install
+		# nfsv4-related drivers.
+		if [[ $(get_dracut_args_fstype "$config_val") == nfs* ]]; then
+			add_dracut_arg "--add-drivers" nfs_layout_nfsv41_files
+		fi
+
 		while read -r dracut_arg; do
 			add_dracut_arg "$dracut_arg"
 		done <<< "$(echo "$config_val" | xargs -n 1 echo)"
