@@ -1090,15 +1090,9 @@ reload_fadump()
 stop()
 {
 	if [[ $DEFAULT_DUMP_MODE == "fadump" ]]; then
-		stop_fadump
+		stop_fadump || return
 	else
-		stop_kdump
-	fi
-
-	# shellcheck disable=SC2181
-	if [[ $? != 0 ]]; then
-		derror "Stopping kdump: [FAILED]"
-		return 1
+		stop_kdump || return
 	fi
 
 	dinfo "Stopping kdump: [OK]"
@@ -1683,7 +1677,10 @@ main()
 		fi
 		;;
 	stop)
-		stop
+		if ! stop; then
+			derror "Stopping kdump: [FAILED]"
+			exit 1
+		fi
 		;;
 	status)
 		EXIT_CODE=0
@@ -1704,7 +1701,10 @@ main()
 		reload
 		;;
 	restart)
-		stop
+		if ! stop; then
+			derror "Stopping kdump: [FAILED]"
+			exit 1
+		fi
 		if ! start; then
 			derror "Starting kdump: [FAILED]"
 			exit 1
