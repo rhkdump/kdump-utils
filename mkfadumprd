@@ -37,7 +37,7 @@ FADUMP_INITRD="$MKFADUMPRD_TMPDIR/fadump.img"
 ### First build an initramfs with dump capture capability
 # this file tells the initrd is fadump enabled
 touch "$MKFADUMPRD_TMPDIR/fadump.initramfs"
-ddebug "rebuild fadump initrd: $FADUMP_INITRD $DEFAULT_INITRD $KDUMP_KERNELVER"
+ddebug "rebuild fadump initrd: $FADUMP_INITRD"
 # Don't use squash for capture image or default image as it negatively impacts
 # compression ratio and increases the size of the initramfs image.
 # Don't compress the capture image as uncompressed image is needed immediately.
