@@ -24,12 +24,11 @@ is_fadump_capable()
 
 is_squash_available()
 {
+	local _version kmodule
+
+	_version=$(_get_kdump_kernel_version)
 	for kmodule in squashfs overlay loop; do
-		if [[ -z $KDUMP_KERNELVER ]]; then
-			modprobe --dry-run $kmodule &> /dev/null || return 1
-		else
-			modprobe -S "$KDUMP_KERNELVER" --dry-run $kmodule &> /dev/null || return 1
-		fi
+		modprobe -S "$_version" --dry-run $kmodule &> /dev/null || return 1
 	done
 }
 
@@ -687,6 +686,31 @@ prepare_kdump_kernel()
 	echo "$kdump_kernel"
 }
 
+_get_kdump_kernel_version()
+{
+	local _version _version_nondebug
+
+	if [[ -n "$KDUMP_KERNELVER" ]]; then
+		echo "$KDUMP_KERNELVER"
+		return
+	fi
+
+	_version=$(uname -r)
+	if [[ ! "$_version" =~ \+debug$ ]]; then
+		echo "$_version"
+		return
+	fi
+
+	_version_nondebug=${_version%+debug}
+	if [[ -f "$(prepare_kdump_kernel "$_version_nondebug")" ]]; then
+		dinfo "Use of debug kernel detected. Trying to use $_version_nondebug"
+		echo "$_version_nondebug"
+	else
+		dinfo "Use of debug kernel detected but cannot find $_version_nondebug. Falling back to $_version"
+		echo "$_version"
+	fi
+}
+
 #
 # Detect initrd and kernel location, results are stored in global environmental variables:
 # KDUMP_BOOTDIR, KDUMP_KERNELVER, KDUMP_KERNEL, DEFAULT_INITRD, and KDUMP_INITRD
@@ -696,36 +720,10 @@ prepare_kdump_kernel()
 #
 prepare_kdump_bootinfo()
 {
-	local boot_initrdlist nondebug_kernelver debug_kernelver
-	local default_initrd_base var_target_initrd_dir
+	local boot_initrdlist default_initrd_base var_target_initrd_dir
 
-	if [[ -z $KDUMP_KERNELVER ]]; then
-		KDUMP_KERNELVER=$(uname -r)
-
-		# Fadump uses the regular bootloader, unlike kdump. So, use the same version
-		# for default kernel and capture kernel unless specified explicitly with
-		# KDUMP_KERNELVER option.
-		if ! is_fadump_capable; then
-			nondebug_kernelver=$(sed -n -e 's/\(.*\)+debug$/\1/p' <<< "$KDUMP_KERNELVER")
-		fi
-	fi
-
-	# Use nondebug kernel if possible, because debug kernel will consume more memory and may oom.
-	if [[ -n $nondebug_kernelver ]]; then
-		dinfo "Trying to use $nondebug_kernelver."
-		debug_kernelver=$KDUMP_KERNELVER
-		KDUMP_KERNELVER=$nondebug_kernelver
-	fi
-
+	KDUMP_KERNELVER=$(_get_kdump_kernel_version)
 	KDUMP_KERNEL=$(prepare_kdump_kernel "$KDUMP_KERNELVER")
-
-	if ! [[ -e $KDUMP_KERNEL ]]; then
-		if [[ -n $debug_kernelver ]]; then
-			dinfo "Fallback to using debug kernel"
-			KDUMP_KERNELVER=$debug_kernelver
-			KDUMP_KERNEL=$(prepare_kdump_kernel "$KDUMP_KERNELVER")
-		fi
-	fi
 
 	if ! [[ -e $KDUMP_KERNEL ]]; then
 		derror "Failed to detect kdump kernel location"
