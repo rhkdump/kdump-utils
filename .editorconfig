@@ -22,7 +22,7 @@ space_redirects    = true
 shell_variant = bash
 
 # Use dracut code style for *-module-setup.sh
-[*-module-setup.sh]
+[*-module-setup.sh,dracut-early-kdump.sh]
 shell_variant = bash
 indent_style = space
 indent_size = 4

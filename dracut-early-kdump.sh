@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/bash
 
 KEXEC=/sbin/kexec
 standard_kexec_args="-p"
