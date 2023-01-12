@@ -255,7 +255,12 @@ parse_config()
 				config_val=$DEFAULT_SSHKEY
 			fi
 			;;
-		path | core_collector | kdump_post | kdump_pre | extra_bins | extra_modules | failure_action | default | final_action | force_rebuild | force_no_rebuild | fence_kdump_args | fence_kdump_nodes | auto_reset_crashkernel) ;;
+		default)
+			dwarn "WARNING: Option 'default' was renamed 'failure_action' and will be removed in the future."
+			dwarn "Please update $KDUMP_CONFIG_FILE to use option 'failure_action' instead."
+			_set_config failure_action "$config_val" || return 1
+			;;
+		path | core_collector | kdump_post | kdump_pre | extra_bins | extra_modules | failure_action | final_action | force_rebuild | force_no_rebuild | fence_kdump_args | fence_kdump_nodes | auto_reset_crashkernel) ;;
 
 		net | options | link_delay | disk_timeout | debug_mem_level | blacklist)
 			derror "Deprecated kdump config option: $config_opt. Refer to kdump.conf manpage for alternatives."
@@ -990,31 +995,12 @@ start_dump()
 
 check_failure_action_config()
 {
-	local default_option
-	local failure_action
-	local option="failure_action"
-
-	default_option=${OPT[default]}
-	failure_action=${OPT[failure_action]}
-
-	if [[ -z $failure_action ]] && [[ -z $default_option ]]; then
-		return 0
-	elif [[ -n $failure_action ]] && [[ -n $default_option ]]; then
-		derror "Cannot specify 'failure_action' and 'default' option together"
-		return 1
-	fi
-
-	if [[ -n $default_option ]]; then
-		option="default"
-		failure_action="$default_option"
-	fi
-
-	case "$failure_action" in
-	reboot | halt | poweroff | shell | dump_to_rootfs)
+	case "${OPT[failure_action]}" in
+	"" | reboot | halt | poweroff | shell | dump_to_rootfs)
 		return 0
 		;;
 	*)
-		dinfo $"Usage kdump.conf: $option {reboot|halt|poweroff|shell|dump_to_rootfs}"
+		dinfo $"Usage kdump.conf: failure_action {reboot|halt|poweroff|shell|dump_to_rootfs}"
 		return 1
 		;;
 	esac
@@ -1022,22 +1008,15 @@ check_failure_action_config()
 
 check_final_action_config()
 {
-	local final_action
-
-	final_action=${OPT[final_action]}
-	if [[ -z $final_action ]]; then
+	case "${OPT[final_action]}" in
+	"" | reboot | halt | poweroff)
 		return 0
-	else
-		case "$final_action" in
-		reboot | halt | poweroff)
-			return 0
-			;;
-		*)
-			dinfo $"Usage kdump.conf: final_action {reboot|halt|poweroff}"
-			return 1
-			;;
-		esac
-	fi
+		;;
+	*)
+		dinfo $"Usage kdump.conf: final_action {reboot|halt|poweroff}"
+		return 1
+		;;
+	esac
 }
 
 start()
