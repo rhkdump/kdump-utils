@@ -986,46 +986,26 @@ check_final_action_config()
 
 start()
 {
-	if ! check_dump_feasibility; then
-		derror "Starting kdump: [FAILED]"
-		return 1
-	fi
-
-	if ! parse_config; then
-		derror "Starting kdump: [FAILED]"
-		return 1
-	fi
+	check_dump_feasibility || return
+	parse_config || return
 
 	if sestatus 2> /dev/null | grep -q "SELinux status.*enabled"; then
 		selinux_relabel
 	fi
 
-	if ! save_raw; then
-		derror "Starting kdump: [FAILED]"
-		return 1
-	fi
+	save_raw || return
 
 	if [[ $DEFAULT_DUMP_MODE == "kdump" ]] && is_kernel_loaded "kdump"; then
 		dwarn "Kdump already running: [WARNING]"
 		return 0
 	fi
 
-	if ! check_and_wait_network_ready; then
-		derror "Starting kdump: [FAILED]"
-		return 1
-	fi
-
-	if ! check_rebuild; then
-		derror "Starting kdump: [FAILED]"
-		return 1
-	fi
-
-	if ! start_dump; then
-		derror "Starting kdump: [FAILED]"
-		return 1
-	fi
+	check_and_wait_network_ready || return
+	check_rebuild || return
+	start_dump || return
 
 	dinfo "Starting kdump: [OK]"
+	return 0
 }
 
 reload()
@@ -1697,7 +1677,10 @@ main()
 
 	case "$1" in
 	start)
-		start
+		if ! start; then
+			derror "Starting kdump: [FAILED]"
+			exit 1
+		fi
 		;;
 	stop)
 		stop
@@ -1722,7 +1705,10 @@ main()
 		;;
 	restart)
 		stop
-		start
+		if ! start; then
+			derror "Starting kdump: [FAILED]"
+			exit 1
+		fi
 		;;
 	rebuild)
 		rebuild
