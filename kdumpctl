@@ -16,7 +16,6 @@ KDUMP_INITRD=""
 TARGET_INITRD=""
 #kdump shall be the default dump mode
 DEFAULT_DUMP_MODE="kdump"
-image_time=0
 
 standard_kexec_args="-d -p"
 
@@ -117,6 +116,8 @@ rebuild_kdump_initrd()
 
 rebuild_initrd()
 {
+	dinfo "Rebuilding $TARGET_INITRD"
+
 	if [[ ! -w $(dirname "$TARGET_INITRD") ]]; then
 		derror "$(dirname "$TARGET_INITRD") does not have write permission. Cannot rebuild $TARGET_INITRD"
 		return 1
@@ -294,10 +295,12 @@ get_pcs_cluster_modified_files()
 {
 	local time_stamp
 	local modified_files
+	local image_time
 
 	is_generic_fence_kdump && return 1
 	is_pcs_fence_kdump || return 1
 
+	image_time=$1
 	time_stamp=$(pcs cluster cib | xmllint --xpath 'string(/cib/@cib-last-written)' - | xargs -0 date +%s --date)
 
 	if [[ -n $time_stamp ]] && [[ $time_stamp -gt $image_time ]]; then
@@ -341,10 +344,14 @@ setup_initrd()
 
 check_files_modified()
 {
+
 	local modified_files=""
+	local image_time
+
+	image_time=$(stat -c "%Y" "$TARGET_INITRD" 2> /dev/null)
 
 	#also rebuild when Pacemaker cluster conf is changed and fence kdump is enabled.
-	modified_files=$(get_pcs_cluster_modified_files)
+	modified_files=$(get_pcs_cluster_modified_files "$image_time")
 
 	EXTRA_BINS=${OPT[kdump_post]}
 	CHECK_FILES=${OPT[kdump_pre]}
@@ -532,32 +539,25 @@ check_fs_modified()
 
 # returns 0 if system is not modified
 # returns 1 if system is modified
-# returns 2 if system modification is invalid
-check_system_modified()
+# returns 2 if an error occurred
+is_system_modified()
 {
 	local ret
 
 	[[ -f $TARGET_INITRD ]] || return 1
 
-	check_files_modified
-	ret=$?
-	if [[ $ret -ne 0 ]]; then
-		return $ret
+	# in case of fadump mode, check whether the default/target initrd is
+	# already built with dump capture capability
+	if [[ $DEFAULT_DUMP_MODE == "fadump" ]]; then
+		if ! lsinitrd -f $DRACUT_MODULES_FILE "$TARGET_INITRD" | grep -q -e ^kdumpbase$ -e ^zz-fadumpinit$; then
+			dinfo "Rebuild $TARGET_INITRD with dump capture support"
+			return 1
+		fi
 	fi
 
-	check_fs_modified
-	ret=$?
-	if [[ $ret -ne 0 ]]; then
-		return $ret
-	fi
-
+	check_files_modified || return
+	check_fs_modified || return
 	check_drivers_modified
-	ret=$?
-	if [[ $ret -ne 0 ]]; then
-		return $ret
-	fi
-
-	return 0
 }
 
 # need_initrd_rebuild - check whether the initrd needs to be rebuild
@@ -600,18 +600,7 @@ need_initrd_rebuild()
 		return 1
 	fi
 
-	# in case of fadump mode, check whether the default/target initrd is
-	# already built with dump capture capability
-	if [[ $DEFAULT_DUMP_MODE == "fadump" ]]; then
-		if ! lsinitrd -f $DRACUT_MODULES_FILE "$TARGET_INITRD" | grep -q -e ^kdumpbase$ -e ^zz-fadumpinit$; then
-			dinfo "Rebuild $TARGET_INITRD with dump capture support"
-			return 1
-		fi
-	fi
-
-	image_time=$(stat -c "%Y" "$TARGET_INITRD" 2> /dev/null)
-	check_system_modified
-
+	is_system_modified
 }
 
 # On ppc64le LPARs, the keys trusted by firmware do not end up in
@@ -994,7 +983,6 @@ start()
 			# Nothing to do
 			;;
 		1)
-			dinfo "Rebuilding $TARGET_INITRD"
 			rebuild_initrd || return
 			;;
 		*)
@@ -1105,7 +1093,6 @@ rebuild()
 
 	setup_initrd || return 1
 
-	dinfo "Rebuilding $TARGET_INITRD"
 	rebuild_initrd
 }
 
@@ -1118,10 +1105,18 @@ do_estimate()
 	local size_mb=$((1024 * 1024))
 
 	setup_initrd
-	if [[ ! -f $TARGET_INITRD ]]; then
-		derror "kdumpctl estimate: kdump initramfs is not built yet."
-		exit 1
-	fi
+	is_system_modified
+	case "$?" in
+		0)
+			# Nothing to do
+			;;
+		1)
+			rebuild_initrd || return
+			;;
+		*)
+			return
+			;;
+	esac
 
 	kdump_mods="$(lsinitrd "$TARGET_INITRD" -f /usr/lib/dracut/hostonly-kernel-modules.txt | tr '\n' ' ')"
 	baseline=$(kdump_get_arch_recommend_size)
