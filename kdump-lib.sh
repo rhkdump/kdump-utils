@@ -22,6 +22,11 @@ is_fadump_capable()
 	return 1
 }
 
+is_aws_aarch64()
+{
+	[[ "$(lscpu | grep "BIOS Model name")" =~ "AWS Graviton" ]]
+}
+
 is_squash_available()
 {
 	local _version kmodule
@@ -845,6 +850,10 @@ prepare_cmdline()
 			cmdline+=" $i.kdumptimeout=0"
 		fi
 	done
+
+	# This is a workaround on AWS platform. Always remove irqpoll since it
+	# may cause the hot-remove of some pci hotplug device.
+	is_aws_aarch64 && cmdline=$(remove_cmdline_param "${cmdline}" irqpoll)
 
 	echo "$cmdline"
 }

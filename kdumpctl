@@ -656,18 +656,6 @@ function remove_kdump_kernel_key()
 	keyctl unlink "$KDUMP_KEY_ID" %:.ima
 }
 
-function is_aws_aarch64()
-{
-	local _bios_model
-
-	_bios_model=$(lscpu | grep "BIOS Model name")
-	if [[ "${_bios_model}" =~ "AWS Graviton" ]]; then
-		return 0
-	fi
-
-	return 1
-}
-
 # Load the kdump kernel specified in /etc/sysconfig/kdump
 # If none is specified, try to load a kdump kernel with the same version
 # as the currently running kernel.
@@ -677,11 +665,6 @@ load_kdump()
 
 	KEXEC_ARGS=$(prepare_kexec_args "${KEXEC_ARGS}")
 	KDUMP_COMMANDLINE=$(prepare_cmdline "${KDUMP_COMMANDLINE}" "${KDUMP_COMMANDLINE_REMOVE}" "${KDUMP_COMMANDLINE_APPEND}")
-	# This is a workaround on AWS platform, since irqpoll may cause the hot-remove of some pci hotplug device
-	if is_aws_aarch64; then
-		KDUMP_COMMANDLINE=$(remove_cmdline_param "${KDUMP_COMMANDLINE}" irqpoll)
-	fi
-
 	# For secureboot enabled machines, use new kexec file based syscall.
 	# Old syscall will always fail as it does not have capability to
 	# to kernel signature verification.
