@@ -37,7 +37,7 @@ early_kdump_load()
         return 1
     fi
 
-    if check_current_kdump_status; then
+    if is_kernel_loaded "kdump"; then
         return 1
     fi
 

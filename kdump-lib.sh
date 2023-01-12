@@ -9,6 +9,7 @@ else
 fi
 
 FADUMP_ENABLED_SYS_NODE="/sys/kernel/fadump_enabled"
+FADUMP_REGISTER_SYS_NODE="/sys/kernel/fadump_registered"
 
 is_fadump_capable()
 {
@@ -494,19 +495,31 @@ check_kdump_feasibility()
 	return $?
 }
 
-check_current_kdump_status()
+is_kernel_loaded()
 {
-	if [[ ! -f /sys/kernel/kexec_crash_loaded ]]; then
-		derror "Perhaps CONFIG_CRASH_DUMP is not enabled in kernel"
+	local _sysfs _mode
+
+	_mode=$1
+
+	case "$_mode" in
+	kdump)
+		_sysfs="/sys/kernel/kexec_crash_loaded"
+		;;
+	fadump)
+		_sysfs="$FADUMP_REGISTER_SYS_NODE"
+		;;
+	*)
+		derror "Unknown dump mode '$_mode' provided"
+		return 1
+		;;
+	esac
+
+	if [[ ! -f $_sysfs ]]; then
+		derror "$_mode is not supported on this kernel"
 		return 1
 	fi
 
-	rc=$(< /sys/kernel/kexec_crash_loaded)
-	if [[ $rc == 1 ]]; then
-		return 0
-	else
-		return 1
-	fi
+	[[ $(< $_sysfs) -eq 1 ]]
 }
 
 # remove_cmdline_param <kernel cmdline> <param1> [<param2>] ... [<paramN>]

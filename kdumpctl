@@ -14,7 +14,6 @@ DEFAULT_INITRD_BAK=""
 INITRD_CHECKSUM_LOCATION=""
 KDUMP_INITRD=""
 TARGET_INITRD=""
-FADUMP_REGISTER_SYS_NODE="/sys/kernel/fadump_registered"
 #kdump shall be the default dump mode
 DEFAULT_DUMP_MODE="kdump"
 image_time=0
@@ -837,23 +836,6 @@ show_reserved_mem()
 	dinfo "Reserved ${mem_mb}MB memory for crash kernel"
 }
 
-check_current_fadump_status()
-{
-	# Check if firmware-assisted dump has been registered.
-	rc=$(< $FADUMP_REGISTER_SYS_NODE)
-	[[ $rc -eq 1 ]] && return 0
-	return 1
-}
-
-check_current_status()
-{
-	if [[ $DEFAULT_DUMP_MODE == "fadump" ]]; then
-		check_current_fadump_status
-	else
-		check_current_kdump_status
-	fi
-}
-
 save_raw()
 {
 	local raw_target
@@ -974,8 +956,8 @@ check_dump_feasibility()
 
 start_fadump()
 {
-	echo 1 > $FADUMP_REGISTER_SYS_NODE
-	if ! check_current_fadump_status; then
+	echo 1 > "$FADUMP_REGISTER_SYS_NODE"
+	if ! is_kernel_loaded "fadump"; then
 		derror "fadump: failed to register"
 		return 1
 	fi
@@ -1040,7 +1022,7 @@ start()
 		return 1
 	fi
 
-	if [[ $DEFAULT_DUMP_MODE == "kdump" ]] && check_current_kdump_status; then
+	if [[ $DEFAULT_DUMP_MODE == "kdump" ]] && is_kernel_loaded "kdump"; then
 		dwarn "Kdump already running: [WARNING]"
 		return 0
 	fi
@@ -1065,7 +1047,7 @@ start()
 
 reload()
 {
-	if ! check_current_status; then
+	if ! is_kernel_loaded "$DEFAULT_DUMP_MODE"; then
 		dwarn "Kdump was not running: [WARNING]"
 	fi
 
@@ -1096,8 +1078,8 @@ reload()
 
 stop_fadump()
 {
-	echo 0 > $FADUMP_REGISTER_SYS_NODE
-	if check_current_fadump_status; then
+	echo 0 > "$FADUMP_REGISTER_SYS_NODE"
+	if is_kernel_loaded "fadump"; then
 		derror "fadump: failed to unregister"
 		return 1
 	fi
@@ -1126,7 +1108,7 @@ stop_kdump()
 
 reload_fadump()
 {
-	if echo 1 > $FADUMP_REGISTER_SYS_NODE; then
+	if echo 1 > "$FADUMP_REGISTER_SYS_NODE"; then
 		dinfo "fadump: re-registered successfully"
 		return 0
 	else
@@ -1739,7 +1721,7 @@ main()
 		;;
 	status)
 		EXIT_CODE=0
-		check_current_status
+		is_kernel_loaded "$DEFAULT_DUMP_MODE"
 		case "$?" in
 		0)
 			dinfo "Kdump is operational"
