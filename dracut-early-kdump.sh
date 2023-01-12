@@ -6,7 +6,6 @@ standard_kexec_args="-p"
 EARLY_KDUMP_INITRD=""
 EARLY_KDUMP_KERNEL=""
 EARLY_KDUMP_CMDLINE=""
-EARLY_KDUMP_KERNELVER=""
 EARLY_KEXEC_ARGS=""
 
 . /etc/sysconfig/kdump
@@ -58,6 +57,7 @@ early_kdump_load()
 	--command-line=$EARLY_KDUMP_CMDLINE --initrd=$EARLY_KDUMP_INITRD \
 	$EARLY_KDUMP_KERNEL"
 
+    # shellcheck disable=SC2086
     if $KEXEC $EARLY_KEXEC_ARGS $standard_kexec_args \
         --command-line="$EARLY_KDUMP_CMDLINE" \
         --initrd=$EARLY_KDUMP_INITRD $EARLY_KDUMP_KERNEL; then
