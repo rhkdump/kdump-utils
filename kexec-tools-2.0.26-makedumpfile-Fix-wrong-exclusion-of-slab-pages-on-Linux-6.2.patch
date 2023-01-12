@@ -1,0 +1,81 @@
+From 5f17bdd2128998a3eeeb4521d136a192222fadb6 Mon Sep 17 00:00:00 2001
+From: Kazuhito Hagio <k-hagio-ab@nec.com>
+Date: Wed, 21 Dec 2022 11:06:39 +0900
+Subject: [PATCH] [PATCH] Fix wrong exclusion of slab pages on Linux 6.2-rc1
+
+* Required for kernel 6.2
+
+Kernel commit 130d4df57390 ("mm/sl[au]b: rearrange struct slab fields to
+allow larger rcu_head"), which is contained in Linux 6.2-rc1 and later,
+made the offset of slab.slabs equal to page.mapping's one.  As a result,
+"makedumpfile -d 8", which should exclude user data, excludes some slab
+pages wrongly because isAnon() returns true when slab.slabs is an odd
+number.  With such dumpfiles, crash can fail to start session with an
+error like this:
+
+  # crash vmlinux dumpfile
+  ...
+  crash: page excluded: kernel virtual address: ffff8fa047ac2fe8 type: "xa_node shift"
+
+Make isAnon() check that the page is not slab to fix this.
+
+Signed-off-by: Kazuhito Hagio <k-hagio-ab@nec.com>
+---
+ makedumpfile.c | 6 +++---
+ makedumpfile.h | 9 +++------
+ 2 files changed, 6 insertions(+), 9 deletions(-)
+
+diff --git a/makedumpfile-1.7.2/makedumpfile.c b/makedumpfile-1.7.2/makedumpfile.c
+index ff821eb..f403683 100644
+--- a/makedumpfile-1.7.2/makedumpfile.c
++++ b/makedumpfile-1.7.2/makedumpfile.c
+@@ -6502,7 +6502,7 @@ __exclude_unnecessary_pages(unsigned long mem_map,
+ 		 */
+ 		else if ((info->dump_level & DL_EXCLUDE_CACHE)
+ 		    && is_cache_page(flags)
+-		    && !isPrivate(flags) && !isAnon(mapping)) {
++		    && !isPrivate(flags) && !isAnon(mapping, flags)) {
+ 			pfn_counter = &pfn_cache;
+ 		}
+ 		/*
+@@ -6510,7 +6510,7 @@ __exclude_unnecessary_pages(unsigned long mem_map,
+ 		 */
+ 		else if ((info->dump_level & DL_EXCLUDE_CACHE_PRI)
+ 		    && is_cache_page(flags)
+-		    && !isAnon(mapping)) {
++		    && !isAnon(mapping, flags)) {
+ 			if (isPrivate(flags))
+ 				pfn_counter = &pfn_cache_private;
+ 			else
+@@ -6522,7 +6522,7 @@ __exclude_unnecessary_pages(unsigned long mem_map,
+ 		 *  - hugetlbfs pages
+ 		 */
+ 		else if ((info->dump_level & DL_EXCLUDE_USER_DATA)
+-			 && (isAnon(mapping) || isHugetlb(compound_dtor))) {
++			 && (isAnon(mapping, flags) || isHugetlb(compound_dtor))) {
+ 			pfn_counter = &pfn_user;
+ 		}
+ 		/*
+diff --git a/makedumpfile-1.7.2/makedumpfile.h b/makedumpfile-1.7.2/makedumpfile.h
+index 70a1a91..21dec7d 100644
+--- a/makedumpfile-1.7.2/makedumpfile.h
++++ b/makedumpfile-1.7.2/makedumpfile.h
+@@ -161,12 +161,9 @@ test_bit(int nr, unsigned long addr)
+ #define isSwapBacked(flags)	test_bit(NUMBER(PG_swapbacked), flags)
+ #define isHWPOISON(flags)	(test_bit(NUMBER(PG_hwpoison), flags) \
+ 				&& (NUMBER(PG_hwpoison) != NOT_FOUND_NUMBER))
+-
+-static inline int
+-isAnon(unsigned long mapping)
+-{
+-	return ((unsigned long)mapping & PAGE_MAPPING_ANON) != 0;
+-}
++#define isSlab(flags)		test_bit(NUMBER(PG_slab), flags)
++#define isAnon(mapping, flags)	(((unsigned long)mapping & PAGE_MAPPING_ANON) != 0 \
++				&& !isSlab(flags))
+ 
+ #define PTOB(X)			(((unsigned long long)(X)) << PAGESHIFT())
+ #define BTOP(X)			(((unsigned long long)(X)) >> PAGESHIFT())
+-- 
+2.39.0
+

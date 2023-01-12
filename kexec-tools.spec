@@ -105,6 +105,7 @@ Requires:       systemd-udev%{?_isa}
 #
 # Patches 601 onward are generic patches
 #
+Patch601: kexec-tools-2.0.26-makedumpfile-Fix-wrong-exclusion-of-slab-pages-on-Linux-6.2.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -120,6 +121,7 @@ mkdir -p -m755 kcp
 tar -z -x -v -f %{SOURCE9}
 tar -z -x -v -f %{SOURCE19}
 
+%patch601 -p1
 
 %ifarch ppc
 %define archdef ARCH=ppc
