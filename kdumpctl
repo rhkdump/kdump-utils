@@ -560,72 +560,58 @@ check_system_modified()
 	return 0
 }
 
-check_rebuild()
+# need_initrd_rebuild - check whether the initrd needs to be rebuild
+# Returns:
+#	0	if does not need to be rebuild
+#	1	if it needs to be rebuild
+#	2	if an error occurred
+need_initrd_rebuild()
 {
-	local capture_capable_initrd="1"
 	local force_rebuild force_no_rebuild
-	local ret system_modified="0"
 
-	setup_initrd || return 1
-
-	force_no_rebuild=${OPT[force_no_rebuild]}
-	force_no_rebuild=${force_no_rebuild:-0}
+	force_no_rebuild=${OPT[force_no_rebuild]:-0}
 	if [[ $force_no_rebuild != "0" ]] && [[ $force_no_rebuild != "1" ]]; then
 		derror "Error: force_no_rebuild value is invalid"
-		return 1
+		return 2
 	fi
 
-	force_rebuild=${OPT[force_rebuild]}
-	force_rebuild=${force_rebuild:-0}
+	force_rebuild=${OPT[force_rebuild]:-0}
 	if [[ $force_rebuild != "0" ]] && [[ $force_rebuild != "1" ]]; then
 		derror "Error: force_rebuild value is invalid"
-		return 1
+		return 2
 	fi
 
 	if [[ $force_no_rebuild == "1" && $force_rebuild == "1" ]]; then
 		derror "Error: force_rebuild and force_no_rebuild are enabled simultaneously in kdump.conf"
-		return 1
+		return 2
 	fi
 
-	# Will not rebuild kdump initrd
 	if [[ $force_no_rebuild == "1" ]]; then
 		return 0
 	fi
 
-	#check to see if dependent files has been modified
-	#since last build of the image file
-	if [[ -f $TARGET_INITRD ]]; then
-		image_time=$(stat -c "%Y" "$TARGET_INITRD" 2> /dev/null)
+	if [[ $force_rebuild == "1" ]]; then
+		dinfo "Force rebuild $TARGET_INITRD"
+		return 1
+	fi
 
-		#in case of fadump mode, check whether the default/target
-		#initrd is already built with dump capture capability
-		if [[ $DEFAULT_DUMP_MODE == "fadump" ]]; then
-			capture_capable_initrd=$(lsinitrd -f $DRACUT_MODULES_FILE "$TARGET_INITRD" | grep -c -e ^kdumpbase$ -e ^zz-fadumpinit$)
+	if [[ ! -f $TARGET_INITRD ]]; then
+		dinfo "No kdump initial ramdisk found."
+		return 1
+	fi
+
+	# in case of fadump mode, check whether the default/target initrd is
+	# already built with dump capture capability
+	if [[ $DEFAULT_DUMP_MODE == "fadump" ]]; then
+		if ! lsinitrd -f $DRACUT_MODULES_FILE "$TARGET_INITRD" | grep -q -e ^kdumpbase$ -e ^zz-fadumpinit$; then
+			dinfo "Rebuild $TARGET_INITRD with dump capture support"
+			return 1
 		fi
 	fi
 
+	image_time=$(stat -c "%Y" "$TARGET_INITRD" 2> /dev/null)
 	check_system_modified
-	ret=$?
-	if [[ $ret -eq 2 ]]; then
-		return 1
-	elif [[ $ret -eq 1 ]]; then
-		system_modified="1"
-	fi
 
-	if [[ $image_time -eq 0 ]]; then
-		dinfo "No kdump initial ramdisk found."
-	elif [[ $capture_capable_initrd == "0" ]]; then
-		dinfo "Rebuild $TARGET_INITRD with dump capture support"
-	elif [[ $force_rebuild != "0" ]]; then
-		dinfo "Force rebuild $TARGET_INITRD"
-	elif [[ $system_modified != "0" ]]; then
-		:
-	else
-		return 0
-	fi
-
-	dinfo "Rebuilding $TARGET_INITRD"
-	rebuild_initrd
 }
 
 # On ppc64le LPARs, the keys trusted by firmware do not end up in
@@ -1001,7 +987,20 @@ start()
 	fi
 
 	check_and_wait_network_ready || return
-	check_rebuild || return
+	setup_initrd || return
+	need_initrd_rebuild
+	case "$?" in
+		0)
+			# Nothing to do
+			;;
+		1)
+			dinfo "Rebuilding $TARGET_INITRD"
+			rebuild_initrd || return
+			;;
+		*)
+			return
+			;;
+	esac
 	start_dump || return
 
 	dinfo "Starting kdump: [OK]"
