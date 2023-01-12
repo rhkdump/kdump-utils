@@ -526,24 +526,6 @@ is_kernel_loaded()
 	[[ $(< $_sysfs) -eq 1 ]]
 }
 
-# remove_cmdline_param <kernel cmdline> <param1> [<param2>] ... [<paramN>]
-# Remove a list of kernel parameters from a given kernel cmdline and print the result.
-# For each "arg" in the removing params list, "arg" and "arg=xxx" will be removed if exists.
-remove_cmdline_param()
-{
-	local cmdline=$1
-	shift
-
-	for arg in "$@"; do
-		cmdline=$(echo "$cmdline" |
-			sed -e "s/\b$arg=[^ ]*//g" \
-				-e "s/^$arg\b//g" \
-				-e "s/[[:space:]]$arg\b//g" \
-				-e "s/\s\+/ /g")
-	done
-	echo "$cmdline"
-}
-
 #
 # This function returns the "apicid" of the boot
 # cpu (cpu 0) if present.
@@ -556,23 +538,6 @@ get_bootcpu_apicid()
         CPU=="0" && /^apicid/           { print $NF; }          \
         ' \
 		/proc/cpuinfo
-}
-
-#
-# append_cmdline <kernel cmdline> <parameter name> <parameter value>
-# This function appends argument "$2=$3" to string ($1) if not already present.
-#
-append_cmdline()
-{
-	local cmdline=$1
-	local newstr=${cmdline/$2/""}
-
-	# unchanged str implies argument wasn't there
-	if [[ $cmdline == "$newstr" ]]; then
-		cmdline="${cmdline} ${2}=${3}"
-	fi
-
-	echo "$cmdline"
 }
 
 # This function check iomem and determines if we have more than
@@ -792,26 +757,46 @@ get_watchdog_drvs()
 	echo "$_wdtdrvs"
 }
 
+_cmdline_parse()
+{
+	local opt val
+
+	while read -r opt; do
+		if [[ $opt =~ = ]]; then
+			val=${opt#*=}
+			opt=${opt%%=*}
+			# ignore options like 'foo='
+			[[ -z $val ]] && continue
+			# xargs removes quotes, add them again
+			[[ $val =~ [[:space:]] ]] && val="\"$val\""
+		else
+			val=""
+		fi
+
+		echo "$opt $val"
+	done <<< "$(echo "$1" | xargs -n 1 echo)"
+}
+
 #
 # prepare_cmdline <commandline> <commandline remove> <commandline append>
 # This function performs a series of edits on the command line.
 # Store the final result in global $KDUMP_COMMANDLINE.
 prepare_cmdline()
 {
-	local cmdline id arg
+	local in out append opt val id drv
+	local -A remove
 
-	if [[ -z $1 ]]; then
-		cmdline=$(< /proc/cmdline)
-	else
-		cmdline="$1"
-	fi
+	in=${1:-$(< /proc/cmdline)}
+	while read -r opt val; do
+		[[ -n "$opt" ]] || continue
+		remove[$opt]=1
+	done <<< "$(_cmdline_parse "$2")"
+	append=$3
+
 
 	# These params should always be removed
-	cmdline=$(remove_cmdline_param "$cmdline" crashkernel panic_on_warn)
-	# These params can be removed configurably
-	while read -r arg; do
-		cmdline=$(remove_cmdline_param "$cmdline" "$arg")
-	done <<< "$(echo "$2" | xargs -n 1 echo)"
+	remove[crashkernel]=1
+	remove[panic_on_warn]=1
 
 	# Always remove "root=X", as we now explicitly generate all kinds
 	# of dump target mount information including root fs.
@@ -819,43 +804,62 @@ prepare_cmdline()
 	# We do this before KDUMP_COMMANDLINE_APPEND, if one really cares
 	# about it(e.g. for debug purpose), then can pass "root=X" using
 	# KDUMP_COMMANDLINE_APPEND.
-	cmdline=$(remove_cmdline_param "$cmdline" root)
+	remove[root]=1
 
 	# With the help of "--hostonly-cmdline", we can avoid some interitage.
-	cmdline=$(remove_cmdline_param "$cmdline" rd.lvm.lv rd.luks.uuid rd.dm.uuid rd.md.uuid fcoe)
+	remove[rd.lvm.lv]=1
+	remove[rd.luks.uuid]=1
+	remove[rd.dm.uuid]=1
+	remove[rd.md.uuid]=1
+	remove[fcoe]=1
 
 	# Remove netroot, rd.iscsi.initiator and iscsi_initiator since
 	# we get duplicate entries for the same in case iscsi code adds
 	# it as well.
-	cmdline=$(remove_cmdline_param "$cmdline" netroot rd.iscsi.initiator iscsi_initiator)
+	remove[netroot]=1
+	remove[rd.iscsi.initiator]=1
+	remove[iscsi_initiator]=1
 
-	cmdline="${cmdline} $3"
+	while read -r opt val; do
+		[[ -n "$opt" ]] || continue
+		[[ -n "${remove[$opt]}" ]] && continue
+
+		if [[ -n "$val" ]]; then
+			out+="$opt=$val "
+		else
+			out+="$opt "
+		fi
+	done <<< "$(_cmdline_parse "$in")"
+
+	out+="$append "
 
 	id=$(get_bootcpu_apicid)
-	if [[ -n ${id} ]]; then
-		cmdline=$(append_cmdline "$cmdline" disable_cpu_apicid "$id")
+	if [[ -n "${id}" ]]; then
+		out+="disable_cpu_apicid=$id "
 	fi
 
 	# If any watchdog is used, set it's pretimeout to 0. pretimeout let
 	# watchdog panic the kernel first, and reset the system after the
 	# panic. If the system is already in kdump, panic is not helpful
 	# and only increase the chance of watchdog failure.
-	for i in $(get_watchdog_drvs); do
-		cmdline+=" $i.pretimeout=0"
+	for drv in $(get_watchdog_drvs); do
+		out+="$drv.pretimeout=0 "
 
-		if [[ $i == hpwdt ]]; then
-			# hpwdt have a special parameter kdumptimeout, is's only suppose
-			# to be set to non-zero in first kernel. In kdump, non-zero
-			# value could prevent the watchdog from resetting the system.
-			cmdline+=" $i.kdumptimeout=0"
+		if [[ $drv == hpwdt ]]; then
+			# hpwdt have a special parameter kdumptimeout, it is
+			# only supposed to be set to non-zero in first kernel.
+			# In kdump, non-zero value could prevent the watchdog
+			# from resetting the system.
+			out+="$drv.kdumptimeout=0 "
 		fi
 	done
 
 	# This is a workaround on AWS platform. Always remove irqpoll since it
 	# may cause the hot-remove of some pci hotplug device.
-	is_aws_aarch64 && cmdline=$(remove_cmdline_param "${cmdline}" irqpoll)
+	is_aws_aarch64 && out=$(echo "$out" | sed -e "/\<irqpoll\>//")
 
-	echo "$cmdline"
+	# Trim unnecessary whitespaces
+	echo "$out" | sed -e "s/^ *//g" -e "s/ *$//g" -e "s/ \+/ /g"
 }
 
 PROC_IOMEM=/proc/iomem
