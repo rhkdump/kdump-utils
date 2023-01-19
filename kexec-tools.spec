@@ -5,7 +5,7 @@
 
 Name: kexec-tools
 Version: 2.0.26
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -412,6 +412,9 @@ fi
 %endif
 
 %changelog
+* Thu Jan 19 2023 Fedora Release Engineering <releng@fedoraproject.org> - 2.0.26-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_38_Mass_Rebuild
+
 * Thu Dec 22 2022 Coiby <coxu@redhat.com> - 2.0.26-1
 - Update kexec-tools to 2.0.25
 - Don't try to update crashkernel when bootloader is not installed
