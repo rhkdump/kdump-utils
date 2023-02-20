@@ -1525,7 +1525,7 @@ reset_crashkernel()
 
 _is_bootloader_installed()
 {
-	if [[ $(uname -r) == s390x ]]; then
+	if [[ $(uname -m) == s390x ]]; then
 		test -f /etc/zipl.conf
 	else
 		test -f /boot/grub2/grub.cfg
