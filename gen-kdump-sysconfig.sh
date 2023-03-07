@@ -97,7 +97,7 @@ ppc64le)
 s390x)
 	update_param KEXEC_ARGS "-s"
 	update_param KDUMP_COMMANDLINE_REMOVE \
-		"hugepages hugepagesz slub_debug quiet log_buf_len swiotlb vmcp_cma cma hugetlb_cma prot_virt ignition.firstboot"
+		"hugepages hugepagesz slub_debug quiet log_buf_len swiotlb vmcp_cma cma hugetlb_cma prot_virt ignition.firstboot zfcp.allow_lun_scan"
 	update_param KDUMP_COMMANDLINE_APPEND \
 		"nr_cpus=1 cgroup_disable=memory numa=off udev.children-max=2 panic=10 transparent_hugepage=never novmcoredd vmcp_cma=0 cma=0 hugetlb_cma=0"
 	;;
