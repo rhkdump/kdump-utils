@@ -315,7 +315,9 @@ clone_and_modify_nmconnection() {
     # connection profile based on MAC address
     _match_nmconnection_by_mac "$_uuid" "$_dev"
 
-    _cloned_nmconnection_file_path=$(nmcli --get-values UUID,FILENAME connection show | sed -n "s/^${_uuid}://p")
+    # If a value contain ":", nmcli by default escape it with "\:" because it
+    # also uses ":" as the delimiter to separate values. In our case, escaping is not needed.
+    _cloned_nmconnection_file_path=$(nmcli --escape no --get-values UUID,FILENAME connection show | sed -n "s/^${_uuid}://p")
     _tmp_nmconnection_file_path=$_DRACUT_KDUMP_NM_TMP_DIR/$(basename "$_nmconnection_file_path")
     cp "$_cloned_nmconnection_file_path" "$_tmp_nmconnection_file_path"
     # change uuid back to old value in case it's refered by other connection
