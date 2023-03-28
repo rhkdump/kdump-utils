@@ -540,7 +540,12 @@ kdump_collect_netif_usage() {
     local _destaddr _srcaddr _route _netdev
 
     _destaddr=$(kdump_get_remote_ip "$1")
-    _route=$(kdump_get_ip_route "$_destaddr")
+
+    if ! _route=$(kdump_get_ip_route "$_destaddr"); then
+        derror "Bad kdump network destination: $_destaddr"
+        exit 1
+    fi
+
     _srcaddr=$(kdump_get_ip_route_field "$_route" "src")
     _netdev=$(kdump_get_ip_route_field "$_route" "dev")
 

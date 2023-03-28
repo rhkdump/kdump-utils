@@ -495,6 +495,8 @@ wait_online_network()
 		if _route=$(kdump_get_ip_route "$1" 2> /dev/null); then
 			printf "%s" "$_route"
 			return
+		else
+			dwarn "Waiting for network to be ready (${_loop}s / 10min)"
 		fi
 	done
 
