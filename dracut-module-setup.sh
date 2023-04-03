@@ -91,19 +91,6 @@ kdump_is_vlan() {
     [[ -f /proc/net/vlan/"$1" ]]
 }
 
-# $1: netdev name
-source_ifcfg_file() {
-    local ifcfg_file
-
-    dwarning "Network Scripts are deprecated. You are encouraged to set up network by NetworkManager."
-    ifcfg_file=$(get_ifcfg_filename "$1")
-    if [[ -f ${ifcfg_file} ]]; then
-        . "${ifcfg_file}"
-    else
-        dwarning "The ifcfg file of $1 is not found!"
-    fi
-}
-
 # $1: repeat times
 # $2: string to be repeated
 # $3: separator
