@@ -307,15 +307,6 @@ get_nmcli_value_by_field()
 	LANG=C nmcli --get-values "$@"
 }
 
-# Get nmcli field value of an connection apath (a D-Bus active connection path)
-# Usage: get_nmcli_field_by_apath <field> <apath>
-get_nmcli_field_by_conpath()
-{
-	local _field=$1 _apath=$2
-
-	get_nmcli_value_by_field "$_field" connection show "$_apath"
-}
-
 # Get nmcli connection apath (a D-Bus active connection path ) by ifname
 #
 # apath is used for nmcli connection operations, e.g.
