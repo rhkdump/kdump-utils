@@ -150,11 +150,6 @@ is_nfs_dump_target()
 	return 1
 }
 
-is_fs_dump_target()
-{
-	[ -n "$(kdump_get_conf_val "ext[234]\|xfs\|btrfs\|minix\|virtiofs")" ]
-}
-
 is_lvm2_thinp_device()
 {
 	_device_path=$1
