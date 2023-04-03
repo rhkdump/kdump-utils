@@ -30,7 +30,7 @@ kdump_get_conf_val()
 
 is_mounted()
 {
-	findmnt -k -n "$1" > /dev/null 2>&1
+	[ -n "$1" ] && findmnt -k -n "$1" > /dev/null 2>&1
 }
 
 # $1: info type
