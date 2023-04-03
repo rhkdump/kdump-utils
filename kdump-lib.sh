@@ -307,17 +307,6 @@ get_nmcli_value_by_field()
 	LANG=C nmcli --get-values "$@"
 }
 
-# Get nmcli connection apath (a D-Bus active connection path ) by ifname
-#
-# apath is used for nmcli connection operations, e.g.
-#  $ nmcli connection show $apath
-get_nmcli_connection_apath_by_ifname()
-{
-	local _ifname=$1
-
-	get_nmcli_value_by_field "GENERAL.CON-PATH" device show "$_ifname"
-}
-
 # returns 0 when omission of a module is desired in dracut_args
 # returns 1 otherwise
 is_dracut_mod_omitted()
