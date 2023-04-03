@@ -45,23 +45,55 @@ if ! dlog_init; then
 	exit 1
 fi
 
-# returns 0 when omission of a module is desired in dracut_args
-# returns 1 otherwise
-is_dracut_mod_omitted()
+_get_dracut_arg()
 {
-	local dracut_args dracut_mod=$1
+	local shortopt longopt n tmp
+	local -a _opt _ret
 
-	set -- $(kdump_get_conf_val dracut_args)
-	while [ $# -gt 0 ]; do
+	shortopt=$1; shift
+	longopt=$1; shift
+	n=0
+
+	if [[ -n $shortopt ]]; then
+		_opt+=(-o "${shortopt#-}:")
+	else
+		# getopt requires the -o/--option to be set.
+		_opt+=(-o "")
+	fi
+	[[ -n $longopt ]] && _opt+=(--long "${longopt#--}:")
+
+	# make sure bash didn't break quoting
+	eval set -- "$*"
+	tmp=$(
+		unset POSIXLY_CORRECT
+		getopt -q "${_opt[@]}" -- "$@"
+	)
+	eval set -- "$tmp"
+	while :; do
 		case $1 in
-		-o | --omit)
-			[[ " ${2//[^[:alnum:]]/ } " == *" $dracut_mod "* ]] && return 0
-			;;
+			"$shortopt"|"$longopt")
+				_ret+=("$2"); shift
+				n=$((n+1))
+				;;
+			--|*)
+				break
+				;;
 		esac
 		shift
 	done
 
-	return 1
+	echo "${_ret[@]}"
+	return $n
+}
+
+is_dracut_mod_omitted()
+{
+	local mod omitted
+
+	mod=$1
+	omitted=$(_get_dracut_arg -o --omit "${OPT[dracut_args]}")
+
+	[[ " $omitted " == *" $mod "* ]]
 }
 
 single_instance_lock()

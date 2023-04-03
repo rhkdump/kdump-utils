@@ -107,6 +107,54 @@ Describe 'kdumpctl'
 		End
 	End
 
+	Describe "_get_dracut_arg"
+		dracut_args='-o "foo bar baz" -t 1 --test="a b c" --omit bla'
+		Parameters
+			-o	--omit	2	"foo bar baz bla"
+			-e	--empty	0	""
+			-t	""	1	"1"
+			""	--test	1	"a b c"
+			""	""	0	""
+		End
+		It "should parse the dracut_args correctly"
+			When call _get_dracut_arg "$1" "$2" "$dracut_args"
+			The status should equal $3
+			The output should equal "$4"
+		End
+	End
+
+	Describe "is_dracut_mod_omitted()"
+		KDUMP_CONFIG_FILE=$(mktemp -t kdump_conf.XXXXXXXXXX)
+		cleanup() {
+			rm -f "$kdump_conf"
+		}
+		AfterAll 'cleanup'
+
+		Parameters:dynamic
+			for opt in '-o ' '--omit ' '--omit='; do
+				for val in \
+					'foo' \
+					'"foo"' \
+					'"foo bar baz"' \
+					'"bar foo baz"' \
+					'"bar baz foo"'; do
+					%data success foo "$opt$val"
+					%data success foo "-a x $opt$val -i y"
+					%data failure xyz "$opt$val"
+					%data failure xyz "-a x $opt$val -i y"
+				done
+			done
+			%data success foo "-o xxx -o foo"
+			%data failure foo "-a x -i y"
+		End
+		It "shall return $1 for module $2 and dracut_args '$3'"
+			echo "dracut_args $3" > $KDUMP_CONFIG_FILE
+			parse_config
+			When call is_dracut_mod_omitted $2
+			The status should be $1
+		End
+	End
+
 	Describe '_update_kernel_arg_in_grub_etc_default()'
 		GRUB_ETC_DEFAULT=/tmp/default_grub
 
