@@ -307,25 +307,6 @@ get_nmcli_value_by_field()
 	LANG=C nmcli --get-values "$@"
 }
 
-# returns 0 when omission of a module is desired in dracut_args
-# returns 1 otherwise
-is_dracut_mod_omitted()
-{
-	local dracut_args dracut_mod=$1
-
-	set -- $(kdump_get_conf_val dracut_args)
-	while [ $# -gt 0 ]; do
-		case $1 in
-		-o | --omit)
-			[[ " ${2//[^[:alnum:]]/ } " == *" $dracut_mod "* ]] && return 0
-			;;
-		esac
-		shift
-	done
-
-	return 1
-}
-
 is_wdt_active()
 {
 	local active
