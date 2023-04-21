@@ -1445,7 +1445,11 @@ _update_kernel_cmdline()
 			grubby --args="fadump=$_fadump_val" --update-kernel "$_kernel_path"
 		fi
 	fi
-	[[ -f /etc/zipl.conf ]] && zipl > /dev/null
+
+	# Don't use "[[ CONDITION ]] && COMMAND" which returns 1 under false CONDITION
+	if [[ -f /etc/zipl.conf ]]; then
+		zipl > /dev/null
+	fi
 }
 
 _valid_grubby_kernel_path()
