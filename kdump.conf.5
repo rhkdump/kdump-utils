@@ -28,9 +28,8 @@ understand how this configuration file affects the behavior of kdump.
 
 .B auto_reset_crashkernel <yes|no>
 .RS
-determine whether to reset kernel crashkernel to new default value
-or not when kexec-tools updates the default crashkernel value and
-existing kernels using the old default kernel crashkernel value
+determine whether to reset kernel crashkernel parameter to the default value
+or not when kexec-tools is updated or a new kernel is installed.
 
 .B raw <partition>
 .RS

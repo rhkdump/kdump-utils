@@ -1675,72 +1675,37 @@ _is_bootloader_installed()
 	fi
 }
 
-# update the crashkernel value in GRUB_ETC_DEFAULT if necessary
-#
-# called by reset_crashkernel_after_update and inherit its array variable
-# _crashkernel_vals
-update_crashkernel_in_grub_etc_default_after_update()
+_update_crashkernel()
 {
-	local _crashkernel _fadump_val
-	local _dump_mode _old_default_crashkernel _new_default_crashkernel
+	local _kernel _dump_mode _old_default_crashkernel _new_default_crashkernel _fadump_val _msg
 
-	if [[ $(uname -m) == s390x ]]; then
-		return
-	fi
-
-	_crashkernel=$(_read_kernel_arg_in_grub_etc_default crashkernel)
-
-	if [[ -z $_crashkernel ]]; then
-		return
-	fi
-
-	_fadump_val=$(_read_kernel_arg_in_grub_etc_default fadump)
-	_dump_mode=$(get_dump_mode_by_fadump_val "$_fadump_val")
-
-	_old_default_crashkernel=${_crashkernel_vals[old_${_dump_mode}]}
-	_new_default_crashkernel=${_crashkernel_vals[new_${_dump_mode}]}
-
-	if [[ $_crashkernel == auto ]] ||
-		  [[ $_crashkernel == "$_old_default_crashkernel" &&
-		     $_new_default_crashkernel != "$_old_default_crashkernel" ]]; then
-			_update_kernel_arg_in_grub_etc_default crashkernel "$_new_default_crashkernel"
+	_kernel=$1
+	_dump_mode=$(get_dump_mode_by_kernel "$_kernel")
+	_old_default_crashkernel=$(get_grub_kernel_boot_parameter "$_kernel" crashkernel)
+	_new_default_crashkernel=$(kdump_get_arch_recommend_crashkernel "$_dump_mode")
+	if [[ $_old_default_crashkernel != "$_new_default_crashkernel" ]]; then
+		_fadump_val=$(get_grub_kernel_boot_parameter "$_kernel" fadump)
+		if _update_kernel_cmdline "$_kernel" "$_new_default_crashkernel" "$_dump_mode" "$_fadump_val"; then
+			_msg="For kernel=$_kernel, crashkernel=$_new_default_crashkernel now. Please reboot the system for the change to take effet."
+			_msg+=" Note if you don't want kexec-tools to manage the crashkernel kernel parameter, please set auto_reset_crashkernel=no in /etc/kdump.conf."
+			dinfo "$_msg"
+		fi
 	fi
 }
+
 
 # shellcheck disable=SC2154 # false positive when dereferencing an array
 reset_crashkernel_after_update()
 {
-	local _kernel _crashkernel _dump_mode _fadump_val _old_default_crashkernel _new_default_crashkernel
-	declare -A _crashkernel_vals
+	local _kernel
 
 	if ! _is_bootloader_installed; then
 		return
 	fi
 
-	_crashkernel_vals[old_kdump]=$(cat /tmp/old_default_crashkernel 2> /dev/null)
-	_crashkernel_vals[old_fadump]=$(cat /tmp/old_default_crashkernel_fadump 2> /dev/null)
-	_crashkernel_vals[new_kdump]=$(get_default_crashkernel kdump)
-	_crashkernel_vals[new_fadump]=$(get_default_crashkernel fadump)
-
 	for _kernel in $(_get_all_kernels_from_grubby ALL); do
-		_crashkernel=$(get_grub_kernel_boot_parameter "$_kernel" crashkernel)
-		if [[ $_crashkernel == auto ]]; then
-			reset_crashkernel "--kernel=$_kernel"
-		elif [[ -n $_crashkernel ]]; then
-			_dump_mode=$(get_dump_mode_by_kernel "$_kernel")
-			_old_default_crashkernel=${_crashkernel_vals[old_${_dump_mode}]}
-			_new_default_crashkernel=${_crashkernel_vals[new_${_dump_mode}]}
-			if [[ $_crashkernel == "$_old_default_crashkernel" ]] &&
-				[[ $_new_default_crashkernel != "$_old_default_crashkernel" ]]; then
-				_fadump_val=$(get_grub_kernel_boot_parameter "$_kernel" fadump)
-				if _update_kernel_cmdline "$_kernel" "$_new_default_crashkernel" "$_dump_mode" "$_fadump_val"; then
-					echo "For kernel=$_kernel, crashkernel=$_new_default_crashkernel now."
-				fi
-			fi
-		fi
+		_update_crashkernel "$_kernel"
 	done
-
-	update_crashkernel_in_grub_etc_default_after_update
 }
 
 # read the value of an environ variable from given environ file path
@@ -1764,8 +1729,7 @@ _is_osbuild()
 
 reset_crashkernel_for_installed_kernel()
 {
-	local _installed_kernel _running_kernel _crashkernel _crashkernel_running
-	local _dump_mode_running _fadump_val_running
+	local _installed_kernel
 
 	# During package install, only try to reset crashkernel for osbuild
 	# thus to avoid calling grubby when installing os via anaconda
@@ -1784,21 +1748,7 @@ reset_crashkernel_for_installed_kernel()
 		return
 	fi
 
-	if ! _running_kernel=$(_get_current_running_kernel_path); then
-		ddebug "Couldn't find current running kernel"
-		exit
-	fi
-
-	_crashkernel=$(get_grub_kernel_boot_parameter "$_installed_kernel" crashkernel)
-	_crashkernel_running=$(get_grub_kernel_boot_parameter "$_running_kernel" crashkernel)
-	_dump_mode_running=$(get_dump_mode_by_kernel "$_running_kernel")
-	_fadump_val_running=$(get_grub_kernel_boot_parameter "$_kernel" fadump)
-
-	if [[ $_crashkernel != "$_crashkernel_running" ]]; then
-		if _update_kernel_cmdline "$_installed_kernel" "$_crashkernel_running" "$_dump_mode_running" "$_fadump_val_running"; then
-			echo "kexec-tools has reset $_installed_kernel to use the new default crashkernel value $_crashkernel_running"
-		fi
-	fi
+	_update_crashkernel "$_installed_kernel"
 }
 
 main()
