@@ -61,9 +61,9 @@ Requires(post): servicelog
 Recommends: keyutils
 %endif
 Requires(pre): coreutils sed zlib
-Requires: dracut >= 050
-Requires: dracut-network >= 050
-Requires: dracut-squash >= 050
+Requires: dracut >= 058
+Requires: dracut-network >= 058
+Requires: dracut-squash >= 058
 Requires: ethtool
 Requires: util-linux
 Requires: binutils
