@@ -66,6 +66,7 @@ Requires: dracut-network >= 050
 Requires: dracut-squash >= 050
 Requires: ethtool
 Requires: util-linux
+Requires: binutils
 Recommends: grubby
 Recommends: hostname
 BuildRequires: make

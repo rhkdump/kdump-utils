@@ -11,6 +11,17 @@ fi
 FADUMP_ENABLED_SYS_NODE="/sys/kernel/fadump_enabled"
 FADUMP_REGISTER_SYS_NODE="/sys/kernel/fadump_registered"
 
+is_uki()
+{
+	local img
+
+	img="$1"
+
+	[[ -f "$img" ]] || return
+	[[ "$(file -b --mime-type "$img")" == application/x-dosexec ]] || return
+	objdump -h -j .linux "$img" &> /dev/null
+}
+
 is_fadump_capable()
 {
 	# Check if firmware-assisted dump is enabled
@@ -489,7 +500,9 @@ prepare_kdump_kernel()
 	read -r machine_id < /etc/machine-id
 
 	boot_dirlist=${KDUMP_BOOTDIR:-"/boot /boot/efi /efi /"}
-	boot_imglist="$KDUMP_IMG-$kdump_kernelver$KDUMP_IMG_EXT $machine_id/$kdump_kernelver/$KDUMP_IMG"
+	boot_imglist="$KDUMP_IMG-$kdump_kernelver$KDUMP_IMG_EXT \
+		$machine_id/$kdump_kernelver/$KDUMP_IMG \
+		EFI/Linux/$machine_id-$kdump_kernelver.efi"
 
 	# The kernel of OSTree based systems is not in the standard locations.
 	if is_ostree; then
@@ -562,7 +575,11 @@ prepare_kdump_bootinfo()
 	fi
 
 	# Set KDUMP_BOOTDIR to where kernel image is stored
-	KDUMP_BOOTDIR=$(dirname "$KDUMP_KERNEL")
+	if is_uki "$KDUMP_KERNEL"; then
+		KDUMP_BOOTDIR=/boot
+	else
+		KDUMP_BOOTDIR=$(dirname "$KDUMP_KERNEL")
+	fi
 
 	# Default initrd should just stay aside of kernel image, try to find it in KDUMP_BOOTDIR
 	boot_initrdlist="initramfs-$KDUMP_KERNELVER.img initrd"
@@ -714,6 +731,11 @@ prepare_cmdline()
 	# This is a workaround on AWS platform. Always remove irqpoll since it
 	# may cause the hot-remove of some pci hotplug device.
 	is_aws_aarch64 && out=$(echo "$out" | sed -e "/\<irqpoll\>//")
+
+	# Always disable gpt-auto-generator as it hangs during boot of the
+	# crash kernel. Furthermore we know which disk will be used for dumping
+	# (if at all) and add it explicitly.
+	is_uki "$KDUMP_KERNEL" && out+="rd.systemd.gpt_auto=no "
 
 	# Trim unnecessary whitespaces
 	echo "$out" | sed -e "s/^ *//g" -e "s/ *$//g" -e "s/ \+/ /g"

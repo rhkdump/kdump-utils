@@ -694,7 +694,7 @@ function remove_kdump_kernel_key()
 # as the currently running kernel.
 load_kdump()
 {
-	local ret
+	local ret uki
 
 	KEXEC_ARGS=$(prepare_kexec_args "${KEXEC_ARGS}")
 	KDUMP_COMMANDLINE=$(prepare_cmdline "${KDUMP_COMMANDLINE}" "${KDUMP_COMMANDLINE_REMOVE}" "${KDUMP_COMMANDLINE_APPEND}")
@@ -705,6 +705,16 @@ load_kdump()
 		dinfo "Secure Boot is enabled. Using kexec file based syscall."
 		KEXEC_ARGS="$KEXEC_ARGS -s"
 		load_kdump_kernel_key
+	fi
+
+	if is_uki "$KDUMP_KERNEL"; then
+		uki=$KDUMP_KERNEL
+		KDUMP_KERNEL=$KDUMP_TMPDIR/vmlinuz
+		objcopy -O binary --only-section .linux "$uki" "$KDUMP_KERNEL"
+		sync -f "$KDUMP_KERNEL"
+		# Make sure the temp file has the correct SELinux label.
+		# Otherwise starting the kdump.service will fail.
+		chcon -t boot_t "$KDUMP_KERNEL"
 	fi
 
 	ddebug "$KEXEC $KEXEC_ARGS $standard_kexec_args --command-line=$KDUMP_COMMANDLINE --initrd=$TARGET_INITRD $KDUMP_KERNEL"
