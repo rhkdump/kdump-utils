@@ -11,6 +11,7 @@ ExecStop=/usr/bin/kdumpctl stop
 ExecReload=/usr/bin/kdumpctl reload
 RemainAfterExit=yes
 StartLimitInterval=0
+PrivateTmp=yes
 
 [Install]
 WantedBy=multi-user.target

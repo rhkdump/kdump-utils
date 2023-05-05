@@ -45,6 +45,13 @@ if ! dlog_init; then
 	exit 1
 fi
 
+KDUMP_TMPDIR=$(mktemp -d kdump.XXXX)
+trap '
+    ret=$?;
+    rm -rf "$KDUMP_TMPDIR"
+    exit $ret;
+    ' EXIT
+
 _get_dracut_arg()
 {
 	local shortopt longopt n tmp
@@ -1193,8 +1200,7 @@ get_kernel_size()
 	# Prepare temp files:
 	local tmp img=$1
 
-	tmp=$(mktemp /tmp/vmlinux-XXX)
-	trap 'rm -f "$tmp"' 0
+	tmp="$KDUMP_TMPDIR/vmlinux"
 
 	# Try to check if it's a vmlinux already
 	check_vmlinux "$img" && get_vmlinux_size "$img" && return 0
