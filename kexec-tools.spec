@@ -5,7 +5,7 @@
 
 Name: kexec-tools
 Version: 2.0.26
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -416,7 +416,27 @@ fi
 %endif
 
 %changelog
-* Jan 30 2023 Coiby <coxu@redhat.com> - 2.0.26-3
+* Tue May 16 2023 Coiby <coxu@redhat.com> - 2.0.26-4
+- kdumpctl: Add support for systemd-boot paths
+- mkdumprd: add --aggressive-strip as default dracut args
+- kdumpctl: Add basic UKI support
+- kdumpctl: Move temp file in get_kernel_size to global temp dir
+- kdumpctl: Move get_kernel_size to kdumpctl
+- kdumpctl: fix is_dracut_mod_omitted
+- kdump-lib: move is_dracut_mod_omitted to kdumpctl
+- kdump-lib: remove get_nmcli_connection_apath_by_ifname
+- kdump-lib: remove get_nmcli_field_by_conpath
+- dracut-module-setup: remove dead source_ifcfg_file
+- kdump-lib-initramfs: remove is_fs_dump_target
+- kdump-lib-initramfs: harden is_mounted
+- Show how much time kdump has waited for the network to be ready
+- Tell nmcli to not escape colon when getting the path of connection profile
+- kdumpctl: lower the log level in reset_crashkernel_for_installed_kernel
+- Install nfsv4-related drivers when users specify nfs dumping via dracut_args
+- sysconfig: add zfcp.allow_lun_scan to KDUMP_COMMANDLINE_REMOVE on s390
+- Use the correct command to get architecture
+
+* Mon Jan 30 2023 Coiby <coxu@redhat.com> - 2.0.26-3
 - kdumpctl: make do_estimate more robust
 - kdumpctl: refractor check_rebuild
 - kdumpctl: cleanup 'stop'
