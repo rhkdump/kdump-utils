@@ -463,6 +463,10 @@ if ! is_fadump_capable; then
 	is_dump_to_rootfs && add_mount "$(to_dev_name "$(get_root_fs_device)")"
 
 	add_dracut_arg "--no-hostonly-default-device"
+
+	if fips-mode-setup --is-enabled 2 > /dev/null; then
+		add_dracut_arg --add-device "$(findmnt -n -o SOURCE --target /boot)"
+	fi
 fi
 
 dracut "${dracut_args[@]}" "$@"
