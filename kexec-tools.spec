@@ -5,7 +5,7 @@
 
 Name: kexec-tools
 Version: 2.0.26
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -395,6 +395,12 @@ fi
 %endif
 
 %changelog
+* Mon May 29 2023 Coiby <coxu@redhat.com> - 2.0.26-5
+- Simplify the management of the kernel parameter crashkernel
+- Let _update_kernel_cmdline return the correct return code
+- mkdumprd: call dracut with --add-device to install the drivers needed by /boot partition automatically for FIPS
+- kdump-lib: fix the matching pattern for debug-kernel
+
 * Tue May 16 2023 Coiby <coxu@redhat.com> - 2.0.26-4
 - kdumpctl: Add support for systemd-boot paths
 - mkdumprd: add --aggressive-strip as default dracut args
