@@ -1467,10 +1467,10 @@ _get_all_kernels_from_grubby()
 reset_crashkernel()
 {
 	local _opt _val _reboot _grubby_kernel_path _kernel _kernels
-	local _dump_mode _new_dump_mode
+	local _dump_mode
 	local _has_changed _needs_reboot
 	local _old_ck _new_ck
-	local _old_fadump _new_fadump
+	local _old_fadump _new_fadump _opt_fadump
 
 	for _opt in "$@"; do
 		case "$_opt" in
@@ -1479,12 +1479,11 @@ reset_crashkernel()
 					derror "Option --fadump only valid on PPC"
 					exit 1
 				fi
-				_new_fadump=${_opt#*=}
-				if ! _dump_mode=$(get_dump_mode_by_fadump_val $_new_fadump); then
+				_opt_fadump=${_opt#*=}
+				if ! _dump_mode=$(get_dump_mode_by_fadump_val $_opt_fadump); then
 					derror "failed to determine dump mode"
 					exit
 				fi
-				[[ "$_new_fadump" == off ]] && _new_fadump=""
 				;;
 			--kernel=*)
 				_val=${_opt#*=}
@@ -1519,8 +1518,6 @@ reset_crashkernel()
 		return
 	fi
 
-	[[ $(uname -m) != ppc64le ]] && _dump_mode=kdump
-
 	# If kernel-path not specified, either
 	#  - use KDUMP_KERNELVER if it's defined
 	#  - use current running kernel
@@ -1536,19 +1533,28 @@ reset_crashkernel()
 
 	for _kernel in $_kernels; do
 		_has_changed=""
-		if [[ -z $_dump_mode ]]; then
-			_new_dump_mode=$(get_dump_mode_by_kernel "$_kernel")
-			_new_fadump=$(get_grub_kernel_boot_parameter "$_kernel" fadump)
+		if [[ $(uname -m) == ppc64le ]]; then
+			if [[ -n "$_opt_fadump" ]]; then
+				_new_ck=$(kdump_get_arch_recommend_crashkernel "$_dump_mode")
+				_old_fadump=$(get_grub_kernel_boot_parameter "$_kernel" fadump)
+				_new_fadump="$_opt_fadump"
+				[[ "$_new_fadump" == off ]] && _new_fadump=""
+				if _update_kernel_cmdline "$_kernel" fadump "$_old_fadump" "$_new_fadump"; then
+					if [[ -n "$_new_fadump" ]]; then
+						_has_changed="Updated fadump=$_new_fadump"
+					else
+						_has_changed="Removed fadump"
+					fi
+				fi
+			else
+				_dump_mode="$(get_dump_mode_by_kernel "$_kernel")"
+				_new_ck=$(kdump_get_arch_recommend_crashkernel "$_dump_mode")
+			fi
 		else
-			_new_dump_mode=$_dump_mode
+			_new_ck=$(kdump_get_arch_recommend_crashkernel kdump)
 		fi
 
 		_old_ck=$(get_grub_kernel_boot_parameter "$_kernel" crashkernel)
-		_new_ck=$(kdump_get_arch_recommend_crashkernel "$_new_dump_mode")
-		_old_fadump=$(get_grub_kernel_boot_parameter "$_kernel" fadump)
-		if _update_kernel_cmdline "$_kernel" fadump "$_old_fadump" "$_new_fadump"; then
-			_has_changed="Updated fadump=$_new_fadump"
-		fi
 		if _update_kernel_cmdline "$_kernel" crashkernel "$_old_ck" "$_new_ck"; then
 			_has_changed="Updated crashkernel=$_new_ck"
 		fi
