@@ -273,8 +273,8 @@ servicelog_notify --add --command=/usr/lib/kdump/kdump-migrate-action.sh --match
 %endif
 
 # This portion of the script is temporary.  Its only here
-# to fix up broken boxes that require special settings 
-# in /etc/sysconfig/kdump.  It will be removed when 
+# to fix up broken boxes that require special settings
+# in /etc/sysconfig/kdump.  It will be removed when
 # These systems are fixed.
 
 if [ -d /proc/bus/mckinley ]
@@ -287,7 +287,7 @@ then
 elif [ -d /proc/sgi_sn ]
 then
 	# This is for SGI SN boxes
-	# They require the --noio option to kexec 
+	# They require the --noio option to kexec
 	# since they don't support legacy io
 	sed -e's/\(^KEXEC_ARGS.*\)\("$\)/\1 --noio"/' \
 	/etc/sysconfig/kdump > /etc/sysconfig/kdump.new
@@ -1131,7 +1131,7 @@ fi
 - Revert "dracut-module-setup.sh: pass correct ip= param for ipv6"
 
 * Sat Apr 28 2018 Dave Young <dyoung@redhat.com> - 2.0.17-2
-- pull in makedumpfile 1.6.3 
+- pull in makedumpfile 1.6.3
 
 * Sat Apr 28 2018 Dave Young <dyoung@redhat.com> - 2.0.17-1
 - pull in 2.0.17
@@ -1191,10 +1191,10 @@ fi
 * Tue Aug 8 2017 Dave Young <dyoung@redhat.com> - 2.0.15-10
 - Improve 'cpu add' udev rules
 - module-setup: suppress the early iscsi error messages
-- mkdumprd: use 300s as the default systemd unit timeout for kdump mount 
+- mkdumprd: use 300s as the default systemd unit timeout for kdump mount
 
 * Mon Aug 7 2017 Dave Young <dyoung@redhat.com> - 2.0.15-9
-- fix makedumpfile bug 1474706 
+- fix makedumpfile bug 1474706
 
 * Thu Aug 03 2017 Fedora Release Engineering <releng@fedoraproject.org> - 2.0.15-8
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_27_Binutils_Mass_Rebuild
@@ -1350,9 +1350,9 @@ fi
 - module-setup: Use get_ifcfg_filename() to get the proper ifcfg file
 
 * Mon May 30 2016 Dave Young <dyoung@redhat.com> - 2.0.12-4
-- update kdump anaconda addon to add mem range in tui 
+- update kdump anaconda addon to add mem range in tui
 - .gitignore: Update to make it more generic
-- kdumpctl: check_rebuild improvement 
+- kdumpctl: check_rebuild improvement
 - kdumpctl: Do not rebuild initramfs when $KDUMP_BOOTDIR is read only
 
 * Tue Mar 29 2016 Dave Young <dyoung@redhat.com> - 2.0.12-3
@@ -1363,7 +1363,7 @@ fi
 - ppc64le: fix kexec hang due to ppc64 elf abi breakage
 
 * Tue Mar 22 2016 Dave Young <dyoung@redhat.com> - 2.0.12-1
-- Rebase kexec-tools to 2.0.12 
+- Rebase kexec-tools to 2.0.12
 
 * Thu Feb 04 2016 Fedora Release Engineering <releng@fedoraproject.org> - 2.0.11-4
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_24_Mass_Rebuild
@@ -1376,7 +1376,7 @@ fi
 - fix bogus date in changelog
 
 * Thu Nov 19 2015 Dave Young <dyoung@redhat.com> - 2.0.11-2
-- Rebase to upstream makedumpfile 1.5.9 
+- Rebase to upstream makedumpfile 1.5.9
 
 * Mon Nov 9 2015 Dave Young <dyoung@redhat.com> - 2.0.11-1
 - Rebase to upstream kexec-tools 2.0.11
@@ -1386,7 +1386,7 @@ fi
 - Remove duplicate prefix path ${initdir}
 
 * Tue Sep 8 2015 Dave Young <dyoung@redhat.com> - 2.0.10-8
-- update kdump addon to fix a kickstart installationi issue 
+- update kdump addon to fix a kickstart installationi issue
 
 * Wed Aug 19 2015 Dave Young <dyoung@redhat.com> - 2.0.10-7
 - add man page for kdumpctl
@@ -1728,7 +1728,7 @@ fi
 
 * Thu Mar 14 2013 Baoquan He <bhe@redhat.com> - 2.0.3-69
 - Support for eppic language as a subpackage
- 
+
 * Thu Mar 14 2013 Baoquan He <bhe@redhat.com> - 2.0.3-68
 - tune sysconfig to save memory usage
 - Remove useless codes related to LOGGER in kdumpctl
@@ -1855,7 +1855,7 @@ fi
 - do not add fstab-sys module in dracut cmdline
 - omit dash module
 - network dns config fix
-- shell exit value fix 
+- shell exit value fix
 
 * Thu Jul 19 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.0.3-52
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_18_Mass_Rebuild
@@ -2182,7 +2182,7 @@ fi
 - Make makedumpfile a dynamic binary
 
 * Mon Jul 06 2009 Neil Horman <nhorman@redhat.com> 2.0.0-19
-- Fix build issue 
+- Fix build issue
 
 * Mon Jul 06 2009 Neil Horman <nhorman@redhat.com> 2.0.0-18
 - Updated initscript to use mkdumprd2 if manifest is present
@@ -2394,7 +2394,7 @@ fi
 - updating mkdumprd to use new kcp syntax
 
 * Wed Aug 23 2006 Neil Horman <nhorman@redhat.com> - 1.101-48
-- Bumping revision number 
+- Bumping revision number
 
 * Tue Aug 22 2006 Jarod Wilson <jwilson@redhat.com> - 1.101-47
 - ppc64 no-more-platform fix
@@ -2414,7 +2414,7 @@ fi
 
 * Tue Aug 15 2006 Neil Horman <nhorman@redhat.com> - 1.101-44
 - updated init script to implement status function/scrub err messages
- 
+
 * Wed Aug 09 2006 Jarod Wilson <jwilson@redhat.com> - 1.101-43
 - Misc spec cleanups and macro-ifications
 
@@ -2422,13 +2422,13 @@ fi
 - Add %%dir /var/crash, so default kdump setup works
 
 * Thu Aug 03 2006 Neil Horman <nhorman@redhat.com> - 1.101-41
-- fix another silly makefile error for makedumpfile 
+- fix another silly makefile error for makedumpfile
 
 * Thu Aug 03 2006 Neil Horman <nhorman@redhat.com> - 1.101-40
-- exclude makedumpfile from build on non-x86[_64] arches 
+- exclude makedumpfile from build on non-x86[_64] arches
 
 * Thu Aug 03 2006 Neil Horman <nhorman@redhat.com> - 1.101-39
-- exclude makedumpfile from build on non-x86[_64] arches 
+- exclude makedumpfile from build on non-x86[_64] arches
 
 * Thu Aug 03 2006 Neil Horman <nhorman@redhat.com> - 1.101-38
 - updating makedumpfile makefile to use pkg-config on glib-2.0
@@ -2525,7 +2525,7 @@ fi
 
 * Wed Nov 16 2005 Thomas Graf <tgraf@redhat.com> - 1.101-5
 - Report missing kdump kernel image as warning
- 
+
 * Thu Nov  3 2005 Jeff Moyer <jmoyer@redhat.com> - 1.101-4
 - Build for x86_64 as well.  Kdump support doesn't work there, but users
   should be able to use kexec.
