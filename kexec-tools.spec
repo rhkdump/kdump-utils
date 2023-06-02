@@ -5,7 +5,7 @@
 
 Name: kexec-tools
 Version: 2.0.26
-Release: 5%{?dist}
+Release: 6%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -66,7 +66,8 @@ Requires: dracut-network >= 058
 Requires: dracut-squash >= 058
 Requires: ethtool
 Requires: util-linux
-Requires: binutils
+# Needed for UKI support
+Recommends: binutils
 Recommends: grubby
 Recommends: hostname
 BuildRequires: make
@@ -395,6 +396,9 @@ fi
 %endif
 
 %changelog
+* Fri Jun 02 2023 Timothée Ravier <tim@siosm.fr> - 2.0.26-6
+- Make binutils a recommend as it's only needed for UKI support
+
 * Mon May 29 2023 Coiby <coxu@redhat.com> - 2.0.26-5
 - Simplify the management of the kernel parameter crashkernel
 - Let _update_kernel_cmdline return the correct return code
