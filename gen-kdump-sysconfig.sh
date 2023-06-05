@@ -107,7 +107,7 @@ x86_64)
 		"irqpoll nr_cpus=1 reset_devices cgroup_disable=memory mce=off numa=off udev.children-max=2 panic=10 acpi_no_memhotplug transparent_hugepage=never nokaslr hest_disable novmcoredd cma=0 hugetlb_cma=0"
 	;;
 *)
-	echo "Warning: Unknown architecture '$1', using default sysconfig template."
+	echo "Warning: Unknown architecture '$1', using default sysconfig template." >&2
 	;;
 esac
 

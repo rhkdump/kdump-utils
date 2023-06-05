@@ -224,7 +224,7 @@ s390x)
 x86_64) ;;
 
 *)
-	echo "Warning: Unknown architecture '$1', using default kdump.conf template."
+	echo "Warning: Unknown architecture '$1', using default kdump.conf template." >&2
 	;;
 esac
 
