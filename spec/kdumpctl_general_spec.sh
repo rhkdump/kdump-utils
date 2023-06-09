@@ -222,6 +222,23 @@ Describe 'kdumpctl'
 		End
 	End
 
+	Describe '_find_kernel_path_by_release()'
+		grubby() {
+			echo -e 'kernel="/boot/vmlinuz-6.2.11-200.fc37.x86_64"\nkernel="/boot/vmlinuz-5.14.0-322.el9.aarch64"\nkernel="/boot/vmlinuz-5.14.0-316.el9.aarch64+64k"'
+		}
+
+		Parameters
+			# parameter          answer
+			vmlinuz-6.2.11-200.fc37.x86_64	/boot/vmlinuz-6.2.11-200.fc37.x86_64
+			vmlinuz-5.14.0-322.el9.aarch64	/boot/vmlinuz-5.14.0-322.el9.aarch64
+			vmlinuz-5.14.0-316.el9.aarch64+64k	/boot/vmlinuz-5.14.0-316.el9.aarch64+64k
+		End
+		It 'returns the kernel path for the given release'
+			When call _find_kernel_path_by_release "$1"
+			The output should equal "$2"
+		End
+	End
+
 	Describe 'parse_config()'
 		bad_kdump_conf=$(mktemp -t bad_kdump_conf.XXXXXXXXXX)
 		cleanup() {
