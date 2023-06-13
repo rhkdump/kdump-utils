@@ -526,6 +526,49 @@ prepare_kdump_kernel()
 	echo "$kdump_kernel"
 }
 
+_is_valid_kver()
+{
+	[[ -f /usr/lib/modules/$1/modules.dep ]]
+}
+
+# This function is introduced since 64k variant may be installed on 4k or vice versa
+# $1 the kernel path name.
+parse_kver_from_path()
+{
+	local _img _kver
+
+	[[ -z "$1" ]] && return
+
+	_img=$1
+	BLS_ENTRY_TOKEN=$(</etc/machine-id)
+
+	# Fedora standard installation, i.e. $BOOT/vmlinuz-<version>
+	_kver=${_img##*/vmlinuz-}
+	_kver=${_kver%"$KDUMP_IMG_EXT"}
+	if _is_valid_kver "$_kver"; then
+		echo "$_kver"
+		return
+	fi
+
+	# BLS recommended image names, i.e. $BOOT/<token>/<version>/linux
+	_kver=${_img##*/"$BLS_ENTRY_TOKEN"/}
+	_kver=${_kver%%/*}
+	if _is_valid_kver "$_kver"; then
+		echo "$_kver"
+		return
+	fi
+
+	# Fedora UKI installation, i.e. $BOOT/efi/EFI/Linux/<token>-<version>.efi
+	_kver=${_img##*/"$BLS_ENTRY_TOKEN"-}
+	_kver=${_kver%.efi}
+	if _is_valid_kver "$_kver"; then
+		echo "$_kver"
+		return
+	fi
+
+	ddebug "Could not parse version from $_img"
+}
+
 _get_kdump_kernel_version()
 {
 	local _version _version_nondebug
