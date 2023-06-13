@@ -786,6 +786,64 @@ get_recommend_size()
 	echo "0M"
 }
 
+# $1 crashkernel=""
+# $2 delta in unit of MB
+_crashkernel_add()
+{
+	local _ck _add _entry _ret
+	local _range _size _offset
+
+	_ck="$1"
+	_add="$2"
+	_ret=""
+
+	if [[ "$_ck" == *@* ]]; then
+		_offset="@${_ck##*@}"
+		_ck=${_ck%@*}
+	elif [[ "$_ck" == *,high ]] || [[ "$_ck" == *,low ]]; then
+		_offset=",${_ck##*,}"
+		_ck=${_ck%,*}
+	else
+		_offset=''
+	fi
+
+	while read -d , -r _entry; do
+		[[ -n "$_entry" ]] || continue
+		if [[ "$_entry" == *:* ]]; then
+			_range=${_entry%:*}
+			_size=${_entry#*:}
+		else
+			_range=""
+			_size=${_entry}
+		fi
+
+		case "${_size: -1}" in
+			K)
+				_size=${_size::-1}
+				_size="$((_size + (_add * 1024)))K"
+				;;
+			M)
+				_size=${_size::-1}
+				_size="$((_size + _add))M"
+				;;
+			G)
+				_size=${_size::-1}
+				_size="$((_size * 1024 + _add))M"
+				;;
+			*)
+				_size="$((_size + (_add * 1024 * 1024)))"
+				;;
+		esac
+
+		[[ -n "$_range" ]] && _ret+="$_range:"
+		_ret+="$_size,"
+	done <<< "$_ck,"
+
+	_ret=${_ret%,}
+	[[ -n "$_offset" ]] && _ret+=$_offset
+	echo "$_ret"
+}
+
 # get default crashkernel
 # $1 dump mode, if not specified, dump_mode will be judged by is_fadump_capable
 kdump_get_arch_recommend_crashkernel()

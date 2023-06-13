@@ -48,6 +48,26 @@ Describe 'kdump-lib'
 		End
 	End
 
+	Describe "_crashkernel_add()"
+		Context "when the input parameter is '1G-4G:256M,4G-64G:320M,64G-:576M'"
+			delta=100
+			Parameters
+				"1G-4G:256M,4G-64G:320M,64G-:576M" "1G-4G:356M,4G-64G:420M,64G-:676M"
+				"1G-4G:256M,4G-64G:320M,64G-:576M@4G" "1G-4G:356M,4G-64G:420M,64G-:676M@4G"
+				"1G-4G:1G,4G-64G:2G,64G-:3G@4G" "1G-4G:1124M,4G-64G:2148M,64G-:3172M@4G"
+				"1G-4G:10000K,4G-64G:20000K,64G-:40000K@4G" "1G-4G:112400K,4G-64G:122400K,64G-:142400K@4G"
+				"300M,high" "400M,high"
+				"300M,low" "400M,low"
+				"500M@1G" "600M@1G"
+			End
+			It "should add delta to the values after ':'"
+
+				When call _crashkernel_add "$1" "$delta"
+				The output should equal "$2"
+			End
+		End
+	End
+
 	Describe 'prepare_cmdline()'
 		get_bootcpu_apicid() {
 			echo 1
