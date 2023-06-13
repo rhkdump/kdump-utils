@@ -889,6 +889,7 @@ _crashkernel_add()
 
 # get default crashkernel
 # $1 dump mode, if not specified, dump_mode will be judged by is_fadump_capable
+# $2 kernel-release, if not specified, got by _get_kdump_kernel_version
 kdump_get_arch_recommend_crashkernel()
 {
 	local _arch _ck_cmdline _dump_mode
@@ -908,8 +909,26 @@ kdump_get_arch_recommend_crashkernel()
 	if [[ $_arch == "x86_64" ]] || [[ $_arch == "s390x" ]]; then
 		_ck_cmdline="1G-4G:192M,4G-64G:256M,64G-:512M"
 	elif [[ $_arch == "aarch64" ]]; then
-		# For 4KB page size, the formula is based on x86 plus extra = 64M
+		local _running_kernel
+		local _delta=0
+
+		# Base line for 4K variant kernel. The formula is based on x86 plus extra = 64M
 		_ck_cmdline="1G-4G:256M,4G-64G:320M,64G-:576M"
+		if [[ -z "$2" ]]; then
+			_running_kernel=$(_get_kdump_kernel_version)
+		else
+			_running_kernel=$2
+		fi
+
+		# the naming convention of 64k variant suffixes with +64k, e.g. "vmlinuz-5.14.0-312.el9.aarch64+64k"
+		if echo "$_running_kernel" | grep -q 64k; then
+			# Without smmu, the diff of MemFree between 4K and 64K measured on a high end aarch64 machine is 82M.
+			# Picking up 100M to cover this diff. And finally, we have "1G-4G:356M;4G-64G:420M;64G-:676M"
+			((_delta += 100))
+		else
+			((_delta += 0))
+		fi
+		_ck_cmdline=$(_crashkernel_add "$_ck_cmdline" "$_delta")
 	elif [[ $_arch == "ppc64le" ]]; then
 		if [[ $_dump_mode == "fadump" ]]; then
 			_ck_cmdline="4G-16G:768M,16G-64G:1G,64G-128G:2G,128G-1T:4G,1T-2T:6G,2T-4T:12G,4T-8T:20G,8T-16T:36G,16T-32T:64G,32T-64T:128G,64T-:180G"
