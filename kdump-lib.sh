@@ -829,6 +829,16 @@ get_recommend_size()
 	echo "0M"
 }
 
+has_mlx5()
+{
+	[[ -d /sys/bus/pci/drivers/mlx5_core ]]
+}
+
+has_aarch64_smmu()
+{
+	ls /sys/devices/platform/arm-smmu-* 1> /dev/null 2>&1
+}
+
 # $1 crashkernel=""
 # $2 delta in unit of MB
 _crashkernel_add()
@@ -925,8 +935,14 @@ kdump_get_arch_recommend_crashkernel()
 			# Without smmu, the diff of MemFree between 4K and 64K measured on a high end aarch64 machine is 82M.
 			# Picking up 100M to cover this diff. And finally, we have "1G-4G:356M;4G-64G:420M;64G-:676M"
 			((_delta += 100))
+			# On a 64K system, the extra 384MB is calculated by: cmdq_num * 16 bytes + evtq_num * 32B + priq_num * 16B
+			# While on a 4K system, it is negligible
+			has_aarch64_smmu && ((_delta += 384))
+			#64k kernel, mlx5 consumes extra 188M memory, and choose 200M
+			has_mlx5 && ((_delta += 200))
 		else
-			((_delta += 0))
+			#4k kernel, mlx5 consumes extra 124M memory, and choose 150M
+			has_mlx5 && ((_delta += 150))
 		fi
 		_ck_cmdline=$(_crashkernel_add "$_ck_cmdline" "$_delta")
 	elif [[ $_arch == "ppc64le" ]]; then
