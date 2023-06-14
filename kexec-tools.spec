@@ -5,7 +5,7 @@
 
 Name: kexec-tools
 Version: 2.0.26
-Release: 6%{?dist}
+Release: 7%{?dist}
 License: GPLv2
 Summary: The kexec/kdump userspace component
 
@@ -396,6 +396,13 @@ fi
 %endif
 
 %changelog
+* Wed Jun 14 2023 Coiby <coxu@redhat.com> - 2.0.26-7
+- kdumpctl: Fix the matching of plus symbol by grep's EREs
+- kdump-lib: Evaluate the memory consumption by smmu and mlx5 separately
+- kdump-lib: add support for 64K aarch64
+- kdump-lib: Introduce parse_kver_from_path() to get kernel version from its path name
+- kdump-lib: Introduce a help function _crashkernel_add()
+
 * Fri Jun 02 2023 Timothée Ravier <tim@siosm.fr> - 2.0.26-6
 - Make binutils a recommend as it's only needed for UKI support
 
