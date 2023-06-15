@@ -86,9 +86,9 @@ get_mountable_dev() {
 get_mount_boot() {
 	local dev=$1 _second_part=${dev}p2
 
-	if [[ $(lsblk -f $_second_part -n -o LABEL 2> /dev/null) == boot ]]; then
-		echo $_second_part
-	fi
+	# it's better to check if the 2nd partition has the boot label using lsblk
+	# but somehow this doesn't work starting with Fedora37
+	echo $_second_part
 }
 
 
