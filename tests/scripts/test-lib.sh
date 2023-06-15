@@ -8,7 +8,7 @@
 DEFAULT_QEMU_CMD="-nodefaults \
 -nographic \
 -smp 2 \
--m 768M \
+-m 1G \
 -monitor none"
 
 _YELLOW='\033[1;33m'
