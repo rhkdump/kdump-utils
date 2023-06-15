@@ -30,7 +30,7 @@ RPMDEFINE = --define '_sourcedir $(REPO)'\
 
 KEXEC_TOOLS_SRC = $(filter-out $(REPO)/tests,$(wildcard $(REPO)/*))
 KEXEC_TOOLS_TEST_SRC = $(wildcard $(REPO)/tests/scripts/**/*)
-KEXEC_TOOLS_NVR = $(shell rpm $(RPMDEFINE) -q --specfile $(REPO)/$(SPEC) 2>/dev/null | grep -m 1 .)
+KEXEC_TOOLS_NVR = $(shell rpm $(RPMDEFINE) -q --specfile $(REPO)/$(SPEC) 2>/dev/null | grep -m 1 . | sed -e 's#.src#.$(ARCH)#')
 KEXEC_TOOLS_RPM = $(BUILD_ROOT)/$(ARCH)/$(KEXEC_TOOLS_NVR).rpm
 
 all: $(TEST_ROOT)/output/test-base-image
