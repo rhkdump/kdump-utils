@@ -45,7 +45,7 @@ if ! dlog_init; then
 	exit 1
 fi
 
-KDUMP_TMPDIR=$(mktemp -d kdump.XXXX)
+KDUMP_TMPDIR=$(mktemp --tmpdir -d kdump.XXXX)
 trap '
     ret=$?;
     rm -rf "$KDUMP_TMPDIR"
