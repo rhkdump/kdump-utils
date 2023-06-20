@@ -614,7 +614,8 @@ prepare_kdump_bootinfo()
 		return 1
 	fi
 
-	if [[ "$KDUMP_KERNEL" == *"+debug" ]]; then
+	# For 64k variant, e.g. vmlinuz-5.14.0-327.el9.aarch64+64k-debug
+	if [[ "$KDUMP_KERNEL" == *"+debug" || "$KDUMP_KERNEL" == *"64k-debug" ]]; then
 		dwarn "Using debug kernel, you may need to set a larger crashkernel than the default value."
 	fi
 
