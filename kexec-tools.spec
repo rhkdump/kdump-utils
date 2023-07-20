@@ -5,7 +5,7 @@
 
 Name: kexec-tools
 Version: 2.0.26
-Release: 7%{?dist}
+Release: 8%{?dist}
 License: GPL-2.0-only
 Summary: The kexec/kdump userspace component
 
@@ -396,6 +396,9 @@ fi
 %endif
 
 %changelog
+* Thu Jul 20 2023 Fedora Release Engineering <releng@fedoraproject.org> - 2.0.26-8
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_39_Mass_Rebuild
+
 * Wed Jun 14 2023 Coiby <coxu@redhat.com> - 2.0.26-7
 - kdumpctl: Fix the matching of plus symbol by grep's EREs
 - kdump-lib: Evaluate the memory consumption by smmu and mlx5 separately
