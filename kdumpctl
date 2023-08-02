@@ -856,7 +856,7 @@ show_reserved_mem()
 	local mem
 	local mem_mb
 
-	mem=$(< /sys/kernel/kexec_crash_size)
+	mem=$(get_reserved_mem_size)
 	mem_mb=$((mem / 1024 / 1024))
 
 	dinfo "Reserved ${mem_mb}MB memory for crash kernel"
@@ -1270,7 +1270,7 @@ do_estimate()
 	# The default pre-reserved crashkernel value
 	baseline_size=$((baseline * size_mb))
 	# Current reserved crashkernel size
-	reserved_size=$(< /sys/kernel/kexec_crash_size)
+	reserved_size=$(get_reserved_mem_size)
 	# A pre-estimated value for userspace usage and kernel
 	# runtime allocation, 64M should good for most cases
 	runtime_size=$((64 * size_mb))

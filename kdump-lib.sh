@@ -344,11 +344,24 @@ is_mount_in_dracut_args()
 	[[ " $(kdump_get_conf_val dracut_args)" =~ .*[[:space:]]--mount[=[:space:]].* ]]
 }
 
+get_reserved_mem_size()
+{
+	local reserved_mem_size=0
+
+	if is_fadump_capable; then
+		reserved_mem_size=$(< /sys/kernel/fadump/mem_reserved)
+	else
+		reserved_mem_size=$(< /sys/kernel/kexec_crash_size)
+	fi
+
+	echo "$reserved_mem_size"
+}
+
 check_crash_mem_reserved()
 {
 	local mem_reserved
 
-	mem_reserved=$(< /sys/kernel/kexec_crash_size)
+	mem_reserved=$(get_reserved_mem_size)
 	if [[ $mem_reserved -eq 0 ]]; then
 		derror "No memory reserved for crash kernel"
 		return 1
