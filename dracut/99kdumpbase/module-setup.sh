@@ -1094,6 +1094,50 @@ ForwardToConsole=yes
 EOF
 }
 
+kdump_check_crypt_targets() {
+    local _luks_dev _devuuid _key_desc
+    declare -a _luks_devs
+
+    mapfile -t _luks_devs < <(get_all_kdump_crypt_dev)
+
+    if [[ ${#_luks_devs[@]} -lt 1 ]]; then
+        return
+    fi
+
+    if [[ ! -d $LUKS_CONFIGFS ]]; then
+        dwarn "$LUKS_CONFIGFS not available"
+        return 1
+    fi
+
+    # This overrides behaviour of 90crypt
+    inst cryptsetup
+    instmods dm_crypt
+
+    echo > "$initdir/etc/cmdline.d/90crypt.conf"
+    echo > "$initdir/etc/crypttab"
+    echo > "${initdir}/sbin/crypt-run-generator"
+
+    # configfs is mounted after dracut pre-udev hook
+    # shellcheck disable=SC2154
+    inst_hook initqueue 20 "$moddir/kexec-crypt-setup.sh"
+
+    # shellcheck disable=SC2154
+    mkdir -p "$hookdir/initqueue/finished"
+    CRYPTSETUP_PATH=$(command -v cryptsetup)
+    for _luks_dev in "${_luks_devs[@]}"; do
+        _devuuid=$(maj_min_to_uuid "$_luks_dev")
+        _key_desc=$LUKS_KEY_PRFIX$_devuuid
+        cat << EOF >> "${initdir}/etc/udev/rules.d/70-luks-kdump.rules"
+ENV{ID_FS_UUID}=="$_devuuid", \
+RUN+="/sbin/initqueue  --settled --unique --onetime --name kdump-crypt-target-%k \
+$CRYPTSETUP_PATH luksOpen --volume-key-keyring \
+%%user:$_key_desc \$env{DEVNAME} luks-$_devuuid"
+EOF
+    done
+
+    dracut_need_initqueue
+}
+
 install() {
     declare -A unique_netifs ovs_unique_netifs ipv4_usage ipv6_usage
     local is_nvmf
@@ -1145,6 +1189,8 @@ install() {
     kdump_check_iscsi_targets
 
     kdump_check_nvmf_target
+
+    kdump_check_crypt_targets
 
     kdump_install_systemd_conf
 
