@@ -52,6 +52,7 @@ trap '
     ret=$?;
     is_mounted $TMPMNT && umount -f $TMPMNT;
     rm -rf "$KDUMP_TMPDIR"
+    [[ -d $LUKS_CONFIGFS ]] && find $LUKS_CONFIGFS/ -mindepth 1 -type d -delete
     exit $ret;
     ' EXIT
 
@@ -731,6 +732,11 @@ load_kdump()
 	args+=("--initrd=$TARGET_INITRD")
 	args+=("$KDUMP_KERNEL")
 
+	if ! prepare_luks; then
+		derror "kexec: failed to prepare for a LUKS target"
+		return 1
+	fi
+
 	ddebug "$KEXEC ${args[*]}"
 	if $KEXEC "${args[@]}"; then
 		dinfo "kexec: loaded kdump kernel"
@@ -1048,6 +1054,36 @@ check_final_action_config()
 		return 1
 		;;
 	esac
+}
+
+prepare_luks()
+{
+	local _luks_dev _key_id _key_des
+	declare -a _luks_devs
+
+	mapfile -t _luks_devs < <(get_all_kdump_crypt_dev)
+
+	if [[ ${#_luks_devs[@]} -lt 1 ]]; then
+		return
+	fi
+
+	if [[ ! -d $LUKS_CONFIGFS ]]; then
+		dwarn "$LUKS_CONFIGFS not available, please use a newer kernel."
+		return 1
+	fi
+
+	for _luks_dev in "${_luks_devs[@]}"; do
+		_devuuid=$(maj_min_to_uuid "$_luks_dev")
+		_key_dir=$LUKS_CONFIGFS/$_devuuid
+		_key_des=$LUKS_KEY_PRFIX$_devuuid
+		if _key_id=$(keyctl request logon "$_key_des" 2> /dev/null); then
+			mkdir "$_key_dir"
+			printf "%s" "$_key_des" > "$_key_dir"/description
+		else
+			derror "Failed to get logon key $_key_des. Ensure the link-volume-key option is correctly set up in /etc/crypttab (see man crypttab) and that the key is available."
+			return 1
+		fi
+	done
 }
 
 start()
