@@ -8,8 +8,8 @@ else
 	. /lib/kdump/kdump-lib-initramfs.sh
 fi
 
-FADUMP_ENABLED_SYS_NODE="/sys/kernel/fadump_enabled"
-FADUMP_REGISTER_SYS_NODE="/sys/kernel/fadump_registered"
+FADUMP_ENABLED_SYS_NODE="/sys/kernel/fadump/enabled"
+FADUMP_REGISTER_SYS_NODE="/sys/kernel/fadump/registered"
 
 is_uki()
 {

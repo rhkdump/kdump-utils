@@ -137,7 +137,7 @@ Then, start up kdump as well:
     # systemctl start kdump.service
 
 This should turn on the firmware assisted functionality in kernel by
-echo'ing 1 to /sys/kernel/fadump_registered, leaving the system ready
+echo'ing 1 to /sys/kernel/fadump/registered, leaving the system ready
 to capture a vmcore upon crashing. For journaling filesystems like XFS an
 additional step is required to ensure bootloader does not pick the
 older initrd (without vmcore capture scripts):
