@@ -4,8 +4,8 @@
 %global mkdf_shortver %(c=%{mkdf_ver}; echo ${c:0:7})
 
 Name: kexec-tools
-Version: 2.0.26
-Release: 8%{?dist}
+Version: 2.0.27
+Release: 1%{?dist}
 License: GPL-2.0-only
 Summary: The kexec/kdump userspace component
 
@@ -396,6 +396,9 @@ fi
 %endif
 
 %changelog
+* Thu Aug 31 2023 Coiby Xu <coxu@redhat.com> - 2.0.27-1
+- kexec-tools 2.0.27 (Simon Horman)
+
 * Thu Jul 20 2023 Fedora Release Engineering <releng@fedoraproject.org> - 2.0.26-8
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_39_Mass_Rebuild
 
