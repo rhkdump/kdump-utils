@@ -1795,8 +1795,6 @@ main()
 	rebuild)
 		rebuild
 		;;
-	condrestart) ;;
-
 	propagate)
 		propagate_ssh_key
 		;;
