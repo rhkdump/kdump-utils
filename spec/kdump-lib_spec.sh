@@ -49,21 +49,33 @@ Describe 'kdump-lib'
 	End
 
 	Describe "_crashkernel_add()"
-		Context "when the input parameter is '1G-4G:256M,4G-64G:320M,64G-:576M'"
-			delta=100
+		Context "For valid input values"
 			Parameters
-				"1G-4G:256M,4G-64G:320M,64G-:576M" "1G-4G:356M,4G-64G:420M,64G-:676M"
-				"1G-4G:256M,4G-64G:320M,64G-:576M@4G" "1G-4G:356M,4G-64G:420M,64G-:676M@4G"
-				"1G-4G:1G,4G-64G:2G,64G-:3G@4G" "1G-4G:1124M,4G-64G:2148M,64G-:3172M@4G"
-				"1G-4G:10000K,4G-64G:20000K,64G-:40000K@4G" "1G-4G:112400K,4G-64G:122400K,64G-:142400K@4G"
-				"300M,high" "400M,high"
-				"300M,low" "400M,low"
-				"500M@1G" "600M@1G"
+				"1G-4G:256M,4G-64G:320M,64G-:576M" "100M" "1G-4G:356M,4G-64G:420M,64G-:676M"
+				"1G-4G:256M,4G-64G:320M,64G-:576M@4G" "100M" "1G-4G:356M,4G-64G:420M,64G-:676M@4G"
+				"1G-4G:1G,4G-64G:2G,64G-:3G@4G" "100M" "1G-4G:1124M,4G-64G:2148M,64G-:3172M@4G"
+				"1G-4G:10000K,4G-64G:20000K,64G-:40000K@4G" "100M" "1G-4G:112400K,4G-64G:122400K,64G-:142400K@4G"
+				"1,high" "1" "2,high"
+				"1K,low" "1" "1025,low"
+				"1M@1G" "1k" "1025K@1G"
+				"500M@1G" "-100m" "400M@1G"
+				"1099511627776" "0" "1024G"
 			End
-			It "should add delta to the values after ':'"
-
-				When call _crashkernel_add "$1" "$delta"
-				The output should equal "$2"
+			It "should add delta to every value after ':'"
+				When call _crashkernel_add "$1" "$2"
+				The output should equal "$3"
+			End
+		End
+		Context "For invalid input values"
+			Parameters
+				"1G-4G:256M.4G-64G:320M" "100M"
+				"foo" "1"
+				"1" "bar"
+			End
+			It "shall return an error"
+				When call _crashkernel_add "$1" "$2"
+				The output should equal ""
+				The status should be failure
 			End
 		End
 	End
