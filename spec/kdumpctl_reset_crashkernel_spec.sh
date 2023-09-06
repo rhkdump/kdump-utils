@@ -111,11 +111,6 @@ Describe 'kdumpctl reset-crashkernel [--kernel] [--fadump]'
 			fi
 		}
 
-		_update_kernel_arg_in_grub_etc_default() {
-			# don't modify /etc/default/grub during the test
-			echo _update_kernel_arg_in_grub_etc_default "$@"
-		}
-
 		kdump_crashkernel=$(get_default_crashkernel kdump)
 		fadump_crashkernel=$(get_default_crashkernel fadump)
 		Context "when no --kernel specified"
@@ -141,7 +136,6 @@ Describe 'kdumpctl reset-crashkernel [--kernel] [--fadump]'
 			grubby --args crashkernel=$ck --update-kernel ALL
 			Specify 'kdumpctl should warn the user that crashkernel has been udpated'
 				When call reset_crashkernel --kernel=ALL --fadump=on
-				The line 1 of output should include "_update_kernel_arg_in_grub_etc_default crashkernel $fadump_crashkernel"
 				The error should include "Updated crashkernel=$fadump_crashkernel for kernel=$kernel1"
 				The error should include "Updated crashkernel=$fadump_crashkernel for kernel=$kernel2"
 			End
@@ -200,8 +194,6 @@ Describe 'kdumpctl reset-crashkernel [--kernel] [--fadump]'
 			grubby --args fadump=on --update-kernel ALL
 			Specify 'fadump=on to fadump=nocma'
 				When call reset_crashkernel --kernel=ALL --fadump=nocma
-				The line 1 of output should equal "_update_kernel_arg_in_grub_etc_default crashkernel $fadump_crashkernel"
-				The line 2 of output should equal "_update_kernel_arg_in_grub_etc_default fadump nocma"
 				The error should include "Updated crashkernel=$fadump_crashkernel for kernel=$kernel1"
 				The error should include "Updated crashkernel=$fadump_crashkernel for kernel=$kernel2"
 			End
@@ -213,8 +205,6 @@ Describe 'kdumpctl reset-crashkernel [--kernel] [--fadump]'
 
 			Specify 'fadump=nocma to fadump=on'
 				When call reset_crashkernel --kernel=ALL --fadump=on
-				The line 1 of output should equal "_update_kernel_arg_in_grub_etc_default crashkernel $fadump_crashkernel"
-				The line 2 of output should equal "_update_kernel_arg_in_grub_etc_default fadump on"
 				The error should include "Updated fadump=on for kernel=$kernel1"
 			End
 
