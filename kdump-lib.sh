@@ -599,7 +599,7 @@ _get_kdump_kernel_version()
 
 	_version_nondebug=${_version%+debug}
 	_version_nondebug=${_version_nondebug%-debug}
-	if [[ -f "$(prepare_kdump_kernel "$_version_nondebug")" ]]; then
+	if _is_valid_kver "$_version_nondebug"; then
 		dinfo "Use of debug kernel detected. Trying to use $_version_nondebug"
 		echo "$_version_nondebug"
 	else
