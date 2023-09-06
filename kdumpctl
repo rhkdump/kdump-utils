@@ -1551,6 +1551,10 @@ reset_crashkernel()
 	for _opt in "$@"; do
 		case "$_opt" in
 			--fadump=*)
+				if [[ $(uname -m) != ppc64le ]]; then
+					derror "Option --fadump only valid on PPC"
+					exit 1
+				fi
 				_val=${_opt#*=}
 				if _dump_mode=$(get_dump_mode_by_fadump_val $_val); then
 					_fadump_val=$_val
@@ -1592,12 +1596,7 @@ reset_crashkernel()
 		return
 	fi
 
-	# For non-ppc64le systems, the dump mode is always kdump since only ppc64le
-	# has FADump.
-	if [[ -z $_dump_mode && $(uname -m) != ppc64le ]]; then
-		_dump_mode=kdump
-		_fadump_val=off
-	fi
+	[[ $(uname -m) != ppc64le ]] && _dump_mode=kdump
 
 	# If the dump mode is determined, we can also know the default crashkernel value
 	if [[ -n $_dump_mode ]]; then
