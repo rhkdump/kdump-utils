@@ -64,7 +64,7 @@ _dracut_isolate_args=(
 
 # Use zstd compression method, if available
 if ! have_compression_in_dracut_args; then
-	if is_zstd_command_available; then
+	if has_command zstd; then
 		_dracut_isolate_args+=(--compress zstd)
 	fi
 fi

@@ -48,9 +48,9 @@ is_squash_available()
 	done
 }
 
-is_zstd_command_available()
+has_command()
 {
-	[[ -x "$(command -v zstd)" ]]
+	[[ -x $(command -v "$1") ]]
 }
 
 dracut_have_option()

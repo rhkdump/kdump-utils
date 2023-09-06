@@ -443,7 +443,7 @@ handle_default_dump_target
 if ! have_compression_in_dracut_args; then
 	if is_squash_available && dracut_have_option "--squash-compressor"; then
 		add_dracut_arg "--squash-compressor" "zstd"
-	elif is_zstd_command_available; then
+	elif has_command zstd; then
 		add_dracut_arg "--compress" "zstd"
 	fi
 fi
