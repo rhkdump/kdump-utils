@@ -75,9 +75,6 @@ BuildRequires: zlib-devel elfutils-devel glib2-devel bzip2-devel ncurses-devel b
 BuildRequires: pkgconfig intltool gettext
 BuildRequires: systemd-rpm-macros
 BuildRequires: automake autoconf libtool
-%ifarch %{ix86} x86_64 ppc64 ppc s390x ppc64le
-Obsoletes: diskdumputils netdump kexec-tools-eppic
-%endif
 
 %ifnarch s390x
 Requires:       systemd-udev%{?_isa}
