@@ -29,14 +29,17 @@ if [[ -f /etc/sysconfig/kdump ]]; then
 fi
 
 [[ $dracutbasedir ]] || dracutbasedir=/usr/lib/dracut
-. $dracutbasedir/dracut-functions.sh
+# shellcheck source=/dev/null
+. "$dracutbasedir"/dracut-functions.sh
 
 if [[ ${__SOURCED__:+x} ]]; then
 	KDUMP_LIB_PATH=.
 else
 	KDUMP_LIB_PATH=/lib/kdump
 fi
+# shellcheck source=./kdump-lib.sh
 . $KDUMP_LIB_PATH/kdump-lib.sh
+# shellcheck source=./kdump-logger.sh
 . $KDUMP_LIB_PATH/kdump-logger.sh
 
 #initiate the kdump logger
@@ -247,7 +250,7 @@ restore_default_initrd()
 		if [[ $default_checksum != "$backup_checksum" ]]; then
 			dwarn "WARNING: checksum mismatch! Can't restore original initrd.."
 		else
-			rm -f $INITRD_CHECKSUM_LOCATION
+			rm -f "$INITRD_CHECKSUM_LOCATION"
 			if mv "$DEFAULT_INITRD_BAK" "$DEFAULT_INITRD"; then
 				derror "Restoring original initrd as fadump mode is disabled."
 				sync -f "$DEFAULT_INITRD"
@@ -497,6 +500,7 @@ check_drivers_modified()
 	# If it's dump target is on block device, detect the block driver
 	_target=$(get_block_dump_target)
 	if [[ -n $_target ]]; then
+		# shellcheck disable=SC2317
 		_record_block_drivers()
 		{
 			local _drivers

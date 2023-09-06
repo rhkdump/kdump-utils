@@ -197,7 +197,7 @@ get_bind_mount_source()
 	local _fsroot _src_nofsroot
 
 	_mnt=$(df "$1" | tail -1 | awk '{print $NF}')
-	_path=${1#$_mnt}
+	_path=${1#"$_mnt"}
 
 	_src=$(get_mount_info SOURCE target "$_mnt" -f)
 	_opt=$(get_mount_info OPTIONS target "$_mnt" -f)
@@ -214,7 +214,7 @@ get_bind_mount_source()
 		echo "$_mnt$_path" && return
 	fi
 
-	_fsroot=${_src#${_src_nofsroot}[}
+	_fsroot=${_src#"${_src_nofsroot}"[}
 	_fsroot=${_fsroot%]}
 	_mnt=$(get_mount_info TARGET source "$_src_nofsroot" -f)
 
@@ -223,7 +223,7 @@ get_bind_mount_source()
 		local _subvol
 		_subvol=${_opt#*subvol=}
 		_subvol=${_subvol%,*}
-		_fsroot=${_fsroot#$_subvol}
+		_fsroot=${_fsroot#"$_subvol"}
 	fi
 	echo "$_mnt$_fsroot$_path"
 }
@@ -270,7 +270,7 @@ kdump_get_persistent_dev()
 		dev=$(blkid -L "${dev#LABEL=}")
 		;;
 	esac
-	echo $(get_persistent_dev "$dev")
+	get_persistent_dev "$dev"
 }
 
 is_ostree()
@@ -823,7 +823,7 @@ get_recommend_size()
 	while read -r -d , range; do
 		# need to use non-default IFS as double spaces are used as a
 		# single delimiter while commas aren't...
-		IFS=, read start start_unit end end_unit size <<< \
+		IFS=, read -r start start_unit end end_unit size <<< \
 			"$(echo "$range" | sed -n "s/\([0-9]\+\)\([GT]\?\)-\([0-9]*\)\([GT]\?\):\([0-9]\+[MG]\)/\1,\2,\3,\4,\5/p")"
 
 		# aka. 102400T
