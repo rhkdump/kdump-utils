@@ -258,28 +258,6 @@ servicelog_notify --remove --command=/usr/lib/kdump/kdump-migrate-action.sh 2>/d
 servicelog_notify --add --command=/usr/lib/kdump/kdump-migrate-action.sh --match='refcode="#MIGRATE" and serviceable=0' --type=EVENT --method=pairs_stdin >/dev/null
 %endif
 
-# This portion of the script is temporary.  Its only here
-# to fix up broken boxes that require special settings
-# in /etc/sysconfig/kdump.  It will be removed when
-# These systems are fixed.
-
-if [ -d /proc/bus/mckinley ]
-then
-	# This is for HP zx1 machines
-	# They require machvec=dig on the kernel command line
-	sed -e's/\(^KDUMP_COMMANDLINE_APPEND.*\)\("$\)/\1 machvec=dig"/' \
-	/etc/sysconfig/kdump > /etc/sysconfig/kdump.new
-	mv /etc/sysconfig/kdump.new /etc/sysconfig/kdump
-elif [ -d /proc/sgi_sn ]
-then
-	# This is for SGI SN boxes
-	# They require the --noio option to kexec
-	# since they don't support legacy io
-	sed -e's/\(^KEXEC_ARGS.*\)\("$\)/\1 --noio"/' \
-	/etc/sysconfig/kdump > /etc/sysconfig/kdump.new
-	mv /etc/sysconfig/kdump.new /etc/sysconfig/kdump
-fi
-
 
 %postun
 %systemd_postun_with_restart kdump.service
