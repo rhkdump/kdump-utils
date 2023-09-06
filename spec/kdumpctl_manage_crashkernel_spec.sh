@@ -52,6 +52,11 @@ Describe 'Management of the kernel crashkernel parameter.'
 		@grubby --no-etc-grub-update --grub2 --config-file="$GRUB_CFG" --bad-image-okay --env="$KDUMP_SPEC_TEST_RUN_DIR"/env_temp -b "$KDUMP_SPEC_TEST_RUN_DIR"/boot_load_entries "$@"
 	}
 
+	# The mocking breaks has_command. Mock it as well to fix the tests.
+	has_command() {
+		[[ "$1" == grubby ]]
+	}
+
 	Describe "When kexec-tools have its default crashkernel updated, "
 
 		Context "if kexec-tools is updated alone, "

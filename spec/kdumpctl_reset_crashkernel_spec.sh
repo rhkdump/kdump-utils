@@ -29,6 +29,11 @@ Describe 'kdumpctl reset-crashkernel [--kernel] [--fadump]'
 		@grubby --no-etc-grub-update --grub2 --bad-image-okay --env="$KDUMP_SPEC_TEST_RUN_DIR"/env_temp -b "$KDUMP_SPEC_TEST_RUN_DIR"/boot_load_entries "$@"
 	}
 
+	# The mocking breaks has_command. Mock it as well to fix the tests.
+	has_command() {
+		[[ "$1" == grubby ]]
+	}
+
 	Describe "Test the kdump dump mode "
 		uname() {
 			if [[ $1 == '-m' ]]; then

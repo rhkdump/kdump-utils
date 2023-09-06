@@ -1424,21 +1424,33 @@ _find_kernel_path_by_release()
 
 _update_kernel_cmdline()
 {
-	local _kernel_path=$1 _crashkernel=$2 _dump_mode=$3 _fadump_val=$4
+	local _kernel _param _old _new
+
+	_kernel="$1"
+	_param="$2"
+	_old="$3"
+	_new="$4"
+
+	# _new = "" removes a _param, so _new = _old = "" is fine
+	[[ -n "$_new" ]] && [[ "$_old" == "$_new" ]] && return 1
 
 	if is_ostree; then
-		if rpm-ostree kargs | grep -q "crashkernel="; then
-			rpm-ostree kargs --replace="crashkernel=$_crashkernel"
+		if [[ -z "$_new" ]]; then
+			rpm-ostree kargs --delete="$_param=$_old"
+		elif [[ -n "$_old" ]]; then
+			rpm-ostree kargs --replace="$_param=$_new"
 		else
-			rpm-ostree kargs --append="crashkernel=$_crashkernel"
+			rpm-ostree kargs --append="$_param=$_new"
+		fi
+	elif has_command grubby; then
+		if [[ -n "$_new" ]]; then
+			grubby --update-kernel "$_kernel" --args "$_param=$_new"
+		else
+			grubby --update-kernel "$_kernel" --remove-args "$_param"
 		fi
 	else
-		grubby --args "crashkernel=$_crashkernel" --update-kernel "$_kernel_path"
-		if [[ $_dump_mode == kdump ]]; then
-			grubby --remove-args="fadump" --update-kernel "$_kernel_path"
-		else
-			grubby --args="fadump=$_fadump_val" --update-kernel "$_kernel_path"
-		fi
+		derror "Unable to update kernel command line"
+		exit 1
 	fi
 
 	# Don't use "[[ CONDITION ]] && COMMAND" which returns 1 under false CONDITION
@@ -1530,9 +1542,11 @@ _read_kernel_arg_in_grub_etc_default()
 
 reset_crashkernel()
 {
-	local _opt _val _dump_mode _fadump_val _reboot _grubby_kernel_path _kernel _kernels
-	local _old_crashkernel _new_crashkernel _new_dump_mode _crashkernel_changed
-	local _new_fadump_val _old_fadump_val _what_is_updated
+	local _opt _val _fadump_val _reboot _grubby_kernel_path _kernel _kernels
+	local _dump_mode _new_dump_mode
+	local _has_changed _needs_reboot
+	local _old_ck _new_ck
+	local _old_fadump _new_fadump
 
 	for _opt in "$@"; do
 		case "$_opt" in
@@ -1570,14 +1584,10 @@ reset_crashkernel()
 	#    modifying the kernel command line so there is no need for kexec-tools
 	#    to repeat it.
 	if is_ostree; then
-		_old_crashkernel=$(rpm-ostree kargs | sed -n -E 's/.*(^|\s)crashkernel=(\S*).*/\2/p')
-		_new_dump_mode=kdump
-		_new_crashkernel=$(kdump_get_arch_recommend_crashkernel "$_new_dump_mode")
-		if [[ $_old_crashkernel != "$_new_crashkernel" ]]; then
-			_update_kernel_cmdline "" "$_new_crashkernel" "$_new_dump_mode" ""
-			if [[ $_reboot == yes ]]; then
-				systemctl reboot
-			fi
+		_old_ck=$(rpm-ostree kargs | sed -n -E 's/.*(^|\s)crashkernel=(\S*).*/\2/p')
+		_new_ck=$(kdump_get_arch_recommend_crashkernel kdump)
+		if _update_kernel_cmdline "" crashkernel "$_old_ck" "$_new_ck"; then
+			[[ $_reboot == yes ]] && systemctl reboot
 		fi
 		return
 	fi
@@ -1626,35 +1636,33 @@ reset_crashkernel()
 	fi
 
 	for _kernel in $_kernels; do
+		_has_changed=""
 		if [[ -z $_dump_mode ]]; then
 			_new_dump_mode=$(get_dump_mode_by_kernel "$_kernel")
-			_new_crashkernel=$(kdump_get_arch_recommend_crashkernel "$_new_dump_mode")
-			_new_fadump_val=$(get_grub_kernel_boot_parameter "$_kernel" fadump)
+			_new_ck=$(kdump_get_arch_recommend_crashkernel "$_new_dump_mode")
+			_new_fadump=$(get_grub_kernel_boot_parameter "$_kernel" fadump)
 		else
 			_new_dump_mode=$_dump_mode
-			_new_crashkernel=$_crashkernel
-			_new_fadump_val=$_fadump_val
+			_new_ck=$_crashkernel
+			_new_fadump=$_fadump_val
 		fi
 
-		_old_crashkernel=$(get_grub_kernel_boot_parameter "$_kernel" crashkernel)
-		_old_fadump_val=$(get_grub_kernel_boot_parameter "$_kernel" fadump)
-		if [[ $_old_crashkernel != "$_new_crashkernel" || $_old_fadump_val != "$_new_fadump_val" ]]; then
-			_update_kernel_cmdline "$_kernel" "$_new_crashkernel" "$_new_dump_mode" "$_new_fadump_val"
-			if [[ $_reboot != yes ]]; then
-				if [[ $_old_crashkernel != "$_new_crashkernel" ]]; then
-					_what_is_updated="Updated crashkernel=$_new_crashkernel"
-				else
-					# This case happens only when switching between fadump=on and fadump=nocma
-					_what_is_updated="Updated fadump=$_new_fadump_val"
-				fi
-				dwarn "$_what_is_updated for kernel=$_kernel. Please reboot the system for the change to take effect."
-			fi
-			_crashkernel_changed=yes
+		_old_ck=$(get_grub_kernel_boot_parameter "$_kernel" crashkernel)
+		_old_fadump=$(get_grub_kernel_boot_parameter "$_kernel" fadump)
+		if _update_kernel_cmdline "$_kernel" fadump "$_old_fadump" "$_new_fadump"; then
+			_has_changed="Updated fadump=$_new_fadump"
+		fi
+		if _update_kernel_cmdline "$_kernel" crashkernel "$_old_ck" "$_new_ck"; then
+			_has_changed="Updated crashkernel=$_new_ck"
+		fi
+		if [[ -n "$_has_changed" ]]; then
+			_needs_reboot=1
+			dwarn "$_has_changed for kernel=$_kernel. Please reboot the system for the change to take effect."
 		fi
 	done
 
-	if [[ $_reboot == yes && $_crashkernel_changed == yes ]]; then
-		reboot
+	if [[ $_reboot == yes && $_needs_reboot == 1 ]]; then
+		systemctl reboot
 	fi
 }
 
@@ -1670,21 +1678,19 @@ _is_bootloader_installed()
 
 _update_crashkernel()
 {
-	local _kernel _kver _dump_mode _old_default_crashkernel _new_default_crashkernel _fadump_val _msg
+	local _kernel _kver _dump_mode _msg
+	local _old_ck _new_ck
 
 	_kernel=$1
 	_dump_mode=$(get_dump_mode_by_kernel "$_kernel")
-	_old_default_crashkernel=$(get_grub_kernel_boot_parameter "$_kernel" crashkernel)
+	_old_ck=$(get_grub_kernel_boot_parameter "$_kernel" crashkernel)
 	_kver=$(parse_kver_from_path "$_kernel")
 	# The second argument is for the case of aarch64, where installing a 64k variant on a 4k kernel, or vice versa
-	_new_default_crashkernel=$(kdump_get_arch_recommend_crashkernel "$_dump_mode" "$_kver")
-	if [[ $_old_default_crashkernel != "$_new_default_crashkernel" ]]; then
-		_fadump_val=$(get_grub_kernel_boot_parameter "$_kernel" fadump)
-		if _update_kernel_cmdline "$_kernel" "$_new_default_crashkernel" "$_dump_mode" "$_fadump_val"; then
-			_msg="For kernel=$_kernel, crashkernel=$_new_default_crashkernel now. Please reboot the system for the change to take effet."
-			_msg+=" Note if you don't want kexec-tools to manage the crashkernel kernel parameter, please set auto_reset_crashkernel=no in /etc/kdump.conf."
-			dinfo "$_msg"
-		fi
+	_new_ck=$(kdump_get_arch_recommend_crashkernel "$_dump_mode" "$_kver")
+	if _update_kernel_cmdline "$_kernel" crashkernel "$_old_ck" "$_new_ck"; then
+		_msg="For kernel=$_kernel, crashkernel=$_new_ck now. Please reboot the system for the change to take effect."
+		_msg+=" Note if you don't want kexec-tools to manage the crashkernel kernel parameter, please set auto_reset_crashkernel=no in /etc/kdump.conf."
+		dinfo "$_msg"
 	fi
 }
 
