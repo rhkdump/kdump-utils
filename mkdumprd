@@ -24,7 +24,6 @@ fi
 
 SSH_KEY_LOCATION=$DEFAULT_SSHKEY
 SAVE_PATH=$(get_save_path)
-OVERRIDE_RESETTABLE=0
 
 extra_modules=""
 dracut_args=(--add kdumpbase --quiet --hostonly --hostonly-cmdline --hostonly-i18n --hostonly-mode strict --hostonly-nics '' --aggressive-strip -o "plymouth resume ifcfg earlykdump")
@@ -309,56 +308,6 @@ handle_default_dump_target()
 	check_size fs "$_target"
 }
 
-# $1: function name
-for_each_block_target()
-{
-	local dev majmin
-
-	for dev in $(get_kdump_targets); do
-		[[ -b $dev ]] || continue
-		majmin=$(get_maj_min "$dev")
-		check_block_and_slaves "$1" "$majmin" && return 1
-	done
-
-	return 0
-}
-
-#judge if a specific device with $1 is unresettable
-#return false if unresettable.
-is_unresettable()
-{
-	local path device resettable=1
-
-	path="/sys/$(udevadm info --query=all --path="/sys/dev/block/$1" | awk '/^P:/ {print $2}' | sed -e 's/\(cciss[0-9]\+\/\).*/\1/g' -e 's/\/block\/.*$//')/resettable"
-	if [[ -f $path ]]; then
-		resettable="$(< "$path")"
-		[[ $resettable -eq 0 ]] && [[ $OVERRIDE_RESETTABLE -eq 0 ]] && {
-			device=$(udevadm info --query=all --path="/sys/dev/block/$1" | awk -F= '/DEVNAME/{print $2}')
-			derror "Error: Can not save vmcore because device $device is unresettable"
-			return 0
-		}
-	fi
-
-	return 1
-}
-
-#check if machine is resettable.
-#return true if resettable
-check_resettable()
-{
-	local _target _override_resettable
-
-	_override_resettable=$(kdump_get_conf_val override_resettable)
-	OVERRIDE_RESETTABLE=${_override_resettable:-$OVERRIDE_RESETTABLE}
-	if [ "$OVERRIDE_RESETTABLE" != "0" ] && [ "$OVERRIDE_RESETTABLE" != "1" ]; then
-		perror_exit "override_resettable value '$OVERRIDE_RESETTABLE' is invalid"
-	fi
-
-	for_each_block_target is_unresettable && return
-
-	return 1
-}
-
 check_crypt()
 {
 	local _dev
@@ -369,10 +318,6 @@ check_crypt()
 		fi
 	done
 }
-
-if ! check_resettable; then
-	exit 1
-fi
 
 if ! check_crypt; then
 	dwarn "Warning: Encrypted device is in dump path, which is not recommended, see kexec-kdump-howto.txt for more details."

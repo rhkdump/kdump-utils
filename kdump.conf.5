@@ -218,14 +218,6 @@ force_no_rebuild and force_rebuild options are mutually exclusive and
 they should not be set to 1 simultaneously.
 .RE
 
-.B override_resettable <0 | 1>
-.RS
-Usually an unresettable block device can't be a dump target. Specifying 1 means
-that even though the block target is unresettable, the user wants to try dumping anyway.
-By default, it's set to 0, which will not try something destined to fail.
-.RE
-
-
 .B dracut_args <arg(s)>
 .RS
 Kdump uses dracut to generate initramfs for second kernel. This option

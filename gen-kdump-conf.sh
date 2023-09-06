@@ -157,12 +157,6 @@ generate()
 #             force_no_rebuild and force_rebuild options are mutually
 #             exclusive and they should not be set to 1 simultaneously.
 #
-# override_resettable <0 | 1>
-#           - Usually an unresettable block device can't be a dump target.
-#             Specifying 1 when you want to dump even though the block
-#             target is unresettable
-#             By default, it is 0, which will not try dumping destined to fail.
-#
 # dracut_args <arg(s)>
 #           - Pass extra dracut options when rebuilding kdump initrd.
 #
