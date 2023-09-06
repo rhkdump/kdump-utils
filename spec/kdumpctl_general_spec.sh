@@ -173,16 +173,14 @@ Describe 'kdumpctl'
 	End
 
 	Describe 'parse_config()'
-		bad_kdump_conf=$(mktemp -t bad_kdump_conf.XXXXXXXXXX)
+		KDUMP_CONFIG_FILE=$(mktemp -t kdump_conf.XXXXXXXXXX)
 		cleanup() {
-			rm -f "$bad_kdump_conf"
-			rm -f kdump.conf
+			rm -f "$KDUMP_CONFIG_FILE"
 		}
 		AfterAll 'cleanup'
 
 		It 'should not be happy with unkown option in kdump.conf'
-			KDUMP_CONFIG_FILE="$bad_kdump_conf"
-			echo blabla > "$bad_kdump_conf"
+			echo blabla > "$KDUMP_CONFIG_FILE"
 			When call parse_config
 			The status should be failure
 			The stderr should include 'Invalid kdump config option blabla'
@@ -191,10 +189,7 @@ Describe 'kdumpctl'
 		Parameters:value aarch64 ppc64le s390x x86_64
 
 		It 'should be happy with the default kdump.conf'
-			./gen-kdump-conf.sh "$1" > kdump.conf
-			# shellcheck disable=SC2034
-			# override the KDUMP_CONFIG_FILE variable
-			KDUMP_CONFIG_FILE=./kdump.conf
+			./gen-kdump-conf.sh "$1" > "$KDUMP_CONFIG_FILE"
 			When call parse_config
 			The status should be success
 		End
