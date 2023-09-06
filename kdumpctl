@@ -1422,18 +1422,6 @@ _find_kernel_path_by_release()
 	echo -n "$_kernel_path"
 }
 
-_get_current_running_kernel_path()
-{
-	local _release _path
-
-	_release=$(uname -r)
-	if _path=$(_find_kernel_path_by_release "$_release"); then
-		echo -n "$_path"
-	else
-		return 1
-	fi
-}
-
 _update_kernel_cmdline()
 {
 	local _kernel_path=$1 _crashkernel=$2 _dump_mode=$3 _fadump_val=$4
@@ -1628,14 +1616,11 @@ reset_crashkernel()
 	#  - use KDUMP_KERNELVER if it's defined
 	#  - use current running kernel
 	if [[ -z $_grubby_kernel_path ]]; then
-		if [[ -z $KDUMP_KERNELVER ]] ||
-			! _kernel_path=$(_find_kernel_path_by_release "$KDUMP_KERNELVER"); then
-					if ! _kernel_path=$(_get_current_running_kernel_path); then
-						derror "no running kernel found"
-						exit 1
-					fi
+		[[ -n $KDUMP_KERNELVER ]] || KDUMP_KERNELVER=$(uname -r)
+		if ! _kernels=$(_find_kernel_path_by_release "$KDUMP_KERNELVER"); then
+			derror "no kernel for version $KDUMP_KERNELVER found"
+			exit 1
 		fi
-		_kernels=$_kernel_path
 	else
 		_kernels=$(_get_all_kernels_from_grubby "$_grubby_kernel_path")
 	fi
