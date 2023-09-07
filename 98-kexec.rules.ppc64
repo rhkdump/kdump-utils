@@ -1,3 +1,7 @@
+# The kernel updates the crash elfcorehdr for CPU and memory changes
+SUBSYSTEM=="cpu", ATTRS{crash_hotplug}=="1", GOTO="kdump_reload_end"
+SUBSYSTEM=="memory", ATTRS{crash_hotplug}=="1", GOTO="kdump_reload_end"
+
 SUBSYSTEM=="cpu", ACTION=="online", GOTO="kdump_reload_cpu"
 SUBSYSTEM=="memory", ACTION=="online", GOTO="kdump_reload_mem"
 SUBSYSTEM=="memory", ACTION=="offline", GOTO="kdump_reload_mem"
