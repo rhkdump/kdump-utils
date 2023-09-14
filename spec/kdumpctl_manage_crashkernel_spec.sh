@@ -42,6 +42,12 @@ Describe 'Management of the kernel crashkernel parameter.'
 		rm -rf "$KDUMP_SPEC_TEST_RUN_DIR"
 	}
 
+	# the boot loader entries are for a system without a boot partition, mock
+	# mountpoint to let grubby know it
+	Mock mountpoint
+		exit 1
+	End
+
 	grubby() {
 		# - --no-etc-grub-update, not update /etc/default/grub
 		# - --bad-image-okay, don't check the validity of the image
@@ -49,7 +55,7 @@ Describe 'Management of the kernel crashkernel parameter.'
 		#   the default /boot/grub2/grubenv
 		# - --bls-directory, specify custom BootLoaderSpec config files to avoid
 		#   modifying the default /boot/loader/entries
-		@grubby --no-etc-grub-update --grub2 --config-file="$GRUB_CFG" --bad-image-okay --env="$KDUMP_SPEC_TEST_RUN_DIR"/env_temp -b "$KDUMP_SPEC_TEST_RUN_DIR"/boot_load_entries "$@"
+		/usr/sbin/grubby --no-etc-grub-update --grub2 --config-file="$GRUB_CFG" --bad-image-okay --env="$KDUMP_SPEC_TEST_RUN_DIR"/env_temp -b "$KDUMP_SPEC_TEST_RUN_DIR"/boot_load_entries "$@"
 	}
 
 	# The mocking breaks has_command. Mock it as well to fix the tests.
