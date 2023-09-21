@@ -384,7 +384,7 @@ _get_hpyerv_physical_driver() {
 kdump_install_nic_driver() {
     local _netif _driver _drivers
 
-    _drivers=()
+    _drivers=('=drivers/net/phy' '=drivers/net/mdio')
 
     for _netif in $1; do
         [[ $_netif == lo ]] && continue
