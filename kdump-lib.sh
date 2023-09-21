@@ -38,6 +38,11 @@ is_aws_aarch64()
 	[[ "$(lscpu | grep "BIOS Model name")" =~ "AWS Graviton" ]]
 }
 
+is_sme_or_sev_active()
+{
+	journalctl -q --dmesg --grep "^Memory Encryption Features active: AMD (SME|SEV)$" >/dev/null 2>&1
+}
+
 is_squash_available()
 {
 	local _version kmodule
@@ -1001,6 +1006,7 @@ _crashkernel_add()
 kdump_get_arch_recommend_crashkernel()
 {
 	local _arch _ck_cmdline _dump_mode
+	local _delta=0
 
 	if [[ -z "$1" ]]; then
 		if is_fadump_capable; then
@@ -1016,9 +1022,9 @@ kdump_get_arch_recommend_crashkernel()
 
 	if [[ $_arch == "x86_64" ]] || [[ $_arch == "s390x" ]]; then
 		_ck_cmdline="1G-4G:192M,4G-64G:256M,64G-:512M"
+		is_sme_or_sev_active && ((_delta += 64))
 	elif [[ $_arch == "aarch64" ]]; then
 		local _running_kernel
-		local _delta=0
 
 		# Base line for 4K variant kernel. The formula is based on x86 plus extra = 64M
 		_ck_cmdline="1G-4G:256M,4G-64G:320M,64G-:576M"
@@ -1042,7 +1048,6 @@ kdump_get_arch_recommend_crashkernel()
 			#4k kernel, mlx5 consumes extra 124M memory, and choose 150M
 			has_mlx5 && ((_delta += 150))
 		fi
-		_ck_cmdline=$(_crashkernel_add "$_ck_cmdline" "${_delta}M")
 	elif [[ $_arch == "ppc64le" ]]; then
 		if [[ $_dump_mode == "fadump" ]]; then
 			_ck_cmdline="4G-16G:768M,16G-64G:1G,64G-128G:2G,128G-1T:4G,1T-2T:6G,2T-4T:12G,4T-8T:20G,8T-16T:36G,16T-32T:64G,32T-64T:128G,64T-:180G"
@@ -1051,7 +1056,7 @@ kdump_get_arch_recommend_crashkernel()
 		fi
 	fi
 
-	echo -n "$_ck_cmdline"
+	echo -n "$(_crashkernel_add "$_ck_cmdline" "${_delta}M")"
 }
 
 # return recommended size based on current system RAM size
