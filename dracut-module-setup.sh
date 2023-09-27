@@ -381,6 +381,14 @@ _get_hpyerv_physical_driver() {
     _get_nic_driver "$_physical_nic"
 }
 
+_get_physical_function_driver() {
+    local _physfn_dir=/sys/class/net/"$1"/device/physfn
+
+    if [[ -e "$_physfn_dir" ]]; then
+        basename "$(readlink -f "$_physfn_dir"/driver)"
+    fi
+}
+
 kdump_install_nic_driver() {
     local _netif _driver _drivers
 
@@ -408,6 +416,9 @@ kdump_install_nic_driver() {
         fi
 
         _drivers+=("$_driver")
+        # For a Single Root I/O Virtualization (SR-IOV) virtual device,
+        # the driver of physical device needs to be installed as well
+        _drivers+=("$(_get_physical_function_driver "$_netif")")
     done
 
     [[ -n ${_drivers[*]} ]] || return
