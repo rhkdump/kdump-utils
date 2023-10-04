@@ -501,6 +501,15 @@ prepare_kexec_args()
 			fi
 		fi
 	fi
+
+	# For secureboot enabled machines, use new kexec file based syscall.
+	# Old syscall will always fail as it does not have capability to do
+	# kernel signature verification.
+	if is_secure_boot_enforced; then
+		dinfo "Secure Boot is enabled. Using kexec file based syscall."
+		kexec_args="$kexec_args -s"
+	fi
+
 	echo "$kexec_args"
 }
 

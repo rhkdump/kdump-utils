@@ -690,14 +690,6 @@ load_kdump()
 
 	KEXEC_ARGS=$(prepare_kexec_args "${KEXEC_ARGS}")
 	KDUMP_COMMANDLINE=$(prepare_cmdline "${KDUMP_COMMANDLINE}" "${KDUMP_COMMANDLINE_REMOVE}" "${KDUMP_COMMANDLINE_APPEND}")
-	# For secureboot enabled machines, use new kexec file based syscall.
-	# Old syscall will always fail as it does not have capability to
-	# to kernel signature verification.
-	if is_secure_boot_enforced; then
-		dinfo "Secure Boot is enabled. Using kexec file based syscall."
-		KEXEC_ARGS="$KEXEC_ARGS -s"
-		load_kdump_kernel_key
-	fi
 
 	if is_uki "$KDUMP_KERNEL"; then
 		uki=$KDUMP_KERNEL
@@ -984,6 +976,12 @@ start_fadump()
 
 start_dump()
 {
+	# On secure boot enabled Power systems, load kernel signing key on .ima for signature
+	# verification using kexec file based syscall.
+	if [[ "$(uname -m)" == ppc64le ]] && is_secure_boot_enforced; then
+		load_kdump_kernel_key
+	fi
+
 	if [[ $DEFAULT_DUMP_MODE == "fadump" ]]; then
 		start_fadump
 	else
