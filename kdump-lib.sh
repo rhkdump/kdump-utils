@@ -862,7 +862,7 @@ has_aarch64_smmu()
 	ls /sys/devices/platform/arm-smmu-* 1> /dev/null 2>&1
 }
 
-is_memsize() { [[ "$1" =~ ^[+-]?[0-9]+[KkMmGg]?$ ]]; }
+is_memsize() { [[ "$1" =~ ^[+-]?[0-9]+[KkMmGgTtPbEe]?$ ]]; }
 
 # range defined for crashkernel parameter
 # i.e. <start>-[<end>]
@@ -893,6 +893,18 @@ to_bytes()
 			_s=${_s::-1}
 			_s="$((_s * 1024 * 1024 * 1024))"
 			;;
+		T|t)
+			_s=${_s::-1}
+			_s="$((_s * 1024 * 1024 * 1024 * 1024))"
+			;;
+		P|p)
+			_s=${_s::-1}
+			_s="$((_s * 1024 * 1024 * 1024 * 1024 * 1024))"
+			;;
+		E|e)
+			_s=${_s::-1}
+			_s="$((_s * 1024 * 1024 * 1024 * 1024 * 1024 * 1024))"
+			;;
 		*)
 			;;
 	esac
@@ -901,7 +913,7 @@ to_bytes()
 
 memsize_add()
 {
-	local -a units=("" "K" "M" "G")
+	local -a units=("" "K" "M" "G" "T" "P" "E")
 	local i a b
 
 	a=$(to_bytes "$1") || return 1

@@ -52,14 +52,20 @@ Describe 'kdump-lib'
 		Context "For valid input values"
 			Parameters
 				"1G-4G:256M,4G-64G:320M,64G-:576M" "100M" "1G-4G:356M,4G-64G:420M,64G-:676M"
+				"1G-4G:256M" "100" "1G-4G:268435556" # avoids any rounding when size % 1024 != 0
 				"1G-4G:256M,4G-64G:320M,64G-:576M@4G" "100M" "1G-4G:356M,4G-64G:420M,64G-:676M@4G"
 				"1G-4G:1G,4G-64G:2G,64G-:3G@4G" "100M" "1G-4G:1124M,4G-64G:2148M,64G-:3172M@4G"
 				"1G-4G:10000K,4G-64G:20000K,64G-:40000K@4G" "100M" "1G-4G:112400K,4G-64G:122400K,64G-:142400K@4G"
 				"1,high" "1" "2,high"
 				"1K,low" "1" "1025,low"
+				"128G-1T:4G" "0" "128G-1T:4G"
+				"10T-100T:1T" "0" "10T-100T:1T"
+				"128G-1T:4G" "0M" "128G-1T:4G"
+				"128G-1P:4G" "0M" "128G-1P:4G"
+				"128G-1E:4G" "0M" "128G-1E:4G"
 				"1M@1G" "1k" "1025K@1G"
 				"500M@1G" "-100m" "400M@1G"
-				"1099511627776" "0" "1024G"
+				"1099511627776" "0" "1T"
 			End
 			It "should add delta to every value after ':'"
 				When call _crashkernel_add "$1" "$2"
