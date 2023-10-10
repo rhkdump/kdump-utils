@@ -1,0 +1,43 @@
+From c3f35ff06e54daf452ac49a4381cf2643c934866 Mon Sep 17 00:00:00 2001
+From: Leah Neukirchen <leah@vuxu.org>
+Date: Mon, 28 Aug 2023 11:58:15 +0200
+Subject: [PATCH 2/4] build: fix tarball creation
+
+The fix in 41b77edac did not work, bsdtar still complains about
+"hardlink pointing to itself".
+
+Simplify the code instead: since the staging directory contains
+exactly the files we want, just package it as a whole.
+
+Signed-off-by: Leah Neukirchen <leah@vuxu.org>
+Signed-off-by: Simon Horman <horms@kernel.org>
+---
+ Makefile.in | 5 +----
+ 1 file changed, 1 insertion(+), 4 deletions(-)
+
+diff --git a/Makefile.in b/Makefile.in
+index 09bbd5c..3cad22a 100644
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -179,8 +179,6 @@ GENERATED_SRCS:= $(SPEC)
+ TARBALL=$(PACKAGE_NAME)-$(PACKAGE_VERSION).tar
+ TARBALL.gz=$(TARBALL).gz
+ SRCS:= $(dist)
+-PSRCS:=$(foreach s, $(SRCS), $(PACKAGE_NAME)-$(PACKAGE_VERSION)/$(s))
+-PGSRCS:=$(foreach s, $(GENERATED_SRCS), $(PACKAGE_NAME)-$(PACKAGE_VERSION)/$(s))
+ 
+ MAN_PAGES:=$(KEXEC_MANPAGE) $(VMCORE_DMESG_MANPAGE)
+ BINARIES_i386:=$(KEXEC_TEST)
+@@ -223,8 +221,7 @@ $(TARBALL): $(SRCS) $(GENERATED_SRCS)
+ 	$(MKDIR) $(PACKAGE_NAME)-$(PACKAGE_VERSION)
+ 	$(TAR) -c $(SRCS) $(GENERATED_SRCS) | \
+ 	        $(TAR) -C $(PACKAGE_NAME)-$(PACKAGE_VERSION) -x
+-	$(TAR) -cf $@ $(PSRCS)
+-	$(TAR) -rf $@ $(PGSRCS)
++	$(TAR) -cf $@ $(PACKAGE_NAME)-$(PACKAGE_VERSION)
+ 	$(RM) -rf $(PACKAGE_NAME)-$(PACKAGE_VERSION)
+ 
+ $(TARBALL.gz): $(TARBALL)
+-- 
+2.41.0
+

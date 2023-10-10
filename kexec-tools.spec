@@ -106,6 +106,18 @@ Requires:       systemd-udev%{?_isa}
 # Patches 601 onward are generic patches
 #
 Patch601: kexec-tools-2.0.26-makedumpfile-Fix-wrong-exclusion-of-slab-pages-on-Linux-6.2.patch
+# kexec-tools 2.0.27.git
+# Author: Simon Horman <horms@kernel.org>
+Patch602: 0001-kexec-tools-2.0.27.git.patch
+# build: fix tarball creation
+# Author: Leah Neukirchen <leah@vuxu.org>
+Patch603: 0002-build-fix-tarball-creation.patch
+# zboot: enable arm64 kexec_load for zboot image
+# Author: Dave Young <dyoung@redhat.com>
+Patch604: 0003-zboot-enable-arm64-kexec_load-for-zboot-image.patch
+# zboot: add loongarch kexec_load support
+# Author: Dave Young <dyoung@redhat.com>
+Patch605: 0004-zboot-add-loongarch-kexec_load-support.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -360,6 +372,9 @@ fi
 %endif
 
 %changelog
+* Tue Oct 10 2023 Coiby Xu <coxu@redhat.com> - 2.0.27-1
+- kexec-tools 2.0.27 (Simon Horman)
+
 * Thu Aug 31 2023 Coiby Xu <coxu@redhat.com> - 2.0.27-1
 - kexec-tools 2.0.27 (Simon Horman)
 

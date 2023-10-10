@@ -1,0 +1,134 @@
+From 8f08e3b51f25f585dc62f8e7aadc6095e06417cc Mon Sep 17 00:00:00 2001
+From: Dave Young <dyoung@redhat.com>
+Date: Thu, 14 Sep 2023 16:49:59 +0800
+Subject: [PATCH 3/4] zboot: enable arm64 kexec_load for zboot image
+
+kexec_file_load support of zboot kernel image decompressed the vmlinuz,
+so in kexec_load code just load the kernel with reading the decompressed
+kernel fd into a new buffer and use it directly.
+
+Signed-off-by: Dave Young <dyoung@redhat.com>
+Tested-by: Baoquan He <bhe@redhat.com>
+Reviewed-by: Pingfan Liu <piliu@redhat.com>
+Signed-off-by: Simon Horman <horms@kernel.org>
+---
+ include/kexec-pe-zboot.h               |  3 ++-
+ kexec/arch/arm64/kexec-vmlinuz-arm64.c | 26 +++++++++++++++++++++++---
+ kexec/kexec-pe-zboot.c                 |  4 +++-
+ kexec/kexec.c                          |  2 +-
+ kexec/kexec.h                          |  1 +
+ 5 files changed, 30 insertions(+), 6 deletions(-)
+
+diff --git a/include/kexec-pe-zboot.h b/include/kexec-pe-zboot.h
+index e2e0448..374916c 100644
+--- a/include/kexec-pe-zboot.h
++++ b/include/kexec-pe-zboot.h
+@@ -11,5 +11,6 @@ struct linux_pe_zboot_header {
+ 	uint32_t compress_type;
+ };
+ 
+-int pez_prepare(const char *crude_buf, off_t buf_sz, int *kernel_fd);
++int pez_prepare(const char *crude_buf, off_t buf_sz, int *kernel_fd,
++		off_t *kernel_size);
+ #endif
+diff --git a/kexec/arch/arm64/kexec-vmlinuz-arm64.c b/kexec/arch/arm64/kexec-vmlinuz-arm64.c
+index c0ee47c..e291a34 100644
+--- a/kexec/arch/arm64/kexec-vmlinuz-arm64.c
++++ b/kexec/arch/arm64/kexec-vmlinuz-arm64.c
+@@ -34,6 +34,7 @@
+ #include "arch/options.h"
+ 
+ static int kernel_fd = -1;
++static off_t decompressed_size;
+ 
+ /* Returns:
+  * -1 : in case of error/invalid format (not a valid PE+compressed ZBOOT format.
+@@ -72,7 +73,7 @@ int pez_arm64_probe(const char *kernel_buf, off_t kernel_size)
+ 		return -1;
+ 	}
+ 
+-	ret = pez_prepare(buf, buf_sz, &kernel_fd);
++	ret = pez_prepare(buf, buf_sz, &kernel_fd, &decompressed_size);
+ 
+ 	if (!ret) {
+ 	    /* validate the arm64 specific header */
+@@ -98,8 +99,27 @@ bad_header:
+ int pez_arm64_load(int argc, char **argv, const char *buf, off_t len,
+ 			struct kexec_info *info)
+ {
+-	info->kernel_fd = kernel_fd;
+-	return image_arm64_load(argc, argv, buf, len, info);
++	if (kernel_fd > 0 && decompressed_size > 0) {
++		char *kbuf;
++		off_t nread;
++		int fd;
++
++		info->kernel_fd = kernel_fd;
++		fd = dup(kernel_fd);
++		if (fd < 0) {
++			dbgprintf("%s: dup fd failed.\n", __func__);
++			return -1;
++		}
++		kbuf = slurp_fd(fd, NULL, decompressed_size, &nread);
++		if (!kbuf || nread != decompressed_size) {
++			dbgprintf("%s: slurp_fd failed.\n", __func__);
++			return -1;
++		}
++		return image_arm64_load(argc, argv, kbuf, decompressed_size, info);
++	}
++
++	dbgprintf("%s: wrong kernel file descriptor.\n", __func__);
++	return -1;
+ }
+ 
+ void pez_arm64_usage(void)
+diff --git a/kexec/kexec-pe-zboot.c b/kexec/kexec-pe-zboot.c
+index 2f2e052..3abd17d 100644
+--- a/kexec/kexec-pe-zboot.c
++++ b/kexec/kexec-pe-zboot.c
+@@ -37,7 +37,8 @@
+  *
+  * crude_buf: the content, which is read from the kernel file without any processing
+  */
+-int pez_prepare(const char *crude_buf, off_t buf_sz, int *kernel_fd)
++int pez_prepare(const char *crude_buf, off_t buf_sz, int *kernel_fd,
++		off_t *kernel_size)
+ {
+ 	int ret = -1;
+ 	int fd = 0;
+@@ -110,6 +111,7 @@ int pez_prepare(const char *crude_buf, off_t buf_sz, int *kernel_fd)
+ 		goto fail_bad_header;
+ 	}
+ 
++	*kernel_size = decompressed_size;
+ 	dbgprintf("%s: done\n", __func__);
+ 
+ 	ret = 0;
+diff --git a/kexec/kexec.c b/kexec/kexec.c
+index c3b182e..1edbd34 100644
+--- a/kexec/kexec.c
++++ b/kexec/kexec.c
+@@ -489,7 +489,7 @@ static int add_backup_segments(struct kexec_info *info,
+ 	return 0;
+ }
+ 
+-static char *slurp_fd(int fd, const char *filename, off_t size, off_t *nread)
++char *slurp_fd(int fd, const char *filename, off_t size, off_t *nread)
+ {
+ 	char *buf;
+ 	off_t progress;
+diff --git a/kexec/kexec.h b/kexec/kexec.h
+index ed3b499..0933389 100644
+--- a/kexec/kexec.h
++++ b/kexec/kexec.h
+@@ -267,6 +267,7 @@ extern void die(const char *fmt, ...)
+ 	__attribute__ ((format (printf, 1, 2)));
+ extern void *xmalloc(size_t size);
+ extern void *xrealloc(void *ptr, size_t size);
++extern char *slurp_fd(int fd, const char *filename, off_t size, off_t *nread);
+ extern char *slurp_file(const char *filename, off_t *r_size);
+ extern char *slurp_file_mmap(const char *filename, off_t *r_size);
+ extern char *slurp_file_len(const char *filename, off_t size, off_t *nread);
+-- 
+2.41.0
+
