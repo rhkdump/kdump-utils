@@ -1649,6 +1649,10 @@ reset_crashkernel_for_installed_kernel()
 	_update_crashkernel "$_installed_kernel"
 }
 
+_should_reset_crashkernel() {
+	[[ $(kdump_get_conf_val auto_reset_crashkernel) != no ]] && systemctl is-enabled kdump &> /dev/null
+}
+
 main()
 {
 	# Determine if the dump mode is kdump or fadump
@@ -1715,12 +1719,12 @@ main()
 		reset_crashkernel "$@"
 		;;
 	_reset-crashkernel-after-update)
-		if [[ $(kdump_get_conf_val auto_reset_crashkernel) != no ]]; then
+		if _should_reset_crashkernel; then
 			reset_crashkernel_after_update
 		fi
 		;;
 	_reset-crashkernel-for-installed_kernel)
-		if [[ $(kdump_get_conf_val auto_reset_crashkernel) != no ]]; then
+		if _should_reset_crashkernel; then
 			reset_crashkernel_for_installed_kernel "$2"
 		fi
 		;;
