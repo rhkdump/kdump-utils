@@ -5,7 +5,7 @@
 
 Name: kexec-tools
 Version: 2.0.27
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPL-2.0-only
 Summary: The kexec/kdump userspace component
 
@@ -134,6 +134,10 @@ tar -z -x -v -f %{SOURCE9}
 tar -z -x -v -f %{SOURCE19}
 
 %patch601 -p1
+%patch602 -p1
+%patch603 -p1
+%patch604 -p1
+%patch605 -p1
 
 %ifarch ppc
 %define archdef ARCH=ppc
@@ -372,6 +376,9 @@ fi
 %endif
 
 %changelog
+* Fri Oct 13 2023 Coiby Xu <coxu@redhat.com> - 2.0.27-2
+- update to latest upstream kexec-tools
+
 * Tue Oct 10 2023 Coiby Xu <coxu@redhat.com> - 2.0.27-1
 - kexec-tools 2.0.27 (Simon Horman)
 
