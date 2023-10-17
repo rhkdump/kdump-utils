@@ -5,7 +5,7 @@
 
 Name: kexec-tools
 Version: 2.0.27
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: GPL-2.0-only
 Summary: The kexec/kdump userspace component
 
@@ -376,6 +376,9 @@ fi
 %endif
 
 %changelog
+* Tue Oct 17 2023 Coiby Xu <coxu@redhat.com> - 2.0.27-3
+- Only try to reset crashkernel when kdump.service is enabled
+
 * Fri Oct 13 2023 Coiby Xu <coxu@redhat.com> - 2.0.27-2
 - update to latest upstream kexec-tools
 
