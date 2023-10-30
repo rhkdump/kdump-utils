@@ -605,6 +605,10 @@ check_fs_modified()
 is_system_modified()
 {
 	local ret
+	local CONF_ERROR=2
+	local CONF_MODIFY=1
+	local CONF_NO_MODIFY=0
+	local conf_status=$CONF_NO_MODIFY
 
 	[[ -f $TARGET_INITRD ]] || return 1
 
@@ -617,9 +621,15 @@ is_system_modified()
 		fi
 	fi
 
-	check_files_modified || return
-	check_fs_modified || return
-	check_drivers_modified
+	for _func in check_files_modified check_fs_modified check_drivers_modified; do
+		$_func
+		ret=$?
+		# return immediately if an error occurred.
+		[[ $ret -eq "$CONF_ERROR" ]] && return "$ret"
+		[[ $ret -eq "$CONF_MODIFY" ]] && { conf_status="$CONF_MODIFY"; }
+	done
+
+    return $conf_status
 }
 
 # need_initrd_rebuild - check whether the initrd needs to be rebuild
