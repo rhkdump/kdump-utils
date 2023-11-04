@@ -1412,7 +1412,7 @@ _find_kernel_path_by_release()
 
 	# Insert '/' before '+' to cope with grep's EREs
 	_release=${_release//+/\\+}
-	_grubby_kernel_str=$(grubby --info ALL | grep -E "^kernel=.*$_release(\/\w+)?\"$")
+	_grubby_kernel_str=$(grubby --info ALL | grep -E "^kernel=.*$_release(/\w+)?\"$")
 	_kernel_path=$(_filter_grubby_kernel_str "$_grubby_kernel_str")
 	if [[ -z $_kernel_path ]]; then
 		ddebug "kernel $_release doesn't exist"

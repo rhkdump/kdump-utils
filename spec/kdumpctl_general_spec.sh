@@ -156,16 +156,32 @@ Describe 'kdumpctl'
 	End
 
 	Describe '_find_kernel_path_by_release()'
+		# When the array length changes, the Parameters:dynamic should change as well
+		kernel_paths=(/boot/vmlinuz-6.2.11-200.fc37.x86_64
+		              /boot/vmlinuz-5.14.0-316.el9.aarch64+64k
+		              /boot/vmlinuz-5.14.0-322.el9.aarch64
+		              /boot/efi/36b54597c46383/6.4.0-0.rc0.20230427git6e98b09da931.5.fc39.aarch64/linux)
+
+		kernels=(vmlinuz-6.2.11-200.fc37.x86_64
+		         vmlinuz-5.14.0-316.el9.aarch64+64k
+		         vmlinuz-5.14.0-322.el9.aarch64
+		         6.4.0-0.rc0.20230427git6e98b09da931.5.fc39.aarch64)
+
 		grubby() {
-			echo -e 'kernel="/boot/vmlinuz-6.2.11-200.fc37.x86_64"\nkernel="/boot/vmlinuz-5.14.0-322.el9.aarch64"\nkernel="/boot/vmlinuz-5.14.0-316.el9.aarch64+64k"'
+			for key in "${!kernel_paths[@]}"; do
+				echo "kernel=\"${kernel_paths[$key]}\""
+			done
 		}
 
-		Parameters
-			# parameter          answer
-			vmlinuz-6.2.11-200.fc37.x86_64	/boot/vmlinuz-6.2.11-200.fc37.x86_64
-			vmlinuz-5.14.0-322.el9.aarch64	/boot/vmlinuz-5.14.0-322.el9.aarch64
-			vmlinuz-5.14.0-316.el9.aarch64+64k	/boot/vmlinuz-5.14.0-316.el9.aarch64+64k
+		Parameters:dynamic
+			# Due to a bug [1] in shellspec, hardcode the loop number instead of using the
+			# array length
+			# [1] https://github.com/shellspec/shellspec/issues/259
+			for key in {0..3}; do
+				%data "${kernels[$key]}" "${kernel_paths[$key]}"
+			done
 		End
+
 		It 'returns the kernel path for the given release'
 			When call _find_kernel_path_by_release "$1"
 			The output should equal "$2"
