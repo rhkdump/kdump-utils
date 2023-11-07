@@ -563,6 +563,33 @@ kdump_collect_netif_usage() {
     fi
 }
 
+kdump_install_resolv_conf() {
+    local _resolv_conf=/etc/resolv.conf _nm_conf_dir=/etc/NetworkManager/conf.d
+
+    # Some users may choose to manage /etc/resolve.conf manually [1]
+    # by setting dns=none or use a symbolic link resolve.conf [2].
+    # So resolve.conf should be installed to kdump initrd as well. To prevent
+    # NM frome overwritting the user-configured resolve.conf in kdump initrd,
+    # also set dns=none for NM.
+    #
+    # Note:
+    # 1. When resolv.conf is managed by systemd-resolved.service, it could also be a
+    #    symbolic link. So exclude this case by teling if systemd-resolved is enabled.
+    #
+    # 2. It's harmless to blindly copy /etc/resolve.conf to the initrd because
+    #    by default in initramfs this file will be overwritten by
+    #    NetworkManager. If user manages it via a symbolic link, it's still
+    #    preserved because NM won't touch a symbolic link file.
+    #
+    # [1] https://bugzilla.gnome.org/show_bug.cgi?id=690404
+    # [2] https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html/configuring_and_managing_networking/manually-configuring-the-etc-resolv-conf-file_configuring-and-managing-networking
+    systemctl -q is-enabled systemd-resolved && return 0
+    inst "$_resolv_conf"
+    if NetworkManager --print-config | grep -qs "^dns=none"; then
+        echo "[main]\ndns=none" > "$_nm_conf_dir"/90-dns-none.conf
+    fi
+}
+
 # Setup dracut to bring up network interface that enable
 # initramfs accessing giving destination
 kdump_install_net() {
@@ -575,6 +602,7 @@ kdump_install_net() {
         kdump_setup_znet
         kdump_install_nm_netif_allowlist "$_netifs"
         kdump_install_nic_driver "$_netifs"
+        kdump_install_resolv_conf
     fi
 }
 
