@@ -1,11 +1,11 @@
 %global eppic_ver e8844d3793471163ae4a56d8f95897be9e5bd554
 %global eppic_shortver %(c=%{eppic_ver}; echo ${c:0:7})
-%global mkdf_ver 1.7.2
+%global mkdf_ver 1.7.4
 %global mkdf_shortver %(c=%{mkdf_ver}; echo ${c:0:7})
 
 Name: kexec-tools
 Version: 2.0.27
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: GPL-2.0-only
 Summary: The kexec/kdump userspace component
 
@@ -105,7 +105,6 @@ Requires:       systemd-udev%{?_isa}
 #
 # Patches 601 onward are generic patches
 #
-Patch601: kexec-tools-2.0.26-makedumpfile-Fix-wrong-exclusion-of-slab-pages-on-Linux-6.2.patch
 # kexec-tools 2.0.27.git
 # Author: Simon Horman <horms@kernel.org>
 Patch602: 0001-kexec-tools-2.0.27.git.patch
@@ -133,7 +132,6 @@ mkdir -p -m755 kcp
 tar -z -x -v -f %{SOURCE9}
 tar -z -x -v -f %{SOURCE19}
 
-%patch601 -p1
 %patch602 -p1
 %patch603 -p1
 %patch604 -p1
@@ -376,6 +374,11 @@ fi
 %endif
 
 %changelog
+* Wed Nov 08 2023 Coiby Xu <coxu@redhat.com> - 2.0.27-4
+- update to makedumpfile-1.7.4
+- kdump-lib.sh: add extra 64M to default crashkernel if sme/sev is active
+- Allow _crashkernel_add to address larger memory ranges
+
 * Tue Oct 17 2023 Coiby Xu <coxu@redhat.com> - 2.0.27-3
 - Only try to reset crashkernel when kdump.service is enabled
 
