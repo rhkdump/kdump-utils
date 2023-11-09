@@ -26,6 +26,9 @@ check() {
     if [[ -z $IN_KDUMP ]] || [[ ! -f /etc/kdump.conf ]]; then
         return 1
     fi
+    if [[ "$(uname -m)" == "s390x" ]]; then
+	require_binaries chzdev || return 1
+    fi
     return 0
 }
 
@@ -474,12 +477,26 @@ _find_znet_nmconnection() {
 #
 # Note part of code is extracted from ccw_init provided by s390utils
 kdump_setup_znet() {
+    local _netif
+    local _tempfile=$(mktemp --tmpdir="$_DRACUT_KDUMP_NM_TMP_DIR" kdump-dracut-zdev.XXXXXX)
     local _config_file _unique_name _NM_conf_dir
     local __sed_discard_ignored_files='/\(~\|\.bak\|\.old\|\.orig\|\.rpmnew\|\.rpmorig\|\.rpmsave\)$/d'
 
     if [[ "$(uname -m)" != "s390x" ]]; then
         return
     fi
+
+    for _netif in $1; do
+	chzdev --export "$_tempfile" --active --by-interface "$_netif" \
+	       2>&1 | ddebug
+	sed -i -e 's/^\[active /\[persistent /' "$_tempfile"
+	ddebug < "$_tempfile"
+	chzdev --import "$_tempfile" --persistent --base "/etc=$initdir/etc" \
+               --yes --no-root-update --force 2>&1 | ddebug
+	lszdev --configured --persistent --info --by-interface "$_netif" \
+	       --base "/etc=$initdir/etc" 2>&1 | ddebug
+    done
+    rm -f "$_tempfile"
 
     _NM_conf_dir="/etc/NetworkManager/system-connections"
 
@@ -599,7 +616,7 @@ kdump_install_net() {
     if [[ -n "$_netifs" ]]; then
         kdump_install_nmconnections
         apply_nm_initrd_generator_timeouts
-        kdump_setup_znet
+        kdump_setup_znet "$_netifs"
         kdump_install_nm_netif_allowlist "$_netifs"
         kdump_install_nic_driver "$_netifs"
         kdump_install_resolv_conf
