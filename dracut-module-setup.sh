@@ -467,20 +467,10 @@ kdump_setup_vlan() {
     _save_kdump_netifs "$_parent_netif"
 }
 
-_find_znet_nmconnection() {
-    LANG=C grep -s -E -i -l \
-        "^s390-subchannels=([0-9]\.[0-9]\.[a-f0-9]+;){0,2}" \
-        "$1"/*.nmconnection | LC_ALL=C sed -e "$2"
-}
-
 # setup s390 znet
-#
-# Note part of code is extracted from ccw_init provided by s390utils
 kdump_setup_znet() {
     local _netif
     local _tempfile=$(mktemp --tmpdir="$_DRACUT_KDUMP_NM_TMP_DIR" kdump-dracut-zdev.XXXXXX)
-    local _config_file _unique_name _NM_conf_dir
-    local __sed_discard_ignored_files='/\(~\|\.bak\|\.old\|\.orig\|\.rpmnew\|\.rpmorig\|\.rpmsave\)$/d'
 
     if [[ "$(uname -m)" != "s390x" ]]; then
         return
@@ -497,32 +487,6 @@ kdump_setup_znet() {
 	       --base "/etc=$initdir/etc" 2>&1 | ddebug
     done
     rm -f "$_tempfile"
-
-    _NM_conf_dir="/etc/NetworkManager/system-connections"
-
-    _config_file=$(_find_znet_nmconnection "$initdir/$_NM_conf_dir" "$__sed_discard_ignored_files")
-    if [[ -n "$_config_file" ]]; then
-        ddebug "$_config_file has already contained the znet config"
-        return
-    fi
-
-    _config_file=$(LANG=C grep -s -E -i -l \
-        "^[[:space:]]*SUBCHANNELS=['\"]?([0-9]\.[0-9]\.[a-f0-9]+,){0,2}" \
-        /etc/sysconfig/network-scripts/ifcfg-* \
-        | LC_ALL=C sed -e "$__sed_discard_ignored_files")
-
-    if [[ -z "$_config_file" ]]; then
-        _config_file=$(_find_znet_nmconnection "$_NM_conf_dir" "$__sed_discard_ignored_files")
-    fi
-
-    if [[ -n "$_config_file" ]]; then
-        _unique_name=$(cat /proc/sys/kernel/random/uuid)
-        nmcli connection clone --temporary "$_config_file" "$_unique_name" &> >(ddebug)
-        nmcli connection modify --temporary "$_unique_name" connection.autoconnect false
-        inst "/run/NetworkManager/system-connections/${_unique_name}.nmconnection" "${_NM_conf_dir}/${_unique_name}.nmconnection"
-        nmcli connection del "$_unique_name" &> >(ddebug)
-    fi
-
 }
 
 kdump_get_remote_ip() {
