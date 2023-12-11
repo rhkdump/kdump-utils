@@ -5,7 +5,7 @@
 
 Name: kexec-tools
 Version: 2.0.27
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: GPL-2.0-only
 Summary: The kexec/kdump userspace component
 
@@ -375,6 +375,9 @@ fi
 %endif
 
 %changelog
+* Mon Dec 11 2023 Coiby Xu <coxu@redhat.com> - 2.0.27-5
+- Let %post scriptlet always exits with the zero exit status
+
 * Wed Nov 08 2023 Coiby Xu <coxu@redhat.com> - 2.0.27-4
 - update to makedumpfile-1.7.4
 - kdump-lib.sh: add extra 64M to default crashkernel if sme/sev is active
