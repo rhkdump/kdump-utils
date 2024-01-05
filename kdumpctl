@@ -748,7 +748,12 @@ check_ssh_config()
 	[[ "${OPT[_fstype]}" == ssh ]] || return 0
 
 	target=$(ssh -G "${OPT[_target]}" | sed  -n -e "s/^hostname[[:space:]]\+\([^[:space:]]*\).*$/\1/p")
-	[[ ${OPT[_target]} =~ .*@.* ]] || return 1
+
+	if [[ ${OPT[_target]} != *@* ]]; then
+		derror "Please verify that $KDUMP_CONFIG_FILE contains 'ssh <user>@<host>' and that it is properly formatted."
+		return 1
+	fi
+
 	if [[ ${OPT[_target]#*@} != "$target" ]]; then
 		derror "Invalid ssh destination ${OPT[_target]} provided."
 		return 1
