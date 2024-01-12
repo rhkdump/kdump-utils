@@ -1020,8 +1020,7 @@ install() {
         kdump_install_random_seed
     fi
     dracut_install -o /etc/adjtime /etc/localtime
-    inst "$moddir/monitor_dd_progress" "/kdumpscripts/monitor_dd_progress"
-    chmod +x "${initdir}/kdumpscripts/monitor_dd_progress"
+    inst "$moddir/monitor_dd_progress.sh" "/kdumpscripts/monitor_dd_progress.sh"
     inst "/bin/dd" "/bin/dd"
     inst "/bin/tail" "/bin/tail"
     inst "/bin/date" "/bin/date"

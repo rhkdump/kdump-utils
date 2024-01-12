@@ -377,7 +377,7 @@ dump_raw()
 	if ! echo "$CORE_COLLECTOR" | grep -q makedumpfile; then
 		_src_size=$(stat --format %s /proc/vmcore)
 		_src_size_mb=$((_src_size / 1048576))
-		/kdumpscripts/monitor_dd_progress $_src_size_mb &
+		/kdumpscripts/monitor_dd_progress.sh $_src_size_mb &
 	fi
 
 	dinfo "saving vmcore"
