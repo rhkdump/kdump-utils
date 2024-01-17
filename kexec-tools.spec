@@ -4,8 +4,8 @@
 %global mkdf_shortver %(c=%{mkdf_ver}; echo ${c:0:7})
 
 Name: kexec-tools
-Version: 2.0.27
-Release: 5%{?dist}
+Version: 2.0.28
+Release: 1%{?dist}
 License: GPL-2.0-only
 Summary: The kexec/kdump userspace component
 
@@ -105,18 +105,6 @@ Requires:       systemd-udev%{?_isa}
 #
 # Patches 601 onward are generic patches
 #
-# kexec-tools 2.0.27.git
-# Author: Simon Horman <horms@kernel.org>
-Patch602: 0001-kexec-tools-2.0.27.git.patch
-# build: fix tarball creation
-# Author: Leah Neukirchen <leah@vuxu.org>
-Patch603: 0002-build-fix-tarball-creation.patch
-# zboot: enable arm64 kexec_load for zboot image
-# Author: Dave Young <dyoung@redhat.com>
-Patch604: 0003-zboot-enable-arm64-kexec_load-for-zboot-image.patch
-# zboot: add loongarch kexec_load support
-# Author: Dave Young <dyoung@redhat.com>
-Patch605: 0004-zboot-add-loongarch-kexec_load-support.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -132,10 +120,6 @@ mkdir -p -m755 kcp
 tar -z -x -v -f %{SOURCE9}
 tar -z -x -v -f %{SOURCE19}
 
-%patch602 -p1
-%patch603 -p1
-%patch604 -p1
-%patch605 -p1
 
 %ifarch ppc
 %define archdef ARCH=ppc
@@ -375,6 +359,11 @@ fi
 %endif
 
 %changelog
+* Wed Jan 17 2024 Coiby Xu <coxu@redhat.com> - 2.0.28-1
+- kexec-tools 2.0.28 (Simon Horman)
+- Use the same /etc/resolve.conf in kdump initrd if it's managed manually
+- dracut-module-setup: consolidate s390 network device config
+
 * Mon Dec 11 2023 Coiby Xu <coxu@redhat.com> - 2.0.27-5
 - Let %post scriptlet always exits with the zero exit status
 
