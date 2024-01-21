@@ -5,7 +5,7 @@
 
 Name: kexec-tools
 Version: 2.0.28
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPL-2.0-only
 Summary: The kexec/kdump userspace component
 
@@ -359,6 +359,9 @@ fi
 %endif
 
 %changelog
+* Sun Jan 21 2024 Fedora Release Engineering <releng@fedoraproject.org> - 2.0.28-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_40_Mass_Rebuild
+
 * Wed Jan 17 2024 Coiby Xu <coxu@redhat.com> - 2.0.28-1
 - kexec-tools 2.0.28 (Simon Horman)
 - Use the same /etc/resolve.conf in kdump initrd if it's managed manually
