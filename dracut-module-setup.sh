@@ -1070,6 +1070,15 @@ install() {
         's/\(^[[:space:]]*reserved_memory[[:space:]]*=\)[[:space:]]*[[:digit:]]*/\1 1024/' \
         "${initdir}/etc/lvm/lvm.conf" &> /dev/null
 
+    # Skip initrd-cleanup.service and initrd-parse-etc.service becasue we don't
+    # need to switch root. Instead of removing them, we use ConditionPathExists
+    # to check if /proc/vmcore exists to determine if we are in kdump.
+    sed -i '/\[Unit\]/a ConditionPathExists=!\/proc\/vmcore' \
+        "${initdir}/${systemdsystemunitdir}/initrd-cleanup.service" &> /dev/null
+
+    sed -i '/\[Unit\]/a ConditionPathExists=!\/proc\/vmcore' \
+        "${initdir}/${systemdsystemunitdir}/initrd-parse-etc.service" &> /dev/null
+
     # Save more memory by dropping switch root capability
     dracut_no_switch_root
 }
