@@ -3,7 +3,7 @@
 # More details about systemd generator:
 # http://www.freedesktop.org/wiki/Software/systemd/Generators/
 
-. /usr/lib/kdump/kdump-lib.sh
+. /usr/lib/kdump/kdump-lib-initramfs.sh
 . /usr/lib/kdump/kdump-logger.sh
 
 # If invokded with no arguments for testing purpose, output to /tmp to
