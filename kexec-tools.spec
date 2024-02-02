@@ -5,7 +5,7 @@
 
 Name: kexec-tools
 Version: 2.0.28
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: GPL-2.0-only
 Summary: The kexec/kdump userspace component
 
@@ -89,6 +89,9 @@ Requires:       systemd-udev%{?_isa}
 #
 # Patches 101 through 200 are meant for x86_64 kexec-tools enablement
 #
+# Fix building on x86_64 with binutils 2.41
+# Author: Michel Lind <salimma@fedoraproject.org>
+Patch101: kexec-tools-2.0.28-Fix-building-on-x86_64-with-binutils-2.41.patch
 
 #
 # Patches 301 through 400 are meant for ppc64 kexec-tools enablement
@@ -105,6 +108,9 @@ Requires:       systemd-udev%{?_isa}
 #
 # Patches 601 onward are generic patches
 #
+# kexec: don't use kexec_file_load on XEN
+# Author: Jiri Bohac <jbohac@suse.cz>
+Patch601: kexec-tools-2.0.28-kexec-don-t-use-kexec_file_load-on-XEN.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -120,6 +126,8 @@ mkdir -p -m755 kcp
 tar -z -x -v -f %{SOURCE9}
 tar -z -x -v -f %{SOURCE19}
 
+%patch 101 -p1
+%patch 601 -p1
 
 %ifarch ppc
 %define archdef ARCH=ppc
@@ -359,6 +367,10 @@ fi
 %endif
 
 %changelog
+* Fri Feb 02 2024 Coiby Xu <coxu@redhat.com> - 2.0.28-4
+- kexec: don't use kexec_file_load on XEN
+- Fix building on x86_64 with binutils 2.41
+
 * Wed Jan 24 2024 Fedora Release Engineering <releng@fedoraproject.org> - 2.0.28-3
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_40_Mass_Rebuild
 
