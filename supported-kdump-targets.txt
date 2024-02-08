@@ -59,10 +59,6 @@ network:
         vlan tagged bonding
         bridge over bond/vlan
 
-hypervisor:
-        kvm
-        xen (Supported in select configurations only)
-
 filesystem:
         ext[234]
         xfs
@@ -74,6 +70,8 @@ firmware:
         UEFI
 
 hypervisor:
+        kvm
+        xen (selected configurations only)
         VMWare ESXi 4.x 5.x would not be tested/supported any more.
             only support ESXi 6.6, 6.7, 7.0
         Hyper-V 2012 R2 (RHEL Gen1 UP Guest only), later version will
