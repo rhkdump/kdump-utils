@@ -39,6 +39,7 @@ Source34: crashkernel-howto.txt
 Source35: kdump-migrate-action.sh
 Source36: kdump-restart.sh
 Source37: 60-fadump.install
+Source38: supported-kdump-targets.txt
 
 #######################################
 # These are sources for mkdumpramfs
@@ -183,6 +184,7 @@ cp %{SOURCE21} .
 cp %{SOURCE26} .
 cp %{SOURCE27} .
 cp %{SOURCE34} .
+cp %{SOURCE38} .
 
 # Generate sysconfig file
 %{SOURCE3} %{_target_cpu} > kdump.sysconfig
@@ -382,6 +384,7 @@ fi
 %doc kdump-in-cluster-environment.txt
 %doc live-image-kdump-howto.txt
 %doc crashkernel-howto.txt
+%doc supported-kdump-targets.txt
 
 
 %files -n makedumpfile

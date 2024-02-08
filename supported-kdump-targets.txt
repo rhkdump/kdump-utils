@@ -1,0 +1,121 @@
+Supported Kdump Targets
+
+This document try to list all supported kdump targets, and those supported
+or unknown/tech-preview targets, this can help users to decide whether a dump
+solution is available.
+
+Dump Target support status
+==========================
+This section tries to come up with some kind of guidelines in terms of
+what dump targets are supported/not supported. Whatever is listed here
+is not binding in any manner. It is just sharing of current understanding
+and if something is not right, this section needs to be edited.
+
+Following are 3 lists. First one contains supported targets. These are
+generic configurations which should work and some configuration most
+likely has worked in testing. Second list is known unsupported targets.
+These targets we know either don't work or we don't support. And third
+list is unknown/tech-preview. We either don't yet know the status of kdump
+on these targets or these are under tech-preview.
+
+Note, these lists are not set in stone and can be changed at any point of
+time. Also these lists might not be complete. We will add/remove items to
+it as we get more testing information. Also, there are many corner cases
+which can't possibly be listed. For example in general we might be
+supporting software iscsi but there might be some configurations of it
+which don't work.
+
+So if any target is listed in supported section, it does not mean it works
+in all possible configurations. It just means that in common configurations
+it should work but there can be issues with particular configurations which
+are not supported. As we come to know of particular issues, we will keep on
+updating lists accordingly.
+
+
+Supported Dump targets
+----------------------
+storage:
+        LVM volume
+        Thin provisioning volume
+        FC disks (qla2xxx, lpfc, bnx2fc, bfa)
+        software initiator based iSCSI
+        software RAID (mdraid)
+        hardware RAID (smartpqi, hpsa, megaraid, mpt3sas, aacraid, mpi3mr)
+        SCSI/SATA disks
+        iSCSI HBA (all offload)
+        hardware FCoE (qla2xxx, lpfc)
+        software FCoE (bnx2fc) (Extra configuration required,
+            please read "Note on FCoE" section below)
+        NVMe-FC (qla2xxx, lpfc)
+
+network:
+        Hardware using kernel modules: (igb, ixgbe, ice, i40e, e1000e, igc,
+              tg3, bnx2x, bnxt_en, qede, cxgb4, be2net, enic, sfc, mlx4_en,
+              mlx5_core, r8169, atlantic, nfp, ionic; nicvf (aarch64 only))
+        protocol: ipv4
+        bonding
+        vlan
+        bridge
+        vlan tagged bonding
+        bridge over bond/vlan
+
+hypervisor:
+        kvm
+        xen (Supported in select configurations only)
+
+filesystem:
+        ext[234]
+        xfs
+        nfs
+        virtiofs
+
+firmware:
+        BIOS
+        UEFI
+
+hypervisor:
+        VMWare ESXi 4.x 5.x would not be tested/supported any more.
+            only support ESXi 6.6, 6.7, 7.0
+        Hyper-V 2012 R2 (RHEL Gen1 UP Guest only), later version will
+	    also be tested/supported
+
+Unsupported Dump targets
+------------------------
+storage:
+        BIOS RAID
+        Software iSCSI with iBFT (bnx2i, cxgb3i, cxgb4i)
+        Software iSCSI with hybrid (be2iscsi)
+        FCoE
+        legacy IDE
+        glusterfs
+        gfs2/clvm/halvm
+
+network:
+        hardware using kernel modules: (sfc SRIOV, cxgb4vf, pch_gbe)
+        protocol: ipv6
+        wireless
+        Infiniband (IB)
+        vlan over bridge/team
+
+filesystem:
+        btrfs
+
+Unknown/tech-preview
+--------------------
+storage:
+        PCI Express based SSDs
+
+hypervisor:
+        Hyper-V 2008
+        Hyper-V 2012
+
+
+Note on FCoE
+=====================
+If you are trying to dump to a software FCoE target, you may encounter OOM
+issue, because some software FCoE requires more memory to work. In such case,
+you may need to increase the kdump reserved memory size in "crashkernel="
+kernel parameter.
+
+For hardware FCoE, kdump should work naturally as firmware will do the
+initialization job. The capture kernel and kdump tools will run just fine.
