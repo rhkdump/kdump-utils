@@ -5,7 +5,7 @@
 
 Name: kexec-tools
 Version: 2.0.28
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: GPL-2.0-only
 Summary: The kexec/kdump userspace component
 
@@ -60,7 +60,7 @@ Source201: dracut-fadump-module-setup.sh
 Requires(post): servicelog
 Recommends: keyutils
 %endif
-Requires(pre): coreutils sed zlib
+Requires(pre): coreutils sed
 Requires: dracut >= 058
 Requires: dracut-network >= 058
 Requires: dracut-squash >= 058
@@ -71,8 +71,6 @@ Recommends: binutils
 Recommends: grubby
 Recommends: hostname
 BuildRequires: make
-BuildRequires: zlib-devel elfutils-devel glib2-devel bzip2-devel ncurses-devel bison flex lzo-devel snappy-devel libzstd-devel
-BuildRequires: pkgconfig intltool gettext
 BuildRequires: systemd-rpm-macros
 BuildRequires: automake autoconf libtool
 
@@ -119,6 +117,37 @@ normal or a panic reboot. This package contains the /sbin/kexec
 binary and ancillary utilities that together form the userspace
 component of the kernel's kexec feature.
 
+
+%package -n makedumpfile
+Version: %{mkdf_ver}
+Summary: make a small dumpfile of kdump
+License: GPL-2.0-only
+URL: https://github.com/makedumpfile/makedumpfile
+
+Conflicts: kexec-tools < 2.0.28-5
+Requires(pre): zlib
+BuildRequires: make
+BuildRequires: gcc
+BuildRequires: zlib-devel
+BuildRequires: elfutils-devel
+BuildRequires: glib2-devel
+BuildRequires: bzip2-devel
+BuildRequires: ncurses-devel
+BuildRequires: bison
+BuildRequires: flex
+BuildRequires: lzo-devel
+BuildRequires: snappy-devel
+BuildRequires: libzstd-devel
+BuildRequires: pkgconfig
+BuildRequires: intltool
+BuildRequires: gettext
+
+
+%description -n makedumpfile
+makedumpfile is a tool to compress and filter out unneeded data from kernel
+dumps to reduce its file size. It is typically used with the kdump mechanism.
+
+
 %prep
 %setup -q
 
@@ -159,11 +188,12 @@ cp %{SOURCE34} .
 %{SOURCE4} %{_target_cpu} > kdump.conf
 
 make
-%ifarch %{ix86} x86_64 ppc64 s390x ppc64le aarch64
+
+# makedumpfile
 make -C eppic-%{eppic_ver}/libeppic
 make -C makedumpfile-%{mkdf_ver} LINKTYPE=dynamic USELZO=on USESNAPPY=on USEZSTD=on
 make -C makedumpfile-%{mkdf_ver} LDFLAGS="$LDFLAGS -I../eppic-%{eppic_ver}/libeppic -L../eppic-%{eppic_ver}/libeppic" eppic_makedumpfile.so
-%endif
+
 
 %install
 mkdir -p -m755 $RPM_BUILD_ROOT/usr/sbin
@@ -221,7 +251,7 @@ install -m 755 -D %{SOURCE22} $RPM_BUILD_ROOT%{_prefix}/lib/systemd/system-gener
 install -m 755 -D %{SOURCE30} $RPM_BUILD_ROOT%{_prefix}/lib/kernel/install.d/60-kdump.install
 install -m 755 -D %{SOURCE33} $RPM_BUILD_ROOT%{_prefix}/lib/kernel/install.d/92-crashkernel.install
 
-%ifarch %{ix86} x86_64 ppc64 s390x ppc64le aarch64
+# makedumpfile
 install -m 755 makedumpfile-%{mkdf_ver}/makedumpfile $RPM_BUILD_ROOT/usr/sbin/makedumpfile
 install -m 644 makedumpfile-%{mkdf_ver}/makedumpfile.8 $RPM_BUILD_ROOT/%{_mandir}/man8/makedumpfile.8
 install -m 644 makedumpfile-%{mkdf_ver}/makedumpfile.conf.5 $RPM_BUILD_ROOT/%{_mandir}/man5/makedumpfile.conf.5
@@ -229,7 +259,6 @@ install -m 644 makedumpfile-%{mkdf_ver}/makedumpfile.conf $RPM_BUILD_ROOT/%{_sys
 install -m 755 makedumpfile-%{mkdf_ver}/eppic_makedumpfile.so $RPM_BUILD_ROOT/%{_libdir}/eppic_makedumpfile.so
 mkdir -p $RPM_BUILD_ROOT/usr/share/makedumpfile/eppic_scripts/
 install -m 644 makedumpfile-%{mkdf_ver}/eppic_scripts/* $RPM_BUILD_ROOT/usr/share/makedumpfile/eppic_scripts/
-%endif
 
 %define dracutdir %{_prefix}/lib/dracut/modules.d
 %define remove_prefix() %(echo -n %2|sed 's/.*%1-//g')
@@ -313,9 +342,6 @@ fi
 
 %files
 /usr/sbin/kexec
-%ifarch %{ix86} x86_64 ppc64 s390x ppc64le aarch64
-/usr/sbin/makedumpfile
-%endif
 %ifarch ppc64 ppc64le
 /usr/sbin/mkfadumprd
 %{_prefix}/lib/kernel/install.d/60-fadump.install
@@ -325,9 +351,6 @@ fi
 %{_bindir}/*
 %{_datadir}/kdump
 %{_prefix}/lib/kdump
-%ifarch %{ix86} x86_64 ppc64 s390x ppc64le aarch64
-%{_sysconfdir}/makedumpfile.conf.sample
-%endif
 %config(noreplace,missingok) %{_sysconfdir}/sysconfig/kdump
 %config(noreplace,missingok) %verify(not mtime) %{_sysconfdir}/kdump.conf
 %ifnarch s390x
@@ -342,12 +365,9 @@ fi
 %dir %{_sharedstatedir}/kdump
 %{_mandir}/man8/kdumpctl.8.gz
 %{_mandir}/man8/kexec.8.gz
-%ifarch %{ix86} x86_64 ppc64 s390x ppc64le aarch64
-%{_mandir}/man8/makedumpfile.8.gz
-%endif
 %{_mandir}/man8/mkdumprd.8.gz
 %{_mandir}/man8/vmcore-dmesg.8.gz
-%{_mandir}/man5/*
+%{_mandir}/man5/kdump.conf.5.gz
 %{_unitdir}/kdump.service
 %{_prefix}/lib/systemd/system-generators/kdump-dep-generator.sh
 %{_prefix}/lib/kernel/install.d/60-kdump.install
@@ -361,12 +381,22 @@ fi
 %doc kdump-in-cluster-environment.txt
 %doc live-image-kdump-howto.txt
 %doc crashkernel-howto.txt
-%ifarch %{ix86} x86_64 ppc64 s390x ppc64le aarch64
+
+
+%files -n makedumpfile
+%license makedumpfile-%{mkdf_ver}/COPYING
+%{_sbindir}/makedumpfile
+%{_mandir}/man5/makedumpfile.conf.5.gz
+%{_mandir}/man8/makedumpfile.8.gz
+%{_sysconfdir}/makedumpfile.conf.sample
 %{_libdir}/eppic_makedumpfile.so
-/usr/share/makedumpfile/
-%endif
+%{_datadir}/makedumpfile/
+
 
 %changelog
+* Fri Feb 23 2024 Carl George <carlwgeorge@fedoraproject.org> - 2.0.28-5
+- Add a makedumpfile subpackage
+
 * Fri Feb 02 2024 Coiby Xu <coxu@redhat.com> - 2.0.28-4
 - kexec: don't use kexec_file_load on XEN
 - Fix building on x86_64 with binutils 2.41
