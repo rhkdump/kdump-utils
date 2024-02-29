@@ -290,8 +290,16 @@ install -m 644 makedumpfile-%{mkdf_ver}/eppic_scripts/* $RPM_BUILD_ROOT/usr/shar
 
 
 %post -n kdump-utils
-# Initial installation
-%systemd_post kdump.service
+# don't try to systemctl preset the kdump service for old kexec-tools
+#
+# when the old kexec-tools gets removed, this trigger will be excuted to
+# create a file. So later the posttrans scriptlet will know there is no need to
+# systemctl preset the kdump service.
+# This solution can be dropped in F41 when we assume no users will use old
+# version of kexec-tools.
+%define kexec_tools_no_preset %{_localstatedir}/lib/rpm-state/kexec-tools.no-preset
+%triggerun -- kexec-tools
+touch %{kexec_tools_no_preset}
 
 touch /etc/kdump.conf
 
@@ -334,6 +342,14 @@ do
 done
 
 %posttrans -n kdump-utils
+# don't try to systemctl preset the kdump service for old kexec-tools
+if [[ -f %{kexec_tools_no_preset} ]]; then
+  # this if branch can be removed in F41 when we assume no users will use the old kexec-tools
+  rm %{kexec_tools_no_preset}
+else
+  # Initial installation
+  %systemd_post kdump.service
+fi
 # Try to reset kernel crashkernel value to new default value or set up
 # crasherkernel value for new install
 #
