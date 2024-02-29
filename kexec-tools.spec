@@ -10,6 +10,7 @@ License: GPL-2.0-only
 Summary: The kexec/kdump userspace component
 
 Source0: http://kernel.org/pub/linux/utils/kernel/kexec/%{name}-%{version}.tar.xz
+Recommends: kdump-utils
 Source1: kdumpctl
 Source3: gen-kdump-sysconfig.sh
 Source4: gen-kdump-conf.sh
