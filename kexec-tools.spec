@@ -1,6 +1,7 @@
 %global eppic_ver e8844d3793471163ae4a56d8f95897be9e5bd554
 %global eppic_shortver %(c=%{eppic_ver}; echo ${c:0:7})
 %global mkdf_ver 1.7.4
+%global kdump_utils_ver 1.0.42
 %global mkdf_shortver %(c=%{mkdf_ver}; echo ${c:0:7})
 
 Name: kexec-tools
@@ -12,52 +13,9 @@ Summary: The kexec/kdump userspace component
 
 Source0: http://kernel.org/pub/linux/utils/kernel/kexec/%{name}-%{version}.tar.xz
 Recommends: kdump-utils
-Source1: kdumpctl
-Source3: gen-kdump-sysconfig.sh
-Source4: gen-kdump-conf.sh
-Source7: mkdumprd
+Source1: https://github.com/rhkdump/kdump-utils/archive/v%{kdump_utils_ver}/kdump-utils-%{kdump_utils_ver}.tar.gz
 Source9: https://github.com/makedumpfile/makedumpfile/archive/%{mkdf_ver}/makedumpfile-%{mkdf_shortver}.tar.gz
-Source10: kexec-kdump-howto.txt
-Source11: fadump-howto.txt
-Source12: mkdumprd.8
-Source13: 98-kexec.rules
-Source14: 98-kexec.rules.ppc64
-Source15: kdump.conf.5
-Source16: kdump.service
 Source19: https://github.com/lucchouina/eppic/archive/%{eppic_ver}/eppic-%{eppic_shortver}.tar.gz
-Source20: kdump-lib.sh
-Source21: kdump-in-cluster-environment.txt
-Source22: kdump-dep-generator.sh
-Source23: kdump-lib-initramfs.sh
-Source25: kdumpctl.8
-Source26: live-image-kdump-howto.txt
-Source27: early-kdump-howto.txt
-Source28: kdump-udev-throttler
-Source30: 60-kdump.install
-Source31: kdump-logger.sh
-Source32: mkfadumprd
-Source33: 92-crashkernel.install
-Source34: crashkernel-howto.txt
-Source35: kdump-migrate-action.sh
-Source36: kdump-restart.sh
-Source37: 60-fadump.install
-Source38: supported-kdump-targets.txt
-
-#######################################
-# These are sources for mkdumpramfs
-# Which is currently in development
-#######################################
-Source100: dracut-kdump.sh
-Source101: dracut-module-setup.sh
-Source102: dracut-monitor_dd_progress
-Source104: dracut-kdump-emergency.service
-Source106: dracut-kdump-capture.service
-Source107: dracut-kdump-emergency.target
-Source108: dracut-early-kdump.sh
-Source109: dracut-early-kdump-module-setup.sh
-
-Source200: dracut-fadump-init-fadump.sh
-Source201: dracut-fadump-module-setup.sh
 
 BuildRequires: automake
 BuildRequires: autoconf
@@ -174,6 +132,8 @@ target.
 %prep
 %setup -q
 
+tar -z -x -v -f %{SOURCE1}
+
 mkdir -p -m755 kcp
 tar -z -x -v -f %{SOURCE9}
 tar -z -x -v -f %{SOURCE19}
@@ -201,21 +161,6 @@ autoreconf
 rm -f kexec-tools.spec.in
 make
 
-# kdump-utils
-# setup the docs
-cp %{SOURCE10} .
-cp %{SOURCE11} .
-cp %{SOURCE21} .
-cp %{SOURCE26} .
-cp %{SOURCE27} .
-cp %{SOURCE34} .
-cp %{SOURCE38} .
-
-# Generate sysconfig file
-%{SOURCE3} %{_target_cpu} > kdump.sysconfig
-%{SOURCE4} %{_target_cpu} > kdump.conf
-
-
 # makedumpfile
 make -C eppic-%{eppic_ver}/libeppic
 make -C makedumpfile-%{mkdf_ver} LINKTYPE=dynamic USELZO=on USESNAPPY=on USEZSTD=on
@@ -227,60 +172,8 @@ make -C makedumpfile-%{mkdf_ver} LDFLAGS="$LDFLAGS -I../eppic-%{eppic_ver}/libep
 rm -f %{buildroot}/%{_libdir}/kexec-tools/kexec_test
 
 # kdump-utils
-mkdir -p -m755 %{buildroot}%{_sysconfdir}/kdump/pre.d
-mkdir -p -m755 %{buildroot}%{_sysconfdir}/kdump/post.d
-mkdir -p -m755 %{buildroot}%{_localstatedir}/crash
-mkdir -p -m755 %{buildroot}%{_udevrulesdir}
-mkdir -p -m755 %{buildroot}%{_sharedstatedir}/kdump
-
-install -D -m 755 %{SOURCE1} %{buildroot}%{_bindir}/kdumpctl
-install -D -m 755 %{SOURCE7} %{buildroot}%{_sbindir}/mkdumprd
-install -D -m 644 kdump.conf %{buildroot}%{_sysconfdir}/kdump.conf
-install -D -m 644 kdump.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/kdump
-install -D -m 644 %{SOURCE12} %{SOURCE25} -t %{buildroot}%{_mandir}/man8
-install -D -m 755 %{SOURCE20} %{SOURCE23} %{SOURCE31} -t %{buildroot}%{_prefix}/lib/kdump
-%ifarch ppc64 ppc64le
-install -m 755 %{SOURCE32} %{buildroot}%{_sbindir}/mkfadumprd
-install -m 755 %{SOURCE35} %{SOURCE36} -t %{buildroot}%{_prefix}/lib/kdump
-%endif
-%ifnarch s390x
-install -m 755 %{SOURCE28} %{buildroot}%{_udevrulesdir}/../kdump-udev-throttler
-%endif
-%ifnarch s390x ppc64 ppc64le
-# For s390x the ELF header is created in the kdump kernel and therefore kexec
-# udev rules are not required
-install -m 644 %{SOURCE13} %{buildroot}%{_udevrulesdir}/98-kexec.rules
-%endif
-%ifarch ppc64 ppc64le
-install -m 644 %{SOURCE14} %{buildroot}%{_udevrulesdir}/98-kexec.rules
-install -m 755 -D %{SOURCE37} %{buildroot}%{_prefix}/lib/kernel/install.d/60-fadump.install
-%endif
-install -D -m 644 %{SOURCE15} %{buildroot}%{_mandir}/man5/kdump.conf.5
-install -D -m 644 %{SOURCE16} %{buildroot}%{_unitdir}/kdump.service
-install -m 755 -D %{SOURCE22} %{buildroot}%{_prefix}/lib/systemd/system-generators/kdump-dep-generator.sh
-install -m 755 -D %{SOURCE30} %{buildroot}%{_prefix}/lib/kernel/install.d/60-kdump.install
-install -m 755 -D %{SOURCE33} %{buildroot}%{_prefix}/lib/kernel/install.d/92-crashkernel.install
-
-%define dracutdir %{_prefix}/lib/dracut/modules.d
-
-# deal with dracut modules
-mkdir -p -m755 %{buildroot}/%{dracutdir}/99kdumpbase
-install -m 755 %{SOURCE100} %{buildroot}/%{dracutdir}/99kdumpbase/kdump.sh
-install -m 755 %{SOURCE101} %{buildroot}/%{dracutdir}/99kdumpbase/module-setup.sh
-install -m 755 %{SOURCE102} %{buildroot}/%{dracutdir}/99kdumpbase/monitor_dd_progress.sh
-install -m 644 %{SOURCE104} %{buildroot}/%{dracutdir}/99kdumpbase/kdump-emergency.service
-install -m 644 %{SOURCE106} %{buildroot}/%{dracutdir}/99kdumpbase/kdump-capture.service
-install -m 644 %{SOURCE107} %{buildroot}/%{dracutdir}/99kdumpbase/kdump-emergency.target
-
-mkdir -p -m755 %{buildroot}/%{dracutdir}/99earlykdump
-install -m 755 %{SOURCE108} %{buildroot}/%{dracutdir}/99earlykdump/kdump.sh
-install -m 755 %{SOURCE109} %{buildroot}/%{dracutdir}/99earlykdump/kdump-module-setup.sh
-
-%ifarch ppc64 ppc64le
-mkdir -p -m755 %{buildroot}/%{dracutdir}/99zz-fadumpinit
-install -m 755 %{SOURCE200} %{buildroot}/%{dracutdir}/99zz-fadumpinit/init-fadump.sh
-install -m 755 %{SOURCE201} %{buildroot}/%{dracutdir}/99zz-fadumpinit/module-setup.sh
-%endif
+%define kdump_utils_dir kdump-utils-%{kdump_utils_ver}
+make DESTDIR=%{buildroot} -C %kdump_utils_dir install
 
 # makedumpfile
 
@@ -366,7 +259,7 @@ fi
 %{_udevrulesdir}
 %{_udevrulesdir}/../kdump-udev-throttler
 %endif
-%{dracutdir}/*
+%{_prefix}/lib/dracut/modules.d/*
 %dir %{_localstatedir}/crash
 %dir %{_sysconfdir}/kdump
 %dir %{_sysconfdir}/kdump/pre.d
@@ -379,14 +272,14 @@ fi
 %{_prefix}/lib/systemd/system-generators/kdump-dep-generator.sh
 %{_prefix}/lib/kernel/install.d/60-kdump.install
 %{_prefix}/lib/kernel/install.d/92-crashkernel.install
-%license COPYING
-%doc kexec-kdump-howto.txt
-%doc early-kdump-howto.txt
-%doc fadump-howto.txt
-%doc kdump-in-cluster-environment.txt
-%doc live-image-kdump-howto.txt
-%doc crashkernel-howto.txt
-%doc supported-kdump-targets.txt
+%license %kdump_utils_dir/COPYING
+%doc %kdump_utils_dir/kexec-kdump-howto.txt
+%doc %kdump_utils_dir/early-kdump-howto.txt
+%doc %kdump_utils_dir/fadump-howto.txt
+%doc %kdump_utils_dir/kdump-in-cluster-environment.txt
+%doc %kdump_utils_dir/live-image-kdump-howto.txt
+%doc %kdump_utils_dir/crashkernel-howto.txt
+%doc %kdump_utils_dir/supported-kdump-targets.txt
 
 
 %files -n makedumpfile
@@ -400,7 +293,7 @@ fi
 
 
 %changelog
-* Tue Mar 19 2024 Coiby Xu <coxu@redhat.com> - 2.0.28-8
+* Tue Apr 09 2024 Coiby Xu <coxu@redhat.com> - 2.0.28-8
 - Add a kdump-utils subpackage
 
 * Sun Apr 07 2024 Coiby Xu <coxu@redhat.com> - 2.0.28-7
