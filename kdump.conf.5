@@ -32,17 +32,22 @@ determine whether to reset kernel crashkernel parameter to the default value
 or not when kexec-tools is updated or a new kernel is installed. The default
 crashkernel values are different for different architectures and also take the
 following factors into consideration,
-	- AMD Secure Memory Encryption (SME) and Secure Encrypted Virtualization (SEV)
-	- Mellanox 5th generation network driver
-	- aarch64 64k kernel
-	- Firmware-assisted dump (FADump)
-
+.IP
+\- AMD Secure Memory Encryption (SME) and Secure Encrypted Virtualization (SEV)
+.IP
+\- Mellanox 5th generation network driver
+.IP
+\- aarch64 64k kernel
+.IP
+\- Firmware-assisted dump (FADump)
+.PP
 Since the kernel crasherkernel parameter will be only reset when kexec-tools is
 updated or a new kernel is installed, you need to call "kdumpctl
 reset-crashkernel [--kernel=path_to_kernel]" if you want to use the default
 value set after having enabled features like SME/SEV for a specific kernel. And
 you should also reboot the system for the new crashkernel value to take effect.
 Also see kdumpctl(8).
+.PP
 .RE
 
 .B raw <partition>
