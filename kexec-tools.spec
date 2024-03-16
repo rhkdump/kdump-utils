@@ -5,7 +5,7 @@
 
 Name: kexec-tools
 Version: 2.0.28
-Release: 5%{?dist}
+Release: 6%{?dist}
 License: GPL-2.0-only
 Summary: The kexec/kdump userspace component
 
@@ -61,6 +61,7 @@ Requires(post): servicelog
 Recommends: keyutils
 %endif
 Requires(pre): coreutils sed
+Requires: makedumpfile
 Requires: dracut >= 058
 Requires: dracut-network >= 058
 Requires: dracut-squash >= 058
@@ -394,6 +395,9 @@ fi
 
 
 %changelog
+* Sat Mar 16 2024 Coiby Xu <coxu@redhat.com> - 2.0.28-6
+- let kexec-tools depends on makedumpfile
+
 * Fri Feb 23 2024 Carl George <carlwgeorge@fedoraproject.org> - 2.0.28-5
 - Add a makedumpfile subpackage
 
