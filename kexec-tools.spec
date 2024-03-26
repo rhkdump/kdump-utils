@@ -320,27 +320,6 @@ servicelog_notify --remove --command=/usr/lib/kdump/kdump-migrate-action.sh >/de
 %endif
 %systemd_preun kdump.service
 
-%triggerin -n kdump-utils -- kernel-kdump
-touch %{_sysconfdir}/kdump.conf
-
-
-%triggerpostun -n kdump-utils -- kernel kernel-xen kernel-debug kernel-PAE kernel-kdump
-# List out the initrds here, strip out version nubmers
-# and search for corresponding kernel installs, if a kernel
-# is not found, remove the corresponding kdump initrd
-
-
-IMGDIR=/boot
-for i in `ls $IMGDIR/initramfs*kdump.img 2>/dev/null`
-do
-	KDVER=`echo $i | sed -e's/^.*initramfs-//' -e's/kdump.*$//'`
-	if [ ! -e $IMGDIR/vmlinuz-$KDVER ]
-	then
-		# We have found an initrd with no corresponding kernel
-		# so we should be able to remove it
-		rm -f $i
-	fi
-done
 
 %posttrans -n kdump-utils
 # don't try to systemctl preset the kdump service for old kexec-tools
