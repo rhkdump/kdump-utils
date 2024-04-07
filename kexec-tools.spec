@@ -5,7 +5,7 @@
 
 Name: kexec-tools
 Version: 2.0.28
-Release: 6%{?dist}
+Release: 7%{?dist}
 License: GPL-2.0-only
 Summary: The kexec/kdump userspace component
 
@@ -112,6 +112,8 @@ Patch101: kexec-tools-2.0.28-Fix-building-on-x86_64-with-binutils-2.41.patch
 # Author: Jiri Bohac <jbohac@suse.cz>
 Patch601: kexec-tools-2.0.28-kexec-don-t-use-kexec_file_load-on-XEN.patch
 
+Patch602: kexec-tools-2.0.28-makedumfpile-0001-PATCH-ppc64-get-vmalloc-start-address-from-vmcoreinf.patch
+
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
 kernel to boot using the kernel's kexec feature either on a
@@ -159,6 +161,7 @@ tar -z -x -v -f %{SOURCE19}
 
 %patch 101 -p1
 %patch 601 -p1
+%patch 602 -p1
 
 %ifarch ppc
 %define archdef ARCH=ppc
@@ -398,6 +401,9 @@ fi
 
 
 %changelog
+* Sun Apr 07 2024 Coiby Xu <coxu@redhat.com> - 2.0.28-7
+- Release 2.0.28-7
+
 * Sat Mar 16 2024 Coiby Xu <coxu@redhat.com> - 2.0.28-6
 - let kexec-tools depends on makedumpfile
 

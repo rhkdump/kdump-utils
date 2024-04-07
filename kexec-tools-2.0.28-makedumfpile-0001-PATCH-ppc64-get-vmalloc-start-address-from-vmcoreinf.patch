@@ -1,0 +1,132 @@
+From: Coiby Xu <coxu@redhat.com>
+
+Subject: [PATCH] ppc64: get vmalloc start address from vmcoreinfo
+
+Bugzilla: https://bugzilla.redhat.com/2269991
+
+commit 94241fd2feed059227a243618f2acc6aabf366e8
+Author: Aditya Gupta <adityag@linux.ibm.com>
+Date:   Sat Feb 24 00:33:42 2024 +0530
+
+    [PATCH] ppc64: get vmalloc start address from vmcoreinfo
+    
+    Below error was noticed when running makedumpfile on linux-next kernel
+    crash (linux-next tag next-20240121):
+    
+        Checking for memory holes : [100.0 %] | readpage_elf: Attempt to read non-existent page at 0xc000000000000.
+        [ 17.551718] kdump.sh[404]: readmem: type_addr: 0, addr:c00c000000000000, size:16384
+        [ 17.551793] kdump.sh[404]: __exclude_unnecessary_pages: Can't read the buffer of struct page.
+        [ 17.551864] kdump.sh[404]: create_2nd_bitmap: Can't exclude unnecessary pages.
+        [ 17.562632] kdump.sh[404]: The kernel version is not supported.
+        [ 17.562708] kdump.sh[404]: The makedumpfile operation may be incomplete.
+        [ 17.562773] kdump.sh[404]: makedumpfile Failed.
+        [ 17.564335] kdump[406]: saving vmcore failed, _exitcode:1
+    
+    Above error was due to 'vmap_area_list' and 'vmlist' symbols missing
+    from the vmcore.  'vmap_area_list' was removed in the linux kernel
+    6.9-rc1 by the commit below:
+    
+        commit 55c49fee57af99f3c663e69dedc5b85e691bbe50
+             mm/vmalloc: remove vmap_area_list
+    
+    Subsequently the commit also introduced 'VMALLOC_START' in vmcoreinfo to
+    get base address of vmalloc area, instead of depending on 'vmap_area_list'
+    
+    Hence if 'VMALLOC_START' symbol is there in vmcoreinfo:
+      1. Set vmalloc_start based on 'VMALLOC_START'
+      2. Don't error if vmap_area_list/vmlist are not defined
+    
+    Reported-by: Sachin Sant <sachinp@linux.ibm.com>
+    Signed-off-by: Aditya Gupta <adityag@linux.ibm.com>
+
+Signed-off-by: Coiby Xu <coxu@redhat.com>
+
+diff --git a/makedumpfile-1.7.4/arch/ppc64.c b/makedumpfile-1.7.4/arch/ppc64.c
+index 3b4f91981f71d035b94282f6c7e33323a4e4c1fd..a54f9a04db7f26eac2f1bd065b134a7e2fdaeb67 100644
+--- a/makedumpfile-1.7.4/arch/ppc64.c
++++ b/makedumpfile-1.7.4/arch/ppc64.c
+@@ -568,7 +568,9 @@ get_machdep_info_ppc64(void)
+ 	/*
+ 	 * Get vmalloc_start value from either vmap_area_list or vmlist.
+ 	 */
+-	if ((SYMBOL(vmap_area_list) != NOT_FOUND_SYMBOL)
++	if (NUMBER(vmalloc_start) != NOT_FOUND_NUMBER) {
++		vmalloc_start = NUMBER(vmalloc_start);
++	} else if ((SYMBOL(vmap_area_list) != NOT_FOUND_SYMBOL)
+ 	    && (OFFSET(vmap_area.va_start) != NOT_FOUND_STRUCTURE)
+ 	    && (OFFSET(vmap_area.list) != NOT_FOUND_STRUCTURE)) {
+ 		if (!readmem(VADDR, SYMBOL(vmap_area_list) + OFFSET(list_head.next),
+@@ -689,11 +691,16 @@ vaddr_to_paddr_ppc64(unsigned long vaddr)
+ 	if ((SYMBOL(vmap_area_list) == NOT_FOUND_SYMBOL)
+ 	    || (OFFSET(vmap_area.va_start) == NOT_FOUND_STRUCTURE)
+ 	    || (OFFSET(vmap_area.list) == NOT_FOUND_STRUCTURE)) {
+-		if ((SYMBOL(vmlist) == NOT_FOUND_SYMBOL)
+-		    || (OFFSET(vm_struct.addr) == NOT_FOUND_STRUCTURE)) {
+-			ERRMSG("Can't get info for vmalloc translation.\n");
+-			return NOT_PADDR;
+-		}
++		/*
++		 * Don't depend on vmap_area_list/vmlist if vmalloc_start is set in
++		 * vmcoreinfo, in that case proceed without error
++		 */
++		if (NUMBER(vmalloc_start) == NOT_FOUND_NUMBER)
++			if ((SYMBOL(vmlist) == NOT_FOUND_SYMBOL)
++				|| (OFFSET(vm_struct.addr) == NOT_FOUND_STRUCTURE)) {
++				ERRMSG("Can't get info for vmalloc translation.\n");
++				return NOT_PADDR;
++			}
+ 	}
+ 
+ 	return ppc64_vtop_level4(vaddr);
+diff --git a/makedumpfile-1.7.4/makedumpfile.c b/makedumpfile-1.7.4/makedumpfile.c
+index 58c6639f289f19cdbf39ed3899be9893fdc317fe..d7f1dd41d2cab526d7d40e809ddccf656c586811 100644
+--- a/makedumpfile-1.7.4/makedumpfile.c
++++ b/makedumpfile-1.7.4/makedumpfile.c
+@@ -2978,6 +2978,8 @@ read_vmcoreinfo(void)
+ 	READ_NUMBER("PAGE_OFFLINE_MAPCOUNT_VALUE", PAGE_OFFLINE_MAPCOUNT_VALUE);
+ 	READ_NUMBER("phys_base", phys_base);
+ 	READ_NUMBER("KERNEL_IMAGE_SIZE", KERNEL_IMAGE_SIZE);
++
++	READ_NUMBER_UNSIGNED("VMALLOC_START", vmalloc_start);
+ #ifdef __aarch64__
+ 	READ_NUMBER("VA_BITS", VA_BITS);
+ 	READ_NUMBER("TCR_EL1_T1SZ", TCR_EL1_T1SZ);
+@@ -2989,7 +2991,6 @@ read_vmcoreinfo(void)
+ 	READ_NUMBER("VA_BITS", va_bits);
+ 	READ_NUMBER_UNSIGNED("phys_ram_base", phys_ram_base);
+ 	READ_NUMBER_UNSIGNED("PAGE_OFFSET", page_offset);
+-	READ_NUMBER_UNSIGNED("VMALLOC_START", vmalloc_start);
+ 	READ_NUMBER_UNSIGNED("VMALLOC_END", vmalloc_end);
+ 	READ_NUMBER_UNSIGNED("VMEMMAP_START", vmemmap_start);
+ 	READ_NUMBER_UNSIGNED("VMEMMAP_END", vmemmap_end);
+diff --git a/makedumpfile-1.7.4/makedumpfile.h b/makedumpfile-1.7.4/makedumpfile.h
+index c04c330b69ecbe5fb232a2eabbd2d71f14b60cc0..c31f3a4371af8aae38dcba8cac4d6de1012b4cfd 100644
+--- a/makedumpfile-1.7.4/makedumpfile.h
++++ b/makedumpfile-1.7.4/makedumpfile.h
+@@ -541,8 +541,6 @@ do { \
+  * The value of dependence on machine
+  */
+ #define PAGE_OFFSET		(info->page_offset)
+-#define VMALLOC_START		(info->vmalloc_start)
+-#define VMALLOC_END		(info->vmalloc_end)
+ #define VMEMMAP_START		(info->vmemmap_start)
+ #define VMEMMAP_END		(info->vmemmap_end)
+ #define PMASK			(0x7ffffffffffff000UL)
+@@ -2263,6 +2261,9 @@ struct number_table {
+ 	long    HUGETLB_PAGE_DTOR;
+ 	long	phys_base;
+ 	long	KERNEL_IMAGE_SIZE;
++
++	unsigned long vmalloc_start;
++
+ #ifdef __aarch64__
+ 	long 	VA_BITS;
+ 	long	TCR_EL1_T1SZ;
+@@ -2273,7 +2274,6 @@ struct number_table {
+ 	long va_bits;
+ 	unsigned long phys_ram_base;
+ 	unsigned long page_offset;
+-	unsigned long vmalloc_start;
+ 	unsigned long vmalloc_end;
+ 	unsigned long vmemmap_start;
+ 	unsigned long vmemmap_end;
