@@ -281,14 +281,12 @@ install -m 755 %{SOURCE201} %{buildroot}/%{dracutdir}/99zz-fadumpinit/module-set
 %endif
 
 # makedumpfile
-install -m 755 makedumpfile-%{mkdf_ver}/makedumpfile $RPM_BUILD_ROOT/usr/sbin/makedumpfile
-install -m 644 makedumpfile-%{mkdf_ver}/makedumpfile.8 $RPM_BUILD_ROOT/%{_mandir}/man8/makedumpfile.8
-install -m 644 makedumpfile-%{mkdf_ver}/makedumpfile.conf.5 $RPM_BUILD_ROOT/%{_mandir}/man5/makedumpfile.conf.5
-install -m 644 makedumpfile-%{mkdf_ver}/makedumpfile.conf $RPM_BUILD_ROOT/%{_sysconfdir}/makedumpfile.conf.sample
-install -m 755 -D makedumpfile-%{mkdf_ver}/eppic_makedumpfile.so $RPM_BUILD_ROOT/%{_libdir}/eppic_makedumpfile.so
-mkdir -p $RPM_BUILD_ROOT/usr/share/makedumpfile/eppic_scripts/
-install -m 644 makedumpfile-%{mkdf_ver}/eppic_scripts/* $RPM_BUILD_ROOT/usr/share/makedumpfile/eppic_scripts/
 
+make DESTDIR=%{buildroot} -C makedumpfile-%{mkdf_ver} install
+install -m 644 -D makedumpfile-%{mkdf_ver}/makedumpfile.conf %{buildroot}/%{_sysconfdir}/makedumpfile.conf.sample
+rm %{buildroot}/%{_sbindir}/makedumpfile-R.pl
+
+install -m 755 -D makedumpfile-%{mkdf_ver}/eppic_makedumpfile.so %{buildroot}/%{_libdir}/eppic_makedumpfile.so
 
 %post -n kdump-utils
 # don't try to systemctl preset the kdump service for old kexec-tools
@@ -392,8 +390,8 @@ fi
 %files -n makedumpfile
 %license makedumpfile-%{mkdf_ver}/COPYING
 %{_sbindir}/makedumpfile
-%{_mandir}/man5/makedumpfile.conf.5.gz
-%{_mandir}/man8/makedumpfile.8.gz
+%{_mandir}/man5/makedumpfile.conf.5.*
+%{_mandir}/man8/makedumpfile.8.*
 %{_sysconfdir}/makedumpfile.conf.sample
 %{_libdir}/eppic_makedumpfile.so
 %{_datadir}/makedumpfile/
