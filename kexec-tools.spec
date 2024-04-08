@@ -6,6 +6,7 @@
 Name: kexec-tools
 Version: 2.0.28
 Release: 8%{?dist}
+URL: https://kernel.org/pub/linux/utils/kernel/kexec
 License: GPL-2.0-only
 Summary: The kexec/kdump userspace component
 
@@ -138,6 +139,7 @@ dumps to reduce its file size. It is typically used with the kdump mechanism.
 %package -n kdump-utils
 Version: 1.0.42
 License: GPL-2.0-only AND LGPL-2.1-or-later
+URL: https://github.com/rhkdump/kdump-utils
 Summary: Kernel crash dump collection utilities
 
 %ifarch ppc64 ppc64le
