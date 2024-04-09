@@ -159,7 +159,7 @@ autoreconf
 %endif
     --sbindir=/usr/sbin
 rm -f kexec-tools.spec.in
-make
+%make_build
 
 # makedumpfile
 make -C eppic-%{eppic_ver}/libeppic
