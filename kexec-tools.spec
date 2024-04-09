@@ -71,7 +71,6 @@ License: GPL-2.0-only
 URL: https://github.com/makedumpfile/makedumpfile
 
 Conflicts: kexec-tools < 2.0.28-5
-Requires(pre): zlib
 BuildRequires: make
 BuildRequires: gcc
 BuildRequires: zlib-devel
