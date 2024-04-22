@@ -3,11 +3,15 @@
 _DRACUT_KDUMP_NM_TMP_DIR="$DRACUT_TMPDIR/$$-DRACUT_KDUMP_NM"
 
 _save_kdump_netifs() {
-    unique_netifs[$1]=1
+    if [[ $is_ovs_bridge == 1 ]]; then
+        ovs_unique_netifs[$1]=1
+    else
+        unique_netifs[$1]=1
+    fi
 }
 
 _get_kdump_netifs() {
-    echo -n "${!unique_netifs[@]}"
+    echo -n "${!unique_netifs[@]} ${!ovs_unique_netifs[@]}"
 }
 
 kdump_module_init() {
@@ -320,8 +324,29 @@ _install_nmconnection() {
     inst "$_src" "$_dst"
 }
 
+# Install the original connection profile that was active before
+# ovs-configuration.service
+_install_nmconnections_before_ovs() {
+    local _nm_conn_path _cloned_nm_path _nic_name
+
+    ((${#ovs_unique_netifs[@]})) || return
+
+    while IFS=: read -r _nm_conn_path _; do
+        _nic_name=$(nmcli --get-values connection.interface-name connection show "$_nm_conn_path")
+        [[ -v "ovs_unique_netifs[$_nic_name]" ]] || continue
+        if _cloned_nm_path=$(clone_and_modify_nmconnection "$_nic_name" "$_nm_conn_path"); then
+            _install_nmconnection "$_cloned_nm_path"
+        else
+            derror "Failed to install the .nmconnection for $_nic_name"
+            exit 1
+        fi
+    done <<<"$(nmcli --get-values filename,ACTIVE connection show | grep "no$")"
+}
+
 kdump_install_nmconnections() {
     local _netif _nm_conn_path _cloned_nm_path
+
+    _install_nmconnections_before_ovs
 
     while IFS=: read -r _netif _nm_conn_path; do
         [[ -v "unique_netifs[$_netif]" ]] || continue
@@ -524,10 +549,32 @@ kdump_get_remote_ip() {
     echo "$_remote"
 }
 
+# Find the physical interface of Open vSwitch (Ovs) bridge
+#
+# The physical network interface has the same MAC address as the Ovs bridge
+ovs_find_phy_if() {
+    local _mac _dev
+    _mac=$(kdump_get_mac_addr "$1")
+
+    for _dev in $(ovs-vsctl list-ifaces "$1"); do
+        if [[ $_mac == $(< /sys/class/net/"$_dev"/address) ]]; then
+            echo -n "$_dev"
+            return
+        fi
+    done
+
+    return 1
+}
+
+# Tell if a network interface is an Open vSwitch (Ovs) bridge
+kdump_is_ovs_bridge() {
+    [[ $(_get_nic_driver "$1") == openvswitch ]]
+}
+
 # Collect netifs needed by kdump
 # $1: destination host
 kdump_collect_netif_usage() {
-    local _destaddr _srcaddr _route _netdev
+    local _destaddr _srcaddr _route _netdev is_ovs_bridge
 
     _destaddr=$(kdump_get_remote_ip "$1")
 
@@ -538,6 +585,11 @@ kdump_collect_netif_usage() {
 
     _srcaddr=$(kdump_get_ip_route_field "$_route" "src")
     _netdev=$(kdump_get_ip_route_field "$_route" "dev")
+
+    if kdump_is_ovs_bridge "$_netdev"; then
+        is_ovs_bridge=1
+        _netdev=$(ovs_find_phy_if "$_netdev")
+    fi
 
     if kdump_is_bridge "$_netdev"; then
         kdump_setup_bridge "$_netdev"
@@ -1018,7 +1070,7 @@ EOF
 }
 
 install() {
-    declare -A unique_netifs ipv4_usage ipv6_usage
+    declare -A unique_netifs ovs_unique_netifs ipv4_usage ipv6_usage
 
     kdump_module_init
     kdump_install_conf
