@@ -973,21 +973,24 @@ kdump_install_random_seed() {
 
 kdump_install_systemd_conf() {
     # Kdump turns out to require longer default systemd mount timeout
-    # than 1st kernel(90s by default), we use default 300s for kdump.
-    if ! grep -q -r "^[[:space:]]*DefaultTimeoutStartSec=" "${initdir}/etc/systemd/system.conf"*; then
-        mkdir -p "${initdir}/etc/systemd/system.conf.d"
-        echo "[Manager]" > "${initdir}/etc/systemd/system.conf.d/kdump.conf"
-        echo "DefaultTimeoutStartSec=300s" >> "${initdir}/etc/systemd/system.conf.d/kdump.conf"
-    fi
+    # than 1st kernel(45s by default), we use default 300s for kdump.
+    mkdir -p "${initdir}/etc/systemd/system.conf.d"
+    cat > "${initdir}/etc/systemd/system.conf.d/99-kdump.conf" << EOF
+[Manager]
+DefaultTimeoutStartSec=300s
+EOF
+
 
     # Forward logs to console directly, and don't read Kmsg, this avoids
     # unneccessary memory consumption and make console output more useful.
     # Only do so for non fadump image.
     mkdir -p "${initdir}/etc/systemd/journald.conf.d"
-    echo "[Journal]" > "${initdir}/etc/systemd/journald.conf.d/kdump.conf"
-    echo "Storage=volatile" >> "${initdir}/etc/systemd/journald.conf.d/kdump.conf"
-    echo "ReadKMsg=no" >> "${initdir}/etc/systemd/journald.conf.d/kdump.conf"
-    echo "ForwardToConsole=yes" >> "${initdir}/etc/systemd/journald.conf.d/kdump.conf"
+    cat > "${initdir}/etc/systemd/journald.conf.d/99-kdump.conf" << EOF
+[Journal]
+Storage=volatile
+ReadKMsg=no
+ForwardToConsole=yes
+EOF
 }
 
 remove_cpu_online_rule() {
