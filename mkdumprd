@@ -256,7 +256,7 @@ check_user_configured_target()
 verify_core_collector()
 {
 	local _cmd="${1%% *}"
-	local _params="${1#* }"
+	local _params="${1#${_cmd}}"
 
 	if [[ $_cmd != "makedumpfile" ]]; then
 		if is_raw_dump_target; then
