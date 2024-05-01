@@ -104,7 +104,7 @@ s390x)
 x86_64)
 	update_param KEXEC_ARGS "-s"
 	update_param KDUMP_COMMANDLINE_APPEND \
-		"irqpoll nr_cpus=1 reset_devices cgroup_disable=memory mce=off numa=off udev.children-max=2 panic=10 acpi_no_memhotplug transparent_hugepage=never nokaslr hest_disable novmcoredd cma=0 hugetlb_cma=0"
+		"irqpoll nr_cpus=1 reset_devices cgroup_disable=memory mce=off numa=off udev.children-max=2 panic=10 acpi_no_memhotplug transparent_hugepage=never nokaslr hest_disable novmcoredd cma=0 hugetlb_cma=0 pcie_ports=compat"
 	;;
 *)
 	echo "Warning: Unknown architecture '$1', using default sysconfig template." >&2
