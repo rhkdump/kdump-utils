@@ -564,7 +564,6 @@ kdump_install_resolv_conf() {
     #
     # [1] https://bugzilla.gnome.org/show_bug.cgi?id=690404
     # [2] https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html/configuring_and_managing_networking/manually-configuring-the-etc-resolv-conf-file_configuring-and-managing-networking
-    systemctl -q is-enabled systemd-resolved 2> /dev/null && return 0
     inst "$_resolv_conf"
     if NetworkManager --print-config | grep -qs "^dns=none"; then
         printf "[main]\ndns=none\n" > "${initdir}/${_nm_conf_dir}"/90-dns-none.conf
