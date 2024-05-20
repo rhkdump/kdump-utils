@@ -60,9 +60,12 @@ add_dracut_sshkey()
 # caller should ensure $1 is valid and mounted in 1st kernel
 to_mount()
 {
-	local _target=$1 _fstype=$2 _options=$3 _sed_cmd _new_mntpoint _pdev
+	local _target=$1 _fstype=$2 _options=$3 _new_mntpoint=$4
+	local _sed_cmd _pdev
 
-	_new_mntpoint=$(get_kdump_mntpoint_from_target "$_target")
+	if [[ -z "$_new_mntpoint" ]]; then
+		_new_mntpoint=$(get_kdump_mntpoint_from_target "$_target")
+	fi
 	_fstype="${_fstype:-$(get_fs_type_from_target "$_target")}"
 	_options="${_options:-$(get_mntopt_from_target "$_target")}"
 	_options="${_options:-defaults}"
@@ -412,6 +415,26 @@ if ! is_fadump_capable; then
 	if fips-mode-setup --is-enabled 2> /dev/null; then
 		add_dracut_arg --add-device "$(findmnt -n -o SOURCE --target /boot)"
 	fi
+fi
+
+ro_regex="[[:space:]]ro[[:space:]]"
+status_target=$(get_target_from_path $(dirname "$VMCORE_CREATION_STATUS"))
+new_mntpoint=$(echo /vmcorestatus/$(get_mntpoint_from_target "$status_target") \
+		| tr -s "/")
+
+# For fadump, the kernel cmdline is the same for 1st and 2nd kernel. The
+# sysroot.mount unit will be generated based on 'root=' kernel cmdline, and
+# its mount r/w option will be taken from cmdline too. If we are mounting
+# the same device on both /sysroot and /vmcorestatus, we need to take the same
+# r/w option, otherwise the systemd mounting will fail. So we copy sysroot's
+# r/w option here, and remount it as writeable during kdump capture service
+# when needed.
+if is_fadump_capable && \
+   [[ $(get_root_fs_device) == "$status_target" ]] && \
+   [[ $(cat /proc/cmdline) =~ $ro_regex ]]; then
+        add_mount "$status_target" "" "ro " "$new_mntpoint"
+else
+        add_mount "$status_target" "" "" "$new_mntpoint"
 fi
 
 dracut "${dracut_args[@]}" "$@"

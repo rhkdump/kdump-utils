@@ -185,6 +185,8 @@ rebuild_initrd()
 	else
 		rebuild_kdump_initrd
 	fi
+
+	set_vmcore_creation_status 'clear' "$VMCORE_CREATION_STATUS"
 }
 
 #$1: the files to be checked with IFS=' '
@@ -1043,6 +1045,7 @@ start()
 	start_dump || return
 
 	dinfo "Starting kdump: [OK]"
+	check_vmcore_creation_status
 	return 0
 }
 
@@ -1654,6 +1657,31 @@ _should_reset_crashkernel() {
 	[[ $(kdump_get_conf_val auto_reset_crashkernel) != no ]] && systemctl is-enabled kdump &> /dev/null
 }
 
+check_vmcore_creation_status()
+{
+	local _record _status _timestamp _status_date
+
+	if [[ -z "$VMCORE_CREATION_NOTIFICATION" ]]; then
+		return
+	fi
+
+	if [[ ! -s $VMCORE_CREATION_STATUS ]]; then
+		dwarn "Notice: No vmcore creation test performed!"
+		return
+	fi
+
+	_record=$(cat "$VMCORE_CREATION_STATUS")
+	_status=$(echo $_record | awk '{print $1}')
+	_timestamp=$(echo $_record | awk '{print $2}')
+	_status_date=$(echo "@"$_timestamp | xargs date -d 2> /dev/null)
+
+	if [[ "$_status" == "success" ]]; then
+		dinfo "Notice: Last successful vmcore creation on $_status_date"
+	else
+		dwarn "Notice: Last unsuccessful vmcore creation on $_status_date"
+	fi
+}
+
 main()
 {
 	# Determine if the dump mode is kdump or fadump
@@ -1685,6 +1713,7 @@ main()
 			EXIT_CODE=3
 			;;
 		esac
+		check_vmcore_creation_status
 		exit $EXIT_CODE
 		;;
 	reload)
@@ -1729,8 +1758,27 @@ main()
 			reset_crashkernel_for_installed_kernel "$2"
 		fi
 		;;
+	test)
+		is_kernel_loaded "$DEFAULT_DUMP_MODE"
+		if [[ "$?" -ne 0 ]]; then
+			derror "Kdump should be operational before test."
+			exit 1
+		fi
+		read -p "DANGER!!! Will perform a kdump test by crashing the system, proceed? (Y/N): " input
+		case $input in
+		[Yy] )
+			dinfo "Start kdump test..."
+			;;
+		* )
+			dinfo "Operation cancelled."
+			exit 0
+			;;
+		esac
+		set_vmcore_creation_status 'clear' "$VMCORE_CREATION_STATUS"
+		echo c > /proc/sysrq-trigger
+		;;
 	*)
-		dinfo $"Usage: $0 {estimate|start|stop|status|restart|reload|rebuild|reset-crashkernel|propagate|showmem}"
+		dinfo $"Usage: $0 {estimate|start|stop|status|restart|reload|rebuild|reset-crashkernel|propagate|showmem|test}"
 		exit 1
 		;;
 	esac
