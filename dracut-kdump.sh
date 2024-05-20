@@ -237,16 +237,8 @@ save_opalcore_fs()
 	return 0
 }
 
-dump_to_rootfs()
+try_mount_sysroot()
 {
-
-	if [ "$(systemctl status dracut-initqueue | sed -n "s/^\s*Active: \(\S*\)\s.*$/\1/p")" = "inactive" ]; then
-		dinfo "Trying to bring up initqueue for rootfs mount"
-		systemctl start dracut-initqueue
-	fi
-
-	dinfo "Clean up dead systemd services"
-	systemctl cancel
 	dinfo "Waiting for rootfs mount, will timeout after 90 seconds"
 	systemctl start --no-block sysroot.mount
 
@@ -258,6 +250,23 @@ dump_to_rootfs()
 
 	if ! is_mounted /sysroot; then
 		derror "Failed to mount rootfs"
+		return 1
+	fi
+	return 0
+}
+
+dump_to_rootfs()
+{
+
+	if [ "$(systemctl status dracut-initqueue | sed -n "s/^\s*Active: \(\S*\)\s.*$/\1/p")" = "inactive" ]; then
+		dinfo "Trying to bring up initqueue for rootfs mount"
+		systemctl start dracut-initqueue
+	fi
+
+	dinfo "Clean up dead systemd services"
+	systemctl cancel
+
+	if ! try_mount_sysroot; then
 		return
 	fi
 
@@ -312,11 +321,19 @@ do_final_action()
 
 do_dump()
 {
+	if ! try_mount_sysroot; then
+		return 1
+	fi
+	set_vmcore_creation_status 'clear' "/sysroot/$VMCORE_CREATION_STATUS"
+
 	eval $DUMP_INSTRUCTION
 	_ret=$?
 
 	if [ $_ret -ne 0 ]; then
+		set_vmcore_creation_status 'fail' "/sysroot/$VMCORE_CREATION_STATUS"
 		derror "saving vmcore failed"
+	else
+		set_vmcore_creation_status 'success' "/sysroot/$VMCORE_CREATION_STATUS"
 	fi
 
 	return $_ret

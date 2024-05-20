@@ -403,9 +403,8 @@ fi
 #       parameter available in fadump case. So, find a way to fix that first
 #       before removing this check.
 if ! is_fadump_capable; then
-	# The 2nd rootfs mount stays behind the normal dump target mount,
-	# so it doesn't affect the logic of check_dump_fs_modified().
-	is_dump_to_rootfs && add_mount "$(to_dev_name "$(get_root_fs_device)")"
+	# Always mount rootfs since we will create VMCORE_CREATION_STATUS file
+	add_mount "$(to_dev_name "$(get_root_fs_device)")"
 
 	add_dracut_arg "--no-hostonly-default-device"
 

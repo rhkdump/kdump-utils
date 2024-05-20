@@ -9,6 +9,7 @@ KDUMP_CONFIG_FILE="/etc/kdump.conf"
 FENCE_KDUMP_CONFIG_FILE="/etc/sysconfig/fence_kdump"
 FENCE_KDUMP_SEND="/usr/libexec/fence_kdump_send"
 LVM_CONF="/etc/lvm/lvm.conf"
+VMCORE_CREATION_STATUS="/var/crash/vmcore-creation.status"
 
 # Read kdump config in well formated style
 kdump_read_conf()
@@ -170,4 +171,27 @@ kdump_get_ip_route()
 kdump_get_ip_route_field()
 {
 	echo "$1" | sed -n -e "s/^.*\<$2\>\s\+\(\S\+\).*$/\1/p"
+}
+
+# $1: success/fail/clear
+# $2: status_file
+set_vmcore_creation_status()
+{
+	_status=$1
+	_status_file=$2
+	_dir=${_status_file%%${_status_file##*/}}
+
+	[[ -d "$_dir" ]] || mkdir -p "$_dir"
+
+	case "$_status" in
+		success | fail)
+			echo  "$_status $(date +%s)" > "$_status_file"
+			;;
+		clear)
+			rm -f "$_status_file"
+			;;
+		*)
+			return
+	esac
+	sync -f "$_dir"
 }
