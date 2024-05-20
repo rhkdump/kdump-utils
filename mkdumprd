@@ -60,9 +60,15 @@ add_dracut_sshkey()
 # caller should ensure $1 is valid and mounted in 1st kernel
 to_mount()
 {
-	local _target=$1 _fstype=$2 _options=$3 _sed_cmd _new_mntpoint _pdev
+	local _target=$1 _fstype=$2 _options=$3 _is_vmcore_status_target=$4
+	local _sed_cmd _new_mntpoint _pdev
 
-	_new_mntpoint=$(get_kdump_mntpoint_from_target "$_target")
+	if [[ -n "$_is_vmcore_status_target" ]]; then
+		_new_mntpoint=$(echo /vmcorestatus/$(get_mntpoint_from_target "$_target") \
+				| tr -s "/")
+	else
+		_new_mntpoint=$(get_kdump_mntpoint_from_target "$_target")
+	fi
 	_fstype="${_fstype:-$(get_fs_type_from_target "$_target")}"
 	_options="${_options:-$(get_mntopt_from_target "$_target")}"
 	_options="${_options:-defaults}"
@@ -406,6 +412,9 @@ if ! is_fadump_capable; then
 	# The 2nd rootfs mount stays behind the normal dump target mount,
 	# so it doesn't affect the logic of check_dump_fs_modified().
 	is_dump_to_rootfs && add_mount "$(to_dev_name "$(get_root_fs_device)")"
+
+	status_target=$(get_target_from_path $(dirname "$VMCORE_CREATION_STATUS"))
+	add_mount "$status_target" "" "" "vmcore_status_target"
 
 	add_dracut_arg "--no-hostonly-default-device"
 
