@@ -16,6 +16,7 @@ KDUMP_INITRD=""
 TARGET_INITRD=""
 #kdump shall be the default dump mode
 DEFAULT_DUMP_MODE="kdump"
+KDUMP_STATUS="/var/crash/kdump.status"
 
 standard_kexec_args="-d -p"
 
@@ -189,6 +190,8 @@ rebuild_initrd()
 	else
 		rebuild_kdump_initrd
 	fi
+
+	clear_kdump_test_status
 }
 
 #$1: the files to be checked with IFS=' '
@@ -1063,6 +1066,7 @@ start()
 	start_dump || return
 
 	dinfo "Starting kdump: [OK]"
+	check_kdump_tested
 	return 0
 }
 
@@ -1668,6 +1672,137 @@ _should_reset_crashkernel() {
 	[[ $(kdump_get_conf_val auto_reset_crashkernel) != no ]] && systemctl is-enabled kdump &> /dev/null
 }
 
+clear_kdump_test_status()
+{
+	echo > $KDUMP_STATUS
+}
+
+# Get the latest dump's info from the dump target in the format:
+# /var/crash 127.0.0.1-2024-05-01-15:54:29/vmcore 1714550071
+#
+# return: 0 on success, 1 on failure
+get_latest_dump()
+{
+	local _latest_record _target
+	local _path=$(get_save_path)
+	if is_raw_dump_target; then
+		dinfo "Unable to check for raw dump. Manual verification of vmcore collection required."
+		return 1
+	elif is_ssh_dump_target; then
+		_latest_record=$(ssh -i "${OPT[sshkey]}" -o BatchMode=yes "${OPT[_target]}" \
+				"cd $_path && \
+				find . -name "vmcore" -or -name "vmcore.flat" \
+				| xargs stat -c %n\ %Y 2> /dev/null \
+				| sort -k2 | sed 's|^\./||' \
+				| tail -1")
+		_target=${OPT[_target]}:$_path
+	else
+		if is_nfs_dump_target; then
+			if ! is_mounted ${OPT[_target]}; then
+				dinfo "The dump target ${OPT[_target]} is not mounted, unable to check for vmcores."
+				return 1
+			fi
+		fi
+		_mnt=$(get_mntpoint_from_target "${OPT[_target]}")
+		_latest_record=$(cd $_mnt/$_path && \
+				find . -name "vmcore" -or -name "vmcore-incomplete" \
+				| xargs stat -c %n\ %Y 2> /dev/null \
+				| sort -k2 | sed 's|^\./||' \
+				| tail -1)
+		_target=${OPT[_target]}$_path
+	fi
+	echo "$_target $_latest_record"
+	return 0
+}
+
+# Check & Report if current kdump is tested
+# The simplified logic is follows:
+#
+# A) If $KDUMP_STATUS not exist, then treat kexec-tools as fresh install by
+#    finding the latest vmcore in the host as specified by kdump.conf, record
+#    it into $KDUMP_STATUS, and mark & report this as untested.
+#
+# B) If $KDUMP_STATUS exist, then treat kexec-tools as already installed, and
+#    finding the latest vmcore in the host as specified by kdump.conf,
+#    a) If host is different from $KDUMP_STATUS's record, then update the vmcore
+#       into $KDUMP_STATUS, mark & report this as untested.
+#    b) If host is the same as $KDUMP_STATUS's record,
+#       1) If the timestamp of the vmcore is equal or smaller(older) than
+#          $KDUMP_STATUS's record, then only report the status of $KDUMP_STATUS's
+#          record.
+#       2) If the timestamp of the vmcore is larger(newer) than $KDUMP_STATUS's
+#          record, then update the vmcore into $KDUMP_STATUS, mark & report this
+#          as tested.
+#
+# host is a string like "/var/crash" for local dump, "root@1.2.3.4:/var/crash"
+# for ssh dump, "1.2.3.4:/var/crash" for nfs dump.
+check_kdump_tested()
+{
+	local _record_of_current _current_core_host _current_core_file
+	local _current_core_timestamp _current_core_date
+	local _record_of_kdstatus _kdstatus_core_host _kdstatus_core_file
+	local _kdstatus_core_timestamp _kdstatus_test_status
+	local _ret
+
+	_record_of_current=$(get_latest_dump)
+	if [[ $? -ne 0 ]]; then
+		dwarn "Test fail: Due to previous error."
+		return
+	fi
+	# There may be no vmcores find by get_latest_dump
+	if [[ $(echo $_record_of_current | tr ' ' '\n' | wc -l) -lt 3 ]]; then
+		_record_of_current="dummy_host dummy_vmcore 0"
+	fi
+	_current_core_host=$(echo $_record_of_current | awk '{print $1}')
+	_current_core_file=$(echo $_record_of_current | awk '{print $2}')
+	_current_core_timestamp=$(echo $_record_of_current | awk '{print $3}')
+	_current_core_date=$(echo "@"$_current_core_timestamp | xargs date -d 2> /dev/null)
+
+	if [[ ! $_current_core_file =~ .*vmcore(\.flat)?$ ]]; then
+		dwarn "Test fail: Latest vmcore saving is incomplete."
+		return
+	fi
+
+	if [[ ! -s $KDUMP_STATUS ]]; then
+		echo "$_record_of_current untested" > $KDUMP_STATUS
+		dwarn "Test fail: NOT tested yet"
+		return
+	fi
+
+	_record_of_kdstatus=$(cat $KDUMP_STATUS)
+	_kdstatus_core_host=$(echo $_record_of_kdstatus | awk '{print $1}')
+	_kdstatus_core_file=$(echo $_record_of_kdstatus | awk '{print $2}')
+	_kdstatus_core_timestamp=$(echo $_record_of_kdstatus | awk '{print $3}')
+	_kdstatus_core_date=$(echo "@"$_kdstatus_core_timestamp | xargs date -d 2> /dev/null)
+	_kdstatus_test_status=$(echo $_record_of_kdstatus | awk '{print $4}')
+
+	if [[ $_kdstatus_core_host == "dummy_host" ]]; then
+		if [[ $_current_core_host == "dummy_host" ]]; then
+			dwarn "Test fail: NOT tested yet"
+		else
+			echo "$_record_of_current tested" > $KDUMP_STATUS
+			dinfo "Test success: Last tested on $_current_core_date"
+		fi
+		return
+	fi
+
+	if [[ $_kdstatus_core_host == $_current_core_host ]]; then
+		if [[ $_current_core_timestamp -gt $_kdstatus_core_timestamp ]]; then
+			echo "$_record_of_current tested" > $KDUMP_STATUS
+			dinfo "Test success: Last tested on $_current_core_date"
+		else
+			if [[ $_kdstatus_test_status == "tested" ]]; then
+				dinfo "Test success: Last tested on $_kdstatus_core_date"
+			else
+				dwarn "Test fail: NOT tested yet"
+			fi
+		fi
+	else
+		echo "$_record_of_current untested" > $KDUMP_STATUS
+		dwarn "Test fail: NOT tested yet"
+	fi
+}
+
 main()
 {
 	# Determine if the dump mode is kdump or fadump
@@ -1699,6 +1834,8 @@ main()
 			EXIT_CODE=3
 			;;
 		esac
+		parse_config || exit 1
+		check_kdump_tested
 		exit $EXIT_CODE
 		;;
 	reload)
