@@ -1135,6 +1135,13 @@ $CRYPTSETUP_PATH luksOpen --volume-key-keyring \
 EOF
     done
 
+    # latest systemd makes /usr read-only by default
+    mkdir -p "${initdir}/etc/systemd/system.conf.d"
+    cat << EOF > "${initdir}/etc/systemd/system.conf.d/kdump_luks.conf"
+[Manager]
+ProtectSystem=false
+EOF
+
     dracut_need_initqueue
 }
 
