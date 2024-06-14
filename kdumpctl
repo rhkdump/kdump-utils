@@ -3,7 +3,6 @@ KEXEC=/sbin/kexec
 
 KDUMP_KERNELVER=""
 KDUMP_KERNEL=""
-KDUMP_COMMANDLINE=""
 KEXEC_ARGS=""
 MKDUMPRD="/sbin/mkdumprd -f"
 MKFADUMPRD="/sbin/mkfadumprd"
@@ -15,8 +14,6 @@ KDUMP_INITRD=""
 TARGET_INITRD=""
 #kdump shall be the default dump mode
 DEFAULT_DUMP_MODE="kdump"
-
-standard_kexec_args="-p"
 
 # Some default values in case /etc/sysconfig/kdump doesn't include
 KDUMP_COMMANDLINE_REMOVE="hugepages hugepagesz slub_debug"
@@ -696,9 +693,7 @@ function load_kdump_kernel_key()
 load_kdump()
 {
 	local uki
-
-	KEXEC_ARGS=$(prepare_kexec_args "${KEXEC_ARGS}")
-	KDUMP_COMMANDLINE=$(prepare_cmdline "${KDUMP_COMMANDLINE}" "${KDUMP_COMMANDLINE_REMOVE}" "${KDUMP_COMMANDLINE_APPEND}")
+	local -a args
 
 	if is_uki "$KDUMP_KERNEL"; then
 		uki=$KDUMP_KERNEL
@@ -710,14 +705,14 @@ load_kdump()
 		chcon -t boot_t "$KDUMP_KERNEL"
 	fi
 
-	ddebug "$KEXEC $KEXEC_ARGS $standard_kexec_args --command-line=$KDUMP_COMMANDLINE --initrd=$TARGET_INITRD $KDUMP_KERNEL"
+	IFS=' ' read -r -a args < <(prepare_kexec_args "$KEXEC_ARGS")
+	args+=("-p")
+	args+=("--command-line=$(prepare_cmdline "${KDUMP_COMMANDLINE}" "${KDUMP_COMMANDLINE_REMOVE}" "${KDUMP_COMMANDLINE_APPEND}")")
+	args+=("--initrd=$TARGET_INITRD")
+	args+=("$KDUMP_KERNEL")
 
-	# shellcheck disable=SC2086
-	$KEXEC $KEXEC_ARGS $standard_kexec_args \
-		--command-line="$KDUMP_COMMANDLINE" \
-		--initrd="$TARGET_INITRD" "$KDUMP_KERNEL"
-
-	if [[ $? == 0 ]]; then
+	ddebug "$KEXEC ${args[*]}"
+	if $KEXEC "${args[@]}"; then
 		dinfo "kexec: loaded kdump kernel"
 		return 0
 	else
