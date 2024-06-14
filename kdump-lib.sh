@@ -726,7 +726,6 @@ _cmdline_parse()
 #
 # prepare_cmdline <commandline> <commandline remove> <commandline append>
 # This function performs a series of edits on the command line.
-# Store the final result in global $KDUMP_COMMANDLINE.
 prepare_cmdline()
 {
 	local in out append opt val id drv
