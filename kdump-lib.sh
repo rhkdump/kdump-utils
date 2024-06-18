@@ -802,7 +802,7 @@ prepare_cmdline()
 
 	# This is a workaround on AWS platform. Always remove irqpoll since it
 	# may cause the hot-remove of some pci hotplug device.
-	is_aws_aarch64 && out=$(echo "$out" | sed -e "/\<irqpoll\>//")
+	is_aws_aarch64 && out=$(echo "$out" | sed -e "s/\<irqpoll\>//")
 
 	# Always disable gpt-auto-generator as it hangs during boot of the
 	# crash kernel. Furthermore we know which disk will be used for dumping
