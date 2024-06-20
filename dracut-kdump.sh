@@ -579,6 +579,7 @@ fence_kdump_notify()
 if [ "$1" = "--error-handler" ]; then
 	get_kdump_confs
 	do_failure_action
+	save_log
 	do_final_action
 
 	exit $?
