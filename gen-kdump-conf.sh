@@ -169,6 +169,11 @@ generate()
 #             to send fence_kdump notifications to.
 #             (this option is mandatory to enable fence_kdump).
 #
+# kdump_cpus <cpu count>
+#           - Number of CPUs used in the kdump environment by the core collector
+#             to collect the dump. Currently, it is only used with the default
+#             dump collector, which is makedumpfile. By default, or if set to 0,
+#             all CPUs available in the kdump environment are used for dump collection.
 
 #raw /dev/vg/lv_kdump
 #ext4 /dev/vg/lv_kdump
@@ -194,6 +199,7 @@ core_collector makedumpfile -l --message-level 7 -d 31
 #dracut_args --omit-drivers "cfg80211 snd" --add-drivers "ext2 ext3"
 #fence_kdump_args -p 7410 -f auto -c 0 -i 10
 #fence_kdump_nodes node1 node2
+#kdump_cpus 0
 EOF
 }
 
