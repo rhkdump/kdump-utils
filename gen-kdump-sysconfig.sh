@@ -88,7 +88,7 @@ ppc64)
 		"irqpoll maxcpus=1 noirqdistrib reset_devices cgroup_disable=memory numa=off udev.children-max=2 ehea.use_mcs=0 panic=10 kvm_cma_resv_ratio=0 transparent_hugepage=never novmcoredd hugetlb_cma=0"
 	;;
 ppc64le)
-	update_param KEXEC_ARGS "--dt-no-old-root -s"
+	update_param KEXEC_ARGS "-s"
 	update_param KDUMP_COMMANDLINE_REMOVE \
 		"hugepages hugepagesz slub_debug quiet log_buf_len swiotlb hugetlb_cma ignition.firstboot"
 	update_param KDUMP_COMMANDLINE_APPEND \
