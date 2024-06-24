@@ -18,7 +18,7 @@ is_uki()
 	img="$1"
 
 	[[ -f "$img" ]] || return
-	[[ "$(file -b --mime-type "$img")" == application/x-dosexec ]] || return
+	[[ "$(objdump -a "$img" 2> /dev/null)" =~ pei-(x86-64|aarch64-little) ]] || return
 	objdump -h -j .linux "$img" &> /dev/null
 }
 
