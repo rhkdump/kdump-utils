@@ -26,8 +26,8 @@ dracut-modules:
 	install -m 644 dracut-kdump-emergency.target $(kdumpbasemoddir)/kdump-emergency.target
 
 	mkdir -p -m755 $(dracutmoddir)/99earlykdump
-	install -m 755 dracut-early-kdump.sh $(dracutmoddir)/99earlykdump/kdump.sh
-	install -m 755 dracut-early-kdump-module-setup.sh $(dracutmoddir)/99earlykdump/kdump-module-setup.sh
+	install -m 755 dracut-early-kdump.sh $(dracutmoddir)/99earlykdump/early-kdump.sh
+	install -m 755 dracut-early-kdump-module-setup.sh $(dracutmoddir)/99earlykdump/module-setup.sh
 
 ifeq ($(ARCH), $(filter ppc64le ppc64,$(ARCH)))
 	mkdir -p -m755 $(dracutmoddir)/99zz-fadumpinit
