@@ -56,7 +56,7 @@ depends() {
     fi
 
     if is_lvm2_thinp_dump_target; then
-        if dracut --list-modules | grep -q lvmthinpool-monitor; then
+        if grep -q lvmthinpool-monitor <<< $(dracut --list-modules); then
             add_opt_module lvmthinpool-monitor
         else
             dwarning "Required lvmthinpool-monitor modules is missing! Please upgrade dracut >= 057."
