@@ -1004,31 +1004,12 @@ ForwardToConsole=yes
 EOF
 }
 
-remove_cpu_online_rule() {
-    local file=${initdir}/usr/lib/udev/rules.d/40-redhat.rules
-
-    if [[ -f $file ]]; then
-        sed -i '/SUBSYSTEM=="cpu"/d' "$file"
-    fi
-}
-
 install() {
     declare -A unique_netifs ipv4_usage ipv6_usage
-    local arch
 
     kdump_module_init
     kdump_install_conf
     remove_sysctl_conf
-
-    # Onlining secondary cpus breaks kdump completely on KVM on Power hosts
-    # Though we use maxcpus=1 by default but 40-redhat.rules will bring up all
-    # possible cpus by default. (rhbz1270174 rhbz1266322)
-    # Thus before we get the kernel fix and the systemd rule fix let's remove
-    # the cpu online rule in kdump initramfs.
-    arch=$(uname -m)
-    if [[ "$arch" = "ppc64le" ]] || [[ "$arch" = "ppc64" ]]; then
-        remove_cpu_online_rule
-    fi
 
     if is_ssh_dump_target; then
         kdump_install_random_seed
