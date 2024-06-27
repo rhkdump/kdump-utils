@@ -62,6 +62,11 @@ grubby's kernel-path=ALL and kernel-path=DEFAULT. ppc64le supports FADump and
 supports an additional [--fadump=[on|off|nocma]] parameter to toggle FADump
 on/off.
 
+If the [--reboot] parameter is used, the operating system will automatically reboot only
+if changes occur to crashkernel or fadump during this run. That means, if you run
+kdumpctl reset-crashkernel --reboot but nothing has been changed, the operating system
+will not reboot.
+
 Note: The memory requirements for kdump varies heavily depending on the
 used hardware and system configuration. Thus the recommended
 crashkernel might not work for your specific setup. Please test if
