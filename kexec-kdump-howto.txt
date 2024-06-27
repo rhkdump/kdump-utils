@@ -1016,12 +1016,7 @@ Debugging Tips
   and the second kernel.
 
   In the first kernel, you can find the historical logs with the journalctl
-  command and check kdump service debugging information. In addition, the
-  'kexec -d' debugging messages are also saved to /var/log/kdump.log in the
-  first kernel. For example:
-
-  [root@ibm-z-109 ~]# ls -al /var/log/kdump.log
-  -rw-r--r--. 1 root root 63238 Oct 28 06:40 /var/log/kdump.log
+  command and check kdump service debugging information.
 
   If you want to get the debugging information of building kdump initramfs, you
   can enable the '--debug' option for the dracut_args in the /etc/kdump.conf, and
