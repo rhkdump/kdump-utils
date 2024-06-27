@@ -1561,7 +1561,7 @@ reset_crashkernel()
 		_old_ck=$(get_grub_kernel_boot_parameter "$_kernel" crashkernel)
 		_new_ck=$(kdump_get_arch_recommend_crashkernel "$_new_dump_mode")
 		_old_fadump=$(get_grub_kernel_boot_parameter "$_kernel" fadump)
-		if _update_kernel_cmdline "$_kernel" fadump "$_old_fadump" "$_new_fadump"; then
+		if [[ $(uname -m) == ppc64le ]] && _update_kernel_cmdline "$_kernel" fadump "$_old_fadump" "$_new_fadump"; then
 			_has_changed="Updated fadump=$_new_fadump"
 		fi
 		if _update_kernel_cmdline "$_kernel" crashkernel "$_old_ck" "$_new_ck"; then
