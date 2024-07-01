@@ -18,7 +18,7 @@ is_uki()
 	img="$1"
 
 	[[ -f "$img" ]] || return
-	[[ "$(file -b --mime-type "$img")" == application/x-dosexec ]] || return
+	[[ "$(objdump -a "$img" 2> /dev/null)" =~ pei-(x86-64|aarch64-little) ]] || return
 	objdump -h -j .linux "$img" &> /dev/null
 }
 
@@ -726,7 +726,6 @@ _cmdline_parse()
 #
 # prepare_cmdline <commandline> <commandline remove> <commandline append>
 # This function performs a series of edits on the command line.
-# Store the final result in global $KDUMP_COMMANDLINE.
 prepare_cmdline()
 {
 	local in out append opt val id drv
@@ -802,7 +801,7 @@ prepare_cmdline()
 
 	# This is a workaround on AWS platform. Always remove irqpoll since it
 	# may cause the hot-remove of some pci hotplug device.
-	is_aws_aarch64 && out=$(echo "$out" | sed -e "/\<irqpoll\>//")
+	is_aws_aarch64 && out=$(echo "$out" | sed -e "s/\<irqpoll\>//")
 
 	# Always disable gpt-auto-generator as it hangs during boot of the
 	# crash kernel. Furthermore we know which disk will be used for dumping

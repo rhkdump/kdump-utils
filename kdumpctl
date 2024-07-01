@@ -3,9 +3,7 @@ KEXEC=/sbin/kexec
 
 KDUMP_KERNELVER=""
 KDUMP_KERNEL=""
-KDUMP_COMMANDLINE=""
 KEXEC_ARGS=""
-KDUMP_LOG_PATH="/var/log"
 MKDUMPRD="/sbin/mkdumprd -f"
 MKFADUMPRD="/sbin/mkfadumprd"
 DRACUT_MODULES_FILE="/usr/lib/dracut/modules.txt"
@@ -16,8 +14,6 @@ KDUMP_INITRD=""
 TARGET_INITRD=""
 #kdump shall be the default dump mode
 DEFAULT_DUMP_MODE="kdump"
-
-standard_kexec_args="-d -p"
 
 # Some default values in case /etc/sysconfig/kdump doesn't include
 KDUMP_COMMANDLINE_REMOVE="hugepages hugepagesz slub_debug"
@@ -696,10 +692,8 @@ function load_kdump_kernel_key()
 # as the currently running kernel.
 load_kdump()
 {
-	local ret uki
-
-	KEXEC_ARGS=$(prepare_kexec_args "${KEXEC_ARGS}")
-	KDUMP_COMMANDLINE=$(prepare_cmdline "${KDUMP_COMMANDLINE}" "${KDUMP_COMMANDLINE_REMOVE}" "${KDUMP_COMMANDLINE_APPEND}")
+	local uki
+	local -a args
 
 	if is_uki "$KDUMP_KERNEL"; then
 		uki=$KDUMP_KERNEL
@@ -711,28 +705,14 @@ load_kdump()
 		chcon -t boot_t "$KDUMP_KERNEL"
 	fi
 
-	ddebug "$KEXEC $KEXEC_ARGS $standard_kexec_args --command-line=$KDUMP_COMMANDLINE --initrd=$TARGET_INITRD $KDUMP_KERNEL"
+	IFS=' ' read -r -a args < <(prepare_kexec_args "$KEXEC_ARGS")
+	args+=("-p")
+	args+=("--command-line=$(prepare_cmdline "${KDUMP_COMMANDLINE}" "${KDUMP_COMMANDLINE_REMOVE}" "${KDUMP_COMMANDLINE_APPEND}")")
+	args+=("--initrd=$TARGET_INITRD")
+	args+=("$KDUMP_KERNEL")
 
-	# The '12' represents an intermediate temporary file descriptor
-	# to store the standard error file descriptor '2', and later
-	# restore the error file descriptor with the file descriptor '12'
-	# and release it.
-	exec 12>&2
-	exec 2>> $KDUMP_LOG_PATH/kdump.log
-	chmod 600 $KDUMP_LOG_PATH/kdump.log
-	PS4='+ $(date "+%Y-%m-%d %H:%M:%S") ${BASH_SOURCE}@${LINENO}: '
-	set -x
-
-	# shellcheck disable=SC2086
-	$KEXEC $KEXEC_ARGS $standard_kexec_args \
-		--command-line="$KDUMP_COMMANDLINE" \
-		--initrd="$TARGET_INITRD" "$KDUMP_KERNEL"
-
-	ret=$?
-	set +x
-	exec 2>&12 12>&-
-
-	if [[ $ret == 0 ]]; then
+	ddebug "$KEXEC ${args[*]}"
+	if $KEXEC "${args[@]}"; then
 		dinfo "kexec: loaded kdump kernel"
 		return 0
 	else
@@ -1482,10 +1462,10 @@ _get_all_kernels_from_grubby()
 reset_crashkernel()
 {
 	local _opt _val _reboot _grubby_kernel_path _kernel _kernels
-	local _dump_mode _new_dump_mode
+	local _dump_mode
 	local _has_changed _needs_reboot
 	local _old_ck _new_ck
-	local _old_fadump _new_fadump
+	local _old_fadump _new_fadump _opt_fadump
 
 	for _opt in "$@"; do
 		case "$_opt" in
@@ -1494,12 +1474,11 @@ reset_crashkernel()
 					derror "Option --fadump only valid on PPC"
 					exit 1
 				fi
-				_new_fadump=${_opt#*=}
-				if ! _dump_mode=$(get_dump_mode_by_fadump_val $_new_fadump); then
+				_opt_fadump=${_opt#*=}
+				if ! _dump_mode=$(get_dump_mode_by_fadump_val $_opt_fadump); then
 					derror "failed to determine dump mode"
 					exit
 				fi
-				[[ "$_new_fadump" == off ]] && _new_fadump=""
 				;;
 			--kernel=*)
 				_val=${_opt#*=}
@@ -1534,8 +1513,6 @@ reset_crashkernel()
 		return
 	fi
 
-	[[ $(uname -m) != ppc64le ]] && _dump_mode=kdump
-
 	# If kernel-path not specified, either
 	#  - use KDUMP_KERNELVER if it's defined
 	#  - use current running kernel
@@ -1551,19 +1528,28 @@ reset_crashkernel()
 
 	for _kernel in $_kernels; do
 		_has_changed=""
-		if [[ -z $_dump_mode ]]; then
-			_new_dump_mode=$(get_dump_mode_by_kernel "$_kernel")
-			_new_fadump=$(get_grub_kernel_boot_parameter "$_kernel" fadump)
+		if [[ $(uname -m) == ppc64le ]]; then
+			if [[ -n "$_opt_fadump" ]]; then
+				_new_ck=$(kdump_get_arch_recommend_crashkernel "$_dump_mode")
+				_old_fadump=$(get_grub_kernel_boot_parameter "$_kernel" fadump)
+				_new_fadump="$_opt_fadump"
+				[[ "$_new_fadump" == off ]] && _new_fadump=""
+				if _update_kernel_cmdline "$_kernel" fadump "$_old_fadump" "$_new_fadump"; then
+					if [[ -n "$_new_fadump" ]]; then
+						_has_changed="Updated fadump=$_new_fadump"
+					else
+						_has_changed="Removed fadump"
+					fi
+				fi
+			else
+				_dump_mode="$(get_dump_mode_by_kernel "$_kernel")"
+				_new_ck=$(kdump_get_arch_recommend_crashkernel "$_dump_mode")
+			fi
 		else
-			_new_dump_mode=$_dump_mode
+			_new_ck=$(kdump_get_arch_recommend_crashkernel kdump)
 		fi
 
 		_old_ck=$(get_grub_kernel_boot_parameter "$_kernel" crashkernel)
-		_new_ck=$(kdump_get_arch_recommend_crashkernel "$_new_dump_mode")
-		_old_fadump=$(get_grub_kernel_boot_parameter "$_kernel" fadump)
-		if _update_kernel_cmdline "$_kernel" fadump "$_old_fadump" "$_new_fadump"; then
-			_has_changed="Updated fadump=$_new_fadump"
-		fi
 		if _update_kernel_cmdline "$_kernel" crashkernel "$_old_ck" "$_new_ck"; then
 			_has_changed="Updated crashkernel=$_new_ck"
 		fi
