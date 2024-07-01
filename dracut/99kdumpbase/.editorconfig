@@ -1,0 +1,3 @@
+# These files run in the initrd and need to be posix compliant
+[{monitor_dd_progress.sh,kdump.sh}]
+shell_variant = posix

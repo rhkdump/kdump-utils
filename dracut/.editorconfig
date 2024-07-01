@@ -1,0 +1,9 @@
+# Use dracut code style for dracut modules
+[*]
+shell_variant = bash
+indent_style = space
+indent_size = 4
+switch_case_indent = true
+function_next_line = false
+binary_next_line   = true
+space_redirects    = true
