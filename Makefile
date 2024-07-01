@@ -12,27 +12,14 @@ udevrulesdir ?=  ${libdir}/udev/rules.d
 systemdsystemunitdir ?= ${libdir}/systemd/system/
 ARCH ?= $(shell uname -m)
 dracutmoddir = $(DESTDIR)${libdir}/dracut/modules.d
-kdumpbasemoddir = $(dracutmoddir)/99kdumpbase
 
 dracut-modules:
 	mkdir -p $(dracutmoddir)
-	mkdir -p -m755 $(kdumpbasemoddir)
 
-	install -m 755 dracut-kdump.sh $(kdumpbasemoddir)/kdump.sh
-	install -m 755 dracut-module-setup.sh $(kdumpbasemoddir)/module-setup.sh
-	install -m 755 dracut-monitor_dd_progress.sh $(kdumpbasemoddir)/monitor_dd_progress.sh
-	install -m 644 dracut-kdump-emergency.service $(kdumpbasemoddir)/kdump-emergency.service
-	install -m 644 dracut-kdump-capture.service $(kdumpbasemoddir)/kdump-capture.service
-	install -m 644 dracut-kdump-emergency.target $(kdumpbasemoddir)/kdump-emergency.target
-
-	mkdir -p -m755 $(dracutmoddir)/99earlykdump
-	install -m 755 dracut-early-kdump.sh $(dracutmoddir)/99earlykdump/early-kdump.sh
-	install -m 755 dracut-early-kdump-module-setup.sh $(dracutmoddir)/99earlykdump/module-setup.sh
-
+	cp -r dracut/99kdumpbase $(dracutmoddir)
+	cp -r dracut/99earlykdump $(dracutmoddir)
 ifeq ($(ARCH), $(filter ppc64le ppc64,$(ARCH)))
-	mkdir -p -m755 $(dracutmoddir)/99zz-fadumpinit
-	install -m 755 dracut-fadump-init-fadump.sh $(dracutmoddir)/99zz-fadumpinit/init-fadump.sh
-	install -m 755 dracut-fadump-module-setup.sh $(dracutmoddir)/99zz-fadumpinit/module-setup.sh
+	cp -r dracut/99zz-fadumpinit $(dracutmoddir)
 endif
 
 kdump-conf: gen-kdump-conf.sh
