@@ -711,6 +711,8 @@ load_kdump()
 		chcon -t boot_t "$KDUMP_KERNEL"
 	fi
 
+	prepare_luks
+
 	ddebug "$KEXEC $KEXEC_ARGS $standard_kexec_args --command-line=$KDUMP_COMMANDLINE --initrd=$TARGET_INITRD $KDUMP_KERNEL"
 
 	# The '12' represents an intermediate temporary file descriptor
@@ -1028,6 +1030,53 @@ check_final_action_config()
 		return 1
 		;;
 	esac
+}
+
+LUKS_SYSFS=/sys/kernel/crash_dm_crypt_keys
+reuse_loaded_luks_keys()
+{
+	local _luks_dev _count _cmds _cmd _state
+	declare -a _luks_devs
+
+	_state=$(< $LUKS_SYSFS)
+
+	if [[ $_state == loaded ]]; then
+		echo -n reuse > $LUKS_SYSFS
+		return 0
+	fi
+}
+
+prepare_luks()
+{
+	local _luks_dev _count _cmds _cmd _state
+	declare -a _luks_devs
+
+	_state=$(< $LUKS_SYSFS)
+
+	if [[ $_state == recorded ]]; then
+		return 0
+	elif [[ $_state == reuse ]]; then
+		return 0
+	elif [[ $_state != fresh ]] && [[ $_state != initialized ]]; then
+		derror "Unknow state about the LUKS keys"
+		return 1
+	fi
+
+	_luks_devs=($(get_all_kdump_crypt_dev))
+	_count=${#_luks_devs[@]}
+
+	if [[ $_count -lt 1 ]]; then
+		return
+	fi
+
+	if [[ $_state == fresh ]]; then
+		printf "init %s" "$_count" > $LUKS_SYSFS
+	fi
+
+	for _luks_dev in "${_luks_devs[@]}"; do
+		_devuuid=$(maj_min_to_uuid "$_luks_dev")
+		printf "record cryptsetup:%s" "$_devuuid" > $LUKS_SYSFS
+	done
 }
 
 start()
@@ -1702,6 +1751,7 @@ main()
 		exit $EXIT_CODE
 		;;
 	reload)
+		reuse_loaded_luks_keys
 		reload
 		;;
 	restart)

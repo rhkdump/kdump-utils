@@ -1095,6 +1095,10 @@ get_luks_crypt_dev()
 	done
 }
 
+maj_min_to_uuid() {
+	lsblk -o uuid,MAJ:MIN | grep $1 | cut -d" " -f1
+}
+
 # kdump_get_maj_min <device>
 # Prints the major and minor of a device node.
 # Example:

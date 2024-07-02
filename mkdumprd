@@ -308,21 +308,6 @@ handle_default_dump_target()
 	check_size fs "$_target"
 }
 
-check_crypt()
-{
-	local _dev
-
-	for _dev in $(get_kdump_targets); do
-		if [[ -n $(get_luks_crypt_dev "$(get_maj_min "$_dev")") ]]; then
-			derror "Device $_dev is encrypted." && return 1
-		fi
-	done
-}
-
-if ! check_crypt; then
-	dwarn "Warning: Encrypted device is in dump path, which is not recommended, see kexec-kdump-howto.txt for more details."
-fi
-
 # firstly get right SSH_KEY_LOCATION
 keyfile=$(kdump_get_conf_val sshkey)
 if [[ -f $keyfile ]]; then
