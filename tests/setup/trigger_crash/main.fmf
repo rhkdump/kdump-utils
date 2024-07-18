@@ -1,0 +1,3 @@
+summary: Dump kernel crash to an NFS server
+require: nfs-utils
+restart-on-exit-code: 255
