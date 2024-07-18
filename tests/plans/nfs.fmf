@@ -34,6 +34,13 @@ provision:
      how: virtual
      connection: system
 
+prepare:
+  # Set root password to log in as root in the console
+  - name: Set root password
+    how: shell
+    script:
+      - echo root:kdump | chpasswd
+
 execute:
     how: tmt
     exit-first: true
