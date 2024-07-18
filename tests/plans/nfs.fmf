@@ -1,0 +1,39 @@
+summary: Kdump NFS dumping tests
+discover:
+  - name: Set up crashkernel
+    how: fmf
+    test:
+     - setup/default_crashkernel
+    where:
+      - client
+  - name: Set up NFS server
+    how: fmf
+    test:
+     - setup/nfs_server
+    where:
+      - server
+  - name: Panic kernel
+    how: fmf
+    test:
+     - /setup/trigger_crash
+    where:
+      - client
+  - name: Check vmcore
+    how: fmf
+    test:
+     - /tests/check_vmcore
+    where:
+      - server
+
+provision:
+   - name: server
+     how: virtual
+     connection: system
+
+   - name: client
+     how: virtual
+     connection: system
+
+execute:
+    how: tmt
+    exit-first: true
