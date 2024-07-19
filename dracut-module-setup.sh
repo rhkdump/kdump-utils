@@ -1041,6 +1041,9 @@ install() {
     # Also redirect dracut-emergency to kdump error handler
     ln_r "$systemdsystemunitdir/emergency.service" "$systemdsystemunitdir/dracut-emergency.service"
 
+    # Disable ostree as we only need the physical root
+    systemctl -q --root "$initdir" mask ostree-prepare-root.service
+
     # Check for all the devices and if any device is iscsi, bring up iscsi
     # target. Ideally all this should be pushed into dracut iscsi module
     # at some point of time.
