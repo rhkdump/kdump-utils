@@ -102,8 +102,15 @@ get_fs_type_from_target()
 
 get_mntpoint_from_target()
 {
-	# --source is applied to ensure non-bind mount is returned
-	get_mount_info TARGET source "$1" -f
+	local SOURCE TARGET
+	findmnt -k --pairs -o SOURCE,TARGET "$1" | while read line; do
+		eval "$line"
+		# omit sources that are bind mounts i.e. they contain a [/path/to/subpath].
+		if [[ ! "$SOURCE" =~ \[ ]]; then
+			echo $TARGET
+			break
+		fi
+	done
 }
 
 is_ssh_dump_target()
