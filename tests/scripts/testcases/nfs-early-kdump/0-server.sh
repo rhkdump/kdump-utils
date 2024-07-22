@@ -1,1 +1,0 @@
-../nfs-kdump/0-server.sh
