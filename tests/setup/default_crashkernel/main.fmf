@@ -1,5 +1,4 @@
-summary: Install kdump-utils and set up the crashkernel kernel parameter
+summary: Set up the crashkernel kernel parameter
 require:
-- kdump-utils
 # Install the squashfs kernel module for the default crashkernel value to work
 - kernel-modules-core
