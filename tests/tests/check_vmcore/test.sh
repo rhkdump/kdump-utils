@@ -54,4 +54,6 @@ has_valid_vmcore_dir() {
     return 0
 }
 
-has_valid_vmcore_dir "/var/tmp/nfsshare/var/crash/"
+VMCORE_PATH=${VMCORE_PATH:-/var/crash}
+
+has_valid_vmcore_dir "$VMCORE_PATH"

@@ -1,2 +1,9 @@
-summary: Check vmcore on NFS server
 require: makedumpfile
+
+/nfs:
+    summary: Check vmcore on NFS server
+    environment:
+        VMCORE_PATH: /var/tmp/nfsshare/var/crash
+
+/local:
+    summary: Check vmcore locally
