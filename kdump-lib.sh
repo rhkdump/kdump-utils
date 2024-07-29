@@ -221,7 +221,7 @@ get_bind_mount_source()
 
 	_fsroot=${_src#"${_src_nofsroot}"[}
 	_fsroot=${_fsroot%]}
-	_mnt=$(get_mount_info TARGET source "$_src_nofsroot" -f)
+	_mnt=$(get_mntpoint_from_target "$_src_nofsroot")
 
 	# for btrfs, _fsroot will also contain the subvol value as well, strip it
 	if [[ $_fstype == btrfs ]]; then
