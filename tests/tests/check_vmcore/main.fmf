@@ -7,3 +7,6 @@ require: makedumpfile
 
 /local:
     summary: Check vmcore locally
+
+/ssh:
+    summary: Check vmcore on SSH SERVER
