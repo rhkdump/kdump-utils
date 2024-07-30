@@ -319,9 +319,40 @@ check_crypt()
 	done
 }
 
+temp_dracut_confdir=
+# This is a workaround for dracut argument inheritance not doing
+# what one would expect. xref https://issues.redhat.com/browse/RHEL-49590
+# and https://github.com/rhkdump/kdump-utils/issues/11
+maybe_synthesize_tmp_confdir()
+{
+	local confs
+	confs=$(shopt -s nullglob; echo /usr/lib/dracut/dracut.conf.d/*.conf)
+	if test -z "${confs}"; then
+		return
+	fi
+	temp_dracut_confdir=$(mktemp -d -t kdump.XXXXXX)
+	for c in ${confs}; do
+		if grep -qEe '^(omit_|)dracutmodules.*=' "${c}"; then
+			echo "Skipping system config which overrides dracutmodules: ${c}"
+			continue
+		fi
+		echo "Using config: ${c}"
+		cp -p $c ${temp_dracut_confdir}/
+	done
+	echo "Synthesized temp configdir: ${temp_dracut_confdir}"
+	add_dracut_arg --confdir "${temp_dracut_confdir}"
+	# and now ensure dracut can't see our overrides. This relies on
+	# kdump.service being in a new mount namespace.
+	mount --bind -o ro /usr/share/empty /usr/lib/dracut/dracut.conf.d
+}
+
 if ! check_crypt; then
 	dwarn "Warning: Encrypted device is in dump path, which is not recommended, see kexec-kdump-howto.txt for more details."
 fi
+
+# Early on, synthesize our own confdir which drops system config
+# that overrides dracutmodules as that causes bugs.
+maybe_synthesize_tmp_confdir
 
 # firstly get right SSH_KEY_LOCATION
 keyfile=$(kdump_get_conf_val sshkey)
