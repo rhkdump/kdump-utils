@@ -1,21 +1,15 @@
-summary: Kdump NFS dumping tests
+summary: Kdump SSH dumping tests
 discover:
   - name: Set up crashkernel
     how: fmf
     test:
-     - setup/default_crashkernel
+     - /setup/default_crashkernel
     where:
       - client
-  - name: Set up NFS server
+  - name: Set up ssh client
     how: fmf
     test:
-     - setup/nfs_server
-    where:
-      - server
-  - name: Setup NFS client
-    how: fmf
-    test:
-     - setup/network_client/nfs
+     - /setup/network_client/ssh
     where:
       - client
   - name: Panic kernel
@@ -27,6 +21,6 @@ discover:
   - name: Check vmcore
     how: fmf
     test:
-     - /tests/check_vmcore/nfs
+     - /tests/check_vmcore/ssh
     where:
       - server

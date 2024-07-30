@@ -1,0 +1,11 @@
+
+/nfs:
+    summary: Set up NFS dumping target
+    require: nfs-utils
+    environment:
+        REMOTE_TYPE: NFS
+
+/ssh:
+    summary: Set up SSH dumping target
+    environment:
+        REMOTE_TYPE: SSH

@@ -1,2 +1,0 @@
-summary: Set up NFS dumping target
-require: nfs-utils
