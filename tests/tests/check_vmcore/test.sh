@@ -56,4 +56,9 @@ has_valid_vmcore_dir() {
 
 VMCORE_PATH=${VMCORE_PATH:-/var/crash}
 
+IS_LVM_THINP=${IS_LVM_THINP:-NO}
+if [[ $IS_LVM_THINP == YES ]]; then
+    mount /dev/vg00/thinlv /mnt
+fi
+
 has_valid_vmcore_dir "$VMCORE_PATH"
