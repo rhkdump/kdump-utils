@@ -52,6 +52,26 @@ rlPhaseEnd
 rlPhaseStartTest
 if [[ $REMOTE_TYPE == NFS ]]; then
     rlRun "echo nfs $SERVER:/var/tmp/nfsshare > /etc/kdump.conf"
+elif [[ $REMOTE_TYPE == NFS_EARLY ]]; then
+    if [ "$TMT_REBOOT_COUNT" == 0 ]; then
+        echo "nfs $SERVER:/var/tmp/nfsshare" > /etc/kdump.conf
+        echo core_collector makedumpfile -l --message-level 7 -d 31 >> /etc/kdump.conf
+        kdumpctl start || exit 1
+        earlykdump_path="/usr/lib/dracut/modules.d/99earlykdump/early-kdump.sh"
+        tmp_file="/tmp/.tmp-file"
+        cat << EOF > $tmp_file
+echo 1 > /proc/sys/kernel/sysrq
+echo c > /proc/sysrq-trigger
+EOF
+        sed -i "/early_kdump_load$/r $tmp_file" $earlykdump_path
+        cp "/boot/initramfs-$(uname -r).img"{,.bak}
+        dracut -f --add earlykdump
+        mv "/boot/initramfs-$(uname -r).img"{,.new}
+        mv "/boot/initramfs-$(uname -r).img"{.bak,}
+        sync
+        kexec -s -l "/boot/vmlinuz-$(uname -r)" --initrd="/boot/initramfs-$(uname -r).img.new" --reuse-cmdline --append=rd.earlykdump
+        tmt-reboot -c "systemctl kexec"
+    fi
 elif [[ $REMOTE_TYPE == SSH ]]; then
     TMT_TEST_PLAN_ROOT=${TMT_PLAN_DATA%data}
     SERVER_SSH_KEY=${TMT_TEST_PLAN_ROOT}/provision/server/id_ecdsa

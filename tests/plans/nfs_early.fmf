@@ -1,4 +1,4 @@
-summary: Kdump NFS dumping tests
+summary: Kdump NFS early dumping tests
 discover:
   - name: Set up crashkernel
     how: fmf
@@ -12,17 +12,10 @@ discover:
      - setup/nfs_server
     where:
       - server
-  - name: Setup NFS client
+  - name: Set up NFS client
     how: fmf
     test:
-     # For tmt, nfs means nfs*, so use nfs$ to exclude nfs_early
-     - setup/network_client/nfs$
-    where:
-      - client
-  - name: Panic kernel
-    how: fmf
-    test:
-     - /setup/trigger_crash
+     - setup/network_client/nfs_early
     where:
       - client
   - name: Check vmcore
