@@ -8,5 +8,12 @@ require: makedumpfile
 /local:
     summary: Check vmcore locally
 
+/lvm2_thinp:
+    summary: Check vmcore saved to LVM2 thin provision target
+    environment:
+        IS_LVM_THINP: YES
+        VMCORE_PATH: /mnt/var/crash
+
+
 /ssh:
     summary: Check vmcore on SSH SERVER
