@@ -32,6 +32,7 @@ KDUMP_POST=""
 NEWROOT="/sysroot"
 OPALCORE="/sys/firmware/opal/mpipl/core"
 KDUMP_CONF_PARSED="/tmp/kdump.conf.$$"
+KDUMP_CPUS=0
 
 # POSIX doesn't have pipefail, only apply when using bash
 # shellcheck disable=SC3040
@@ -40,6 +41,23 @@ KDUMP_CONF_PARSED="/tmp/kdump.conf.$$"
 DUMP_RETVAL=0
 
 kdump_read_conf > $KDUMP_CONF_PARSED
+
+get_cpus_count()
+{
+	CPUS=1
+	ONLINE_CPUS=$(nproc)
+
+	if [ "$KDUMP_CPUS" -lt "1" ]; then
+		CPUS="$ONLINE_CPUS"
+	elif [ "$KDUMP_CPUS" -lt "$ONLINE_CPUS" ]; then
+		CPUS=$KDUMP_CPUS
+	else
+		CPUS=$ONLINE_CPUS
+	fi
+
+	echo "$CPUS"
+	return
+}
 
 get_kdump_confs()
 {
@@ -68,6 +86,9 @@ get_kdump_confs()
 			;;
 		fence_kdump_nodes)
 			FENCE_KDUMP_NODES="$config_val"
+			;;
+		kdump_cpus)
+			KDUMP_CPUS="$config_val"
 			;;
 		failure_action | default)
 			case $config_val in
@@ -146,7 +167,9 @@ dump_fs()
 	# Remove -F in makedumpfile case. We don't want a flat format dump here.
 	case $CORE_COLLECTOR in
 	*makedumpfile*)
+		THREADS=$(get_cpus_count)
 		CORE_COLLECTOR=$(echo "$CORE_COLLECTOR" | sed -e "s/-F//g")
+		CORE_COLLECTOR="$CORE_COLLECTOR --num-thread=$THREADS"
 		;;
 	esac
 
@@ -378,6 +401,11 @@ dump_raw()
 		_src_size=$(stat --format %s /proc/vmcore)
 		_src_size_mb=$((_src_size / 1048576))
 		/kdumpscripts/monitor_dd_progress.sh $_src_size_mb &
+	fi
+
+	if echo "$CORE_COLLECTOR" | grep -q makedumpfile; then
+		THREADS=$(get_cpus_count)
+		CORE_COLLECTOR="$CORE_COLLECTOR --num-thread=$THREADS"
 	fi
 
 	dinfo "saving vmcore"

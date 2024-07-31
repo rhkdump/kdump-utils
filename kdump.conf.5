@@ -258,6 +258,14 @@ to (this option is mandatory to enable fence_kdump).
 .RE
 
 
+.B kdump_cpus <cpu count>
+.RS
+Number of CPUs used in the kdump environment by the core collector to collect the dump.
+Currently, it is only used with the default dump collector, which is makedumpfile.
+By default, or if set to 0, all CPUs available in the kdump environment are used for dump collection.
+.RE
+
+
 .SH DEPRECATED OPTIONS
 
 .B net <nfs mount>|<user@server>
