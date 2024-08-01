@@ -1,0 +1,34 @@
+provision:
+   - name: server
+     how: virtual
+     connection: system
+
+   - name: client
+     how: virtual
+     connection: system
+
+
+prepare:
+  # Set root password to log in as root in the console
+  - name: Set root password
+    how: shell
+    script:
+      - echo root:kdump | chpasswd
+
+  - name: Use custom mirror
+    how: shell
+    script:
+      - test -v CUSTOM_MIRROR && sed -e 's/^metalink=/#metalink=/g' -e "s|^#baseurl=http://download.example/pub/fedora/linux|baseurl=${CUSTOM_MIRROR}|g" -i.bak /etc/yum.repos.d/fedora*.repo || true
+      - dnf config-manager --set-disabled fedora-cisco-openh264 || true
+
+  - name: Install built RPM
+    how: install
+    package:
+      - "$KDUMP_UTILS_RPM"
+    where:
+      - client
+
+
+execute:
+    how: tmt
+    exit-first: true
