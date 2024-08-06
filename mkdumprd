@@ -414,4 +414,7 @@ if ! is_fadump_capable; then
 	fi
 fi
 
+[[ $kdumpdracutconfdir ]] || kdumpdracutconfdir=/lib/kdump/dracut.conf.d
+[ -d "$kdumpdracutconfdir" ] && add_dracut_arg "--confdir" "$kdumpdracutconfdir"
+
 dracut "${dracut_args[@]}" "$@"
