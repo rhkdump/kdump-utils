@@ -58,12 +58,6 @@ has_command()
 	[[ -x $(command -v "$1") ]]
 }
 
-dracut_have_option()
-{
-	local _option=$1
-	! dracut "$_option" 2>&1 | grep -q "unrecognized option"
-}
-
 perror_exit()
 {
 	derror "$@"
