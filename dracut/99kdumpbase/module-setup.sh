@@ -59,11 +59,7 @@ depends() {
     fi
 
     if is_lvm2_thinp_dump_target; then
-        if grep -q lvmthinpool-monitor <<< "$(dracut --list-modules)"; then
-            add_opt_module lvmthinpool-monitor
-        else
-            dwarning "Required lvmthinpool-monitor modules is missing! Please upgrade dracut >= 057."
-        fi
+        add_opt_module lvmthinpool-monitor
     fi
 
     if [[ "$(uname -m)" == "s390x" ]]; then
