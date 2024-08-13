@@ -54,6 +54,22 @@ trap '
 # clean up after ourselves no matter how we die.
 trap 'exit 1;' SIGINT
 
+# check whether the given dracut module is installed. If multiple modules are
+# provided return true if any of them is installed.
+has_dracut_module()
+{
+	local -a _args
+	local _e
+
+	[[ $# -ge 1 ]] || return 1
+
+	for _e in "$@"; do
+		_args+=(-e "$_e")
+	done
+
+	dracut --list-modules | grep -x -q "${_args[@]}"
+}
+
 # caller should ensure $1 is valid and mounted in 1st kernel
 to_mount()
 {
@@ -379,7 +395,18 @@ done <<< "$(kdump_read_conf)"
 handle_default_dump_target
 
 if ! have_compression_in_dracut_args; then
-	if has_command mksquashfs; then
+	# With dracut 104 the 99squash module got split up into 99squash and
+	# 95squash-squashfs as well as the new 95squash-erofs. Explicitly set
+	# which image type is required otherwise the requested compression
+	# algorithm might not be supported.
+	if has_dracut_module squash-squashfs && has_command mksquashfs; then
+		dracut_args+=(--add squash-squashfs)
+		dracut_args+=(--squash-compressor zstd)
+	elif has_dracut_module squash-erofs && has_command mkfs.erofs; then
+		dracut_args+=(--add squash-erofs)
+		dracut_args+=(--squash-compressor lz4hc)
+	elif has_command mksquashfs; then
+		# only true for dracut <= 103
 		dracut_args+=(--add squash)
 		dracut_args+=(--squash-compressor zstd)
 	fi
