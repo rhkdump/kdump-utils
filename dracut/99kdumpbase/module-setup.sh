@@ -44,12 +44,6 @@ depends() {
         [[ " $omit_dracutmodules " != *\ $1\ * ]] && _dep="$_dep $1"
     }
 
-    if is_squash_available; then
-        add_opt_module squash
-    else
-        dwarning "Required modules to build a squashed kdump image is missing!"
-    fi
-
     if is_wdt_active; then
         add_opt_module watchdog
     fi
