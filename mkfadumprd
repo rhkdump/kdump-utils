@@ -46,7 +46,7 @@ ddebug "rebuild fadump initrd: $FADUMP_INITRD"
 # compression ratio and increases the size of the initramfs image.
 # Don't compress the capture image as uncompressed image is needed immediately.
 # Also, early microcode would not be needed here.
-if ! $MKDUMPRD "$FADUMP_INITRD" -i "$MKFADUMPRD_TMPDIR/fadump.initramfs" /etc/fadump.initramfs --omit squash --no-compress --no-early-microcode; then
+if ! $MKDUMPRD "$FADUMP_INITRD" -i "$MKFADUMPRD_TMPDIR/fadump.initramfs" /etc/fadump.initramfs --omit squash --omit squash-squashfs --omit squash-erofs --no-compress --no-early-microcode; then
 	perror_exit "mkfadumprd: failed to build image with dump capture support"
 fi
 
