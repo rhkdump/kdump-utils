@@ -9,7 +9,9 @@ depends() {
 }
 
 install() {
+    # shellcheck disable=SC2154
     mv -f "$initdir/init" "$initdir/init.dracut"
+    # shellcheck disable=SC2154
     inst_script "$moddir/init-fadump.sh" /init
     chmod a+x "$initdir/init"
 

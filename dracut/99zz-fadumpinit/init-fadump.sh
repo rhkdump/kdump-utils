@@ -14,10 +14,8 @@ if [ -f /proc/device-tree/rtas/ibm,kernel-dump ] || [ -f /proc/device-tree/ibm,o
     mkdir /newroot
     mount -t ramfs ramfs /newroot
 
-    if [ $ROOTFS_IS_RAMFS ]; then
-        for FILE in $(ls -A /fadumproot/); do
-            mv /fadumproot/$FILE /newroot/
-        done
+    if [ "$ROOTFS_IS_RAMFS" ]; then
+        mv /fadumproot/* /newroot/
         exec switch_root /newroot /init
     else
         mkdir /newroot/sys /newroot/proc /newroot/dev /newroot/run /newroot/oldroot
