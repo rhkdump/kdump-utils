@@ -15,19 +15,17 @@ EARLY_KEXEC_ARGS=""
 
 # initiate the kdump logger
 if ! dlog_init; then
-        echo "failed to initiate the kdump logger."
-        exit 1
+    echo "failed to initiate the kdump logger."
+    exit 1
 fi
 
-prepare_parameters()
-{
+prepare_parameters() {
     EARLY_KDUMP_CMDLINE=$(prepare_cmdline "${KDUMP_COMMANDLINE}" "${KDUMP_COMMANDLINE_REMOVE}" "${KDUMP_COMMANDLINE_APPEND}")
     EARLY_KDUMP_KERNEL="/boot/kernel-earlykdump"
     EARLY_KDUMP_INITRD="/boot/initramfs-earlykdump"
 }
 
-early_kdump_load()
-{
+early_kdump_load() {
     if ! check_kdump_feasibility; then
         return 1
     fi
@@ -64,8 +62,7 @@ early_kdump_load()
     fi
 }
 
-set_early_kdump()
-{
+set_early_kdump() {
     if getargbool 0 rd.earlykdump; then
         dinfo "early-kdump is enabled."
         early_kdump_load
