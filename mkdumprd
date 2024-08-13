@@ -11,8 +11,11 @@ if [[ -f /etc/sysconfig/kdump ]]; then
 fi
 
 [[ $dracutbasedir ]] || dracutbasedir=/usr/lib/dracut
-. $dracutbasedir/dracut-functions.sh
+# shellcheck source=/dev/null
+. "$dracutbasedir"/dracut-functions.sh
+# shellcheck source=SCRIPTDIR/kdump-lib.sh
 . /lib/kdump/kdump-lib.sh
+# shellcheck source=SCRIPTDIR/kdump-logger.sh
 . /lib/kdump/kdump-logger.sh
 export IN_KDUMP=1
 
@@ -32,6 +35,7 @@ MKDUMPRD_TMPDIR="$(mktemp -d -t mkdumprd.XXXXXX)"
 [ -d "$MKDUMPRD_TMPDIR" ] || perror_exit "dracut: mktemp -p -d -t dracut.XXXXXX failed."
 MKDUMPRD_TMPMNT="$MKDUMPRD_TMPDIR/target"
 
+# shellcheck disable=SC2154
 trap '
     ret=$?;
     is_mounted $MKDUMPRD_TMPMNT && umount -f $MKDUMPRD_TMPMNT;
@@ -256,7 +260,7 @@ check_user_configured_target()
 verify_core_collector()
 {
 	local _cmd="${1%% *}"
-	local _params="${1#${_cmd}}"
+	local _params="${1#"${_cmd}"}"
 
 	if [[ $_cmd != "makedumpfile" ]]; then
 		if is_raw_dump_target; then
