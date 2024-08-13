@@ -11,12 +11,14 @@ _get_kdump_netifs() {
 }
 
 kdump_module_init() {
+    # shellcheck disable=SC2154
     if ! [[ -d "${initdir}/tmp" ]]; then
         mkdir -p "${initdir}/tmp"
     fi
 
     mkdir -p "$_DRACUT_KDUMP_NM_TMP_DIR"
 
+    # shellcheck source-path=SCRIPTDIR/../../
     . /lib/kdump/kdump-lib.sh
 }
 
@@ -38,6 +40,7 @@ depends() {
     kdump_module_init
 
     add_opt_module() {
+        # shellcheck disable=SC2154
         [[ " $omit_dracutmodules " != *\ $1\ * ]] && _dep="$_dep $1"
     }
 
@@ -56,7 +59,7 @@ depends() {
     fi
 
     if is_lvm2_thinp_dump_target; then
-        if grep -q lvmthinpool-monitor <<< $(dracut --list-modules); then
+        if grep -q lvmthinpool-monitor <<< "$(dracut --list-modules)"; then
             add_opt_module lvmthinpool-monitor
         else
             dwarning "Required lvmthinpool-monitor modules is missing! Please upgrade dracut >= 057."
@@ -499,11 +502,13 @@ kdump_setup_ovs() {
 # setup s390 znet
 kdump_setup_znet() {
     local _netif
-    local _tempfile=$(mktemp --tmpdir="$_DRACUT_KDUMP_NM_TMP_DIR" kdump-dracut-zdev.XXXXXX)
+    local _tempfile
 
     if [[ "$(uname -m)" != "s390x" ]]; then
         return
     fi
+
+    _tempfile=$(mktemp --tmpdir="$_DRACUT_KDUMP_NM_TMP_DIR" kdump-dracut-zdev.XXXXXX)
 
     for _netif in $1; do
         chzdev --export "$_tempfile" --active --by-interface "$_netif" |& ddebug
@@ -535,10 +540,10 @@ kdump_get_remote_ip() {
 # The physical network interface has the same MAC address as the Ovs bridge
 ovs_find_phy_if() {
     local _mac _dev
-    _mac=$(kdump_get_mac_addr $1)
+    _mac=$(kdump_get_mac_addr "$1")
 
-    for _dev in $(ovs-vsctl list-ifaces $1); do
-        if [[ $_mac == $(< /sys/class/net/$_dev/address) ]]; then
+    for _dev in $(ovs-vsctl list-ifaces "$1"); do
+        if [[ $_mac == $(< /sys/class/net/"$_dev"/address) ]]; then
             echo -n "$_dev"
             return
         fi
@@ -549,7 +554,7 @@ ovs_find_phy_if() {
 
 # Tell if a network interface is an Open vSwitch (Ovs) bridge
 kdump_is_ovs_bridge() {
-    [[ $(_get_nic_driver $1) == openvswitch ]]
+    [[ $(_get_nic_driver "$1") == openvswitch ]]
 }
 
 # Collect netifs needed by kdump
@@ -626,7 +631,7 @@ kdump_install_resolv_conf() {
 
 kdump_install_ovs_deps() {
     [[ $has_ovs_bridge == yes ]] || return 0
-    inst_multiple -o $(rpm -ql NetworkManager-ovs) $(rpm -ql $(rpm -qf /usr/lib/systemd/system/openvswitch.service)) /sbin/sysctl /usr/bin/uuidgen /usr/bin/hostname /usr/bin/touch /usr/bin/expr /usr/bin/id /usr/bin/install /usr/bin/setpriv /usr/bin/nice /usr/bin/df
+    inst_multiple -o "$(rpm -ql NetworkManager-ovs)" "$(rpm -ql "$(rpm -qf /usr/lib/systemd/system/openvswitch.service)")" /sbin/sysctl /usr/bin/uuidgen /usr/bin/hostname /usr/bin/touch /usr/bin/expr /usr/bin/id /usr/bin/install /usr/bin/setpriv /usr/bin/nice /usr/bin/df
     # 1. Overwrite the copied /etc/sysconfig/openvswitch so
     # ovsdb-server.service can run as the default user root.
     # /etc/sysconfig/openvswitch by default intructs ovsdb-server.service to
@@ -641,7 +646,7 @@ kdump_install_ovs_deps() {
 
     KDUMP_DROP_IN_DIR="${initdir}/etc/systemd/system/nm-initrd.service.d"
     mkdir -p "$KDUMP_DROP_IN_DIR"
-    printf "[Unit]\nAfter=openvswitch.service\n" > $KDUMP_DROP_IN_DIR/01-after-ovs.conf
+    printf "[Unit]\nAfter=openvswitch.service\n" > "$KDUMP_DROP_IN_DIR"/01-after-ovs.conf
 
     $SYSTEMCTL -q --root "$initdir" enable openvswitch.service
     $SYSTEMCTL -q --root "$initdir" add-wants basic.target openvswitch.service
@@ -897,6 +902,7 @@ kdump_check_iscsi_targets() {
     # If our prerequisites are not met, fail anyways.
     type -P iscsistart > /dev/null || return 1
 
+    # shellcheck disable=SC2317
     kdump_check_setup_iscsi() {
         local _dev
         _dev=$1
@@ -963,6 +969,7 @@ get_pcs_fence_kdump_nodes() {
     for node in ${nodelist}; do
         # convert $node from 'uname="nodeX"' to 'nodeX'
         eval "$node"
+        # shellcheck disable=SC2154
         nodename="$uname"
         # Skip its own node name
         if is_localhost "$nodename"; then
@@ -977,6 +984,7 @@ get_pcs_fence_kdump_nodes() {
 # retrieves fence_kdump args from config file
 get_pcs_fence_kdump_args() {
     if [[ -f $FENCE_KDUMP_CONFIG_FILE ]]; then
+        # shellcheck disable=SC1090
         . "$FENCE_KDUMP_CONFIG_FILE"
         echo "$FENCE_KDUMP_OPTS"
     fi
@@ -1081,6 +1089,7 @@ install() {
         kdump_install_random_seed
     fi
     dracut_install -o /etc/adjtime /etc/localtime
+    # shellcheck disable=SC2154
     inst "$moddir/monitor_dd_progress.sh" "/kdumpscripts/monitor_dd_progress.sh"
     inst "/bin/dd" "/bin/dd"
     inst "/bin/tail" "/bin/tail"
@@ -1098,7 +1107,9 @@ install() {
     inst "/usr/bin/chmod" "/sbin/chmod"
     inst "/lib/kdump/kdump-lib-initramfs.sh" "/lib/kdump-lib-initramfs.sh"
     inst "/lib/kdump/kdump-logger.sh" "/lib/kdump-logger.sh"
+    # shellcheck disable=SC2154
     inst "$moddir/kdump.sh" "/usr/bin/kdump.sh"
+    # shellcheck disable=SC2154
     inst "$moddir/kdump-capture.service" "$systemdsystemunitdir/kdump-capture.service"
     systemctl -q --root "$initdir" add-wants initrd.target kdump-capture.service
     # Replace existing emergency service and emergency target
