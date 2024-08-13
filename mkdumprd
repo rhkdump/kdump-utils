@@ -28,7 +28,16 @@ SSH_KEY_LOCATION=$DEFAULT_SSHKEY
 SAVE_PATH=$(get_save_path)
 
 extra_modules=""
-dracut_args=(--add kdumpbase --quiet --hostonly --hostonly-cmdline --hostonly-i18n --hostonly-mode strict --hostonly-nics '' --aggressive-strip -o "plymouth resume ifcfg earlykdump")
+declare -a dracut_args
+dracut_args+=(--add kdumpbase)
+dracut_args+=(--quiet)
+dracut_args+=(--hostonly)
+dracut_args+=(--hostonly-cmdline)
+dracut_args+=(--hostonly-i18n)
+dracut_args+=(--hostonly-mode strict)
+dracut_args+=(--hostonly-nics '')
+dracut_args+=(--aggressive-strip)
+dracut_args+=(--omit "plymouth resume ifcfg earlykdump")
 
 MKDUMPRD_TMPDIR="$(mktemp -d -t mkdumprd.XXXXXX)"
 [ -d "$MKDUMPRD_TMPDIR" ] || perror_exit "dracut: mktemp -p -d -t dracut.XXXXXX failed."
@@ -43,21 +52,6 @@ trap '
 
 # clean up after ourselves no matter how we die.
 trap 'exit 1;' SIGINT
-
-add_dracut_arg()
-{
-	dracut_args+=("$@")
-}
-
-add_dracut_mount()
-{
-	add_dracut_arg "--mount" "$1"
-}
-
-add_dracut_sshkey()
-{
-	add_dracut_arg "--sshkey" "$1"
-}
 
 # caller should ensure $1 is valid and mounted in 1st kernel
 to_mount()
@@ -284,11 +278,7 @@ verify_core_collector()
 
 add_mount()
 {
-	local _mnt
-
-	_mnt=$(to_mount "$@") || exit 1
-
-	add_dracut_mount "$_mnt"
+	dracut_args+=(--mount "$(to_mount "$@")") || exit 1
 }
 
 #handle the case user does not specify the dump target explicitly
@@ -351,14 +341,14 @@ while read -r config_opt config_val; do
 		if [[ -z $_praw ]]; then
 			exit 1
 		fi
-		add_dracut_arg "--device" "$_praw"
+		dracut_args+=(--device "$_praw")
 		check_size raw "$config_val"
 		;;
 	ssh)
 		if strstr "$config_val" "@"; then
 			mkdir_save_path_ssh "$config_val"
 			check_size ssh "$config_val"
-			add_dracut_sshkey "$SSH_KEY_LOCATION"
+			dracut_args+=(--sshkey "$SSH_KEY_LOCATION")
 		else
 			perror_exit "Bad ssh dump target $config_val"
 		fi
@@ -373,11 +363,11 @@ while read -r config_opt config_val; do
 		# because we call dracut with --hostonly-mode strict. So manually install
 		# nfsv4-related drivers.
 		if [[ $(get_dracut_args_fstype "$config_val") == nfs* ]]; then
-			add_dracut_arg "--add-drivers" nfs_layout_nfsv41_files
+			dracut_args+=(--add-drivers "nfs_layout_nfsv41_files")
 		fi
 
 		while read -r dracut_arg; do
-			add_dracut_arg "$dracut_arg"
+			dracut_args+=("$dracut_arg")
 		done <<< "$(echo "$config_val" | xargs -n 1 echo)"
 		;;
 	*) ;;
@@ -389,14 +379,14 @@ handle_default_dump_target
 
 if ! have_compression_in_dracut_args; then
 	if is_squash_available && dracut_have_option "--squash-compressor"; then
-		add_dracut_arg "--squash-compressor" "zstd"
+		dracut_args+=("--squash-compressor" "zstd")
 	elif has_command zstd; then
-		add_dracut_arg "--compress" "zstd"
+		dracut_args+=("--compress" "zstd")
 	fi
 fi
 
 if [[ -n $extra_modules ]]; then
-	add_dracut_arg "--add-drivers" "$extra_modules"
+	dracut_args+=("--add-drivers" "$extra_modules")
 fi
 
 # TODO: The below check is not needed anymore with the introduction of
@@ -409,10 +399,10 @@ if ! is_fadump_capable; then
 	# so it doesn't affect the logic of check_dump_fs_modified().
 	is_dump_to_rootfs && add_mount "$(to_dev_name "$(get_root_fs_device)")"
 
-	add_dracut_arg "--no-hostonly-default-device"
+	dracut_args+=(--no-hostonly-default-device)
 
 	if fips-mode-setup --is-enabled 2> /dev/null; then
-		add_dracut_arg --add-device "$(findmnt -n -o SOURCE --target /boot)"
+		dracut_args+=(--add-device "$(findmnt -n -o SOURCE --target /boot)")
 	fi
 fi
 
