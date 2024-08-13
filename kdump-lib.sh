@@ -43,16 +43,6 @@ is_sme_or_sev_active()
 	journalctl -q --dmesg --grep "^Memory Encryption Features active: AMD (SME|SEV)$" >/dev/null 2>&1
 }
 
-is_squash_available()
-{
-	local _version kmodule
-
-	_version=$(_get_kdump_kernel_version)
-	for kmodule in squashfs overlay loop; do
-		modprobe -S "$_version" --dry-run $kmodule &> /dev/null || return 1
-	done
-}
-
 has_command()
 {
 	[[ -x $(command -v "$1") ]]

@@ -377,10 +377,9 @@ done <<< "$(kdump_read_conf)"
 handle_default_dump_target
 
 if ! have_compression_in_dracut_args; then
-	if is_squash_available; then
-		dracut_args+=("--squash-compressor" "zstd")
-	elif has_command zstd; then
-		dracut_args+=("--compress" "zstd")
+	if has_command mksquashfs; then
+		dracut_args+=(--add squash)
+		dracut_args+=(--squash-compressor zstd)
 	fi
 fi
 
