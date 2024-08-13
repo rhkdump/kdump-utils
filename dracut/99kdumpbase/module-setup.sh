@@ -27,7 +27,7 @@ check() {
         return 1
     fi
     if [[ "$(uname -m)" == "s390x" ]]; then
-	require_binaries chzdev || return 1
+        require_binaries chzdev || return 1
     fi
     return 0
 }
@@ -351,7 +351,7 @@ kdump_install_nm_netif_allowlist() {
 
     for _netif in $1; do
         _per_mac=$(kdump_get_perm_addr "$_netif")
-        if [[ "$_per_mac" != 'not set' ]]; then
+        if [[ $_per_mac != 'not set' ]]; then
             _except_netif="mac:$_per_mac"
         else
             _except_netif="interface-name:$_netif"
@@ -384,7 +384,7 @@ _get_hpyerv_physical_driver() {
 _get_physical_function_driver() {
     local _physfn_dir=/sys/class/net/"$1"/device/physfn
 
-    if [[ -e "$_physfn_dir" ]]; then
+    if [[ -e $_physfn_dir ]]; then
         basename "$(readlink -f "$_physfn_dir"/driver)"
     fi
 }
@@ -506,14 +506,14 @@ kdump_setup_znet() {
     fi
 
     for _netif in $1; do
-	chzdev --export "$_tempfile" --active --by-interface "$_netif" \
-	       2>&1 | ddebug
-	sed -i -e 's/^\[active /\[persistent /' "$_tempfile"
-	ddebug < "$_tempfile"
-	chzdev --import "$_tempfile" --persistent --base "/etc=$initdir/etc" \
-               --yes --no-root-update --force 2>&1 | ddebug
-	lszdev --configured --persistent --info --by-interface "$_netif" \
-	       --base "/etc=$initdir/etc" 2>&1 | ddebug
+        chzdev --export "$_tempfile" --active --by-interface "$_netif" \
+            2>&1 | ddebug
+        sed -i -e 's/^\[active /\[persistent /' "$_tempfile"
+        ddebug < "$_tempfile"
+        chzdev --import "$_tempfile" --persistent --base "/etc=$initdir/etc" \
+            --yes --no-root-update --force 2>&1 | ddebug
+        lszdev --configured --persistent --info --by-interface "$_netif" \
+            --base "/etc=$initdir/etc" 2>&1 | ddebug
     done
     rm -f "$_tempfile"
 }
@@ -539,7 +539,7 @@ ovs_find_phy_if() {
     _mac=$(kdump_get_mac_addr $1)
 
     for _dev in $(ovs-vsctl list-ifaces $1); do
-        if [[ $_mac == $(</sys/class/net/$_dev/address) ]]; then
+        if [[ $_mac == $(< /sys/class/net/$_dev/address) ]]; then
             echo -n "$_dev"
             return
         fi
@@ -638,11 +638,11 @@ kdump_install_ovs_deps() {
     #
     # 2. Bypass the error "referential integrity violation: Table Port column
     # interfaces row" caused by we changing the connection profiles
-    echo "OPTIONS=\"--ovsdb-server-options='--disable-file-column-diff'\"" >"${initdir}/etc/sysconfig/openvswitch"
+    echo "OPTIONS=\"--ovsdb-server-options='--disable-file-column-diff'\"" > "${initdir}/etc/sysconfig/openvswitch"
 
     KDUMP_DROP_IN_DIR="${initdir}/etc/systemd/system/nm-initrd.service.d"
     mkdir -p "$KDUMP_DROP_IN_DIR"
-    printf "[Unit]\nAfter=openvswitch.service\n" >$KDUMP_DROP_IN_DIR/01-after-ovs.conf
+    printf "[Unit]\nAfter=openvswitch.service\n" > $KDUMP_DROP_IN_DIR/01-after-ovs.conf
 
     $SYSTEMCTL -q --root "$initdir" enable openvswitch.service
     $SYSTEMCTL -q --root "$initdir" add-wants basic.target openvswitch.service
@@ -654,7 +654,7 @@ kdump_install_net() {
     local _netifs
 
     _netifs=$(_get_kdump_netifs)
-    if [[ -n "$_netifs" ]]; then
+    if [[ -n $_netifs ]]; then
         kdump_install_nmconnections
         apply_nm_initrd_generator_timeouts
         kdump_setup_znet "$_netifs"
@@ -1057,7 +1057,6 @@ kdump_install_systemd_conf() {
 [Manager]
 DefaultTimeoutStartSec=300s
 EOF
-
 
     # Forward logs to console directly, and don't read Kmsg, this avoids
     # unneccessary memory consumption and make console output more useful.
