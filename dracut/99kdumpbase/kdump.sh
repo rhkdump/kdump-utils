@@ -3,8 +3,11 @@
 # The main kdump routine in capture kernel, bash may not be the
 # default shell. Any code added must be POSIX compliant.
 
+# shellcheck source=/dev/null
 . /lib/dracut-lib.sh
+# shellcheck source=SCRIPTDIR/../../kdump-logger.sh
 . /lib/kdump-logger.sh
+# shellcheck source=SCRIPTDIR/../../kdump-lib-initramfs.sh
 . /lib/kdump-lib-initramfs.sh
 
 #initiate the kdump logger
@@ -262,11 +265,14 @@ dump_to_rootfs() {
 kdump_emergency_shell() {
     ddebug "Switching to kdump emergency shell..."
 
+    # shellcheck source=/dev/null
     [ -f /etc/profile ] && . /etc/profile
     export PS1='kdump:${PWD}# '
 
+    # shellcheck source=/dev/null
     . /lib/dracut-lib.sh
     if [ -f /dracut-state.sh ]; then
+        # shellcheck source=/dev/null
         . /dracut-state.sh 2> /dev/null
     fi
 
@@ -293,16 +299,16 @@ kdump_emergency_shell() {
 
 do_failure_action() {
     dinfo "Executing failure action $FAILURE_ACTION"
-    eval $FAILURE_ACTION
+    eval "$FAILURE_ACTION"
 }
 
 do_final_action() {
     dinfo "Executing final action $FINAL_ACTION"
-    eval $FINAL_ACTION
+    eval "$FINAL_ACTION"
 }
 
 do_dump() {
-    eval $DUMP_INSTRUCTION
+    eval "$DUMP_INSTRUCTION"
     _ret=$?
 
     if [ $_ret -ne 0 ]; then
@@ -390,7 +396,7 @@ dump_ssh() {
     dinfo "saving to $2:$_ssh_dir"
 
     cat /var/lib/random-seed > /dev/urandom
-    ssh -q $_ssh_opt "$2" mkdir -p "$_ssh_dir" || return 1
+    ssh -q "$_ssh_opt" "$2" mkdir -p "$_ssh_dir" || return 1
 
     save_vmcore_dmesg_ssh "$DMESG_COLLECTOR" "$_ssh_dir" "$_ssh_opt" "$2"
 
@@ -402,17 +408,19 @@ dump_ssh() {
     save_opalcore_ssh "$_ssh_dir" "$_ssh_opt" "$2" "$_scp_address"
 
     if [ "${CORE_COLLECTOR%%[[:blank:]]*}" = "scp" ]; then
-        scp -q $_ssh_opt /proc/vmcore "$_scp_address:$_ssh_dir/vmcore-incomplete"
+        scp -q "$_ssh_opt" /proc/vmcore "$_scp_address:$_ssh_dir/vmcore-incomplete"
         _ret=$?
         _vmcore="vmcore"
     else
-        $CORE_COLLECTOR /proc/vmcore | ssh $_ssh_opt "$2" "umask 0077 && dd bs=512 of='$_ssh_dir/vmcore-incomplete'"
+        # shellcheck disable=SC2029
+        $CORE_COLLECTOR /proc/vmcore | ssh "$_ssh_opt" "$2" "umask 0077 && dd bs=512 of='$_ssh_dir/vmcore-incomplete'"
         _ret=$?
         _vmcore="vmcore.flat"
     fi
 
     if [ $_ret -eq 0 ]; then
-        ssh $_ssh_opt "$2" "mv '$_ssh_dir/vmcore-incomplete' '$_ssh_dir/$_vmcore'"
+        # shellcheck disable=SC2029
+        ssh "$_ssh_opt" "$2" "mv '$_ssh_dir/vmcore-incomplete' '$_ssh_dir/$_vmcore'"
         _ret=$?
         if [ $_ret -ne 0 ]; then
             derror "moving vmcore failed, exitcode:$_ret"
@@ -442,12 +450,13 @@ save_opalcore_ssh() {
 
     dinfo "saving opalcore:$OPALCORE to $3:$1"
 
-    if ! scp $2 $OPALCORE "$4:$1/opalcore-incomplete"; then
+    if ! scp "$2" "$OPALCORE" "$4:$1/opalcore-incomplete"; then
         derror "saving opalcore failed"
         return 1
     fi
 
-    ssh $2 "$3" mv "$1/opalcore-incomplete" "$1/opalcore"
+    # shellcheck disable=SC2029
+    ssh "$2" "$3" mv "$1/opalcore-incomplete" "$1/opalcore"
     dinfo "saving opalcore complete"
     return 0
 }
@@ -458,8 +467,9 @@ save_opalcore_ssh() {
 # $4: ssh address in <user>@<host> format
 save_vmcore_dmesg_ssh() {
     dinfo "saving vmcore-dmesg.txt to $4:$2"
-    if $1 /proc/vmcore | ssh $3 "$4" "umask 0077 && dd of='$2/vmcore-dmesg-incomplete.txt'"; then
-        ssh -q $3 "$4" mv "$2/vmcore-dmesg-incomplete.txt" "$2/vmcore-dmesg.txt"
+    # shellcheck disable=SC2029
+    if "$1" /proc/vmcore | ssh "$3" "$4" "umask 0077 && dd of='$2/vmcore-dmesg-incomplete.txt'"; then
+        ssh -q "$3" "$4" mv "$2/vmcore-dmesg-incomplete.txt" "$2/vmcore-dmesg.txt"
         dinfo "saving vmcore-dmesg.txt complete"
     else
         derror "saving vmcore-dmesg.txt failed"
