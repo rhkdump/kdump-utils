@@ -506,14 +506,13 @@ kdump_setup_znet() {
     fi
 
     for _netif in $1; do
-        chzdev --export "$_tempfile" --active --by-interface "$_netif" \
-            2>&1 | ddebug
+        chzdev --export "$_tempfile" --active --by-interface "$_netif" |& ddebug
         sed -i -e 's/^\[active /\[persistent /' "$_tempfile"
         ddebug < "$_tempfile"
         chzdev --import "$_tempfile" --persistent --base "/etc=$initdir/etc" \
-            --yes --no-root-update --force 2>&1 | ddebug
+            --yes --no-root-update --force |& ddebug
         lszdev --configured --persistent --info --by-interface "$_netif" \
-            --base "/etc=$initdir/etc" 2>&1 | ddebug
+            --base "/etc=$initdir/etc" |& ddebug
     done
     rm -f "$_tempfile"
 }
@@ -955,7 +954,7 @@ is_localhost() {
 get_pcs_fence_kdump_nodes() {
     local nodes
 
-    pcs cluster sync > /dev/null 2>&1 && pcs cluster cib-upgrade > /dev/null 2>&1
+    pcs cluster sync &> /dev/null && pcs cluster cib-upgrade &> /dev/null
     # get cluster nodes from cluster cib, get interface and ip address
     nodelist=$(pcs cluster cib | xmllint --xpath "/cib/status/node_state/@uname" -)
 
