@@ -8,8 +8,11 @@ EARLY_KDUMP_KERNEL=""
 EARLY_KDUMP_CMDLINE=""
 EARLY_KEXEC_ARGS=""
 
+# shellcheck source=/dev/null
 . /etc/sysconfig/kdump
+# shellcheck source=/dev/null
 . /lib/dracut-lib.sh
+# shellcheck source-path=SCRIPTDIR/../../
 . /lib/kdump-lib.sh
 . /lib/kdump-logger.sh
 
@@ -41,6 +44,7 @@ early_kdump_load() {
 
     prepare_parameters
 
+    # shellcheck disable=SC2153
     EARLY_KEXEC_ARGS=$(prepare_kexec_args "${KEXEC_ARGS}")
 
     # Here, only output the messages, but do not save these messages
