@@ -7,8 +7,11 @@ if [[ -f /etc/sysconfig/kdump ]]; then
 fi
 
 [[ $dracutbasedir ]] || dracutbasedir=/usr/lib/dracut
-. $dracutbasedir/dracut-functions.sh
+# shellcheck source=/dev/null
+. "$dracutbasedir"/dracut-functions.sh
+# shellcheck source=SCRIPTDIR/kdump-lib.sh
 . /lib/kdump/kdump-lib.sh
+# shellcheck source=SCRIPTDIR/kdump-logger.sh
 . /lib/kdump/kdump-logger.sh
 
 #initiate the kdump logger
@@ -19,6 +22,7 @@ fi
 
 MKFADUMPRD_TMPDIR="$(mktemp -d -t mkfadumprd.XXXXXX)"
 [ -d "$MKFADUMPRD_TMPDIR" ] || perror_exit "mkfadumprd: mktemp -d -t mkfadumprd.XXXXXX failed."
+# shellcheck disable=SC2154
 trap '
     ret=$?;
     [[ -d $MKFADUMPRD_TMPDIR ]] && rm --one-file-system -rf -- "$MKFADUMPRD_TMPDIR";
