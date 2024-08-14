@@ -7,7 +7,9 @@ if [[ -f /etc/sysconfig/kdump ]]; then
 fi
 
 [[ $dracutbasedir ]] || dracutbasedir=/usr/lib/dracut
-. $dracutbasedir/dracut-functions.sh
+# shellcheck source=/dev/null
+. "$dracutbasedir"/dracut-functions.sh
+# shellcheck source-path=SCRIPTDIR
 . /lib/kdump/kdump-lib.sh
 . /lib/kdump/kdump-logger.sh
 
