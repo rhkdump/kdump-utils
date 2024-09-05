@@ -70,6 +70,16 @@ Note: The memory requirements for kdump varies heavily depending on the
 used hardware and system configuration. Thus the recommended
 crashkernel might not work for your specific setup. Please test if
 kdump works after resetting the crashkernel value.
+.TP
+.I test [--force]
+Test the kdump by actually trigger the system crash & dump, and check if a
+vmcore can really be generated successfully based on current config and
+environment. After system reboot back to normal, check the test result
+by "kdumpctl status".
+
+If the optional parameter [--force] is provided, there will be no interact
+before triggering the system crash. Dangerous though, this option is meant
+for automation testing.
 
 .SH "SEE ALSO"
 .BR kdump.conf (5),

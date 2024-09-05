@@ -308,11 +308,22 @@ do_final_action() {
 }
 
 do_dump() {
+    if [ -d /vmcorestatus ]; then
+        _vmcore_creation_status="/vmcorestatus/$VMCORE_CREATION_STATUS"
+    else
+        _vmcore_creation_status="/sysroot/$VMCORE_CREATION_STATUS"
+    fi
+
+    set_vmcore_creation_status 'clear' "$_vmcore_creation_status"
+
     eval "$DUMP_INSTRUCTION"
     _ret=$?
 
     if [ $_ret -ne 0 ]; then
+        set_vmcore_creation_status 'fail' "$_vmcore_creation_status"
         derror "saving vmcore failed"
+    else
+        set_vmcore_creation_status 'success' "$_vmcore_creation_status"
     fi
 
     return $_ret
