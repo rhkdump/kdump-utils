@@ -73,9 +73,10 @@ has_dracut_module()
 # caller should ensure $1 is valid and mounted in 1st kernel
 to_mount()
 {
-	local _target=$1 _fstype=$2 _options=$3 _sed_cmd _new_mntpoint _pdev
+	local _target=$1 _fstype=$2 _options=$3 _new_mntpoint=$4
+	local _sed_cmd _pdev
 
-	_new_mntpoint=$(get_kdump_mntpoint_from_target "$_target")
+	_new_mntpoint="${_new_mntpoint:-$(get_kdump_mntpoint_from_target "$_target")}"
 	_fstype="${_fstype:-$(get_fs_type_from_target "$_target")}"
 	_options="${_options:-$(get_mntopt_from_target "$_target")}"
 	_options="${_options:-defaults}"
@@ -427,6 +428,17 @@ if ! is_fadump_capable; then
 	if fips-mode-setup --is-enabled 2> /dev/null; then
 		dracut_args+=(--add-device "$(findmnt -n -o SOURCE --target /boot)")
 	fi
+fi
+
+status_target=$(get_target_from_path $(dirname "$VMCORE_CREATION_STATUS"))
+
+if [[ $(get_root_fs_device) != "$status_target" ]]; then
+	new_mntpoint=$(echo /vmcorestatus/$(get_mntpoint_from_target "$status_target") \
+		| tr -s "/")
+	add_mount "$status_target" "" "" "$new_mntpoint"
+elif ! is_fadump_capable && \
+     ! [[ ${dracut_args[@]} == *"$(kdump_get_persistent_dev $status_target)"* ]]; then
+	add_mount "$status_target"
 fi
 
 dracut "${dracut_args[@]}" "$@"

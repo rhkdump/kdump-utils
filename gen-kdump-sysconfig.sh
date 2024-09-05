@@ -47,6 +47,10 @@ KDUMP_IMG="vmlinuz"
 #What is the images extension.  Relocatable kernels don't have one
 KDUMP_IMG_EXT=""
 
+# Enable vmcore creation notification by default, disable by setting
+# VMCORE_CREATION_NOTIFICATION=""
+VMCORE_CREATION_NOTIFICATION="yes"
+
 # Logging is controlled by following variables in the first kernel:
 #   - @var KDUMP_STDLOGLVL - logging level to standard error (console output)
 #   - @var KDUMP_SYSLOGLVL - logging level to syslog (by logger command)
