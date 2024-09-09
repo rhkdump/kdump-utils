@@ -37,7 +37,7 @@ dracut_args+=(--hostonly-i18n)
 dracut_args+=(--hostonly-mode strict)
 dracut_args+=(--hostonly-nics '')
 dracut_args+=(--aggressive-strip)
-dracut_args+=(--omit "plymouth resume ifcfg earlykdump")
+dracut_args+=(--omit "rdma plymouth resume ifcfg earlykdump")
 
 MKDUMPRD_TMPDIR="$(mktemp -d -t mkdumprd.XXXXXX)"
 [ -d "$MKDUMPRD_TMPDIR" ] || perror_exit "dracut: mktemp -p -d -t dracut.XXXXXX failed."
