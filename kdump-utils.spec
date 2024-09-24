@@ -2,7 +2,7 @@
 %global debug_package %{nil}
 Name: kdump-utils
 Version: 1.0.44
-Release: 2%{?dist}
+Release: %autorelease
 Summary: Kernel crash dump collection utilities
 
 License: GPL-2.0-only
@@ -132,11 +132,4 @@ fi
 %doc supported-kdump-targets.txt
 
 %changelog
-* Thu Jul 18 2024 Fedora Release Engineering <releng@fedoraproject.org> - 1.0.44-2
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_41_Mass_Rebuild
-
-* Mon Jul 15 2024 Packit <hello@packit.dev> - 1.0.44-1
-- Update to version 1.0.44
-
-* Tue Oct 24 2023 Coiby <coxu@redhat.com> - 1.0.42-10
-- split from kexec-tools
+%autochangelog
