@@ -39,7 +39,7 @@ kdump kernel and initramfs to save the collected crash kernel dump to specified
 target.
 
 %prep
-%autosetup
+%autosetup -p1
 
 %install
 %make_install sbindir=%_sbindir
