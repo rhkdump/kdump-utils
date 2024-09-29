@@ -73,12 +73,12 @@ has_dracut_module()
 # caller should ensure $1 is valid and mounted in 1st kernel
 to_mount()
 {
-	local _target=$1 _fstype=$2 _options=$3 _sed_cmd _new_mntpoint _pdev
+	local _target=$1 _fstype=$2 _options=$3 _subvol=$4 _sed_cmd _new_mntpoint _pdev
 
-	_new_mntpoint=$(get_kdump_mntpoint_from_dump_target "$_target")
 	_fstype="${_fstype:-$(get_fs_type_from_dump_target "$_target")}"
 	_options="${_options:-$(get_mntopt_from_dump_target "$_target")}"
 	_options="${_options:-defaults}"
+	_new_mntpoint=$(get_kdump_mntpoint_from_dump_target "$_target" "$_subvol")
 
 	if [[ $_fstype == "nfs"* ]]; then
 		_pdev=$_target
@@ -301,7 +301,7 @@ add_mount()
 #handle the case user does not specify the dump target explicitly
 handle_default_dump_target()
 {
-	local _target
+	local _target _fstype _options
 	local _mntpoint
 
 	is_user_configured_dump_target && return
@@ -310,10 +310,13 @@ handle_default_dump_target()
 
 	_save_path=$(get_bind_mount_source "$SAVE_PATH")
 	_target=$(get_target_from_path "$_save_path")
-	_mntpoint=$(get_mntpoint_from_dump_target "$_target")
+	_fstype=$(get_fs_type_from_dump_target "$_target")
+	[[ $_fstype == "btrfs" ]] && _subvol=$(get_btrfs_subvol_from_mntpoint "$_save_path")
+	_mntpoint=$(get_mntpoint_from_dump_target "$_target" "$_subvol")
+	_options=$(get_mount_info OPTIONS target $_mntpoint)
 
 	SAVE_PATH=${_save_path##"$_mntpoint"}
-	add_mount "$_target"
+	add_mount "$_target" "$_fstype" "$_options" "$_subvol"
 	check_size fs "$_target"
 }
 

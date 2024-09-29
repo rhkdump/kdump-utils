@@ -102,9 +102,17 @@ get_fs_type_from_dump_target()
 
 get_mntpoint_from_dump_target()
 {
-	local _mntpoint
-	_mntpoint=$(get_mount_info TARGET,SOURCE source "$1" | grep -v "\]$" | awk 'NR==1 { print $1 }')
-	[[ -n "$_mntpoint" ]] || _mntpoint=$(get_mount_info TARGET source "$1" -f )
+	local _mntpoint _dump_target _subvol _fstype
+	_dump_target=$1
+	_subvol=$2
+	_fstype=$(get_mount_info FSTYPE source "$_dump_target" -f)
+
+	if [[ -n "$_subvol" && $_fstype == "btrfs" ]]; then
+		_mntpoint=$(get_mount_info TARGET,SOURCE source "$_dump_target" | grep "\[$_subvol\]" | awk 'NR==1 { print $1 }')
+	else
+		_mntpoint=$(get_mount_info TARGET,SOURCE source "$_dump_target" | grep -v "\]$" | awk 'NR==1 { print $1 }')
+	fi
+	[[ -n "$_mntpoint" ]] || _mntpoint=$(get_mount_info TARGET source "$_dump_target" -f )
 	echo $_mntpoint
 }
 
@@ -119,7 +127,7 @@ get_kdump_mntpoint_from_dump_target()
 {
 	local _mntpoint
 
-	_mntpoint=$(get_mntpoint_from_dump_target "$1")
+	_mntpoint=$(get_mntpoint_from_dump_target "$1" "$2")
 	# mount under /sysroot if dump to root disk or mount under
 	# mount under /kdumproot if dump target is not mounted in first kernel
 	# mount under /kdumproot/$_mntpoint in other cases in 2nd kernel.
@@ -136,6 +144,19 @@ get_kdump_mntpoint_from_dump_target()
 
 	# strip duplicated "/"
 	echo $_mntpoint | tr -s "/"
+}
+
+get_btrfs_subvol_from_mntpoint()
+{
+	local _options _mntpoint _fstype _subvol
+	_mntpoint=$1
+	_fstype=$(get_mount_info FSTYPE target "$_mntpoint" -f)
+	if [[ "$_fstype" == "btrfs" ]]; then
+		_options=$(get_mount_info OPTIONS target "$_mntpoint")
+		_subvol=${_options#*subvol=}
+		_subvol=${_subvol%,*}
+	fi
+	echo $_subvol
 }
 
 is_ssh_dump_target()

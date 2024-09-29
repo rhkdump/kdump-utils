@@ -183,7 +183,7 @@ get_kdump_targets()
 get_bind_mount_source()
 {
 	local _mnt _path _src _opt _fstype
-	local _fsroot _src_nofsroot
+	local _fsroot _src_nofsroot _subvol
 
 	_mnt=$(df "$1" | tail -1 | awk '{print $NF}')
 	_path=${1#"$_mnt"}
@@ -205,15 +205,14 @@ get_bind_mount_source()
 
 	_fsroot=${_src#"${_src_nofsroot}"[}
 	_fsroot=${_fsroot%]}
-	_mnt=$(get_mount_info TARGET source "$_src_nofsroot" -f)
 
 	# for btrfs, _fsroot will also contain the subvol value as well, strip it
 	if [[ $_fstype == btrfs ]]; then
-		local _subvol
 		_subvol=${_opt#*subvol=}
 		_subvol=${_subvol%,*}
 		_fsroot=${_fsroot#"$_subvol"}
 	fi
+	_mnt=$(get_mntpoint_from_dump_target "$_src_nofsroot" "$_subvol")
 	echo "$_mnt$_fsroot$_path"
 }
 
