@@ -429,4 +429,12 @@ if ! is_fadump_capable; then
 	fi
 fi
 
+_dracut_add_confdir_option="--add-confdir"
+
+# dracut doesn't support --add-confdir before 104, use --confdir instead.
+dracut --help | grep "add-confdir" -q
+[[ $? -eq 0 ]] || _dracut_add_confdir_option="--confdir"
+[[ $kdumpdracutconfdir ]] || kdumpdracutconfdir=/lib/kdump/dracut.conf.d
+[ -d "$kdumpdracutconfdir" ] && add_dracut_arg "$_dracut_add_confdir_option" "$kdumpdracutconfdir"
+
 dracut "${dracut_args[@]}" "$@"
