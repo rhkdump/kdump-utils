@@ -108,6 +108,36 @@ get_mntpoint_from_target()
 	echo $_mntpoint
 }
 
+get_mntopt_from_target()
+{
+	get_mount_info OPTIONS source "$1" -f
+}
+
+# Get the path where the target will be mounted in kdump kernel
+# $1: kdump target device
+get_kdump_mntpoint_from_target()
+{
+	local _mntpoint
+
+	_mntpoint=$(get_mntpoint_from_target "$1")
+	# mount under /sysroot if dump to root disk or mount under
+	# mount under /kdumproot if dump target is not mounted in first kernel
+	# mount under /kdumproot/$_mntpoint in other cases in 2nd kernel.
+	# systemd will be in charge to umount it.
+	if [[ -z $_mntpoint ]]; then
+		_mntpoint="/kdumproot"
+	else
+		if [[ $_mntpoint == "/" ]]; then
+			_mntpoint="/sysroot"
+		else
+			_mntpoint="/kdumproot/$_mntpoint"
+		fi
+	fi
+
+	# strip duplicated "/"
+	echo $_mntpoint | tr -s "/"
+}
+
 is_ssh_dump_target()
 {
 	kdump_get_conf_val ssh | grep -q @
