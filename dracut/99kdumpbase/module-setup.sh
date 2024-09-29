@@ -690,9 +690,9 @@ default_dump_target_install_conf() {
 
     _save_path=$(get_bind_mount_source "$(get_save_path)")
     _target=$(get_target_from_path "$_save_path")
-    _mntpoint=$(get_mntpoint_from_target "$_target")
+    _mntpoint=$(get_mntpoint_from_dump_target "$_target")
 
-    _fstype=$(get_fs_type_from_target "$_target")
+    _fstype=$(get_fs_type_from_dump_target "$_target")
     if is_fs_type_nfs "$_fstype"; then
         kdump_collect_netif_usage "$_target"
         _fstype="nfs"

@@ -95,12 +95,12 @@ get_target_from_path()
 	echo "$__kdump_target"
 }
 
-get_fs_type_from_target()
+get_fs_type_from_dump_target()
 {
 	get_mount_info FSTYPE source "$1" -f
 }
 
-get_mntpoint_from_target()
+get_mntpoint_from_dump_target()
 {
 	local _mntpoint
 	_mntpoint=$(get_mount_info TARGET,SOURCE source "$1" | grep -v "\]$" | awk 'NR==1 { print $1 }')
@@ -108,18 +108,18 @@ get_mntpoint_from_target()
 	echo $_mntpoint
 }
 
-get_mntopt_from_target()
+get_mntopt_from_dump_target()
 {
 	get_mount_info OPTIONS source "$1" -f
 }
 
 # Get the path where the target will be mounted in kdump kernel
 # $1: kdump target device
-get_kdump_mntpoint_from_target()
+get_kdump_mntpoint_from_dump_target()
 {
 	local _mntpoint
 
-	_mntpoint=$(get_mntpoint_from_target "$1")
+	_mntpoint=$(get_mntpoint_from_dump_target "$1")
 	# mount under /sysroot if dump to root disk or mount under
 	# mount under /kdumproot if dump target is not mounted in first kernel
 	# mount under /kdumproot/$_mntpoint in other cases in 2nd kernel.
@@ -158,7 +158,7 @@ is_virtiofs_dump_target()
 		return 0
 	fi
 
-	if is_fs_type_virtiofs "$(get_fs_type_from_target "$(get_target_from_path "$(get_save_path)")")"; then
+	if is_fs_type_virtiofs "$(get_fs_type_from_dump_target "$(get_target_from_path "$(get_save_path)")")"; then
 		return 0
 	fi
 
@@ -175,7 +175,7 @@ is_nfs_dump_target()
 		return 0
 	fi
 
-	if is_fs_type_nfs "$(get_fs_type_from_target "$(get_target_from_path "$(get_save_path)")")"; then
+	if is_fs_type_nfs "$(get_fs_type_from_dump_target "$(get_target_from_path "$(get_save_path)")")"; then
 		return 0
 	fi
 

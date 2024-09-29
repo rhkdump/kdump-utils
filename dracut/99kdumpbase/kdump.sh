@@ -541,12 +541,12 @@ read_kdump_confs() {
             dracut_args)
                 config_val=$(get_dracut_args_target "$config_val")
                 if [ -n "$config_val" ]; then
-                    config_val=$(get_mntpoint_from_target "$config_val")
+                    config_val=$(get_mntpoint_from_dump_target "$config_val")
                     DUMP_INSTRUCTION="dump_fs $config_val"
                 fi
                 ;;
             ext[234] | xfs | btrfs | minix | nfs | virtiofs)
-                config_val=$(get_mntpoint_from_target "$config_val")
+                config_val=$(get_mntpoint_from_dump_target "$config_val")
                 DUMP_INSTRUCTION="dump_fs $config_val"
                 ;;
             raw)

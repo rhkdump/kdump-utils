@@ -115,7 +115,7 @@ get_block_dump_target()
 	_target=$(get_target_from_path "$(get_save_path)")
 	[[ -b $_target ]] && to_dev_name "$_target" && return
 
-	_fstype=$(get_fs_type_from_target "$_target")
+	_fstype=$(get_fs_type_from_dump_target "$_target")
 	is_fs_type_virtiofs "$_fstype" && echo "$_target" && return
 }
 
@@ -138,7 +138,7 @@ get_failure_action_target()
 		# Get rootfs device name
 		_target=$(get_root_fs_device)
 		[[ -b $_target ]] && to_dev_name "$_target" && return
-		is_fs_type_virtiofs "$(get_fs_type_from_target "$_target")" && echo "$_target" && return
+		is_fs_type_virtiofs "$(get_fs_type_from_dump_target "$_target")" && echo "$_target" && return
 		# Then, must be nfs root
 		echo "nfs"
 	fi

@@ -75,9 +75,9 @@ to_mount()
 {
 	local _target=$1 _fstype=$2 _options=$3 _sed_cmd _new_mntpoint _pdev
 
-	_new_mntpoint=$(get_kdump_mntpoint_from_target "$_target")
-	_fstype="${_fstype:-$(get_fs_type_from_target "$_target")}"
-	_options="${_options:-$(get_mntopt_from_target "$_target")}"
+	_new_mntpoint=$(get_kdump_mntpoint_from_dump_target "$_target")
+	_fstype="${_fstype:-$(get_fs_type_from_dump_target "$_target")}"
+	_options="${_options:-$(get_mntopt_from_dump_target "$_target")}"
 	_options="${_options:-defaults}"
 
 	if [[ $_fstype == "nfs"* ]]; then
@@ -145,7 +145,7 @@ mkdir_save_path_ssh()
 #$1=dump target
 get_fs_size()
 {
-	df --output=avail "$(get_mntpoint_from_target "$1")/$SAVE_PATH" | tail -1
+	df --output=avail "$(get_mntpoint_from_dump_target "$1")/$SAVE_PATH" | tail -1
 }
 
 #Function: get_raw_size
@@ -218,9 +218,9 @@ check_user_configured_target()
 	local _target=$1 _cfg_fs_type=$2 _mounted
 	local _mnt _opt _fstype
 
-	_mnt=$(get_mntpoint_from_target "$_target")
-	_opt=$(get_mntopt_from_target "$_target")
-	_fstype=$(get_fs_type_from_target "$_target")
+	_mnt=$(get_mntpoint_from_dump_target "$_target")
+	_opt=$(get_mntopt_from_dump_target "$_target")
+	_fstype=$(get_fs_type_from_dump_target "$_target")
 
 	if [[ -n $_fstype ]]; then
 		# In case of nfs4, nfs should be used instead, nfs* options is deprecated in kdump.conf
@@ -310,7 +310,7 @@ handle_default_dump_target()
 
 	_save_path=$(get_bind_mount_source "$SAVE_PATH")
 	_target=$(get_target_from_path "$_save_path")
-	_mntpoint=$(get_mntpoint_from_target "$_target")
+	_mntpoint=$(get_mntpoint_from_dump_target "$_target")
 
 	SAVE_PATH=${_save_path##"$_mntpoint"}
 	add_mount "$_target"

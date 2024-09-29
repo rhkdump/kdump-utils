@@ -557,7 +557,7 @@ check_fs_modified()
 	fi
 
 	_target=$(get_block_dump_target)
-	_new_fstype=$(get_fs_type_from_target "$_target")
+	_new_fstype=$(get_fs_type_from_dump_target "$_target")
 	if [[ -z $_target ]] || [[ -z $_new_fstype ]]; then
 		derror "Dump target is invalid"
 		return 2
@@ -570,7 +570,7 @@ check_fs_modified()
 		return 2
 	fi
 
-	_new_mntpoint="$(get_kdump_mntpoint_from_target "$_target")"
+	_new_mntpoint="$(get_kdump_mntpoint_from_dump_target "$_target")"
 	_dracut_args=$(lsinitrd "$TARGET_INITRD" -f usr/lib/dracut/build-parameter.txt)
 	if [[ -z $_dracut_args ]]; then
 		dwarn "Warning: No dracut arguments found in initrd"
@@ -889,7 +889,7 @@ path_to_be_relabeled()
 		fi
 
 		if is_local_target; then
-			_mnt=$(get_mntpoint_from_target "${OPT[_target]}")
+			_mnt=$(get_mntpoint_from_dump_target "${OPT[_target]}")
 			if ! is_mounted "$_mnt"; then
 				return
 			fi
