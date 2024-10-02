@@ -65,13 +65,13 @@ Reset using kdumpctl
 To make it easier to reset the `crashkernel=` kernel cmdline to this default
 value properly, `kdumpctl` also provides a sub-command:
 
-	`kdumpctl reset-crashkernel [--kernel=path_to_kernel] [--reboot]`
+	`kdumpctl reset-crashkernel [--kernel=path_to_kernel]`
 
 This command will reset the bootloader's kernel cmdline to the default value.
 It will also update bootloader config if the bootloader has a standalone config
 file. User will have to reboot the machine after this command to make it take
-effect if --reboot is not specified. For more details, please refer to the
-reset-crashkernel command in `man kdumpctl`.
+effect. For more details, please refer to the reset-crashkernel command in `man
+kdumpctl`.
 
 Reset manually
 --------------
