@@ -53,7 +53,7 @@ based on the current kdump setup, and list some details of memory usage.
 .I get-default-crashkernel
 Return the default crashkernel value provided by kexec-tools.
 .TP
-.I reset-crashkernel [--kernel=path_to_kernel] [--reboot]
+.I reset-crashkernel [--kernel=path_to_kernel]
 Reset crashkernel to default value recommended by kexec-tools. If no kernel
 is specified, will reset KDUMP_KERNELVER if it's defined in /etc/sysconfig/kdump
 or the current running kernel's crashkernel value if KDUMP_KERNELVER is empty. You can
@@ -61,10 +61,6 @@ also specify --kernel=ALL and --kernel=DEFAULT which have the same meaning as
 grubby's kernel-path=ALL and kernel-path=DEFAULT. ppc64le supports FADump and
 supports an additional [--fadump=[on|off|nocma]] parameter to toggle FADump
 on/off.
-
-If the optional parameter [--reboot] is provided the system will automatically
-reboot for changes to take effect. If no changes were made to the kernel
-command line the reboot is omitted.
 
 Note: The memory requirements for kdump varies heavily depending on the
 used hardware and system configuration. Thus the recommended

@@ -1491,6 +1491,10 @@ reset_crashkernel()
 				_grubby_kernel_path=$_val
 				;;
 			--reboot)
+				# --reboot option was deprecated with
+				# kdump-utils v1.0.45. Keep the code for now to
+				# not break any user setup.
+				dwarn "Option --reboot is deprecated and will be removed in the future."
 				_reboot=yes
 				;;
 			*)
