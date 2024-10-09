@@ -38,4 +38,54 @@ Describe 'kdump-lib-initramfs'
 
 	End
 
+	Describe 'Test get_mntpoint_from_target'
+		findmnt() {
+			if [[ "$7" == 'eng.redhat.com:/srv/[nfs]' ]]; then
+				if [[ "$8" == "-f" ]]; then
+					printf '/mnt\n'
+				else
+					printf '/mnt %s\n' "$7"
+				fi
+			elif [[ "$7" == '[2620:52:0:a1:217:38ff:fe01:131]:/srv/[nfs]' ]]; then
+				if [[ "$8" == "-f" ]]; then
+					printf '/mnt\n'
+				else
+					printf '/mnt %s\n' "$7"
+				fi
+			elif [[ "$7" == '/dev/mapper/rhel[disk]' ]]; then
+				if [[ "$8" == "-f" ]]; then
+					printf '/\n'
+				else
+					printf '/ %s\n' "$7"
+				fi
+			elif [[ "$7" == '/dev/vda4' ]]; then
+				if [[ "$8" == "-f" ]]; then
+					printf '/var\n'
+				else
+					printf '/var %s[/ostree/deploy/default/var]\n/sysroot %s\n' "$7" "$7"
+				fi
+			fi
+		}
+
+		Context 'Given different cases'
+			# Test the following cases:
+			#  - IPv6 NFS target
+			#  - IPv6 NFS target also contain '[' in the export
+			#  - local dumping target that has '[' in the name
+			#  - has bind mint
+			Parameters
+				'eng.redhat.com:/srv/[nfs]' '/mnt'
+				'[2620:52:0:a1:217:38ff:fe01:131]:/srv/[nfs]' '/mnt'
+				'/dev/mapper/rhel[disk]' '/'
+				'/dev/vda4' '/sysroot'
+			End
+
+			It 'should handle all cases correctly'
+				When call get_mntpoint_from_target "$1"
+				The output should equal "$2"
+			End
+		End
+
+	End
+
 End
