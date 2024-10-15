@@ -396,7 +396,7 @@ dump_raw() {
 # $2: ssh address in <user>@<host> format
 dump_ssh() {
     _ret=0
-    _ssh_opt="-i $1 -o BatchMode=yes -o StrictHostKeyChecking=yes"
+    _ssh_opts="-i $1 -o BatchMode=yes -o StrictHostKeyChecking=yes"
     _ssh_dir="$KDUMP_PATH/$HOST_IP-$DATEDIR"
     if is_ipv6_address "$2"; then
         _scp_address=${2%@*}@"[${2#*@}]"
@@ -407,31 +407,37 @@ dump_ssh() {
     dinfo "saving to $2:$_ssh_dir"
 
     cat /var/lib/random-seed > /dev/urandom
-    ssh -q "$_ssh_opt" "$2" mkdir -p "$_ssh_dir" || return 1
+    # shellcheck disable=SC2086 # ssh_opts needs to be split
+    ssh -q $_ssh_opts "$2" mkdir -p "$_ssh_dir" || return 1
 
-    save_vmcore_dmesg_ssh "$DMESG_COLLECTOR" "$_ssh_dir" "$_ssh_opt" "$2"
+    save_vmcore_dmesg_ssh "$DMESG_COLLECTOR" "$_ssh_dir" "$_ssh_opts" "$2"
 
     dinfo "saving vmcore"
 
     KDUMP_LOG_DEST=$2:$_ssh_dir/
-    KDUMP_LOG_OP="scp -q $_ssh_opt '$KDUMP_LOG_FILE' '$_scp_address:$_ssh_dir/'"
+    KDUMP_LOG_OP="scp -q $_ssh_opts '$KDUMP_LOG_FILE' '$_scp_address:$_ssh_dir/'"
 
-    save_opalcore_ssh "$_ssh_dir" "$_ssh_opt" "$2" "$_scp_address"
+    save_opalcore_ssh "$_ssh_dir" "$_ssh_opts" "$2" "$_scp_address"
 
     if [ "${CORE_COLLECTOR%%[[:blank:]]*}" = "scp" ]; then
-        scp -q "$_ssh_opt" /proc/vmcore "$_scp_address:$_ssh_dir/vmcore-incomplete"
+        # shellcheck disable=SC2086 # ssh_opts needs to be split
+        scp -q $_ssh_opts /proc/vmcore "$_scp_address:$_ssh_dir/vmcore-incomplete"
         _ret=$?
         _vmcore="vmcore"
     else
-        # shellcheck disable=SC2029
-        $CORE_COLLECTOR /proc/vmcore | ssh "$_ssh_opt" "$2" "umask 0077 && dd bs=512 of='$_ssh_dir/vmcore-incomplete'"
+        # shellcheck disable=SC2029,SC2086
+        #  - _ssh_opts needs to be split
+        #  - _ssh_dir needs to be expanded
+        $CORE_COLLECTOR /proc/vmcore | ssh $_ssh_opts "$2" "umask 0077 && dd bs=512 of='$_ssh_dir/vmcore-incomplete'"
         _ret=$?
         _vmcore="vmcore.flat"
     fi
 
     if [ $_ret -eq 0 ]; then
-        # shellcheck disable=SC2029
-        ssh "$_ssh_opt" "$2" "mv '$_ssh_dir/vmcore-incomplete' '$_ssh_dir/$_vmcore'"
+        # shellcheck disable=SC2029,SC2086
+        #  - _ssh_opts needs to be split
+        #  - _ssh_dir needs to be expanded
+        ssh $_ssh_opts "$2" "mv '$_ssh_dir/vmcore-incomplete' '$_ssh_dir/$_vmcore'"
         _ret=$?
         if [ $_ret -ne 0 ]; then
             derror "moving vmcore failed, exitcode:$_ret"
@@ -461,13 +467,16 @@ save_opalcore_ssh() {
 
     dinfo "saving opalcore:$OPALCORE to $3:$1"
 
-    if ! scp "$2" "$OPALCORE" "$4:$1/opalcore-incomplete"; then
+    # shellcheck disable=SC2086 # $2 (_ssh_opts) needs to be split
+    if ! scp $2 "$OPALCORE" "$4:$1/opalcore-incomplete"; then
         derror "saving opalcore failed"
         return 1
     fi
 
-    # shellcheck disable=SC2029
-    ssh "$2" "$3" mv "$1/opalcore-incomplete" "$1/opalcore"
+    # shellcheck disable=SC2029,SC2086
+    #  - $1 (dump path) needs to be expanded
+    #  - $2 (_ssh_opts) needs to be split
+    ssh $2 "$3" mv "$1/opalcore-incomplete" "$1/opalcore"
     dinfo "saving opalcore complete"
     return 0
 }
@@ -478,9 +487,11 @@ save_opalcore_ssh() {
 # $4: ssh address in <user>@<host> format
 save_vmcore_dmesg_ssh() {
     dinfo "saving vmcore-dmesg.txt to $4:$2"
-    # shellcheck disable=SC2029
-    if "$1" /proc/vmcore | ssh "$3" "$4" "umask 0077 && dd of='$2/vmcore-dmesg-incomplete.txt'"; then
-        ssh -q "$3" "$4" mv "$2/vmcore-dmesg-incomplete.txt" "$2/vmcore-dmesg.txt"
+    # shellcheck disable=SC2029,SC2086
+    #  - $2 (_ssh_dir) needs to be expanded
+    #  - $3 (_ssh_opts) needs to be split
+    if "$1" /proc/vmcore | ssh $3 "$4" "umask 0077 && dd of='$2/vmcore-dmesg-incomplete.txt'"; then
+        ssh -q $3 "$4" mv "$2/vmcore-dmesg-incomplete.txt" "$2/vmcore-dmesg.txt"
         dinfo "saving vmcore-dmesg.txt complete"
     else
         derror "saving vmcore-dmesg.txt failed"
