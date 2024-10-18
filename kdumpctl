@@ -173,6 +173,7 @@ rebuild_kdump_initrd()
 
 rebuild_initrd()
 {
+	local _ret
 	dinfo "Rebuilding $TARGET_INITRD"
 
 	if [[ ! -w $(dirname "$TARGET_INITRD") ]]; then
@@ -185,8 +186,10 @@ rebuild_initrd()
 	else
 		rebuild_kdump_initrd
 	fi
+	_ret=$?
 
 	set_vmcore_creation_status 'clear' "$VMCORE_CREATION_STATUS"
+	return $_ret
 }
 
 #$1: the files to be checked with IFS=' '
