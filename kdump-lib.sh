@@ -10,6 +10,7 @@ fi
 
 FADUMP_ENABLED_SYS_NODE="/sys/kernel/fadump/enabled"
 FADUMP_REGISTER_SYS_NODE="/sys/kernel/fadump/registered"
+FADUMP_APPEND_ARGS_SYS_NODE="/sys/kernel/fadump/bootargs_append"
 
 is_uki()
 {
