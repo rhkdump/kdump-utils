@@ -319,7 +319,27 @@ Advanced Setups & Failure action:
 Kdump and fadump exhibit similar behavior in terms of setup & failure action.
 For fadump advanced setup related information see section "Advanced Setups" in
 "kexec-kdump-howto.txt" document. Refer to "Failure action" section in "kexec-
-kdump-howto.txt" document for fadump failure action related information.
+kdump-howto.txt" document for fadump failure action related information. Note
+that the below options from /etc/sysconfig/kdump have no relevance to fadump
+owing to the way it operates:
+
+-KDUMP_BOOTDIR
+-KDUMP_IMG
+-KDUMP_IMG_EXT
+-KEXEC_ARGS
+-KDUMP_KERNELVER
+-KDUMP_COMMANDLINE
+-KDUMP_COMMANDLINE_REMOVE
+-KDUMP_COMMANDLINE_APPEND
+
+Passing additional parameters to fadump capture kerenl
+
+-FADUMP_COMMANDLINE_APPEND
+
+If a powerpc system supports passing additional parameters, it would have the
+sysfs node '/sys/kernel/fadump/bootargs_append'. FADUMP_COMMANDLINE_APPEND
+allows us to append arguments to fadump capture kernel, further to parameters
+passed via the bootloader.
 
 Compression and filtering
 
@@ -331,11 +351,7 @@ Notes on rootfs mount:
 Dracut is designed to mount rootfs by default. If rootfs mounting fails it
 will refuse to go on. So fadump leaves rootfs mounting to dracut currently.
 We make the assumtion that proper root= cmdline is being passed to dracut
-initramfs for the time being. If you need modify "KDUMP_COMMANDLINE=" in
-/etc/sysconfig/kdump, you will need to make sure that appropriate root=
-options are copied from /proc/cmdline. In general it is best to append
-command line options using "KDUMP_COMMANDLINE_APPEND=" instead of replacing
-the original command line completely.
+initramfs for the time being.
 
 How to disable FADump:
 
