@@ -35,7 +35,7 @@ FINAL_ACTION="systemctl reboot -f"
 KDUMP_PRE=""
 KDUMP_POST=""
 NEWROOT="/sysroot"
-OPALCORE="/sys/firmware/opal/mpipl/core"
+OPALCORE=""
 KDUMP_CONF_PARSED="/tmp/kdump.conf.$$"
 
 # POSIX doesn't have pipefail, only apply when using bash
@@ -226,14 +226,7 @@ save_vmcore_dmesg_fs() {
 
 # $1: dump path
 save_opalcore_fs() {
-    if [ ! -f $OPALCORE ]; then
-        # Check if we are on an old kernel that uses a different path
-        if [ -f /sys/firmware/opal/core ]; then
-            OPALCORE="/sys/firmware/opal/core"
-        else
-            return 0
-        fi
-    fi
+    [ -n "$OPALCORE" ] || return 0
 
     dinfo "saving opalcore:$OPALCORE to $1/opalcore"
     if ! cp $OPALCORE "$1/opalcore"; then
@@ -468,14 +461,7 @@ dump_ssh() {
 # $3: ssh address in <user>@<host> format
 # $4: scp address, similar with ssh address but IPv6 addresses are quoted
 save_opalcore_ssh() {
-    if [ ! -f $OPALCORE ]; then
-        # Check if we are on an old kernel that uses a different path
-        if [ -f /sys/firmware/opal/core ]; then
-            OPALCORE="/sys/firmware/opal/core"
-        else
-            return 0
-        fi
-    fi
+    [ -n "$OPALCORE" ] || return 0
 
     dinfo "saving opalcore:$OPALCORE to $3:$1"
 
@@ -641,6 +627,12 @@ kdump_test_init() {
 
     kdump_test_set_status 'fail'
 }
+
+for _core in "/sys/firmware/opal/mpipl/core" "/sys/firmware/opal/core"; do
+    [ -f "$_core" ] || continue
+    OPALCORE="$_core"
+    break
+done
 
 if [ "$1" = "--error-handler" ]; then
     get_kdump_confs
