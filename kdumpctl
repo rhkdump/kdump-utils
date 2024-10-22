@@ -1115,6 +1115,15 @@ stop_kdump()
 
 reload_fadump()
 {
+	if "$FADUMP_APPEND_ARGS_SYS_NODE"; then
+		output=$(echo "${FADUMP_COMMANDLINE_APPEND}" > "$FADUMP_APPEND_ARGS_SYS_NODE")
+		if [ $? -eq 0 ]; then
+			output=$(cat "$FADUMP_APPEND_ARGS_SYS_NODE")
+			dinfo "fadump: additional parameters '$output' for capture kernel"
+		else
+			dwarn "WARNING: failed to setup additional parameters for fadump capture kernel ($output)"
+		fi
+	fi
 	if echo 1 > "$FADUMP_REGISTER_SYS_NODE"; then
 		dinfo "fadump: re-registered successfully"
 		return 0
