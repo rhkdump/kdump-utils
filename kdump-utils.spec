@@ -46,16 +46,8 @@ target.
 
 
 %post
-# don't try to systemctl preset the kdump service for old kexec-tools
-#
-# when the old kexec-tools gets removed, this trigger will be excuted to
-# create a file. So later the posttrans scriptlet will know there is no need to
-# systemctl preset the kdump service.
-# This solution can be dropped in F41 when we assume no users will use old
-# version of kexec-tools.
-%define kexec_tools_no_preset %{_localstatedir}/lib/rpm-state/kexec-tools.no-preset
-%triggerun -- kexec-tools
-touch %{kexec_tools_no_preset}
+# kdumpctl will only set up default crashkernel when kdump.service is enabled
+%systemd_post kdump.service
 
 touch /etc/kdump.conf
 
@@ -75,14 +67,6 @@ servicelog_notify --remove --command=/usr/lib/kdump/kdump-migrate-action.sh >/de
 %systemd_preun kdump.service
 
 %posttrans
-# don't try to systemctl preset the kdump service for old kexec-tools
-if [[ -f %{kexec_tools_no_preset} ]]; then
-  # this if branch can be removed in F41 when we assume no users will use the old kexec-tools
-  rm %{kexec_tools_no_preset}
-else
-  # Initial installation
-  %systemd_post kdump.service
-fi
 # Try to reset kernel crashkernel value to new default value or set up
 # crasherkernel value for new install
 #
@@ -90,6 +74,7 @@ fi
 #  1. Skip ostree systems as they are not supported.
 #  2. For Fedora 36 and RHEL9, "[ $1 == 1 ]" in posttrans scriptlet means both install and upgrade;
 #     For Fedora > 36, "[ $1 == 1 ]" only means install and "[ $1 == 2 ]" means upgrade
+#  3. osbuild depends on "kdumpctl _reset-crashkernel-for-installed_kernel" to set up crashkernel
 if [ ! -f /run/ostree-booted ] && [ $1 == 1 -o $1 == 2 ]; then
   kdumpctl _reset-crashkernel-after-update
   :
