@@ -1,0 +1,4 @@
+summary: Set up the crashkernel kernel parameter
+require:
+# Install the squashfs kernel module for the default crashkernel value to work
+- kernel-modules-core
