@@ -147,6 +147,10 @@ dump_fs() {
     case $CORE_COLLECTOR in
         *makedumpfile*)
             CORE_COLLECTOR=$(echo "$CORE_COLLECTOR" | sed -e "s/-F//g")
+            THREADS=$(nproc)
+            if [ "$THREADS" -gt 1 ]; then
+                CORE_COLLECTOR="$CORE_COLLECTOR --num-threads=$THREADS"
+            fi
             ;;
     esac
 
@@ -382,6 +386,13 @@ dump_raw() {
         _src_size=$(stat --format %s /proc/vmcore)
         _src_size_mb=$((_src_size / 1048576))
         /kdumpscripts/monitor_dd_progress.sh $_src_size_mb &
+    fi
+
+    if echo "$CORE_COLLECTOR" | grep -q makedumpfile; then
+        THREADS=$(nproc)
+        if [ "$THREADS" -gt 1 ]; then
+            CORE_COLLECTOR="$CORE_COLLECTOR --num-threads=$THREADS"
+        fi
     fi
 
     dinfo "saving vmcore"
