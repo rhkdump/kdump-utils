@@ -33,7 +33,7 @@ manpages:
 	install -D -m 644 kdump.conf.5 $(DESTDIR)$(mandir)/man5/kdump.conf.5
 
 install: dracut-modules kdump-conf kdump-sysconfig manpages
-	mkdir -p $(DESTDIR)$(pkglibdir)
+	mkdir -p $(DESTDIR)$(pkglibdir)/dracut.conf.d
 	mkdir -p -m755 $(DESTDIR)$(sysconfdir)/kdump/pre.d
 	mkdir -p -m755 $(DESTDIR)$(sysconfdir)/kdump/post.d
 	mkdir -p -m755 $(DESTDIR)$(localstatedir)/crash
@@ -46,6 +46,7 @@ install: dracut-modules kdump-conf kdump-sysconfig manpages
 	install -D -m 644 kdump.conf $(DESTDIR)$(sysconfdir)
 	install -D -m 644 kdump.sysconfig $(DESTDIR)$(sysconfdir)/sysconfig/kdump
 	install -D -m 755 kdump-lib.sh kdump-lib-initramfs.sh kdump-logger.sh -t $(DESTDIR)$(pkglibdir)
+	install -D -m 644 99-kdump.conf -t $(DESTDIR)$(pkglibdir)/dracut.conf.d
 
 ifeq ($(ARCH), $(filter ppc64le ppc64,$(ARCH)))
 	install -m 755 mkfadumprd $(DESTDIR)$(sbindir)
