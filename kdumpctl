@@ -962,8 +962,24 @@ check_dump_feasibility()
 	check_kdump_feasibility
 }
 
+fadump_bootargs_append()
+{
+	if [[ -f "$FADUMP_APPEND_ARGS_SYS_NODE" ]]; then
+		local output=$( { echo "${FADUMP_COMMANDLINE_APPEND}" > "$FADUMP_APPEND_ARGS_SYS_NODE" ; } 2>&1)
+		if [ $? -eq 0 ]; then
+			output=$(cat "$FADUMP_APPEND_ARGS_SYS_NODE")
+			dinfo "fadump: additional parameters for capture kernel: '$output'"
+		else
+			dwarn "WARNING: failed to setup additional parameters for fadump capture kernel: '$output'"
+		fi
+	else
+		dwarn "WARNING: this kernel does not support passing additional parameters to fadump capture kernel."
+	fi
+}
+
 start_fadump()
 {
+	fadump_bootargs_append
 	echo 1 > "$FADUMP_REGISTER_SYS_NODE"
 	if ! is_kernel_loaded "fadump"; then
 		derror "fadump: failed to register"
@@ -1115,15 +1131,7 @@ stop_kdump()
 
 reload_fadump()
 {
-	if "$FADUMP_APPEND_ARGS_SYS_NODE"; then
-		output=$(echo "${FADUMP_COMMANDLINE_APPEND}" > "$FADUMP_APPEND_ARGS_SYS_NODE")
-		if [ $? -eq 0 ]; then
-			output=$(cat "$FADUMP_APPEND_ARGS_SYS_NODE")
-			dinfo "fadump: additional parameters '$output' for capture kernel"
-		else
-			dwarn "WARNING: failed to setup additional parameters for fadump capture kernel ($output)"
-		fi
-	fi
+	fadump_bootargs_append
 	if echo 1 > "$FADUMP_REGISTER_SYS_NODE"; then
 		dinfo "fadump: re-registered successfully"
 		return 0
