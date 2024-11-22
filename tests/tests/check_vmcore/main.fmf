@@ -1,0 +1,19 @@
+require: makedumpfile
+
+/nfs:
+    summary: Check vmcore on NFS server
+    environment:
+        VMCORE_PATH: /var/tmp/nfsshare/var/crash
+
+/local:
+    summary: Check vmcore locally
+
+/lvm2_thinp:
+    summary: Check vmcore saved to LVM2 thin provision target
+    environment:
+        IS_LVM_THINP: YES
+        VMCORE_PATH: /mnt/var/crash
+
+
+/ssh:
+    summary: Check vmcore on SSH SERVER

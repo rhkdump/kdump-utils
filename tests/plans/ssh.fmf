@@ -1,0 +1,26 @@
+summary: Kdump SSH dumping tests
+discover:
+  - name: Set up crashkernel
+    how: fmf
+    test:
+     - /setup/default_crashkernel
+    where:
+      - client
+  - name: Set up ssh client
+    how: fmf
+    test:
+     - /setup/network_client/ssh
+    where:
+      - client
+  - name: Panic kernel
+    how: fmf
+    test:
+     - /setup/trigger_crash
+    where:
+      - client
+  - name: Check vmcore
+    how: fmf
+    test:
+     - /tests/check_vmcore/ssh
+    where:
+      - server
