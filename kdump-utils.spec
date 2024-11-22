@@ -56,6 +56,10 @@ servicelog_notify --remove --command=/usr/lib/kdump/kdump-migrate-action.sh 2>/d
 servicelog_notify --add --command=/usr/lib/kdump/kdump-migrate-action.sh --match='refcode="#MIGRATE" and serviceable=0' --type=EVENT --method=pairs_stdin >/dev/null
 %endif
 
+# RPM scriptlet should always return 0. Otherwise it can break
+# installs/upgrades/erases.
+:
+
 
 %postun
 %systemd_postun_with_restart kdump.service
