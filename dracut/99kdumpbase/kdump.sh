@@ -392,9 +392,21 @@ dump_raw() {
     return 0
 }
 
+_ssh() {
+    ssh -q -i "$SSH_KEY" \
+        -o BatchMode=yes \
+        -o StrictHostKeyChecking=yes \
+        "$SSH_HOST" "$@"
+}
+
+_scp() {
+    scp -q -i "$SSH_KEY" \
+        -o BatchMode=yes \
+        -o StrictHostKeyChecking=yes \
+        "$@"
+}
+
 dump_ssh() {
-    _ret=0
-    _ssh_opts="-i $SSH_KEY -o BatchMode=yes -o StrictHostKeyChecking=yes"
     if [ -z "$KDUMP_TEST_ID" ]; then
         _ssh_dir="$KDUMP_PATH/$HOST_IP-$DATEDIR"
     else
@@ -410,37 +422,29 @@ dump_ssh() {
     dinfo "saving to $SSH_HOST:$_ssh_dir"
 
     cat /var/lib/random-seed > /dev/urandom
-    # shellcheck disable=SC2086 # ssh_opts needs to be split
-    ssh -q $_ssh_opts "$SSH_HOST" mkdir -p "$_ssh_dir" || return 1
+    _ssh mkdir -p "$_ssh_dir" || return 1
 
-    save_vmcore_dmesg_ssh "$DMESG_COLLECTOR" "$_ssh_dir" "$_ssh_opts"
+    save_vmcore_dmesg_ssh "$DMESG_COLLECTOR" "$_ssh_dir"
 
     dinfo "saving vmcore"
 
     KDUMP_LOG_DEST=$SSH_HOST:$_ssh_dir/
-    KDUMP_LOG_OP="scp -q $_ssh_opts '$KDUMP_LOG_FILE' '$_scp_address:$_ssh_dir/'"
+    KDUMP_LOG_OP="_scp '$KDUMP_LOG_FILE' '$_scp_address:$_ssh_dir/'"
 
-    save_opalcore_ssh "$_ssh_dir" "$_ssh_opts" "$_scp_address"
+    save_opalcore_ssh "$_ssh_dir" "$_scp_address"
 
     if [ "${CORE_COLLECTOR%%[[:blank:]]*}" = "scp" ]; then
-        # shellcheck disable=SC2086 # ssh_opts needs to be split
-        scp -q $_ssh_opts /proc/vmcore "$_scp_address:$_ssh_dir/vmcore-incomplete"
+        _scp /proc/vmcore "$_scp_address:$_ssh_dir/vmcore-incomplete"
         _ret=$?
         _vmcore="vmcore"
     else
-        # shellcheck disable=SC2029,SC2086
-        #  - _ssh_opts needs to be split
-        #  - _ssh_dir needs to be expanded
-        $CORE_COLLECTOR /proc/vmcore | ssh $_ssh_opts "$SSH_HOST" "umask 0077 && dd bs=512 of='$_ssh_dir/vmcore-incomplete'"
+        $CORE_COLLECTOR /proc/vmcore | _ssh "umask 0077 && dd bs=512 of='$_ssh_dir/vmcore-incomplete'"
         _ret=$?
         _vmcore="vmcore.flat"
     fi
 
     if [ $_ret -eq 0 ]; then
-        # shellcheck disable=SC2029,SC2086
-        #  - _ssh_opts needs to be split
-        #  - _ssh_dir needs to be expanded
-        ssh $_ssh_opts "$SSH_HOST" "mv '$_ssh_dir/vmcore-incomplete' '$_ssh_dir/$_vmcore'"
+        _ssh mv "$_ssh_dir/vmcore-incomplete" "$_ssh_dir/$_vmcore"
         _ret=$?
         if [ $_ret -ne 0 ]; then
             derror "moving vmcore failed, exitcode:$_ret"
@@ -455,37 +459,28 @@ dump_ssh() {
 }
 
 # $1: dump path
-# $2: ssh opts
-# $3: scp address, similar with ssh address but IPv6 addresses are quoted
+# $2: scp address, similar with ssh address but IPv6 addresses are quoted
 save_opalcore_ssh() {
     [ -n "$OPALCORE" ] || return 0
 
     dinfo "saving opalcore:$OPALCORE to $SSH_HOST:$1"
 
-    # shellcheck disable=SC2086 # $2 (_ssh_opts) needs to be split
-    if ! scp $2 "$OPALCORE" "$3:$1/opalcore-incomplete"; then
+    if ! _scp "$OPALCORE" "$2:$1/opalcore-incomplete"; then
         derror "saving opalcore failed"
         return 1
     fi
 
-    # shellcheck disable=SC2029,SC2086
-    #  - $1 (dump path) needs to be expanded
-    #  - $2 (_ssh_opts) needs to be split
-    ssh $2 "$SSH_HOST" mv "$1/opalcore-incomplete" "$1/opalcore"
+    _ssh mv "$1/opalcore-incomplete" "$1/opalcore"
     dinfo "saving opalcore complete"
     return 0
 }
 
 # $1: dmesg collector
 # $2: dump path
-# $3: ssh opts
 save_vmcore_dmesg_ssh() {
     dinfo "saving vmcore-dmesg.txt to $SSH_HOST:$2"
-    # shellcheck disable=SC2029,SC2086
-    #  - $2 (_ssh_dir) needs to be expanded
-    #  - $3 (_ssh_opts) needs to be split
-    if "$1" /proc/vmcore | ssh $3 "$SSH_HOST" "umask 0077 && dd of='$2/vmcore-dmesg-incomplete.txt'"; then
-        ssh -q $3 "$SSH_HOST" mv "$2/vmcore-dmesg-incomplete.txt" "$2/vmcore-dmesg.txt"
+    if "$1" /proc/vmcore | _ssh "umask 0077 && dd of='$2/vmcore-dmesg-incomplete.txt'"; then
+        _ssh mv "$2/vmcore-dmesg-incomplete.txt" "$2/vmcore-dmesg.txt"
         dinfo "saving vmcore-dmesg.txt complete"
     else
         derror "saving vmcore-dmesg.txt failed"
@@ -597,12 +592,8 @@ kdump_test_set_status() {
     esac
 
     if is_ssh_dump_target; then
-        _ssh_opts="-i $SSH_KEY -o BatchMode=yes -o StrictHostKeyChecking=yes"
-
-        ssh -q $_ssh_opts "$SSH_HOST" "mkdir -p ${KDUMP_TEST_STATUS%/*}" \
-            || return 1
-        ssh -q $_ssh_opts "$SSH_HOST" "echo $_status kdump_test_id=$KDUMP_TEST_ID > $KDUMP_TEST_STATUS" \
-            || return 1
+        _ssh "mkdir -p ${KDUMP_TEST_STATUS%/*}" || return 1
+        _ssh "echo $_status kdump_test_id=$KDUMP_TEST_ID > $KDUMP_TEST_STATUS" || return 1
     else
 	_target=$(echo "$DUMP_INSTRUCTION" | awk '{print $2}')
 
