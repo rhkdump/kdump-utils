@@ -1097,6 +1097,7 @@ install() {
     inst "/usr/bin/chmod" "/sbin/chmod"
     inst "/usr/bin/nproc" "/sbin/nproc"
     inst "/usr/bin/dirname" "/sbin/dirname"
+    inst "/usr/bin/curl" "/sbin/curl"
     inst "/lib/kdump/kdump-lib-initramfs.sh" "/lib/kdump-lib-initramfs.sh"
     inst "/lib/kdump/kdump-logger.sh" "/lib/kdump-logger.sh"
     inst "$moddir/kdump.sh" "/usr/bin/kdump.sh"

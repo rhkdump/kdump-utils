@@ -385,92 +385,59 @@ dump_raw() {
     return 0
 }
 
-_ssh() {
-    ssh -q -i "$SSH_KEY" \
-        -o BatchMode=yes \
-        -o StrictHostKeyChecking=yes \
-        "$SSH_HOST" "$@"
-}
-
-_scp() {
-    scp -q -i "$SSH_KEY" \
-        -o BatchMode=yes \
-        -o StrictHostKeyChecking=yes \
+_curl() {
+    curl --silent \
+        --fail-early \
+        --create-file-mode 0600 \
+        --ftp-create-dirs \
+        -u "$SSH_USER:" \
+        --key "$SSH_KEY" \
         "$@"
 }
 
-dump_ssh() {
-    if is_ipv6_address "$SSH_HOST"; then
-        _scp_address=${SSH_HOST%@*}@"[${SSH_HOST#*@}]"
-    else
-        _scp_address=$SSH_HOST
+# copy a file to remote host using curl
+# $1: file to be copied or - (dash) when read from stdin
+# $2: destination path on remote host
+copy_to_remote() {
+    _src="$1"; shift
+    _dst="$1"; shift
+
+    _url="sftp://$SSH_HOST"
+
+    dinfo "saving ${_dst##*/} to $SSH_HOST:${_dst%/*}"
+    _curl -T "$_src" -Q "-rename $_dst-incomplete $_dst" "$_url/$_dst-incomplete"
+    _ret=$?
+    if [ $_ret -ne 0 ]; then
+        derror "failed to save ${_dst##*/}, exitcode $_ret"
+        return $_ret
     fi
+
+    dinfo "saving ${_dst##*/} complete"
+}
+
+dump_ssh() {
     dinfo "saving to $SSH_HOST:$KDUMP_PATH"
 
     cat /var/lib/random-seed > /dev/urandom
-    _ssh mkdir -p "$KDUMP_PATH" || return 1
 
-    save_vmcore_dmesg_ssh "$DMESG_COLLECTOR" "$KDUMP_PATH"
+    $DMESG_COLLECTOR /proc/vmcore | copy_to_remote "-" "$KDUMP_PATH/vmcore-dmesg.txt"
 
     dinfo "saving vmcore"
 
     KDUMP_LOG_DEST=$SSH_HOST:$KDUMP_PATH/
-    KDUMP_LOG_OP="_scp '$KDUMP_LOG_FILE' '$_scp_address:$KDUMP_PATH/'"
+    KDUMP_LOG_OP="copy_to_remote '$KDUMP_LOG_FILE' '$KDUMP_PATH/kexec-dmesg.log'"
 
-    save_opalcore_ssh "$KDUMP_PATH" "$_scp_address"
+    [ -n "$OPALCORE" ] && copy_to_remote "$OPALCORE" "$KDUMP_PATH/opalcore"
 
     if [ "${CORE_COLLECTOR%%[[:blank:]]*}" = "scp" ]; then
-        _scp /proc/vmcore "$_scp_address:$KDUMP_PATH/vmcore-incomplete"
+        copy_to_remote /proc/vmcore "$KDUMP_PATH/vmcore"
         _ret=$?
-        _vmcore="vmcore"
     else
-        $CORE_COLLECTOR /proc/vmcore | _ssh "umask 0077 && dd bs=512 of='$KDUMP_PATH/vmcore-incomplete'"
+        $CORE_COLLECTOR /proc/vmcore | copy_to_remote "-" "$KDUMP_PATH/vmcore.flat"
         _ret=$?
-        _vmcore="vmcore.flat"
-    fi
-
-    if [ $_ret -eq 0 ]; then
-        _ssh mv "$_ssh_dir/vmcore-incomplete" "$_ssh_dir/$_vmcore"
-        _ret=$?
-        if [ $_ret -ne 0 ]; then
-            derror "moving vmcore failed, exitcode:$_ret"
-        else
-            dinfo "saving vmcore complete"
-        fi
-    else
-        derror "saving vmcore failed, exitcode:$_ret"
     fi
 
     return $_ret
-}
-
-# $1: dump path
-# $2: scp address, similar with ssh address but IPv6 addresses are quoted
-save_opalcore_ssh() {
-    [ -n "$OPALCORE" ] || return 0
-
-    dinfo "saving opalcore:$OPALCORE to $SSH_HOST:$1"
-
-    if ! _scp "$OPALCORE" "$2:$1/opalcore-incomplete"; then
-        derror "saving opalcore failed"
-        return 1
-    fi
-
-    _ssh mv "$1/opalcore-incomplete" "$1/opalcore"
-    dinfo "saving opalcore complete"
-    return 0
-}
-
-# $1: dmesg collector
-# $2: dump path
-save_vmcore_dmesg_ssh() {
-    dinfo "saving vmcore-dmesg.txt to $SSH_HOST:$2"
-    if "$1" /proc/vmcore | _ssh "umask 0077 && dd of='$2/vmcore-dmesg-incomplete.txt'"; then
-        _ssh mv "$2/vmcore-dmesg-incomplete.txt" "$2/vmcore-dmesg.txt"
-        dinfo "saving vmcore-dmesg.txt complete"
-    else
-        derror "saving vmcore-dmesg.txt failed"
-    fi
 }
 
 wait_online_network() {
@@ -550,7 +517,11 @@ read_kdump_confs() {
                 DUMP_INSTRUCTION="dump_raw $config_val"
                 ;;
             ssh)
-                SSH_HOST="$config_val"
+                SSH_USER="${config_val%@*}"
+                SSH_HOST="${config_val#*@}"
+                if is_ipv6_address "$SSH_HOST"; then
+                    SSH_HOST="[$SSH_HOST]"
+                fi
                 DUMP_INSTRUCTION="dump_ssh"
                 ;;
         esac
@@ -578,8 +549,7 @@ kdump_test_set_status() {
     esac
 
     if is_ssh_dump_target; then
-        _ssh "mkdir -p ${KDUMP_TEST_STATUS%/*}" || return 1
-        _ssh "echo $_status kdump_test_id=$KDUMP_TEST_ID > $KDUMP_TEST_STATUS" || return 1
+        echo $_status kdump_test_id=$KDUMP_TEST_ID | _curl -T "-" "sftp://$SSH_HOST/$KDUMP_TEST_STATUS"
     else
         mkdir -p "$KDUMP_PATH" || return 1
         echo "$_status kdump_test_id=$KDUMP_TEST_ID" > "$KDUMP_TEST_STATUS"
