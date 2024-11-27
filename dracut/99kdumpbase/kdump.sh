@@ -26,7 +26,6 @@ CORE_COLLECTOR=""
 DEFAULT_CORE_COLLECTOR="makedumpfile -l --message-level 7 -d 31"
 DMESG_COLLECTOR="/sbin/vmcore-dmesg"
 FAILURE_ACTION="systemctl reboot -f"
-DATEDIR=$(date +%Y-%m-%d-%T)
 HOST_IP='127.0.0.1'
 DUMP_INSTRUCTION=""
 SSH_KEY=$DEFAULT_SSHKEY
@@ -155,13 +154,7 @@ dump_fs() {
             ;;
     esac
 
-    if [ -z "$KDUMP_TEST_ID" ]; then
-        _dump_fs_path=$(echo "$1/$KDUMP_PATH/$HOST_IP-$DATEDIR/" | tr -s /)
-    else
-        _dump_fs_path=$(echo "$1/$KDUMP_PATH/" | tr -s /)
-    fi
-
-    dinfo "saving to $_dump_fs_path"
+    dinfo "saving to $KDUMP_PATH"
 
     # Only remount to read-write mode if the dump target is mounted read-only.
     _dump_mnt_op=$(get_mount_info OPTIONS target "$NEWROOT" -f)
@@ -172,22 +165,22 @@ dump_fs() {
             ;;
     esac
 
-    mkdir -p "$_dump_fs_path" || return 1
+    mkdir -p "$KDUMP_PATH" || return 1
 
-    save_vmcore_dmesg_fs ${DMESG_COLLECTOR} "$_dump_fs_path"
-    save_opalcore_fs "$_dump_fs_path"
+    save_vmcore_dmesg_fs ${DMESG_COLLECTOR} "$KDUMP_PATH"
+    save_opalcore_fs "$KDUMP_PATH"
 
     dinfo "saving vmcore"
-    KDUMP_LOG_DEST=$_dump_fs_path/
+    KDUMP_LOG_DEST=$KDUMP_PATH/
     KDUMP_LOG_OP="mv '$KDUMP_LOG_FILE' '$KDUMP_LOG_DEST/'"
 
-    $CORE_COLLECTOR /proc/vmcore "$_dump_fs_path/vmcore-incomplete"
+    $CORE_COLLECTOR /proc/vmcore "$KDUMP_PATH/vmcore-incomplete"
     _dump_exitcode=$?
     if [ $_dump_exitcode -eq 0 ]; then
-        sync -f "$_dump_fs_path/vmcore-incomplete"
+        sync -f "$KDUMP_PATH/vmcore-incomplete"
         _sync_exitcode=$?
         if [ $_sync_exitcode -eq 0 ]; then
-            mv "$_dump_fs_path/vmcore-incomplete" "$_dump_fs_path/vmcore"
+            mv "$KDUMP_PATH/vmcore-incomplete" "$KDUMP_PATH/vmcore"
             dinfo "saving vmcore complete"
         else
             derror "sync vmcore failed, exitcode:$_sync_exitcode"
@@ -261,6 +254,7 @@ dump_to_rootfs() {
         return
     fi
 
+    KDUMP_PATH="$NEWROOT/$KDUMP_PATH/$HOST_IP-$(date +%Y-%m-%d-%T)"
     ddebug "NEWROOT=$NEWROOT"
     dump_fs
 }
@@ -406,38 +400,31 @@ _scp() {
 }
 
 dump_ssh() {
-    if [ -z "$KDUMP_TEST_ID" ]; then
-        _ssh_dir="$KDUMP_PATH/$HOST_IP-$DATEDIR"
-    else
-        _ssh_dir="$KDUMP_PATH"
-    fi
-
     if is_ipv6_address "$SSH_HOST"; then
         _scp_address=${SSH_HOST%@*}@"[${SSH_HOST#*@}]"
     else
         _scp_address=$SSH_HOST
     fi
-
-    dinfo "saving to $SSH_HOST:$_ssh_dir"
+    dinfo "saving to $SSH_HOST:$KDUMP_PATH"
 
     cat /var/lib/random-seed > /dev/urandom
-    _ssh mkdir -p "$_ssh_dir" || return 1
+    _ssh mkdir -p "$KDUMP_PATH" || return 1
 
-    save_vmcore_dmesg_ssh "$DMESG_COLLECTOR" "$_ssh_dir"
+    save_vmcore_dmesg_ssh "$DMESG_COLLECTOR" "$KDUMP_PATH"
 
     dinfo "saving vmcore"
 
-    KDUMP_LOG_DEST=$SSH_HOST:$_ssh_dir/
-    KDUMP_LOG_OP="_scp '$KDUMP_LOG_FILE' '$_scp_address:$_ssh_dir/'"
+    KDUMP_LOG_DEST=$SSH_HOST:$KDUMP_PATH/
+    KDUMP_LOG_OP="_scp '$KDUMP_LOG_FILE' '$_scp_address:$KDUMP_PATH/'"
 
-    save_opalcore_ssh "$_ssh_dir" "$_scp_address"
+    save_opalcore_ssh "$KDUMP_PATH" "$_scp_address"
 
     if [ "${CORE_COLLECTOR%%[[:blank:]]*}" = "scp" ]; then
-        _scp /proc/vmcore "$_scp_address:$_ssh_dir/vmcore-incomplete"
+        _scp /proc/vmcore "$_scp_address:$KDUMP_PATH/vmcore-incomplete"
         _ret=$?
         _vmcore="vmcore"
     else
-        $CORE_COLLECTOR /proc/vmcore | _ssh "umask 0077 && dd bs=512 of='$_ssh_dir/vmcore-incomplete'"
+        $CORE_COLLECTOR /proc/vmcore | _ssh "umask 0077 && dd bs=512 of='$KDUMP_PATH/vmcore-incomplete'"
         _ret=$?
         _vmcore="vmcore.flat"
     fi
@@ -594,9 +581,9 @@ kdump_test_set_status() {
         _ssh "mkdir -p ${KDUMP_TEST_STATUS%/*}" || return 1
         _ssh "echo $_status kdump_test_id=$KDUMP_TEST_ID > $KDUMP_TEST_STATUS" || return 1
     else
-        mkdir -p "$NEWROOT/$KDUMP_PATH" || return 1
-        echo "$_status kdump_test_id=$KDUMP_TEST_ID" > "$NEWROOT/$KDUMP_TEST_STATUS"
-        sync -f "$NEWROOT/$KDUMP_TEST_STATUS"
+        mkdir -p "$KDUMP_PATH" || return 1
+        echo "$_status kdump_test_id=$KDUMP_TEST_ID" > "$KDUMP_TEST_STATUS"
+        sync -f "$KDUMP_TEST_STATUS"
     fi
 }
 
@@ -606,6 +593,7 @@ kdump_test_init() {
     KDUMP_TEST_ID=$(getarg kdump_test_id=)
     [ -z "$KDUMP_TEST_ID" ] && return
 
+    KDUMP_PATH="${KDUMP_PATH%/*}"
     KDUMP_PATH="$KDUMP_PATH/kdump-test-$KDUMP_TEST_ID"
     KDUMP_TEST_STATUS="$KDUMP_PATH/vmcore-creation.status"
 
@@ -643,6 +631,10 @@ fi
 if [ -z "$DUMP_INSTRUCTION" ]; then
     DUMP_INSTRUCTION="dump_fs"
 fi
+
+KDUMP_PATH="$KDUMP_PATH/$HOST_IP-$(date +%Y-%m-%d-%T)"
+[ "$DUMP_INSTRUCTION" = "dump_fs" ] && KDUMP_PATH="$NEWROOT/$KDUMP_PATH"
+KDUMP_PATH="$(echo "$KDUMP_PATH" | tr -s /)"
 
 kdump_test_init
 if ! do_kdump_pre; then
