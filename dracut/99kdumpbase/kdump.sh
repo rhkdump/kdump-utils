@@ -29,7 +29,7 @@ FAILURE_ACTION="systemctl reboot -f"
 DATEDIR=$(date +%Y-%m-%d-%T)
 HOST_IP='127.0.0.1'
 DUMP_INSTRUCTION=""
-SSH_KEY_LOCATION=$DEFAULT_SSHKEY
+SSH_KEY=$DEFAULT_SSHKEY
 DD_BLKSIZE=512
 FINAL_ACTION="systemctl reboot -f"
 KDUMP_PRE=""
@@ -58,7 +58,7 @@ get_kdump_confs() {
                 ;;
             sshkey)
                 if [ -f "$config_val" ]; then
-                    SSH_KEY_LOCATION=$config_val
+                    SSH_KEY=$config_val
                 fi
                 ;;
             kdump_pre)
@@ -392,37 +392,35 @@ dump_raw() {
     return 0
 }
 
-# $1: ssh key file
-# $2: ssh address in <user>@<host> format
 dump_ssh() {
     _ret=0
-    _ssh_opts="-i $1 -o BatchMode=yes -o StrictHostKeyChecking=yes"
+    _ssh_opts="-i $SSH_KEY -o BatchMode=yes -o StrictHostKeyChecking=yes"
     if [ -z "$KDUMP_TEST_ID" ]; then
         _ssh_dir="$KDUMP_PATH/$HOST_IP-$DATEDIR"
     else
         _ssh_dir="$KDUMP_PATH"
     fi
 
-    if is_ipv6_address "$2"; then
-        _scp_address=${2%@*}@"[${2#*@}]"
+    if is_ipv6_address "$SSH_HOST"; then
+        _scp_address=${SSH_HOST%@*}@"[${SSH_HOST#*@}]"
     else
-        _scp_address=$2
+        _scp_address=$SSH_HOST
     fi
 
-    dinfo "saving to $2:$_ssh_dir"
+    dinfo "saving to $SSH_HOST:$_ssh_dir"
 
     cat /var/lib/random-seed > /dev/urandom
     # shellcheck disable=SC2086 # ssh_opts needs to be split
-    ssh -q $_ssh_opts "$2" mkdir -p "$_ssh_dir" || return 1
+    ssh -q $_ssh_opts "$SSH_HOST" mkdir -p "$_ssh_dir" || return 1
 
-    save_vmcore_dmesg_ssh "$DMESG_COLLECTOR" "$_ssh_dir" "$_ssh_opts" "$2"
+    save_vmcore_dmesg_ssh "$DMESG_COLLECTOR" "$_ssh_dir" "$_ssh_opts"
 
     dinfo "saving vmcore"
 
-    KDUMP_LOG_DEST=$2:$_ssh_dir/
+    KDUMP_LOG_DEST=$SSH_HOST:$_ssh_dir/
     KDUMP_LOG_OP="scp -q $_ssh_opts '$KDUMP_LOG_FILE' '$_scp_address:$_ssh_dir/'"
 
-    save_opalcore_ssh "$_ssh_dir" "$_ssh_opts" "$2" "$_scp_address"
+    save_opalcore_ssh "$_ssh_dir" "$_ssh_opts" "$_scp_address"
 
     if [ "${CORE_COLLECTOR%%[[:blank:]]*}" = "scp" ]; then
         # shellcheck disable=SC2086 # ssh_opts needs to be split
@@ -433,7 +431,7 @@ dump_ssh() {
         # shellcheck disable=SC2029,SC2086
         #  - _ssh_opts needs to be split
         #  - _ssh_dir needs to be expanded
-        $CORE_COLLECTOR /proc/vmcore | ssh $_ssh_opts "$2" "umask 0077 && dd bs=512 of='$_ssh_dir/vmcore-incomplete'"
+        $CORE_COLLECTOR /proc/vmcore | ssh $_ssh_opts "$SSH_HOST" "umask 0077 && dd bs=512 of='$_ssh_dir/vmcore-incomplete'"
         _ret=$?
         _vmcore="vmcore.flat"
     fi
@@ -442,7 +440,7 @@ dump_ssh() {
         # shellcheck disable=SC2029,SC2086
         #  - _ssh_opts needs to be split
         #  - _ssh_dir needs to be expanded
-        ssh $_ssh_opts "$2" "mv '$_ssh_dir/vmcore-incomplete' '$_ssh_dir/$_vmcore'"
+        ssh $_ssh_opts "$SSH_HOST" "mv '$_ssh_dir/vmcore-incomplete' '$_ssh_dir/$_vmcore'"
         _ret=$?
         if [ $_ret -ne 0 ]; then
             derror "moving vmcore failed, exitcode:$_ret"
@@ -458,15 +456,14 @@ dump_ssh() {
 
 # $1: dump path
 # $2: ssh opts
-# $3: ssh address in <user>@<host> format
-# $4: scp address, similar with ssh address but IPv6 addresses are quoted
+# $3: scp address, similar with ssh address but IPv6 addresses are quoted
 save_opalcore_ssh() {
     [ -n "$OPALCORE" ] || return 0
 
-    dinfo "saving opalcore:$OPALCORE to $3:$1"
+    dinfo "saving opalcore:$OPALCORE to $SSH_HOST:$1"
 
     # shellcheck disable=SC2086 # $2 (_ssh_opts) needs to be split
-    if ! scp $2 "$OPALCORE" "$4:$1/opalcore-incomplete"; then
+    if ! scp $2 "$OPALCORE" "$3:$1/opalcore-incomplete"; then
         derror "saving opalcore failed"
         return 1
     fi
@@ -474,7 +471,7 @@ save_opalcore_ssh() {
     # shellcheck disable=SC2029,SC2086
     #  - $1 (dump path) needs to be expanded
     #  - $2 (_ssh_opts) needs to be split
-    ssh $2 "$3" mv "$1/opalcore-incomplete" "$1/opalcore"
+    ssh $2 "$SSH_HOST" mv "$1/opalcore-incomplete" "$1/opalcore"
     dinfo "saving opalcore complete"
     return 0
 }
@@ -482,14 +479,13 @@ save_opalcore_ssh() {
 # $1: dmesg collector
 # $2: dump path
 # $3: ssh opts
-# $4: ssh address in <user>@<host> format
 save_vmcore_dmesg_ssh() {
-    dinfo "saving vmcore-dmesg.txt to $4:$2"
+    dinfo "saving vmcore-dmesg.txt to $SSH_HOST:$2"
     # shellcheck disable=SC2029,SC2086
     #  - $2 (_ssh_dir) needs to be expanded
     #  - $3 (_ssh_opts) needs to be split
-    if "$1" /proc/vmcore | ssh $3 "$4" "umask 0077 && dd of='$2/vmcore-dmesg-incomplete.txt'"; then
-        ssh -q $3 "$4" mv "$2/vmcore-dmesg-incomplete.txt" "$2/vmcore-dmesg.txt"
+    if "$1" /proc/vmcore | ssh $3 "$SSH_HOST" "umask 0077 && dd of='$2/vmcore-dmesg-incomplete.txt'"; then
+        ssh -q $3 "$SSH_HOST" mv "$2/vmcore-dmesg-incomplete.txt" "$2/vmcore-dmesg.txt"
         dinfo "saving vmcore-dmesg.txt complete"
     else
         derror "saving vmcore-dmesg.txt failed"
@@ -573,7 +569,8 @@ read_kdump_confs() {
                 DUMP_INSTRUCTION="dump_raw $config_val"
                 ;;
             ssh)
-                DUMP_INSTRUCTION="dump_ssh $SSH_KEY_LOCATION $config_val"
+                SSH_HOST="$config_val"
+                DUMP_INSTRUCTION="dump_ssh"
                 ;;
         esac
     done < "$KDUMP_CONF_PARSED"
@@ -600,12 +597,11 @@ kdump_test_set_status() {
     esac
 
     if is_ssh_dump_target; then
-        _ssh_opts="-i $SSH_KEY_LOCATION -o BatchMode=yes -o StrictHostKeyChecking=yes"
-        _ssh_host=$(echo "$DUMP_INSTRUCTION" | awk '{print $3}')
+        _ssh_opts="-i $SSH_KEY -o BatchMode=yes -o StrictHostKeyChecking=yes"
 
-        ssh -q $_ssh_opts "$_ssh_host" "mkdir -p ${KDUMP_TEST_STATUS%/*}" \
+        ssh -q $_ssh_opts "$SSH_HOST" "mkdir -p ${KDUMP_TEST_STATUS%/*}" \
             || return 1
-        ssh -q $_ssh_opts "$_ssh_host" "echo $_status kdump_test_id=$KDUMP_TEST_ID > $KDUMP_TEST_STATUS" \
+        ssh -q $_ssh_opts "$SSH_HOST" "echo $_status kdump_test_id=$KDUMP_TEST_ID > $KDUMP_TEST_STATUS" \
             || return 1
     else
 	_target=$(echo "$DUMP_INSTRUCTION" | awk '{print $2}')
