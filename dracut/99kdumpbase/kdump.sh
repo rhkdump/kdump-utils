@@ -133,14 +133,13 @@ save_log() {
     eval "$KDUMP_LOG_OP"
 }
 
-# $1: dump path, must be a mount point
 dump_fs() {
-    ddebug "dump_fs _mp=$1"
+    ddebug "dump_fs _mp=$NEWROOT"
 
-    if ! is_mounted "$1"; then
-        dinfo "dump path '$1' is not mounted, trying to mount..."
-        if ! mount --target "$1"; then
-            derror "failed to dump to '$1', it's not a mount point!"
+    if ! is_mounted "$NEWROOT"; then
+        dinfo "dump path '$NEWROOT' is not mounted, trying to mount..."
+        if ! mount --target "$NEWROOT"; then
+            derror "failed to dump to '$NEWROOT', it's not a mount point!"
             return 1
         fi
     fi
@@ -165,11 +164,11 @@ dump_fs() {
     dinfo "saving to $_dump_fs_path"
 
     # Only remount to read-write mode if the dump target is mounted read-only.
-    _dump_mnt_op=$(get_mount_info OPTIONS target "$1" -f)
+    _dump_mnt_op=$(get_mount_info OPTIONS target "$NEWROOT" -f)
     case $_dump_mnt_op in
         ro*)
             dinfo "Remounting the dump target in rw mode."
-            mount -o remount,rw "$1" || return 1
+            mount -o remount,rw "$NEWROOT" || return 1
             ;;
     esac
 
@@ -263,7 +262,7 @@ dump_to_rootfs() {
     fi
 
     ddebug "NEWROOT=$NEWROOT"
-    dump_fs $NEWROOT
+    dump_fs
 }
 
 kdump_emergency_shell() {
@@ -552,13 +551,13 @@ read_kdump_confs() {
             dracut_args)
                 config_val=$(get_dracut_args_target "$config_val")
                 if [ -n "$config_val" ]; then
-                    config_val=$(get_mntpoint_from_target "$config_val")
-                    DUMP_INSTRUCTION="dump_fs $config_val"
+                    NEWROOT=$(get_mntpoint_from_target "$config_val")
+                    DUMP_INSTRUCTION="dump_fs"
                 fi
                 ;;
             ext[234] | xfs | btrfs | minix | nfs | virtiofs)
-                config_val=$(get_mntpoint_from_target "$config_val")
-                DUMP_INSTRUCTION="dump_fs $config_val"
+                NEWROOT=$(get_mntpoint_from_target "$config_val")
+                DUMP_INSTRUCTION="dump_fs"
                 ;;
             raw)
                 DUMP_INSTRUCTION="dump_raw $config_val"
@@ -595,11 +594,9 @@ kdump_test_set_status() {
         _ssh "mkdir -p ${KDUMP_TEST_STATUS%/*}" || return 1
         _ssh "echo $_status kdump_test_id=$KDUMP_TEST_ID > $KDUMP_TEST_STATUS" || return 1
     else
-	_target=$(echo "$DUMP_INSTRUCTION" | awk '{print $2}')
-
-        mkdir -p "$_target/$KDUMP_PATH" || return 1
-        echo "$_status kdump_test_id=$KDUMP_TEST_ID" > "$_target/$KDUMP_TEST_STATUS"
-        sync -f "$_target/$KDUMP_TEST_STATUS"
+        mkdir -p "$NEWROOT/$KDUMP_PATH" || return 1
+        echo "$_status kdump_test_id=$KDUMP_TEST_ID" > "$NEWROOT/$KDUMP_TEST_STATUS"
+        sync -f "$NEWROOT/$KDUMP_TEST_STATUS"
     fi
 }
 
@@ -644,7 +641,7 @@ if ! get_host_ip; then
 fi
 
 if [ -z "$DUMP_INSTRUCTION" ]; then
-    DUMP_INSTRUCTION="dump_fs $NEWROOT"
+    DUMP_INSTRUCTION="dump_fs"
 fi
 
 kdump_test_init
