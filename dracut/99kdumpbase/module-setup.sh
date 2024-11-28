@@ -363,7 +363,27 @@ EOF
 }
 
 _get_nic_driver() {
-    ethtool -i "$1" | sed -n -E "s/driver: (.*)/\1/p"
+    local _driver
+
+    _driver=$(ethtool -i "$1" | sed -n -E "s/driver: (.*)/\1/p")
+
+    if [[ $_driver == "802.1Q VLAN Support" ]]; then
+        # ethtool somehow doesn't return the driver name for a VLAN NIC
+        _driver=8021q
+    fi
+
+    if ! modinfo "$_driver" &> /dev/null; then
+        # Fallback to get NIC driver by /sys/class/net/NIC/device/driver/module
+        # as some drivers like dwmac_tegra may report its name incorrectly.
+        # Note this method only for physical NICs i.e it doesn't work for
+        # virtual NICs like bonding NIC
+        _driver=$(basename "$(readlink -f /sys/class/net/"$1"/device/driver/module)")
+        if ! modinfo "$_driver" &> /dev/null; then
+            derror "Failed to find the driver for $1 ($_driver doesnt exist)"
+        fi
+    fi
+
+    echo -n "$_driver"
 }
 
 _get_hpyerv_physical_driver() {
@@ -395,10 +415,7 @@ kdump_install_nic_driver() {
             exit 1
         fi
 
-        if [[ $_driver == "802.1Q VLAN Support" ]]; then
-            # ethtool somehow doesn't return the driver name for a VLAN NIC
-            _driver=8021q
-        elif [[ $_driver == "team" ]]; then
+        if [[ $_driver == "team" ]]; then
             # install the team mode drivers like team_mode_roundrobin.ko as well
             _driver='=drivers/net/team'
         elif [[ $_driver == "hv_netvsc" ]]; then
