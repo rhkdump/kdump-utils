@@ -20,6 +20,8 @@ KDUMP_PATH="/var/crash"
 KDUMP_LOG_FILE="/run/initramfs/kexec-dmesg.log"
 KDUMP_LOG_DEST=""
 KDUMP_LOG_OP=""
+KDUMP_TEST_ID=""
+KDUMP_TEST_STATUS=""
 CORE_COLLECTOR=""
 DEFAULT_CORE_COLLECTOR="makedumpfile -l --message-level 7 -d 31"
 DMESG_COLLECTOR="/sbin/vmcore-dmesg"
@@ -154,7 +156,12 @@ dump_fs() {
             ;;
     esac
 
-    _dump_fs_path=$(echo "$1/$KDUMP_PATH/$HOST_IP-$DATEDIR/" | tr -s /)
+    if [ -z "$KDUMP_TEST_ID" ]; then
+        _dump_fs_path=$(echo "$1/$KDUMP_PATH/$HOST_IP-$DATEDIR/" | tr -s /)
+    else
+        _dump_fs_path=$(echo "$1/$KDUMP_PATH/" | tr -s /)
+    fi
+
     dinfo "saving to $_dump_fs_path"
 
     # Only remount to read-write mode if the dump target is mounted read-only.
@@ -397,7 +404,12 @@ dump_raw() {
 dump_ssh() {
     _ret=0
     _ssh_opts="-i $1 -o BatchMode=yes -o StrictHostKeyChecking=yes"
-    _ssh_dir="$KDUMP_PATH/$HOST_IP-$DATEDIR"
+    if [ -z "$KDUMP_TEST_ID" ]; then
+        _ssh_dir="$KDUMP_PATH/$HOST_IP-$DATEDIR"
+    else
+        _ssh_dir="$KDUMP_PATH"
+    fi
+
     if is_ipv6_address "$2"; then
         _scp_address=${2%@*}@"[${2#*@}]"
     else
@@ -588,6 +600,48 @@ fence_kdump_notify() {
     fi
 }
 
+kdump_test_set_status() {
+    _status="$1"
+
+    [ -n "$KDUMP_TEST_STATUS" ] || return
+
+    case "$_status" in
+        success|fail) ;;
+        *)
+            derror "Unknown test status $_status"
+            return 1
+            ;;
+    esac
+
+    if is_ssh_dump_target; then
+        _ssh_opts="-i $SSH_KEY_LOCATION -o BatchMode=yes -o StrictHostKeyChecking=yes"
+        _ssh_host=$(echo "$DUMP_INSTRUCTION" | awk '{print $3}')
+
+        ssh -q $_ssh_opts "$_ssh_host" "mkdir -p ${KDUMP_TEST_STATUS%/*}" \
+            || return 1
+        ssh -q $_ssh_opts "$_ssh_host" "echo $_status kdump_test_id=$KDUMP_TEST_ID > $KDUMP_TEST_STATUS" \
+            || return 1
+    else
+	_target=$(echo "$DUMP_INSTRUCTION" | awk '{print $2}')
+
+        mkdir -p "$_target/$KDUMP_PATH" || return 1
+        echo "$_status kdump_test_id=$KDUMP_TEST_ID" > "$_target/$KDUMP_TEST_STATUS"
+        sync -f "$_target/$KDUMP_TEST_STATUS"
+    fi
+}
+
+kdump_test_init() {
+    is_raw_dump_target && return
+
+    KDUMP_TEST_ID=$(getarg kdump_test_id=)
+    [ -z "$KDUMP_TEST_ID" ] && return
+
+    KDUMP_PATH="$KDUMP_PATH/kdump-test-$KDUMP_TEST_ID"
+    KDUMP_TEST_STATUS="$KDUMP_PATH/vmcore-creation.status"
+
+    kdump_test_set_status 'fail'
+}
+
 if [ "$1" = "--error-handler" ]; then
     get_kdump_confs
     do_failure_action
@@ -614,6 +668,7 @@ if [ -z "$DUMP_INSTRUCTION" ]; then
     DUMP_INSTRUCTION="dump_fs $NEWROOT"
 fi
 
+kdump_test_init
 if ! do_kdump_pre; then
     derror "kdump_pre script exited with non-zero status!"
     do_final_action
@@ -634,4 +689,5 @@ if [ $DUMP_RETVAL -ne 0 ]; then
     exit 1
 fi
 
+kdump_test_set_status "success"
 do_final_action

@@ -14,6 +14,7 @@ KDUMP_INITRD=""
 TARGET_INITRD=""
 #kdump shall be the default dump mode
 DEFAULT_DUMP_MODE="kdump"
+VMCORE_CREATION_STATUS="/var/lib/kdump/vmcore-creation.status"
 
 # Some default values in case /etc/sysconfig/kdump doesn't include
 KDUMP_COMMANDLINE_REMOVE="hugepages hugepagesz slub_debug"
@@ -45,8 +46,10 @@ if ! dlog_init; then
 fi
 
 KDUMP_TMPDIR=$(mktemp --tmpdir -d kdump.XXXX)
+TMPMNT="$KDUMP_TMPDIR/target"
 trap '
     ret=$?;
+    is_mounted $TMPMNT && umount -f $TMPMNT;
     rm -rf "$KDUMP_TMPDIR"
     exit $ret;
     ' EXIT
@@ -185,6 +188,11 @@ rebuild_initrd()
 	else
 		rebuild_kdump_initrd
 	fi
+
+	_ret=$?
+
+	set_vmcore_creation_status 'clear'
+	return $_ret
 }
 
 #$1: the files to be checked with IFS=' '
@@ -1674,6 +1682,170 @@ _should_reset_crashkernel() {
 	[[ $(kdump_get_conf_val auto_reset_crashkernel) != no ]] && systemctl is-enabled kdump &> /dev/null
 }
 
+set_kdump_test_id()
+{
+	local _id=$1
+
+	KDUMP_COMMANDLINE_APPEND+=" $_id "
+	reload >& /dev/null
+
+	if [[ "$?" -ne 0 ]]; then
+		derror "Set kdump test id fail."
+		exit 1
+	fi
+}
+
+# $1: success/fail/pending/manual/clear
+# $2: test id
+set_vmcore_creation_status()
+{
+	local _status=$1
+	local _kdump_test_id
+	_dir=$(dirname "$VMCORE_CREATION_STATUS")
+
+	[[ -d "$_dir" ]] || mkdir -p "$_dir"
+	[[ -w "$_dir" ]] || chmod +w "$_dir"
+
+	case "$_status" in
+		pending)
+			_kdump_test_id="kdump_test_id=$(date +%s-%N)"
+			set_kdump_test_id "$_kdump_test_id"
+			echo  "$_status $_kdump_test_id" > "$VMCORE_CREATION_STATUS"
+			;;
+		success | fail | manual)
+			sed -E -i "s/^\w+/$_status/" "$VMCORE_CREATION_STATUS"
+			;;
+		clear)
+			rm -f "$VMCORE_CREATION_STATUS"
+			;;
+		*)
+			return
+	esac
+	sync -f "$_dir"
+}
+
+fetch_status()
+{
+	local _test_id="$1" _mnt
+	local  _status
+
+	is_raw_dump_target && return 2
+
+	_status="${OPT[path]}/kdump-test-$_test_id/vmcore-creation.status"
+
+	if is_nfs_dump_target || is_local_target; then
+		_mnt=$(get_mntpoint_from_target "${OPT[_target]}")
+		if [[ -z "$_mnt" ]] || ! is_mounted "$_mnt"; then
+			mkdir -p $TMPMNT
+			mount "${OPT[_target]}" "$TMPMNT" -t "${OPT[_fstype]}" -o defaults || \
+				{ dwarn "Failed to mount ${OPT[_target]}" && return 2; }
+			_mnt="$TMPMNT"
+		fi
+		_status="$_mnt/$_status"
+	elif is_ssh_dump_target; then
+		scp -i "${OPT[sshkey]}" -o BatchMode=yes \
+			"${OPT[_target]}:$_status" \
+			"$KDUMP_TMPDIR"
+		case "$?" in
+			0)
+				# success
+				;;
+			1)
+				# file not found
+				return 1
+				;;
+			255)
+				# no connection to host
+				return 2
+		esac
+		_status="$KDUMP_TMPDIR/vmcore-creation.status"
+	fi
+
+	[[ -f "$_status" ]] || return 1
+	grep -q "success" "$_status" && return 0 || return 1
+}
+
+check_vmcore_creation_status()
+{
+	local _status _test_id _timestamp _status_date
+
+	[[ ${VMCORE_CREATION_NOTIFICATION,,} == "yes" ]] || return
+
+	[[ "$DEFAULT_DUMP_MODE" == "kdump" ]] || return
+
+	if [[ ! -s "$VMCORE_CREATION_STATUS" ]]; then
+		dwarn "Notice: No vmcore creation test performed!"
+		return
+	fi
+
+	[[ "${#OPT[@]}" -eq 0 ]] && { parse_config || return; }
+
+	read -r _status _test_id < "$VMCORE_CREATION_STATUS"
+	_test_id=${_test_id#*=}
+	_timestamp=${_test_id%-*}
+	_status_date=$(date -d "@$_timestamp")
+
+	if [[ "$_status" == "pending" ]]; then
+		fetch_status "$_test_id"
+		case "$?" in
+		0)
+			_status="success"
+			;;
+		1)
+			_status="fail"
+			;;
+		*)
+			_status="manual"
+			;;
+		esac
+		set_vmcore_creation_status "$_status"
+	fi
+
+	case "$_status" in
+		success)
+			dinfo "Notice: Last successful vmcore creation on $_status_date"
+			;;
+		fail)
+			dwarn "Notice: Last NOT successful vmcore creation on $_status_date"
+			;;
+		manual)
+			dwarn "Notice: Require manual check for kdump test of $_status_date"
+			;;
+		*)
+			derror "Unknown test status: $_status"
+			;;
+	esac
+}
+
+kdump_test()
+{
+	if ! is_kernel_loaded "$DEFAULT_DUMP_MODE"; then
+		derror "Kdump needs be operational before test."
+		exit 1
+	fi
+
+	if [[ ! "$DEFAULT_DUMP_MODE" == "kdump" ]]; then
+		derror "Only kdump is supported for test."
+		exit 1
+	fi
+
+	if [[ ! "$1" == "--force" ]]; then
+		read -p "DANGER!!! Will perform a kdump test by crashing the system, proceed? (y/N): " input
+		case $input in
+		[Yy] )
+			dinfo "Start kdump test..."
+			;;
+		* )
+			dinfo "Operation cancelled."
+			exit 0
+			;;
+		esac
+	fi
+
+	set_vmcore_creation_status 'pending'
+	echo c > /proc/sysrq-trigger
+}
+
 main()
 {
 	# Determine if the dump mode is kdump or fadump
@@ -1705,6 +1877,7 @@ main()
 			EXIT_CODE=3
 			;;
 		esac
+		check_vmcore_creation_status
 		exit $EXIT_CODE
 		;;
 	reload)
