@@ -535,24 +535,15 @@ fence_kdump_notify() {
     fi
 }
 
-kdump_test_set_status() {
-    _status="$1"
-
+kdump_test_mark_success() {
     [ -n "$KDUMP_TEST_STATUS" ] || return
 
-    case "$_status" in
-        success|fail) ;;
-        *)
-            derror "Unknown test status $_status"
-            return 1
-            ;;
-    esac
+    _status="success kdump_test_id=$KDUMP_TEST_ID"
 
     if is_ssh_dump_target; then
-        echo $_status kdump_test_id=$KDUMP_TEST_ID | _curl -T "-" "sftp://$SSH_HOST/$KDUMP_TEST_STATUS"
+        echo "$_status" | _curl -T "-" "sftp://$SSH_HOST/$KDUMP_TEST_STATUS"
     else
-        mkdir -p "$KDUMP_PATH" || return 1
-        echo "$_status kdump_test_id=$KDUMP_TEST_ID" > "$KDUMP_TEST_STATUS"
+        echo "$_status" > "$KDUMP_TEST_STATUS"
         sync -f "$KDUMP_TEST_STATUS"
     fi
 }
@@ -566,8 +557,6 @@ kdump_test_init() {
     KDUMP_PATH="${KDUMP_PATH%/*}"
     KDUMP_PATH="$KDUMP_PATH/kdump-test-$KDUMP_TEST_ID"
     KDUMP_TEST_STATUS="$KDUMP_PATH/vmcore-creation.status"
-
-    kdump_test_set_status 'fail'
 }
 
 for _core in "/sys/firmware/opal/mpipl/core" "/sys/firmware/opal/core"; do
@@ -627,5 +616,5 @@ if [ $DUMP_RETVAL -ne 0 ]; then
     exit 1
 fi
 
-kdump_test_set_status "success"
+kdump_test_mark_success
 do_final_action
