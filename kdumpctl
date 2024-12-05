@@ -1743,8 +1743,16 @@ fetch_status()
 		fi
 		_status="$_mnt/$_status"
 	elif is_ssh_dump_target; then
-		scp -i "${OPT[sshkey]}" -o BatchMode=yes \
-			"${OPT[_target]}:$_status" \
+		local _scp_address
+
+		if is_ipv6_address "${OPT[_target]}"; then
+			_scp_address="${OPT[_target]%@*}@[${OPT[_target]#*@}]"
+		else
+			_scp_address="${OPT[_target]}"
+		fi
+
+		scp -q -i "${OPT[sshkey]}" -o BatchMode=yes \
+			"$_scp_address:$_status" \
 			"$KDUMP_TMPDIR"
 		case "$?" in
 			0)
