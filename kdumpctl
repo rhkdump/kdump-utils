@@ -176,6 +176,8 @@ rebuild_kdump_initrd()
 
 rebuild_initrd()
 {
+	local _ret
+
 	dinfo "Rebuilding $TARGET_INITRD"
 
 	if [[ ! -w $(dirname "$TARGET_INITRD") ]]; then
@@ -1687,9 +1689,8 @@ set_kdump_test_id()
 	local _id=$1
 
 	KDUMP_COMMANDLINE_APPEND+=" $_id "
-	reload >& /dev/null
 
-	if [[ "$?" -ne 0 ]]; then
+	if ! reload >& /dev/null; then
 		derror "Set kdump test id fail."
 		exit 1
 	fi
@@ -1736,7 +1737,7 @@ fetch_status()
 	if is_nfs_dump_target || is_local_target; then
 		_mnt=$(get_mntpoint_from_target "${OPT[_target]}")
 		if [[ -z "$_mnt" ]] || ! is_mounted "$_mnt"; then
-			mkdir -p $TMPMNT
+			mkdir -p "$TMPMNT"
 			mount "${OPT[_target]}" "$TMPMNT" -t "${OPT[_fstype]}" -o defaults || \
 				{ dwarn "Failed to mount ${OPT[_target]}" && return 2; }
 			_mnt="$TMPMNT"
@@ -1838,7 +1839,7 @@ kdump_test()
 	fi
 
 	if [[ ! "$1" == "--force" ]]; then
-		read -p "DANGER!!! Will perform a kdump test by crashing the system, proceed? (y/N): " input
+		read -r -p "DANGER!!! Will perform a kdump test by crashing the system, proceed? (y/N): " input
 		case $input in
 		[Yy] )
 			dinfo "Start kdump test..."
