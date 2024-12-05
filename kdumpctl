@@ -176,6 +176,8 @@ rebuild_kdump_initrd()
 
 rebuild_initrd()
 {
+	local _ret
+
 	dinfo "Rebuilding $TARGET_INITRD"
 
 	if [[ ! -w $(dirname "$TARGET_INITRD") ]]; then
@@ -968,8 +970,9 @@ check_dump_feasibility()
 fadump_bootargs_append()
 {
 	if [[ -f "$FADUMP_APPEND_ARGS_SYS_NODE" ]]; then
-		local output=$( { echo "${FADUMP_COMMANDLINE_APPEND}" > "$FADUMP_APPEND_ARGS_SYS_NODE" ; } 2>&1)
-		if [ $? -eq 0 ]; then
+		local output
+
+		if output=$( { echo "${FADUMP_COMMANDLINE_APPEND}" > "$FADUMP_APPEND_ARGS_SYS_NODE" ; } 2>&1); then
 			output=$(cat "$FADUMP_APPEND_ARGS_SYS_NODE")
 			dinfo "fadump: additional parameters for capture kernel: '$output'"
 		else
@@ -1687,9 +1690,8 @@ set_kdump_test_id()
 	local _id=$1
 
 	KDUMP_COMMANDLINE_APPEND+=" $_id "
-	reload >& /dev/null
 
-	if [[ "$?" -ne 0 ]]; then
+	if ! reload >& /dev/null; then
 		derror "Set kdump test id fail."
 		exit 1
 	fi
@@ -1736,15 +1738,23 @@ fetch_status()
 	if is_nfs_dump_target || is_local_target; then
 		_mnt=$(get_mntpoint_from_target "${OPT[_target]}")
 		if [[ -z "$_mnt" ]] || ! is_mounted "$_mnt"; then
-			mkdir -p $TMPMNT
+			mkdir -p "$TMPMNT"
 			mount "${OPT[_target]}" "$TMPMNT" -t "${OPT[_fstype]}" -o defaults || \
 				{ dwarn "Failed to mount ${OPT[_target]}" && return 2; }
 			_mnt="$TMPMNT"
 		fi
 		_status="$_mnt/$_status"
 	elif is_ssh_dump_target; then
-		scp -i "${OPT[sshkey]}" -o BatchMode=yes \
-			"${OPT[_target]}:$_status" \
+		local _scp_address
+
+		if is_ipv6_address "${OPT[_target]}"; then
+			_scp_address="${OPT[_target]%@*}@[${OPT[_target]#*@}]"
+		else
+			_scp_address="${OPT[_target]}"
+		fi
+
+		scp -q -i "${OPT[sshkey]}" -o BatchMode=yes \
+			"$_scp_address:$_status" \
 			"$KDUMP_TMPDIR"
 		case "$?" in
 			0)
@@ -1830,7 +1840,7 @@ kdump_test()
 	fi
 
 	if [[ ! "$1" == "--force" ]]; then
-		read -p "DANGER!!! Will perform a kdump test by crashing the system, proceed? (y/N): " input
+		read -r -p "DANGER!!! Will perform a kdump test by crashing the system, proceed? (y/N): " input
 		case $input in
 		[Yy] )
 			dinfo "Start kdump test..."
