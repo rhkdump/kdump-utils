@@ -1,0 +1,54 @@
+name: kdump-utils tests
+
+on: pull_request
+
+jobs:
+  format-check:
+    runs-on: ubuntu-latest
+    container: docker.io/fedora:latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: dnf install shfmt -y
+      - run: shfmt -s -d *.sh kdumpctl mk*dumprd tests/*/*/*.sh dracut/*/*.sh tools/*.sh
+
+  static-analysis:
+    runs-on: ubuntu-latest
+    container: docker.io/fedora:latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: dnf install shellcheck -y
+      # Currently, for kdump-utils, there is need for shellcheck to require
+      # the sourced file to give correct warnings about the checked file
+      - run: shellcheck -x *.sh spec/*.sh kdumpctl mk*dumprd
+      - run: shellcheck -x dracut/*/*.sh
+      - run: shellcheck -x tests/*/*/*.sh tools/*.sh
+
+  unit-tests:
+    runs-on: ubuntu-latest
+    container: docker.io/fedora:latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo dnf install -y make dracut grubby hostname
+      - run: curl -L -O https://github.com/shellspec/shellspec/archive/latest.tar.gz && tar -xzf latest.tar.gz
+      - run: cd shellspec-latest && sudo make install
+      - run: shellspec
+
+  integration-tests:
+        runs-on: self-hosted
+        timeout-minutes: 45
+        concurrency:
+            group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.fedora_version }}-${{ matrix.test }}
+            cancel-in-progress: true
+        strategy:
+            matrix:
+                fedora_version: [
+                        "40",
+                ]
+            fail-fast: false
+        steps:
+            -   name: "Checkout Repository"
+                uses: actions/checkout@v4
+                with:
+                    fetch-depth: 0
+            -   name: "${{ matrix.fedora_version }} kdump tests"
+                run: tools/run-integration-tests.sh ${{ matrix.fedora_version }}
