@@ -6,6 +6,8 @@
 # Written by Cong Wang <amwang@redhat.com>
 #
 
+[[ -n $debug ]] && set -x
+
 if [[ -f /etc/sysconfig/kdump ]]; then
 	. /etc/sysconfig/kdump
 fi
