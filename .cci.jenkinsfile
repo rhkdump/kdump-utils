@@ -1,0 +1,45 @@
+// Documentation: https://github.com/coreos/coreos-ci/blob/main/README-upstream-ci.md
+
+properties([
+    // abort previous runs when a PR is updated to save resources
+    disableConcurrentBuilds(abortPrevious: true)
+])
+
+
+buildPod(runAsUser: 0, memory: "2Gi", cpu: "2") {
+      checkout scm
+      stage("Install packit") {
+        shwrap("""
+          dnf install packit -y
+        """)
+      }
+      stage("Build kdump RPM") {
+        // note: coreos upstream CI only run on x86 so we hardcode the architecture
+        shwrap("""
+          packit build locally --release-suffix coreos.tests
+          mv x86_64/kdump-utils*coreos.tests*.rpm ./kdump-coreos-ci.rpm
+        """)
+      }
+      // make it easy for anyone to download the RPMs
+      archiveArtifacts 'kdump-coreos-ci.rpm'
+      stash includes: 'kdump-coreos-ci.rpm', name: 'kdump-rpm'
+}
+
+// Build FCOS with the kdump rpm
+cosaPod {
+
+   stage("Build FCOS") {
+       unstash 'kdump-rpm'
+       shwrap("""
+         coreos-assembler init --force https://github.com/coreos/fedora-coreos-config
+         mv kdump-coreos-ci.rpm overrides/rpm
+         cosa fetch --with-cosa-overrides
+         cosa build
+       """)
+     }
+
+   // the kdump kola tests
+    stage("Kola kdump tests") {
+      kola(cosaDir: "${env.WORKSPACE}", extraArgs: '\\*kdump\\*', skipUpgrade: true, skipBasicScenarios: true)
+    }
+}
