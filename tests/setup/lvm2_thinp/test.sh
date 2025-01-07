@@ -30,6 +30,9 @@ EOF
     lvcreate -V 300M -T $VG/$LV_THINPOOL -n $LV_VOLUME
     mkfs.ext4 /dev/$VG/$LV_VOLUME
     mount /dev/$VG/$LV_VOLUME /mnt
+    # Prevent an empty /etc/lvm/devices/system.devices file after a kernel
+    # panic which will cause failure of pvscan
+    rm -f /etc/lvm/devices/system.devices
     mkdir -p /mnt/$VMCORE_PATH
 
     cat << EOF > /etc/kdump.conf
