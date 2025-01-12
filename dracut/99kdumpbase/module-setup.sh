@@ -488,24 +488,6 @@ kdump_setup_vlan() {
     _save_kdump_netifs "$_parent_netif"
 }
 
-kdump_setup_ovs() {
-    local _netdev="$1"
-    local _dev _phy_if
-
-    _phy_if=$(ovs_find_phy_if "$_netdev")
-
-    if kdump_is_bridge "$_phy_if"; then
-        kdump_setup_vlan "$_phy_if"
-    elif kdump_is_bond "$_phy_if"; then
-        kdump_setup_bond "$_phy_if" || return 1
-    elif kdump_is_team "$_phy_if"; then
-        derror "Ovs bridge over team is not supported!"
-        exit 1
-    fi
-
-    _save_kdump_netifs "$_phy_if"
-}
-
 # setup s390 znet
 kdump_setup_znet() {
     local _netif
@@ -542,28 +524,6 @@ kdump_get_remote_ip() {
     echo "$_remote"
 }
 
-# Find the physical interface of Open vSwitch (Ovs) bridge
-#
-# The physical network interface has the same MAC address as the Ovs bridge
-ovs_find_phy_if() {
-    local _mac _dev
-    _mac=$(kdump_get_mac_addr "$1")
-
-    for _dev in $(ovs-vsctl list-ifaces "$1"); do
-        if [[ $_mac == $(< /sys/class/net/"$_dev"/address) ]]; then
-            echo -n "$_dev"
-            return
-        fi
-    done
-
-    return 1
-}
-
-# Tell if a network interface is an Open vSwitch (Ovs) bridge
-kdump_is_ovs_bridge() {
-    [[ $(_get_nic_driver "$1") == openvswitch ]]
-}
-
 # Collect netifs needed by kdump
 # $1: destination host
 kdump_collect_netif_usage() {
@@ -587,9 +547,6 @@ kdump_collect_netif_usage() {
         kdump_setup_team "$_netdev"
     elif kdump_is_vlan "$_netdev"; then
         kdump_setup_vlan "$_netdev"
-    elif kdump_is_ovs_bridge "$_netdev"; then
-        has_ovs_bridge=yes
-        kdump_setup_ovs "$_netdev"
     fi
     _save_kdump_netifs "$_netdev"
 
@@ -636,29 +593,6 @@ kdump_install_resolv_conf() {
     fi
 }
 
-kdump_install_ovs_deps() {
-    [[ $has_ovs_bridge == yes ]] || return 0
-    inst_multiple -o "$(rpm -ql NetworkManager-ovs)" "$(rpm -ql "$(rpm -qf /usr/lib/systemd/system/openvswitch.service)")" /sbin/sysctl /usr/bin/uuidgen /usr/bin/hostname /usr/bin/touch /usr/bin/expr /usr/bin/id /usr/bin/install /usr/bin/setpriv /usr/bin/nice /usr/bin/df
-    # 1. Overwrite the copied /etc/sysconfig/openvswitch so
-    # ovsdb-server.service can run as the default user root.
-    # /etc/sysconfig/openvswitch by default intructs ovsdb-server.service to
-    # run as USER=openvswitch, However openvswitch doesn't have the permission
-    # to write to /tmp in kdump initrd and ovsdb-server.servie will fail
-    # with the error "ovs-ctl[1190]: ovsdb-server: failed to create temporary
-    # file (Permission denied)". So run ovsdb-server.service as root instead
-    #
-    # 2. Bypass the error "referential integrity violation: Table Port column
-    # interfaces row" caused by we changing the connection profiles
-    echo "OPTIONS=\"--ovsdb-server-options='--disable-file-column-diff'\"" > "${initdir}/etc/sysconfig/openvswitch"
-
-    KDUMP_DROP_IN_DIR="${initdir}/etc/systemd/system/nm-initrd.service.d"
-    mkdir -p "$KDUMP_DROP_IN_DIR"
-    printf "[Unit]\nAfter=openvswitch.service\n" > "$KDUMP_DROP_IN_DIR"/01-after-ovs.conf
-
-    $SYSTEMCTL -q --root "$initdir" enable openvswitch.service
-    $SYSTEMCTL -q --root "$initdir" add-wants basic.target openvswitch.service
-}
-
 # Setup dracut to bring up network interface that enable
 # initramfs accessing giving destination
 kdump_install_net() {
@@ -672,7 +606,6 @@ kdump_install_net() {
         kdump_install_nm_netif_allowlist "$_netifs"
         kdump_install_nic_driver "$_netifs"
         kdump_install_resolv_conf
-        kdump_install_ovs_deps
     fi
 }
 
@@ -1086,7 +1019,6 @@ EOF
 
 install() {
     declare -A unique_netifs ipv4_usage ipv6_usage
-    local has_ovs_bridge
 
     kdump_module_init
     kdump_install_conf
