@@ -1,0 +1,39 @@
+summary: Kdump NFS dumping tests
+discover:
+  - name: Set up crashkernel
+    how: fmf
+    test:
+     - setup/default_crashkernel
+    where:
+      - client
+  - name: Set up NFS server
+    how: fmf
+    test:
+     - setup/nfs_server
+    where:
+      - server
+  - name: Set up OVS network
+    how: fmf
+    test:
+     - setup/ovs_network
+    where:
+      - client
+  - name: Setup NFS client
+    how: fmf
+    test:
+     # For tmt, nfs means nfs*, so use nfs$ to exclude nfs_early
+     - setup/network_client/nfs$
+    where:
+      - client
+  - name: Panic kernel
+    how: fmf
+    test:
+     - /setup/trigger_crash
+    where:
+      - client
+  - name: Check vmcore
+    how: fmf
+    test:
+     - /tests/check_vmcore/nfs
+    where:
+      - server

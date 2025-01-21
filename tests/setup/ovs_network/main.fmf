@@ -1,0 +1,9 @@
+summary: Set up Open vSwitch bridge network
+test: ./test.sh
+framework: shell
+require:
+ - /usr/bin/ovs-vsctl
+ - NetworkManager-ovs
+ - nmap-ncat
+ - jq
+
