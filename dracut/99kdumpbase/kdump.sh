@@ -533,10 +533,6 @@ wait_online_network() {
 
 get_host_ip() {
 
-    if ! is_nfs_dump_target && ! is_ssh_dump_target; then
-        return 0
-    fi
-
     _kdump_remote_ip=$(getarg kdump_remote_ip=)
 
     if [ -z "$_kdump_remote_ip" ]; then
@@ -558,6 +554,14 @@ get_host_ip() {
     _kdumpip=$(echo "$_kdumpip" | head -n 1 | awk '{print $2}')
     _kdumpip="${_kdumpip%%/*}"
     HOST_IP=$_kdumpip
+}
+
+remote_dump_wait_host_ip() {
+
+    if ! is_nfs_dump_target && ! is_ssh_dump_target; then
+        return 0
+    fi
+    get_host_ip
 }
 
 read_kdump_confs() {
@@ -659,8 +663,8 @@ fi
 read_kdump_confs
 fence_kdump_notify
 
-if ! get_host_ip; then
-    derror "get_host_ip exited with non-zero status!"
+if ! remote_dump_wait_host_ip; then
+    derror "remote_dump_wait_host_ip exited with non-zero status!"
     exit 1
 fi
 
