@@ -112,6 +112,14 @@ get_mntpoint_from_target()
 	echo $_mntpoint
 }
 
+require_fence_message()
+{
+	if [ -n "$(kdump_get_conf_val fence_kdump_nodes)" ]; then
+		return 0
+	fi
+	return 1
+}
+
 is_ssh_dump_target()
 {
 	kdump_get_conf_val ssh | grep -q @

@@ -694,4 +694,12 @@ if [ $DUMP_RETVAL -ne 0 ]; then
 fi
 
 kdump_test_set_status "success"
+#fence_kdump_send may fail to send a message due to slow network initialization.
+#Let's wait for the network to be ready and retry.
+if require_fence_message; then
+    get_host_ip
+    # Give fence_kdump_send a chance to send out message.
+    sleep 2
+fi
+
 do_final_action
