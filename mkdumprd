@@ -424,7 +424,7 @@ if ! is_fadump_capable; then
 
 	dracut_args+=(--no-hostonly-default-device)
 
-	if fips-mode-setup --is-enabled 2> /dev/null; then
+	if [[ $(cat /proc/sys/crypto/fips_enabled) == 1  ]]; then
 		dracut_args+=(--add-device "$(findmnt -n -o SOURCE --target /boot)")
 	fi
 fi
