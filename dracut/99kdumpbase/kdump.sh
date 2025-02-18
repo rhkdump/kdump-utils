@@ -68,7 +68,7 @@ get_kdump_confs() {
                 KDUMP_POST="$config_val"
                 ;;
             fence_kdump_args)
-                FENCE_KDUMP_ARGS="$config_val"
+                FENCE_KDUMP_ARGS="$config_val -i 1"
                 ;;
             fence_kdump_nodes)
                 FENCE_KDUMP_NODES="$config_val"
