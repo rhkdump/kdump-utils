@@ -1,6 +1,9 @@
 summary: Kdump local dumping
+enabled: true
 # Disable this plan due to https://bugzilla.redhat.com/show_bug.cgi?id=2270423
-enabled: false
+adjust:
+    enabled: false
+    when: distro == fedora
 discover:
     how: fmf
     test:

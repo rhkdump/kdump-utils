@@ -1,4 +1,8 @@
 summary: Kdump NFS dumping tests
+enabled: true
+adjust:
+    enabled: false
+    when: distro > fedora-40
 discover:
   - name: Set up crashkernel
     how: fmf
