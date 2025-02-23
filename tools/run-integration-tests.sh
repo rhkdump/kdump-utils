@@ -5,6 +5,8 @@ set -ex
 [[ -d ${0%/*} ]] && cd "${0%/*}"/../
 
 fedora_version=${1:-40}
+mirror=${2:-https://mirrors.tuna.tsinghua.edu.cn/fedora}
+[[ $fedora_version == rawhide ]] && mirror=https://mirrors.sjtug.sjtu.edu.cn/fedora/linux
 
 dist_abbr=.fc$fedora_version
 
@@ -27,4 +29,4 @@ if [[ ! -f $rpm_path ]]; then
 	echo "Failed to find built kdump-utils rpm ($rpm_path doesn't eixst)"
 fi
 
-cd tests && tmt --context distro="fedora-${fedora_version}" run --environment CUSTOM_MIRROR=https://mirrors.tuna.tsinghua.edu.cn/fedora --environment KDUMP_UTILS_RPM="$rpm_path" -a provision -h virtual -i fedora:"$fedora_version"
+cd tests && tmt --context distro="fedora-${fedora_version}" run --environment CUSTOM_MIRROR=$mirror --environment KDUMP_UTILS_RPM="$rpm_path" -a provision -h virtual -i fedora:"$fedora_version"
