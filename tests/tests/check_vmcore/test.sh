@@ -5,7 +5,7 @@ has_valid_vmcore_dir() {
     local vmcore_dir
     local vmcore="<invalid>"
 
-    MAX_WAIT_TIME=300
+    MAX_WAIT_TIME=10
     _waited=0
     while [ $_waited -le $MAX_WAIT_TIME ]; do
         if vmcore_dir=$(find "$path/"* -maxdepth 0 2> /dev/null); then
