@@ -1295,8 +1295,8 @@ do_estimate()
 	# Current reserved crashkernel size
 	reserved_size=$(get_reserved_mem_size)
 	# A pre-estimated value for userspace usage and kernel
-	# runtime allocation, 64M should good for most cases
-	runtime_size=$((64 * size_mb))
+	# runtime allocation, 16M should good for most cases
+	runtime_size=$((16 * size_mb))
 	# Kernel image size
 	kernel_size=$(get_kernel_size "$KDUMP_KERNEL")
 	# Kdump initramfs size
@@ -1337,7 +1337,12 @@ do_estimate()
 		echo -e "Encrypted kdump target requires extra memory, assuming using the keyslot with maximum memory requirement\n"
 	fi
 
-	estimated_size=$((kernel_size + mod_size + initrd_size + runtime_size + crypt_size))
+	# initramfs will be loaded into crashkernel, and unpacking to an tmpfs during boot progress,
+	# the size of tmpfs is 50% of total memory at that time, so at least 3 * initrd_size memory are required.
+	# We are currently studying whether it is possible to set kernel boot parameters for the tmpfs that stores
+	# the unpacked initramfs, such as size=75%, to further reduce the memory requirements during the unpack
+	# phase. At that time, the formula will change, for example, to initrd_size * (2+1/3).
+	estimated_size=$((kernel_size + mod_size + initrd_size * 3 + runtime_size + crypt_size))
 	if [[ $baseline_size -gt $estimated_size ]]; then
 		recommended_size=$baseline_size
 	else
