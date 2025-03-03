@@ -1259,12 +1259,48 @@ get_kernel_size()
 	echo $_size
 }
 
+get_unpacked_initramfs_size()
+{
+	local _tmp_unpack_dir="$KDUMP_TMPDIR/initrd_unpack"
+	local _size
+	mkdir -p "$_tmp_unpack_dir"
+
+	(cd "$_tmp_unpack_dir" && lsinitrd "$TARGET_INITRD" --unpack >/dev/null 2>&1)
+
+	# Add size of any squashfs/erofs images after unpacking/mounting
+	while read -r _img; do
+		local _img_mnt="$_tmp_unpack_dir/img_$$"
+		local _img_fs="squashfs"
+		mkdir -p "$_img_mnt"
+
+		if [[ "$_img" == *"erofs-root.img" ]]; then
+			_img_fs="erofs"
+			# lsinitrd use fsck.erofs to extract erofs-root.img.
+			if [[ -e "$_tmp_unpack_dir/erofs-root" ]]; then
+				_size=$(du -sb "$_tmp_unpack_dir/erofs-root" | awk '{print $1}')
+			fi
+			if [[ "$_size" -ne 0 ]]; then
+				break
+			fi
+		fi
+
+		if mount -t "$_img_fs" "$_img" "$_img_mnt" 2>/dev/null; then
+			_size=$(du -sb "$_img_mnt" | awk '{print $1}')
+			umount "$_img_mnt"
+		else
+			derror "mount -t $_img_fs $_img failed!"
+		fi
+	done < <(find "$_tmp_unpack_dir" -name "*.img")
+	echo "$_size"
+}
+
 do_estimate()
 {
 	local kdump_mods
 	local -A large_mods
 	local baseline
 	local kernel_size mod_size initrd_size baseline_size runtime_size reserved_size estimated_size recommended_size _cryptsetup_overhead
+	local unpacked_initramfs_size
 	local size_mb=$((1024 * 1024))
 
 	setup_initrd
@@ -1296,12 +1332,15 @@ do_estimate()
 	# Current reserved crashkernel size
 	reserved_size=$(get_reserved_mem_size)
 	# A pre-estimated value for userspace usage and kernel
-	# runtime allocation, 64M should good for most cases
-	runtime_size=$((64 * size_mb))
+	# runtime allocation, 32M should good for most cases
+	runtime_size=$((32 * size_mb))
 	# Kernel image size
 	kernel_size=$(get_kernel_size "$KDUMP_KERNEL")
 	# Kdump initramfs size
 	initrd_size=$(du -b "$TARGET_INITRD" | awk '{print $1}')
+	# Get the decompressed size of initramfs contents
+	unpacked_initramfs_size=$(get_unpacked_initramfs_size)
+
 	# Kernel modules static size after loaded
 	mod_size=0
 	while read -r _name _size _; do
@@ -1338,7 +1377,7 @@ do_estimate()
 		echo -e "Encrypted kdump target requires extra memory, assuming using the keyslot with maximum memory requirement\n"
 	fi
 
-	estimated_size=$((kernel_size + mod_size + initrd_size + runtime_size + crypt_size))
+	estimated_size=$((kernel_size + mod_size + unpacked_initramfs_size + initrd_size + runtime_size + crypt_size))
 	if [[ $baseline_size -gt $estimated_size ]]; then
 		recommended_size=$baseline_size
 	else
@@ -1351,6 +1390,7 @@ do_estimate()
 	echo "Kernel image size:   $((kernel_size / size_mb))M"
 	echo "Kernel modules size: $((mod_size / size_mb))M"
 	echo "Initramfs size:      $((initrd_size / size_mb))M"
+	echo "Unpacked initramfs size: $((unpacked_initramfs_size / size_mb))M"
 	echo "Runtime reservation: $((runtime_size / size_mb))M"
 	[[ $crypt_size -ne 0 ]] &&
 		echo "LUKS required size:  $((crypt_size / size_mb))M"
