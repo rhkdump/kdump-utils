@@ -1005,7 +1005,7 @@ kdump_get_arch_recommend_crashkernel()
 	_arch=$(uname -m)
 
 	if [[ $_arch == "x86_64" ]] || [[ $_arch == "s390x" ]]; then
-		_ck_cmdline="1G-4G:192M,4G-64G:256M,64G-:512M"
+		_ck_cmdline="2G-64G:256M,64G-:512M"
 		is_sme_or_sev_active && ((_delta += 64))
 	elif [[ $_arch == "aarch64" ]]; then
 		local _running_kernel
