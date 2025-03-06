@@ -1011,7 +1011,7 @@ kdump_get_arch_recommend_crashkernel()
 		local _running_kernel
 
 		# Base line for 4K variant kernel. The formula is based on x86 plus extra = 64M
-		_ck_cmdline="1G-4G:256M,4G-64G:320M,64G-:576M"
+		_ck_cmdline="2G-4G:256M,4G-64G:320M,64G-:576M"
 		if [[ -z "$2" ]]; then
 			_running_kernel=$(_get_kdump_kernel_version)
 		else
@@ -1021,7 +1021,7 @@ kdump_get_arch_recommend_crashkernel()
 		# the naming convention of 64k variant suffixes with +64k, e.g. "vmlinuz-5.14.0-312.el9.aarch64+64k"
 		if echo "$_running_kernel" | grep -q 64k; then
 			# Without smmu, the diff of MemFree between 4K and 64K measured on a high end aarch64 machine is 82M.
-			# Picking up 100M to cover this diff. And finally, we have "1G-4G:356M;4G-64G:420M;64G-:676M"
+			# Picking up 100M to cover this diff. And finally, we have "2G-4G:356M;4G-64G:420M;64G-:676M"
 			((_delta += 100))
 			# On a 64K system, the extra 384MB is calculated by: cmdq_num * 16 bytes + evtq_num * 32B + priq_num * 16B
 			# While on a 4K system, it is negligible
