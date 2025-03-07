@@ -12,17 +12,19 @@ Describe 'kdump-lib'
 
 		AfterAll 'cleanup'
 
-		ONE_GIGABYTE='000000-3fffffff : System RAM'
+		# 1000MB per block
+		MEMORY_BLOCK='000000-3e800000 : System RAM'
 		Parameters
-			1
-			3
+			1 1
+			3 3
+			6 5
 		End
 
 		It 'should return correct system RAM size'
 			echo -n >"$PROC_IOMEM"
-			for _ in $(seq 1 "$1"); do echo "$ONE_GIGABYTE" >>"$PROC_IOMEM"; done
+			for _ in $(seq 1 "$1"); do echo "$MEMORY_BLOCK" >>"$PROC_IOMEM"; done
 			When call get_system_size
-			The output should equal "$1"
+			The output should equal "$2"
 		End
 
 	End
