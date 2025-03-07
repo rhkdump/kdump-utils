@@ -801,8 +801,11 @@ PROC_IOMEM=/proc/iomem
 #get system memory size i.e. memblock.memory.total_size in the unit of GB
 get_system_size()
 {
-	sum=$(sed -n "s/\s*\([0-9a-fA-F]\+\)-\([0-9a-fA-F]\+\) : System RAM$/+ 0x\2 - 0x\1 + 1/p" $PROC_IOMEM)
-	echo $(( (sum) / 1024 / 1024 / 1024))
+	local _mem_size_mb _sum
+	_sum=$(sed -n "s/\s*\([0-9a-fA-F]\+\)-\([0-9a-fA-F]\+\) : System RAM$/+ 0x\2 - 0x\1 + 1/p" $PROC_IOMEM)
+	_mem_size_mb=$(( (_sum) / 1024 / 1024 ))
+	# rounding up the total_size to 128M to align with kernel code kernel/crash_reserve.c
+	echo $(((_mem_size_mb + 127) / 128 * 128 / 1024 ))
 }
 
 # Return the recommended size for the reserved crashkernel memory
