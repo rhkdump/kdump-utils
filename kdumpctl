@@ -1287,7 +1287,7 @@ do_estimate()
 	elif [[ ${baseline: -1} == "G" ]]; then
 		baseline=$((${baseline%G} * 1024))
 	elif [[ ${baseline: -1} == "T" ]]; then
-		baseline=$((${baseline%Y} * 1048576))
+		baseline=$((${baseline%T} * 1048576))
 	fi
 
 	# The default pre-reserved crashkernel value
