@@ -26,16 +26,15 @@ CORE_COLLECTOR=""
 DEFAULT_CORE_COLLECTOR="makedumpfile -l --message-level 7 -d 31"
 DMESG_COLLECTOR="/sbin/vmcore-dmesg"
 FAILURE_ACTION="systemctl reboot -f"
-DATEDIR=$(date +%Y-%m-%d-%T)
 HOST_IP='127.0.0.1'
 DUMP_INSTRUCTION=""
-SSH_KEY_LOCATION=$DEFAULT_SSHKEY
+SSH_KEY=$DEFAULT_SSHKEY
 DD_BLKSIZE=512
 FINAL_ACTION="systemctl reboot -f"
 KDUMP_PRE=""
 KDUMP_POST=""
 NEWROOT="/sysroot"
-OPALCORE="/sys/firmware/opal/mpipl/core"
+OPALCORE=""
 KDUMP_CONF_PARSED="/tmp/kdump.conf.$$"
 
 # POSIX doesn't have pipefail, only apply when using bash
@@ -58,7 +57,7 @@ get_kdump_confs() {
                 ;;
             sshkey)
                 if [ -f "$config_val" ]; then
-                    SSH_KEY_LOCATION=$config_val
+                    SSH_KEY=$config_val
                 fi
                 ;;
             kdump_pre)
@@ -133,14 +132,13 @@ save_log() {
     eval "$KDUMP_LOG_OP"
 }
 
-# $1: dump path, must be a mount point
 dump_fs() {
-    ddebug "dump_fs _mp=$1"
+    ddebug "dump_fs _mp=$NEWROOT"
 
-    if ! is_mounted "$1"; then
-        dinfo "dump path '$1' is not mounted, trying to mount..."
-        if ! mount --target "$1"; then
-            derror "failed to dump to '$1', it's not a mount point!"
+    if ! is_mounted "$NEWROOT"; then
+        dinfo "dump path '$NEWROOT' is not mounted, trying to mount..."
+        if ! mount --target "$NEWROOT"; then
+            derror "failed to dump to '$NEWROOT', it's not a mount point!"
             return 1
         fi
     fi
@@ -156,39 +154,33 @@ dump_fs() {
             ;;
     esac
 
-    if [ -z "$KDUMP_TEST_ID" ]; then
-        _dump_fs_path=$(echo "$1/$KDUMP_PATH/$HOST_IP-$DATEDIR/" | tr -s /)
-    else
-        _dump_fs_path=$(echo "$1/$KDUMP_PATH/" | tr -s /)
-    fi
-
-    dinfo "saving to $_dump_fs_path"
+    dinfo "saving to $KDUMP_PATH"
 
     # Only remount to read-write mode if the dump target is mounted read-only.
-    _dump_mnt_op=$(get_mount_info OPTIONS target "$1" -f)
+    _dump_mnt_op=$(get_mount_info OPTIONS target "$NEWROOT" -f)
     case $_dump_mnt_op in
         ro*)
             dinfo "Remounting the dump target in rw mode."
-            mount -o remount,rw "$1" || return 1
+            mount -o remount,rw "$NEWROOT" || return 1
             ;;
     esac
 
-    mkdir -p "$_dump_fs_path" || return 1
+    mkdir -p "$KDUMP_PATH" || return 1
 
-    save_vmcore_dmesg_fs ${DMESG_COLLECTOR} "$_dump_fs_path"
-    save_opalcore_fs "$_dump_fs_path"
+    save_vmcore_dmesg_fs ${DMESG_COLLECTOR} "$KDUMP_PATH"
+    save_opalcore_fs "$KDUMP_PATH"
 
     dinfo "saving vmcore"
-    KDUMP_LOG_DEST=$_dump_fs_path/
+    KDUMP_LOG_DEST=$KDUMP_PATH/
     KDUMP_LOG_OP="mv '$KDUMP_LOG_FILE' '$KDUMP_LOG_DEST/'"
 
-    $CORE_COLLECTOR /proc/vmcore "$_dump_fs_path/vmcore-incomplete"
+    $CORE_COLLECTOR /proc/vmcore "$KDUMP_PATH/vmcore-incomplete"
     _dump_exitcode=$?
     if [ $_dump_exitcode -eq 0 ]; then
-        sync -f "$_dump_fs_path/vmcore-incomplete"
+        sync -f "$KDUMP_PATH/vmcore-incomplete"
         _sync_exitcode=$?
         if [ $_sync_exitcode -eq 0 ]; then
-            mv "$_dump_fs_path/vmcore-incomplete" "$_dump_fs_path/vmcore"
+            mv "$KDUMP_PATH/vmcore-incomplete" "$KDUMP_PATH/vmcore"
             dinfo "saving vmcore complete"
         else
             derror "sync vmcore failed, exitcode:$_sync_exitcode"
@@ -226,14 +218,7 @@ save_vmcore_dmesg_fs() {
 
 # $1: dump path
 save_opalcore_fs() {
-    if [ ! -f $OPALCORE ]; then
-        # Check if we are on an old kernel that uses a different path
-        if [ -f /sys/firmware/opal/core ]; then
-            OPALCORE="/sys/firmware/opal/core"
-        else
-            return 0
-        fi
-    fi
+    [ -n "$OPALCORE" ] || return 0
 
     dinfo "saving opalcore:$OPALCORE to $1/opalcore"
     if ! cp $OPALCORE "$1/opalcore"; then
@@ -269,8 +254,9 @@ dump_to_rootfs() {
         return
     fi
 
+    KDUMP_PATH="$NEWROOT/$KDUMP_PATH/$HOST_IP-$(date +%Y-%m-%d-%T)"
     ddebug "NEWROOT=$NEWROOT"
-    dump_fs $NEWROOT
+    dump_fs
 }
 
 kdump_emergency_shell() {
@@ -399,115 +385,59 @@ dump_raw() {
     return 0
 }
 
-# $1: ssh key file
-# $2: ssh address in <user>@<host> format
+_curl() {
+    curl --silent \
+        --fail-early \
+        --create-file-mode 0600 \
+        --ftp-create-dirs \
+        -u "$SSH_USER:" \
+        --key "$SSH_KEY" \
+        "$@"
+}
+
+# copy a file to remote host using curl
+# $1: file to be copied or - (dash) when read from stdin
+# $2: destination path on remote host
+copy_to_remote() {
+    _src="$1"; shift
+    _dst="$1"; shift
+
+    _url="sftp://$SSH_HOST"
+
+    dinfo "saving ${_dst##*/} to $SSH_HOST:${_dst%/*}"
+    _curl -T "$_src" -Q "-rename $_dst-incomplete $_dst" "$_url/$_dst-incomplete"
+    _ret=$?
+    if [ $_ret -ne 0 ]; then
+        derror "failed to save ${_dst##*/}, exitcode $_ret"
+        return $_ret
+    fi
+
+    dinfo "saving ${_dst##*/} complete"
+}
+
 dump_ssh() {
-    _ret=0
-    _ssh_opts="-i $1 -o BatchMode=yes -o StrictHostKeyChecking=yes"
-    if [ -z "$KDUMP_TEST_ID" ]; then
-        _ssh_dir="$KDUMP_PATH/$HOST_IP-$DATEDIR"
-    else
-        _ssh_dir="$KDUMP_PATH"
-    fi
-
-    if is_ipv6_address "$2"; then
-        _scp_address=${2%@*}@"[${2#*@}]"
-    else
-        _scp_address=$2
-    fi
-
-    dinfo "saving to $2:$_ssh_dir"
+    dinfo "saving to $SSH_HOST:$KDUMP_PATH"
 
     cat /var/lib/random-seed > /dev/urandom
-    # shellcheck disable=SC2086 # ssh_opts needs to be split
-    ssh -q $_ssh_opts "$2" mkdir -p "$_ssh_dir" || return 1
 
-    save_vmcore_dmesg_ssh "$DMESG_COLLECTOR" "$_ssh_dir" "$_ssh_opts" "$2"
+    $DMESG_COLLECTOR /proc/vmcore | copy_to_remote "-" "$KDUMP_PATH/vmcore-dmesg.txt"
 
     dinfo "saving vmcore"
 
-    KDUMP_LOG_DEST=$2:$_ssh_dir/
-    KDUMP_LOG_OP="scp -q $_ssh_opts '$KDUMP_LOG_FILE' '$_scp_address:$_ssh_dir/'"
+    KDUMP_LOG_DEST=$SSH_HOST:$KDUMP_PATH/
+    KDUMP_LOG_OP="copy_to_remote '$KDUMP_LOG_FILE' '$KDUMP_PATH/kexec-dmesg.log'"
 
-    save_opalcore_ssh "$_ssh_dir" "$_ssh_opts" "$2" "$_scp_address"
+    [ -n "$OPALCORE" ] && copy_to_remote "$OPALCORE" "$KDUMP_PATH/opalcore"
 
     if [ "${CORE_COLLECTOR%%[[:blank:]]*}" = "scp" ]; then
-        # shellcheck disable=SC2086 # ssh_opts needs to be split
-        scp -q $_ssh_opts /proc/vmcore "$_scp_address:$_ssh_dir/vmcore-incomplete"
+        copy_to_remote /proc/vmcore "$KDUMP_PATH/vmcore"
         _ret=$?
-        _vmcore="vmcore"
     else
-        # shellcheck disable=SC2029,SC2086
-        #  - _ssh_opts needs to be split
-        #  - _ssh_dir needs to be expanded
-        $CORE_COLLECTOR /proc/vmcore | ssh $_ssh_opts "$2" "umask 0077 && dd bs=512 of='$_ssh_dir/vmcore-incomplete'"
+        $CORE_COLLECTOR /proc/vmcore | copy_to_remote "-" "$KDUMP_PATH/vmcore.flat"
         _ret=$?
-        _vmcore="vmcore.flat"
-    fi
-
-    if [ $_ret -eq 0 ]; then
-        # shellcheck disable=SC2029,SC2086
-        #  - _ssh_opts needs to be split
-        #  - _ssh_dir needs to be expanded
-        ssh $_ssh_opts "$2" "mv '$_ssh_dir/vmcore-incomplete' '$_ssh_dir/$_vmcore'"
-        _ret=$?
-        if [ $_ret -ne 0 ]; then
-            derror "moving vmcore failed, exitcode:$_ret"
-        else
-            dinfo "saving vmcore complete"
-        fi
-    else
-        derror "saving vmcore failed, exitcode:$_ret"
     fi
 
     return $_ret
-}
-
-# $1: dump path
-# $2: ssh opts
-# $3: ssh address in <user>@<host> format
-# $4: scp address, similar with ssh address but IPv6 addresses are quoted
-save_opalcore_ssh() {
-    if [ ! -f $OPALCORE ]; then
-        # Check if we are on an old kernel that uses a different path
-        if [ -f /sys/firmware/opal/core ]; then
-            OPALCORE="/sys/firmware/opal/core"
-        else
-            return 0
-        fi
-    fi
-
-    dinfo "saving opalcore:$OPALCORE to $3:$1"
-
-    # shellcheck disable=SC2086 # $2 (_ssh_opts) needs to be split
-    if ! scp $2 "$OPALCORE" "$4:$1/opalcore-incomplete"; then
-        derror "saving opalcore failed"
-        return 1
-    fi
-
-    # shellcheck disable=SC2029,SC2086
-    #  - $1 (dump path) needs to be expanded
-    #  - $2 (_ssh_opts) needs to be split
-    ssh $2 "$3" mv "$1/opalcore-incomplete" "$1/opalcore"
-    dinfo "saving opalcore complete"
-    return 0
-}
-
-# $1: dmesg collector
-# $2: dump path
-# $3: ssh opts
-# $4: ssh address in <user>@<host> format
-save_vmcore_dmesg_ssh() {
-    dinfo "saving vmcore-dmesg.txt to $4:$2"
-    # shellcheck disable=SC2029,SC2086
-    #  - $2 (_ssh_dir) needs to be expanded
-    #  - $3 (_ssh_opts) needs to be split
-    if "$1" /proc/vmcore | ssh $3 "$4" "umask 0077 && dd of='$2/vmcore-dmesg-incomplete.txt'"; then
-        ssh -q $3 "$4" mv "$2/vmcore-dmesg-incomplete.txt" "$2/vmcore-dmesg.txt"
-        dinfo "saving vmcore-dmesg.txt complete"
-    else
-        derror "saving vmcore-dmesg.txt failed"
-    fi
 }
 
 wait_online_network() {
@@ -575,19 +505,24 @@ read_kdump_confs() {
             dracut_args)
                 config_val=$(get_dracut_args_target "$config_val")
                 if [ -n "$config_val" ]; then
-                    config_val=$(get_mntpoint_from_target "$config_val")
-                    DUMP_INSTRUCTION="dump_fs $config_val"
+                    NEWROOT=$(get_mntpoint_from_target "$config_val")
+                    DUMP_INSTRUCTION="dump_fs"
                 fi
                 ;;
             ext[234] | xfs | btrfs | minix | nfs | virtiofs)
-                config_val=$(get_mntpoint_from_target "$config_val")
-                DUMP_INSTRUCTION="dump_fs $config_val"
+                NEWROOT=$(get_mntpoint_from_target "$config_val")
+                DUMP_INSTRUCTION="dump_fs"
                 ;;
             raw)
                 DUMP_INSTRUCTION="dump_raw $config_val"
                 ;;
             ssh)
-                DUMP_INSTRUCTION="dump_ssh $SSH_KEY_LOCATION $config_val"
+                SSH_USER="${config_val%@*}"
+                SSH_HOST="${config_val#*@}"
+                if is_ipv6_address "$SSH_HOST"; then
+                    SSH_HOST="[$SSH_HOST]"
+                fi
+                DUMP_INSTRUCTION="dump_ssh"
                 ;;
         esac
     done < "$KDUMP_CONF_PARSED"
@@ -600,33 +535,16 @@ fence_kdump_notify() {
     fi
 }
 
-kdump_test_set_status() {
-    _status="$1"
-
+kdump_test_mark_success() {
     [ -n "$KDUMP_TEST_STATUS" ] || return
 
-    case "$_status" in
-        success|fail) ;;
-        *)
-            derror "Unknown test status $_status"
-            return 1
-            ;;
-    esac
+    _status="success kdump_test_id=$KDUMP_TEST_ID"
 
     if is_ssh_dump_target; then
-        _ssh_opts="-i $SSH_KEY_LOCATION -o BatchMode=yes -o StrictHostKeyChecking=yes"
-        _ssh_host=$(echo "$DUMP_INSTRUCTION" | awk '{print $3}')
-
-        ssh -q $_ssh_opts "$_ssh_host" "mkdir -p ${KDUMP_TEST_STATUS%/*}" \
-            || return 1
-        ssh -q $_ssh_opts "$_ssh_host" "echo $_status kdump_test_id=$KDUMP_TEST_ID > $KDUMP_TEST_STATUS" \
-            || return 1
+        echo "$_status" | _curl -T "-" "sftp://$SSH_HOST/$KDUMP_TEST_STATUS"
     else
-	_target=$(echo "$DUMP_INSTRUCTION" | awk '{print $2}')
-
-        mkdir -p "$_target/$KDUMP_PATH" || return 1
-        echo "$_status kdump_test_id=$KDUMP_TEST_ID" > "$_target/$KDUMP_TEST_STATUS"
-        sync -f "$_target/$KDUMP_TEST_STATUS"
+        echo "$_status" > "$KDUMP_TEST_STATUS"
+        sync -f "$KDUMP_TEST_STATUS"
     fi
 }
 
@@ -636,11 +554,16 @@ kdump_test_init() {
     KDUMP_TEST_ID=$(getarg kdump_test_id=)
     [ -z "$KDUMP_TEST_ID" ] && return
 
+    KDUMP_PATH="${KDUMP_PATH%/*}"
     KDUMP_PATH="$KDUMP_PATH/kdump-test-$KDUMP_TEST_ID"
     KDUMP_TEST_STATUS="$KDUMP_PATH/vmcore-creation.status"
-
-    kdump_test_set_status 'fail'
 }
+
+for _core in "/sys/firmware/opal/mpipl/core" "/sys/firmware/opal/core"; do
+    [ -f "$_core" ] || continue
+    OPALCORE="$_core"
+    break
+done
 
 if [ "$1" = "--error-handler" ]; then
     get_kdump_confs
@@ -665,8 +588,12 @@ if ! get_host_ip; then
 fi
 
 if [ -z "$DUMP_INSTRUCTION" ]; then
-    DUMP_INSTRUCTION="dump_fs $NEWROOT"
+    DUMP_INSTRUCTION="dump_fs"
 fi
+
+KDUMP_PATH="$KDUMP_PATH/$HOST_IP-$(date +%Y-%m-%d-%T)"
+[ "$DUMP_INSTRUCTION" = "dump_fs" ] && KDUMP_PATH="$NEWROOT/$KDUMP_PATH"
+KDUMP_PATH="$(echo "$KDUMP_PATH" | tr -s /)"
 
 kdump_test_init
 if ! do_kdump_pre; then
@@ -689,5 +616,5 @@ if [ $DUMP_RETVAL -ne 0 ]; then
     exit 1
 fi
 
-kdump_test_set_status "success"
+kdump_test_mark_success
 do_final_action
