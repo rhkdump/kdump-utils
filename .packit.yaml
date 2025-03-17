@@ -26,9 +26,30 @@ jobs:
   - job: copr_build
     trigger: pull_request
     targets:
-      - fedora-all
+      - fedora-41-x86_64
+      - fedora-rawhide-x86_64
     packages:
       - kdump-utils
+
+  - job: tests
+    trigger: pull_request
+    targets:
+      - fedora-41-x86_64
+    tmt_plan: nfs_fips$
+    fmf_path: kernel-tests-plans
+    use_internal_tf: true
+    tf_extra_params:
+      environments:
+        - variables:
+            # use internal NFS/SSH server to avoid creating another VM as NFS/SSH server
+            RESOURCE_URL: https://gitlab.cee.redhat.com/kernel-qe/kernel/-/raw/master/kdump/internal/internal_resources.sh
+            AUTO_CONFIG: auto
+            SUBMITTER: rhkdump_kdump_utils_packit
+        - settings:
+            provisioning:
+            # report cloud costs: https://docs.testing-farm.io/Testing%20Farm/0.1/services.html#_changing_the_team_name
+              tags:
+                BusinessUnit: sst_kernel_debug_sst
 
   - job: koji_build
     trigger: commit
