@@ -36,7 +36,6 @@ jobs:
     targets:
       - fedora-41-x86_64
       - fedora-rawhide-x86_64
-    tmt_plan: nfs_fips$
     fmf_path: kernel-tests-plans
     use_internal_tf: true
     tf_extra_params:
