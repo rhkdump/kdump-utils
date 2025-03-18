@@ -1,0 +1,9 @@
+summary: Kdump ssh dumping tests
+discover+:
+    test:
+     - /kdump/config-default-crashkernel
+     - /kdump/config-ssh
+     - /kdump/crash-sysrq-c
+     - /kdump/copy-ssh
+     - /kdump/analyse-crash-cmd/simple_check
+
