@@ -420,13 +420,19 @@ fi
 if ! is_fadump_capable; then
 	# The 2nd rootfs mount stays behind the normal dump target mount,
 	# so it doesn't affect the logic of check_dump_fs_modified().
-	is_dump_to_rootfs && add_mount "$(to_dev_name "$(get_root_fs_device)")"
+	is_dump_to_rootfs && add_root_mount=yes
 
 	dracut_args+=(--no-hostonly-default-device)
 
 	if [[ $(cat /proc/sys/crypto/fips_enabled) == 1  ]]; then
 		dracut_args+=(--add-device "$(findmnt -n -o SOURCE --target /boot)")
+		# dracut fips module won't mount the root fs when /boot isn't a
+		# separate partition
+		if ! findmnt /boot >/dev/null; then
+			add_root_mount=yes
+		fi
 	fi
+	[[ $add_root_mount == yes ]] && add_mount "$(to_dev_name "$(get_root_fs_device)")"
 fi
 
 # Use kdump managed dracut profile.
