@@ -63,9 +63,9 @@ Describe 'Management of the kernel crashkernel parameter.'
 		[[ "$1" == grubby ]]
 	}
 
-	Describe "When kexec-tools have its default crashkernel updated, "
+	Describe "When kdump-utils have its default crashkernel updated, "
 
-		Context "if kexec-tools is updated alone, "
+		Context "if kdump-utils is updated alone, "
 			BeforeAll 'setup'
 			AfterAll 'cleanup'
 			Specify 'reset_crashkernel_after_update should report updated kernels and note that auto_reset_crashkernel=yes'

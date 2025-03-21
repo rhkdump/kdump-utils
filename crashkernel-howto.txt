@@ -1,7 +1,7 @@
 Introduction
 ============
 
-This document describes features the kexec-tools package provides for setting
+This document describes features the kdump-utils package provides for setting
 and estimating the crashkernel value.
 
 Kdump lives in a pre-reserved chunk of memory, and the size of the reserved
@@ -13,7 +13,7 @@ kdump after you updated the `crashkernel=` value or changed the dump target.
 Default crashkernel value
 =========================
 
-Latest kexec-tools provides "kdumpctl get-default-crashkernel" to retrieve
+Latest kdump-utils provides "kdumpctl get-default-crashkernel" to retrieve
 the default crashkernel value,
 
 	$ echo $(kdumpctl get-default-crashkernel)
@@ -37,16 +37,16 @@ Users can override the value during Anaconda installation manually.
 Auto update of crashkernel boot parameter
 =========================================
 
-A new release of kexec-tools could update the default crashkernel value.  By
-default, kexec-tools would reset crashkernel to the new default value if it
+A new release of kdump-utils could update the default crashkernel value.  By
+default, kdump-utils would reset crashkernel to the new default value if it
 detects the old default crashkernel value is used by installed kernels. If you
-don't want kexec-tools to update the old default crashkernel to the new default
+don't want kdump-utils to update the old default crashkernel to the new default
 crashkernel, you can change auto_reset_crashkernel to no in kdump.conf.
 
 Supported Bootloaders
 ---------------------
 
-This auto update only works with GRUB2 and ZIPL, as kexec-tools heavily depends
+This auto update only works with GRUB2 and ZIPL, as kdump-utils heavily depends
 on `grubby`. If other boot loaders are used, the user will have to update the
 `crashkernel=` value manually.
 
@@ -54,7 +54,7 @@ on `grubby`. If other boot loaders are used, the user will have to update the
 Reset crashkernel to default value
 ==================================
 
-kexec-tools only perform the auto update of crashkernel value when it can
+kdump-utils only perform the auto update of crashkernel value when it can
 confirm the boot kernel's crashkernel value is using its corresponding default
 value and auto_reset_crashkernel=yes in kdump.conf. In other cases, the user
 can reset the crashkernel value by themselves.

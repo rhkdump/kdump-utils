@@ -64,9 +64,9 @@ How to configure kdump
 ======================
 
 Again, we assume if you're reading this document, you should already have
-kexec-tools installed. If not, you install it via the following command:
+kdump-utils installed. If not, you install it via the following command:
 
-    # dnf install kexec-tools
+    # dnf install kdump-utils
 
 To be able to do much of anything interesting in the way of debug analysis,
 you'll also need to install the kernel-debuginfo package, of the same arch
@@ -90,7 +90,7 @@ find the best value that works for your setup. To begin with
 
 gives you an estimation for the crashkernel value based on the currently
 running kernel. For more details, please refer to the "Estimate crashkernel"
-section in /usr/share/doc/kexec-tools/crashkernel-howto.txt.
+section in /usr/share/doc/kdump-utils/crashkernel-howto.txt.
 
 Note that there is an alternative form in which to specify a crashkernel
 memory reservation, in the event that more control is needed over the size and
@@ -696,10 +696,10 @@ Compression and filtering
 -------------------------
 
 The 'core_collector' parameter in kdump.conf allows you to specify a custom
-dump capture method. The most common alternate method is makedumpfile, which
-is a dump filtering and compression utility provided with kexec-tools. On
-some architectures, it can drastically reduce the size of your vmcore files,
-which becomes very useful on systems with large amounts of memory.
+dump capture method. The most common alternate method is makedumpfile, which is
+a dump filtering and compression utility. On some architectures, it can
+drastically reduce the size of your vmcore files, which becomes very useful on
+systems with large amounts of memory.
 
 A typical setup is 'core_collector makedumpfile -F -l --message-level 7 -d 31',
 but check the output of '/sbin/makedumpfile --help' for a list of all available
@@ -857,7 +857,7 @@ loaded in crash kernel, so that either watchdog is deactivated or started
 being kicked in second kernel. Otherwise, we might face watchdog reboot
 when vmcore is being saved. When dracut watchdog module is enabled, it
 installs kernel watchdog module of active watchdog device in initrd.
-kexec-tools always add "-a watchdog" to the dracut_args if there exists at
+kdump-utils always add "-a watchdog" to the dracut_args if there exists at
 least one active watchdog and user has not added specifically "-o watchdog"
 in dracut_args of kdump.conf. If a watchdog module (such as hp_wdt) has
 not been written in watchdog-core framework then this option will not have

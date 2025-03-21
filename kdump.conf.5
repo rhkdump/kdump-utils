@@ -1,4 +1,4 @@
-.TH KDUMP.CONF 5 "07/23/2008" "kexec-tools"
+.TH KDUMP.CONF 5 "07/23/2008" "kdump-utils"
 
 .SH NAME
 kdump.conf \- configuration file for kdump kernel.
@@ -29,7 +29,7 @@ understand how this configuration file affects the behavior of kdump.
 .B auto_reset_crashkernel <yes|no>
 .RS
 determine whether to reset kernel crashkernel parameter to the default value
-or not when kexec-tools is updated or a new kernel is installed. The default
+or not when kdump-utils is updated or a new kernel is installed. The default
 crashkernel values are different for different architectures and also take the
 following factors into consideration,
 .IP
@@ -41,7 +41,7 @@ following factors into consideration,
 .IP
 \- Firmware-assisted dump (FADump)
 .PP
-Since the kernel crasherkernel parameter will be only reset when kexec-tools is
+Since the kernel crasherkernel parameter will be only reset when kdump-utils is
 updated or a new kernel is installed, you need to call "kdumpctl
 reset-crashkernel [--kernel=path_to_kernel]" if you want to use the default
 value set after having enabled features like SME/SEV for a specific kernel. And
