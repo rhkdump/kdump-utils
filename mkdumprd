@@ -375,7 +375,7 @@ while read -r config_opt config_val; do
 		;;
 	dracut_args)
 
-		# When users specify nfs dumping via dracut_args, kexec-tools won't
+		# When users specify nfs dumping via dracut_args, kdump-utils won't
 		# mount nfs fs beforehand thus nfsv4-related drivers won't be installed
 		# because we call dracut with --hostonly-mode strict. So manually install
 		# nfsv4-related drivers.

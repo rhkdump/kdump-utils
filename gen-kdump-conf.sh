@@ -21,7 +21,7 @@ generate()
 #
 # auto_reset_crashkernel <yes|no>
 #           - whether to reset kernel crashkernel to new default value
-#             or not when kexec-tools updates the default crashkernel value and
+#             or not when kdump-utils updates the default crashkernel value and
 #             existing kernels using the old default kernel crashkernel value.
 #             The default value is yes. Note the user-specified value will be
 #             overwritten to the default crahskernel value.

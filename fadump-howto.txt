@@ -36,10 +36,10 @@ system registers, and hardware PTE's.
 Fadump is supported only on ppc64 platform. The standard kernel and capture
 kernel are one and the same on ppc64.
 
-If you're reading this document, you should already have kexec-tools
+If you're reading this document, you should already have kdump-utils
 installed. If not, you install it via the following command:
 
-    # dnf install kexec-tools
+    # dnf install kdump-utils
 
 Fadump Operational Flow:
 
@@ -80,9 +80,9 @@ The control flow of fadump works as follows:
 How to configure fadump:
 
 Again, we assume if you're reading this document, you should already have
-kexec-tools installed. If not, you install it via the following command:
+kdump-utils installed. If not, you install it via the following command:
 
-    # dnf install kexec-tools
+    # dnf install kdump-utils
 
 Make the kernel to be configured with FADump as the default boot entry, if
 it isn't already:

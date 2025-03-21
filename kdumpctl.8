@@ -1,4 +1,4 @@
-.TH KDUMPCTL 8 2015-07-13 kexec-tools
+.TH KDUMPCTL 8 2015-07-13 kdump-utils
 
 .SH NAME
 kdumpctl \- control interface for kdump
@@ -51,10 +51,10 @@ best-effort estimate. It will print a recommended crashkernel value
 based on the current kdump setup, and list some details of memory usage.
 .TP
 .I get-default-crashkernel
-Return the default crashkernel value provided by kexec-tools.
+Return the default crashkernel value provided by kdump-utils.
 .TP
 .I reset-crashkernel [--kernel=path_to_kernel]
-Reset crashkernel to default value recommended by kexec-tools. If no kernel
+Reset crashkernel to default value recommended by kdump-utils. If no kernel
 is specified, will reset KDUMP_KERNELVER if it's defined in /etc/sysconfig/kdump
 or the current running kernel's crashkernel value if KDUMP_KERNELVER is empty. You can
 also specify --kernel=ALL and --kernel=DEFAULT which have the same meaning as

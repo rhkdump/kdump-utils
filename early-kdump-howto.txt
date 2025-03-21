@@ -21,7 +21,7 @@ the crash kernel and initramfs. It has no conflict with the early kdump.
 How to configure early kdump
 ----------------------------
 
-We assume if you're reading this document, you should already have kexec-tools
+We assume if you're reading this document, you should already have kdump-utils
 installed.
 
 You can rebuild the initramfs with earlykdump support with below steps:
