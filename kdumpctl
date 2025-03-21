@@ -1533,7 +1533,7 @@ reset_crashkernel()
 	#    line. --kernel=ALL doesn't make sense for OStree.
 	# 2. We don't have any OSTree POWER systems so the dump mode is always kdump.
 	# 3. "rpm-ostree kargs" would prompt the user to reboot the system after
-	#    modifying the kernel command line so there is no need for kexec-tools
+	#    modifying the kernel command line so there is no need for kdump-utils
 	#    to repeat it.
 	if is_ostree; then
 		_old_ck=$(rpm-ostree kargs | sed -n -E 's/.*(^|\s)crashkernel=(\S*).*/\2/p')
@@ -1618,7 +1618,7 @@ _update_crashkernel()
 	_new_ck=$(kdump_get_arch_recommend_crashkernel "$_dump_mode" "$_kver")
 	if _update_kernel_cmdline "$_kernel" crashkernel "$_old_ck" "$_new_ck"; then
 		_msg="For kernel=$_kernel, crashkernel=$_new_ck now. Please reboot the system for the change to take effect."
-		_msg+=" Note if you don't want kexec-tools to manage the crashkernel kernel parameter, please set auto_reset_crashkernel=no in /etc/kdump.conf."
+		_msg+=" Note if you don't want kdump-utils to manage the crashkernel kernel parameter, please set auto_reset_crashkernel=no in /etc/kdump.conf."
 		dinfo "$_msg"
 	fi
 }
