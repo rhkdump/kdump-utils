@@ -330,6 +330,10 @@ check_crypt()
 
 if ! check_crypt; then
 	dwarn "Warning: Encrypted device is in dump path, which is not recommended, see kexec-kdump-howto.txt for more details."
+	# TPM device can be used to automatically unlock encrypted volumes
+	if has_command tpm2; then
+		dracut_args+=(--add "tpm2-tss")
+	fi
 fi
 
 # firstly get right SSH_KEY_LOCATION
