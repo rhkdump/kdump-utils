@@ -1,0 +1,10 @@
+summary: Kdump NFS dumping tests with FIPS enabled
+discover+:
+    test:
+     - /security/crypto/enable_fips
+     - /kdump/config-default-crashkernel
+     - /kdump/config-nfs
+     - /kdump/crash-sysrq-c
+     - /kdump/copy-nfs
+     - /kdump/analyse-crash-cmd/simple_check
+

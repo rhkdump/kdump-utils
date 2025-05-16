@@ -1,0 +1,8 @@
+summary: Kdump local dumping tests
+discover+:
+    test:
+     - /kdump/config-default-crashkernel
+     - /kdump/config-any
+     - /kdump/crash-sysrq-c
+     - /kdump/analyse-crash-cmd/simple_check
+
