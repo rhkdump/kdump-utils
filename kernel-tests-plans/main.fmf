@@ -17,6 +17,15 @@ execute:
     how: tmt
     exit-first: true
 
+
+# x86_64 rawhide has UBSAN: array-index-out-of-bounds warnings which are harmless
+# treat them as informational messages
+adjust+:
+   - when: distro >= fedora-42
+     check:
+       - how: dmesg
+         result: info
+
 discover:
     how: fmf
     url: https://gitlab.com/coxu/kernel-tests.git
