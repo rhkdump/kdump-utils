@@ -21,7 +21,7 @@ Type=oneshot
 ExecStart=/bin/kdump.sh
 StandardInput=null
 StandardOutput=journal
-StandardError=journal+console
+StandardError=tty
 KillMode=process
 RemainAfterExit=yes
 
