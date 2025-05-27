@@ -404,7 +404,7 @@ if ! have_compression_in_dracut_args; then
 		dracut_args+=(--squash-compressor zstd)
 	elif has_dracut_module squash-erofs && has_command mkfs.erofs; then
 		dracut_args+=(--add squash-erofs)
-		dracut_args+=(--squash-compressor lz4hc)
+		dracut_args+=(--squash-compressor lzma)
 	elif has_command mksquashfs; then
 		# only true for dracut <= 103
 		dracut_args+=(--add squash)
