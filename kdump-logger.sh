@@ -46,6 +46,7 @@ kdump_kmsgloglvl=""
 # be used in the first kernel because the dracut-lib.sh is invisible in
 # the first kernel.
 if [ -f /lib/dracut-lib.sh ]; then
+	# shellcheck source=/dev/null
 	. /lib/dracut-lib.sh
 fi
 

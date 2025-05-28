@@ -5,6 +5,7 @@
 if [[ ${__SOURCED__:+x} ]]; then
 	. ./kdump-lib-initramfs.sh
 else
+	# shellcheck source=SCRIPTDIR/kdump-lib-initramfs.sh
 	. /lib/kdump/kdump-lib-initramfs.sh
 fi
 
