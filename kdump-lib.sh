@@ -792,6 +792,8 @@ prepare_cmdline()
 
 	# This is a workaround on AWS platform. Always remove irqpoll since it
 	# may cause the hot-remove of some pci hotplug device.
+	# shellcheck disable=SC2001 # \< and \> are word boundary markers which
+	# doesn't exist in bash parameter expansion
 	is_aws_aarch64 && out=$(echo "$out" | sed -e "s/\<irqpoll\>//")
 
 	# Always disable gpt-auto-generator as it hangs during boot of the
