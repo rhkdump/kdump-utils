@@ -3,6 +3,7 @@
 # the default initramfs using zz-fadumpinit dracut module.
 
 if [[ -f /etc/sysconfig/kdump ]]; then
+	# shellcheck source=/dev/null
 	. /etc/sysconfig/kdump
 fi
 

@@ -9,6 +9,7 @@
 [[ -n $debug ]] && set -x
 
 if [[ -f /etc/sysconfig/kdump ]]; then
+	# shellcheck source=/dev/null
 	. /etc/sysconfig/kdump
 fi
 

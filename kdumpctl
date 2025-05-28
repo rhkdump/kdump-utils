@@ -22,6 +22,7 @@ KDUMP_COMMANDLINE_REMOVE="hugepages hugepagesz slub_debug"
 declare -A OPT
 
 if [[ -f /etc/sysconfig/kdump ]]; then
+	# shellcheck source=/dev/null
 	. /etc/sysconfig/kdump
 fi
 
