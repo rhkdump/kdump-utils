@@ -105,13 +105,12 @@ get_fs_type_from_target()
 
 get_mntpoint_from_target()
 {
-	local _mntpoint
 	# get the first TARGET when SOURCE doesn't end with ].
 	# In most cases, a SOURCE ends with ] when fsroot or subvol exists.
 	_mntpoint=$(get_mount_info TARGET,SOURCE source "$1" | grep -v "\]$" | awk 'NR==1 { print $1 }')
 
 	# fallback to the old way when _mntpoint is empty.
-	[[ -n "$_mntpoint" ]] || _mntpoint=$(get_mount_info TARGET source "$1" -f)
+	[ -n "$_mntpoint" ] || _mntpoint=$(get_mount_info TARGET source "$1" -f)
 	echo "$_mntpoint"
 }
 
