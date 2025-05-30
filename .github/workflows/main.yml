@@ -32,7 +32,7 @@ jobs:
     container: docker.io/fedora:latest
     steps:
       - uses: actions/checkout@v4
-      - run: sudo dnf install -y make dracut grubby hostname
+      - run: sudo dnf install -y make dracut grubby hostname gawk
       - run: curl -L -O https://github.com/shellspec/shellspec/archive/latest.tar.gz && tar -xzf latest.tar.gz
       - run: cd shellspec-latest && sudo make install
       - run: shellspec

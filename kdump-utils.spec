@@ -21,6 +21,7 @@ Requires: dracut >= 058
 Requires: dracut-network >= 058
 Requires: dracut-squash >= 058
 Requires: ethtool
+Requires: gawk
 Requires: util-linux
 # Needed for UKI support
 Recommends: binutils
