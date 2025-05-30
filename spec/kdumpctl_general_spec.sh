@@ -128,7 +128,7 @@ Describe 'kdumpctl'
 	Describe "is_dracut_mod_omitted()"
 		KDUMP_CONFIG_FILE=$(mktemp -t kdump_conf.XXXXXXXXXX)
 		cleanup() {
-			rm -f "$kdump_conf"
+			rm -f "$KDUMP_CONFIG_FILE"
 		}
 		AfterAll 'cleanup'
 
