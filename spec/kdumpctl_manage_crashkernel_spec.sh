@@ -12,8 +12,6 @@ Describe 'Management of the kernel crashkernel parameter.'
 	uname() {
 		if [[ $1 == '-m' ]]; then
 			echo -n x86_64
-		elif [[ $1 == '-r' ]]; then
-			echo -n $current_kernel
 		fi
 	}
 
