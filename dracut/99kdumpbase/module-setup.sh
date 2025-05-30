@@ -11,7 +11,10 @@ _save_kdump_netifs() {
 }
 
 _get_kdump_netifs() {
-    echo -n "${!unique_netifs[@]} ${!ovs_unique_netifs[@]}"
+    local -a _all_netifs
+
+    _all_netifs=("${!unique_netifs[@]}" "${!ovs_unique_netifs[@]}")
+    echo -n "${_all_netifs[@]}"
 }
 
 kdump_module_init() {
