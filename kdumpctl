@@ -992,6 +992,7 @@ fadump_bootargs_append()
 	if [[ -f $FADUMP_APPEND_ARGS_SYS_NODE ]]; then
 		local output
 
+		# shellcheck disable=SC2153
 		if output=$({
 			echo "${FADUMP_COMMANDLINE_APPEND}" > "$FADUMP_APPEND_ARGS_SYS_NODE"
 		} 2>&1); then
