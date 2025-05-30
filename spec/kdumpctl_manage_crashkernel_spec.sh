@@ -30,8 +30,8 @@ Describe 'Management of the kernel crashkernel parameter.'
 		cp spec/support/grub_env "$KDUMP_SPEC_TEST_RUN_DIR"/env_temp
 		touch "$GRUB_CFG"
 
-		grubby --args crashkernel=$old_ck --update-kernel=$kernel1
-		grubby --args crashkernel=$new_ck --update-kernel=$kernel2
+		grubby --args crashkernel="$old_ck" --update-kernel="$kernel1"
+		grubby --args crashkernel="$new_ck" --update-kernel="$kernel2"
 		grubby --remove-args fadump --update-kernel=ALL
 
 	}
@@ -75,12 +75,12 @@ Describe 'Management of the kernel crashkernel parameter.'
 			End
 
 			Specify 'kernel1 should have crashkernel updated'
-				When call grubby --info $kernel1
+				When call grubby --info "$kernel1"
 				The line 3 of output should include crashkernel="$new_ck"
 			End
 
 			Specify 'kernel2 should also have crashkernel updated'
-				When call grubby --info $kernel2
+				When call grubby --info "$kernel2"
 				The line 3 of output should include crashkernel="$new_ck"
 			End
 
@@ -93,20 +93,20 @@ Describe 'Management of the kernel crashkernel parameter.'
 			setup
 			new_kernel_ver=new_kernel
 			new_kernel=/boot/vmlinuz-$new_kernel_ver
-			grubby --add-kernel=$new_kernel --initrd=/boot/initramfs-$new_kernel_ver.img --title=$new_kernel_ver
+			grubby --add-kernel="$new_kernel" --initrd=/boot/initramfs-"$new_kernel_ver".img --title="$new_kernel_ver"
 
 			Specify 'reset_crashkernel_for_installed_kernel should report the new kernel has its crashkernel updated'
-				When call reset_crashkernel_for_installed_kernel $new_kernel_ver
+				When call reset_crashkernel_for_installed_kernel "$new_kernel_ver"
 				The output should include "crashkernel=$new_ck"
 			End
 
 			Specify 'the new kernel should have crashkernel updated'
-				When call grubby --info $new_kernel
+				When call grubby --info "$new_kernel"
 				The output should include crashkernel="$new_ck"
 			End
 
 			Specify 'kernel1 keeps its crashkernel value'
-				When call grubby --info $kernel1
+				When call grubby --info "$kernel1"
 				The output should include crashkernel="$old_ck"
 			End
 
