@@ -424,8 +424,22 @@ if ! is_fadump_capable; then
 
 	dracut_args+=(--no-hostonly-default-device)
 
+	# When FIPS mode is enabled, the fips dracut module needs to use
+	# /boot/.vmlinuz-${KERNEL}.hmac to verify the integrity of the kernel.
+	#
+	# If /boot is on a separate partition, the fips module will mount /boot
+	# based on the boot= kernel parameter.
+	#
+	# If /boot is not on a separate partition, the fips dracut module will
+	# link /sysroot/boot to /boot. So we need to mount the root partition
+	# to /sysroot beforehand.
 	if [[ $(cat /proc/sys/crypto/fips_enabled) == 1  ]]; then
-		dracut_args+=(--add-device "$(findmnt -n -o SOURCE --target /boot)")
+		_boot_source=$(findmnt -n -o SOURCE --target /boot)
+		if mountpoint -q /boot; then
+			dracut_args+=(--add-device "$_boot_source")
+		else
+			add_mount "$_boot_source"
+		fi
 	fi
 fi
 
