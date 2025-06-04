@@ -4,10 +4,12 @@
 # not be the default shell. Any code added must be POSIX compliant.
 
 DEFAULT_PATH="/var/crash/"
+# shellcheck disable=SC2034
 DEFAULT_SSHKEY="/root/.ssh/kdump_id_rsa"
 KDUMP_CONFIG_FILE="/etc/kdump.conf"
-FENCE_KDUMP_CONFIG_FILE="/etc/sysconfig/fence_kdump"
+# shellcheck disable=SC2034
 FENCE_KDUMP_SEND="/usr/libexec/fence_kdump_send"
+# shellcheck disable=SC2034
 LVM_CONF="/etc/lvm/lvm.conf"
 
 # Read kdump config in well formated style
@@ -37,6 +39,7 @@ is_mounted()
 # $2: mount source type
 # $3: mount source
 # $4: extra args
+# shellcheck disable=SC2086 # $4 means extra args which nees to word-splitted
 get_mount_info()
 {
 	__kdump_mnt=$(findmnt -k -n -r -o "$1" "--$2" "$3" $4)
@@ -102,14 +105,13 @@ get_fs_type_from_target()
 
 get_mntpoint_from_target()
 {
-	local _mntpoint
 	# get the first TARGET when SOURCE doesn't end with ].
 	# In most cases, a SOURCE ends with ] when fsroot or subvol exists.
 	_mntpoint=$(get_mount_info TARGET,SOURCE source "$1" | grep -v "\]$" | awk 'NR==1 { print $1 }')
 
 	# fallback to the old way when _mntpoint is empty.
-	[[ -n "$_mntpoint" ]] || _mntpoint=$(get_mount_info TARGET source "$1" -f )
-	echo $_mntpoint
+	[ -n "$_mntpoint" ] || _mntpoint=$(get_mount_info TARGET source "$1" -f)
+	echo "$_mntpoint"
 }
 
 is_ssh_dump_target()

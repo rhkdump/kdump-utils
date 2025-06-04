@@ -9,6 +9,7 @@
 [[ -n $debug ]] && set -x
 
 if [[ -f /etc/sysconfig/kdump ]]; then
+	# shellcheck source=/dev/null
 	. /etc/sysconfig/kdump
 fi
 
@@ -43,7 +44,7 @@ MKDUMPRD_TMPDIR="$(mktemp -d -t mkdumprd.XXXXXX)"
 [ -d "$MKDUMPRD_TMPDIR" ] || perror_exit "dracut: mktemp -p -d -t dracut.XXXXXX failed."
 MKDUMPRD_TMPMNT="$MKDUMPRD_TMPDIR/target"
 
-# shellcheck disable=SC2154
+# shellcheck disable=SC2154 # known issue of shellcheck https://github.com/koalaman/shellcheck/issues/1299
 trap '
     ret=$?;
     is_mounted $MKDUMPRD_TMPMNT && umount -f $MKDUMPRD_TMPMNT;
@@ -424,14 +425,14 @@ if ! is_fadump_capable; then
 
 	dracut_args+=(--no-hostonly-default-device)
 
-	if [[ $(cat /proc/sys/crypto/fips_enabled) == 1  ]]; then
+	if [[ $(cat /proc/sys/crypto/fips_enabled) == 1 ]]; then
 		dracut_args+=(--add-device "$(findmnt -n -o SOURCE --target /boot)")
 	fi
 fi
 
 # Use kdump managed dracut profile.
 [[ $kdump_dracut_confdir ]] || kdump_dracut_confdir=/lib/kdump/dracut.conf.d
-if [[ "$(dracut --help)" == *--add-confdir* ]] && [[ -d "$kdump_dracut_confdir" ]]; then
+if [[ "$(dracut --help)" == *--add-confdir* ]] && [[ -d $kdump_dracut_confdir ]]; then
 	dracut_args+=("--add-confdir" "$kdump_dracut_confdir")
 else
 	dracut_args+=(--add kdumpbase)

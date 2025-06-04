@@ -1,4 +1,6 @@
 #!/bin/bash
+# shellcheck disable=SC2286
+
 Describe 'kdumpctl'
 	Include ./kdumpctl
 
@@ -118,7 +120,7 @@ Describe 'kdumpctl'
 		End
 		It "should parse the dracut_args correctly"
 			When call _get_dracut_arg "$1" "$2" "$dracut_args"
-			The status should equal $3
+			The status should equal "$3"
 			The output should equal "$4"
 		End
 	End
@@ -126,7 +128,7 @@ Describe 'kdumpctl'
 	Describe "is_dracut_mod_omitted()"
 		KDUMP_CONFIG_FILE=$(mktemp -t kdump_conf.XXXXXXXXXX)
 		cleanup() {
-			rm -f "$kdump_conf"
+			rm -f "$KDUMP_CONFIG_FILE"
 		}
 		AfterAll 'cleanup'
 
@@ -148,10 +150,10 @@ Describe 'kdumpctl'
 			%data failure foo "-a x -i y"
 		End
 		It "shall return $1 for module $2 and dracut_args '$3'"
-			echo "dracut_args $3" > $KDUMP_CONFIG_FILE
+			echo "dracut_args $3" > "$KDUMP_CONFIG_FILE"
 			parse_config
-			When call is_dracut_mod_omitted $2
-			The status should be $1
+			When call is_dracut_mod_omitted "$2"
+			The status should be "$1"
 		End
 	End
 

@@ -11,7 +11,10 @@ _save_kdump_netifs() {
 }
 
 _get_kdump_netifs() {
-    echo -n "${!unique_netifs[@]} ${!ovs_unique_netifs[@]}"
+    local -a _all_netifs
+
+    _all_netifs=("${!unique_netifs[@]}" "${!ovs_unique_netifs[@]}")
+    echo -n "${_all_netifs[@]}"
 }
 
 kdump_module_init() {
@@ -340,7 +343,7 @@ _install_nmconnections_before_ovs() {
             derror "Failed to install the .nmconnection for $_nic_name"
             exit 1
         fi
-    done <<<"$(nmcli --get-values filename,ACTIVE connection show | grep "no$")"
+    done <<< "$(nmcli --get-values filename,ACTIVE connection show | grep "no$")"
 }
 
 kdump_install_nmconnections() {
