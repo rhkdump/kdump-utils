@@ -120,4 +120,17 @@ Describe 'kdump-lib'
 		End
 	End
 
+	Describe "get_kdump_mntpoint_from_target"
+		get_mntpoint_from_target() {
+			echo -n "/"
+		}
+
+
+		# the fips dracut module requires this when there is no boot partition
+		It 'should make sure root partition will be mounted to /sysroot'
+			When call get_kdump_mntpoint_from_target "/dev/vda2"
+			The output should equal "/sysroot"
+		End
+	End
+
 End
