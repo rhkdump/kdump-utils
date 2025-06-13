@@ -1504,6 +1504,23 @@ _get_all_kernels_from_grubby()
 	echo -n "$_kernels"
 }
 
+check_mem_requirement()
+{
+	local _sys_mem _min_mem _dump_mode _msg
+	_dump_mode=${1:-kdump}
+	_sys_mem=$(get_system_size)
+	_min_mem=2
+	_msg="No memory will be reserved for crash kernel for this system because the system memory is smaller than the requirement."
+	if [[ $_dump_mode == fadump ]]; then
+		_min_mem=4
+	fi
+	if [[ $_sys_mem -lt $_min_mem ]]; then
+		_msg+=" ${_dump_mode} requires more than ${_min_mem}GB memory."
+		dwarn "$_msg"
+		return 1
+	fi
+}
+
 reset_crashkernel()
 {
 	local _opt _val _reboot _grubby_kernel_path _kernel _kernels
@@ -1603,6 +1620,7 @@ reset_crashkernel()
 			_has_changed="Updated crashkernel=$_new_ck"
 		fi
 		if [[ -n $_has_changed ]]; then
+			check_mem_requirement "$_dump_mode"
 			_needs_reboot=1
 			dwarn "$_has_changed for kernel=$_kernel. Please reboot the system for the change to take effect."
 		fi
