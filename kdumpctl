@@ -1056,9 +1056,42 @@ check_final_action_config()
 	esac
 }
 
+_get_luks_key_by_unlock()
+{
+	local _devuuid=$1 _key_des=$2
+	local _max_retries
+	local _attempt=1
+
+	local _luks_unlock_cmd=""
+
+	# Check if stdin is a terminal.
+	if [ -t 0 ]; then
+		_max_retries=5
+		ddebug "Attempting to unlock LUKS device. You have $_max_retries attempts."
+	else
+		# Not a terminal (e.g., running as system service), so only try once
+		# for cases where volume key is sealed to TPM which doesn't need user
+		# interaction.
+		_max_retries=1
+		ddebug "Attempting to unlock LUKS device (non-interactive mode)..."
+	fi
+
+	while [ "$_attempt" -le "$_max_retries" ]; do
+		if cryptsetup open "UUID=$_devuuid" DUMMY "--link-vk-to-keyring=@u::%logon:$_key_des" --test-passphrase; then
+			ddebug "Success: LUKS device unlocked."
+			dwarn "To avoid manually running kdumpctl, ensure the link-volume-key=@u::%logon:$_key_des option is correctly set up in /etc/crypttab (see man crypttab)."
+			return 0
+		fi
+		_attempt=$((_attempt + 1))
+	done
+
+	derror "Error: Could not unlock the LUKS device."
+	return 1
+}
+
 prepare_luks()
 {
-	local _luks_dev _key_id _key_des
+	local _luks_dev _key_id _key_des _luks_unlock_cmd
 	declare -a _luks_devs
 
 	mapfile -t _luks_devs < <(get_all_kdump_crypt_dev)
@@ -1077,12 +1110,19 @@ prepare_luks()
 		_key_dir=$LUKS_CONFIGFS/$_devuuid
 		_key_des=$LUKS_KEY_PRFIX$_devuuid
 		if _key_id=$(keyctl request logon "$_key_des" 2> /dev/null); then
-			mkdir "$_key_dir"
-			printf "%s" "$_key_des" > "$_key_dir"/description
+			ddebug "Succesfully get @u::%logon:$_key_des"
+		elif _get_luks_key_by_unlock "$_devuuid" "$_key_des"; then
+			_key_id=$(keyctl request logon "$_key_des")
+			ddebug "Succesfully get @u::%logon:$_key_des after cryptsetup"
 		else
-			derror "Failed to get logon key $_key_des. Ensure the link-volume-key option is correctly set up in /etc/crypttab (see man crypttab) and that the key is available."
+			derror "Failed to get logon key $_key_des. Run 'kdumpctl restart' manually to start kdump."
 			return 1
 		fi
+
+		# Let the key expire after 300 seconds
+		keyctl timeout "$_key_id" 300
+		mkdir "$_key_dir"
+		printf "%s" "$_key_des" > "$_key_dir"/description
 	done
 }
 
