@@ -1507,6 +1507,7 @@ reset_crashkernel()
 	local _has_changed _needs_reboot
 	local _old_ck _new_ck
 	local _old_fadump _new_fadump _opt_fadump
+	local _sys_mem
 
 	for _opt in "$@"; do
 		case "$_opt" in
@@ -1543,6 +1544,12 @@ reset_crashkernel()
 		esac
 	done
 
+	_sys_mem=$(get_system_size)
+	if [[ "$_sys_mem" -lt 4 && -n "$_opt_fadump" ]]; then
+		dwarn "No memory will be reserved for crash kernel for this system becasue the system memory is too low. The default crashkernel only works on systems with more than 4GB memory when fadump enabled."
+	elif [[ "$_sys_mem" -lt 2 ]]; then
+		dwarn "No memory will be reserved for crash kernel for this system becasue the system memory is too low. The default crashkernel only works on systems with more than 2GB memory."
+	fi
 	# 1. OSTree systems use "rpm-ostree kargs" instead of grubby to manage kernel command
 	#    line. --kernel=ALL doesn't make sense for OStree.
 	# 2. We don't have any OSTree POWER systems so the dump mode is always kdump.
