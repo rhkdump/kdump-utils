@@ -1426,7 +1426,7 @@ get_dump_mode_by_kernel()
 		echo -n "$_dump_mode"
 	else
 		derror "failed to get dump mode for kernel $_kernel_path"
-		exit
+		return 1
 	fi
 }
 
