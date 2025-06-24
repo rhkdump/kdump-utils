@@ -1382,9 +1382,28 @@ get_default_crashkernel()
 get_grub_kernel_boot_parameter()
 {
 	local _kernel_path=$1 _para=$2
+	local _grubby_output _grub_entries_count _all_values _found_count _uniq_values _uniq_count
 
 	[[ $_kernel_path == ALL ]] && derror "kernel_path=ALL invalid for get_grub_kernel_boot_parameter" && return 1
-	grubby --info="$_kernel_path" | sed -En -e "/^args=.*$/{s/^.*(\s|\")${_para}=(\S*).*\"$/\2/p;q}"
+	_grubby_output=$(grubby --info="$_kernel_path")
+	_grub_entries_count=$(echo "$_grubby_output" | grep -c "index=")
+	_all_values=$(echo "$_grubby_output" | sed -En -e "/^args=.*$/{s/^.*(\s|\")${_para}=(\S*).*\"$/\2/p}")
+	_found_count=$(echo "$_all_values" | wc -l)
+
+	_uniq_values=$(echo "$_all_values" | sort -u)
+	_uniq_count=$(echo "$_uniq_values" | wc -l)
+
+	# $para is not set in $_kernel_path.
+	if [[ -z $_all_values ]]; then
+		echo ""
+	# different values for $_para in $_kernel_path.
+	elif [[ $_found_count -ne "$_grub_entries_count" ]] || [[ $_uniq_count -gt 1 ]]; then
+		dwarn "$_kernel_path has $_grub_entries_count grub entries, and they have different values for $_para."
+		echo "inconsistent_value"
+	else
+	# uniq $_para found in $_kernel_path
+		echo "$_uniq_values"
+	fi
 }
 
 # get dump mode by fadump value
@@ -1400,6 +1419,10 @@ get_dump_mode_by_fadump_val()
 		echo -n kdump
 	elif [[ $_fadump_val == on ]] || [[ $_fadump_val == nocma ]]; then
 		echo -n fadump
+	elif [[ $_fadump_val == inconsistent_value ]]; then
+		derror "have multi grub entries for the same kernel, and they have inconsistent value of fadump"
+		derror "kdump-utils can not auto update crashkernel in this case, please set fakdump mode manually."
+		return 1
 	else
 		derror "invalid fadump=$_fadump_val"
 		return 1
@@ -1417,7 +1440,7 @@ get_dump_mode_by_kernel()
 		echo -n "$_dump_mode"
 	else
 		derror "failed to get dump mode for kernel $_kernel_path"
-		exit
+		return 1
 	fi
 }
 
@@ -1587,7 +1610,9 @@ reset_crashkernel()
 					fi
 				fi
 			else
-				_dump_mode="$(get_dump_mode_by_kernel "$_kernel")"
+				if ! _dump_mode="$(get_dump_mode_by_kernel "$_kernel")"; then
+					exit 1
+				fi
 				_new_ck=$(kdump_get_arch_recommend_crashkernel "$_dump_mode")
 			fi
 		else
@@ -1625,7 +1650,9 @@ _update_crashkernel()
 	local _old_ck _new_ck
 
 	_kernel=$1
-	_dump_mode=$(get_dump_mode_by_kernel "$_kernel")
+	if ! _dump_mode=$(get_dump_mode_by_kernel "$_kernel"); then
+		exit 1
+	fi
 	_old_ck=$(get_grub_kernel_boot_parameter "$_kernel" crashkernel)
 	_kver=$(parse_kver_from_path "$_kernel")
 	# The second argument is for the case of aarch64, where installing a 64k variant on a 4k kernel, or vice versa
