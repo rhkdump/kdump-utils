@@ -1415,21 +1415,6 @@ get_dump_mode_by_fadump_val()
 	fi
 }
 
-# get dump mode of a specific kernel
-# based on its fadump kernel cmdline parameter
-get_dump_mode_by_kernel()
-{
-	local _kernel_path=$1 _fadump_val _dump_mode
-
-	_fadump_val=$(get_grub_kernel_boot_parameter "$_kernel_path" fadump)
-	if _dump_mode=$(get_dump_mode_by_fadump_val "$_fadump_val"); then
-		echo -n "$_dump_mode"
-	else
-		derror "failed to get dump mode for kernel $_kernel_path"
-		return 1
-	fi
-}
-
 _filter_grubby_kernel_str()
 {
 	local _grubby_kernel_str=$1
@@ -1453,9 +1438,9 @@ _find_kernel_path_by_release()
 
 _update_kernel_cmdline()
 {
-	local _kernel _param _old _new
+	local _grub_entry_index _param _old _new
 
-	_kernel="$1"
+	_grub_entry_index="$1"
 	_param="$2"
 	_old="$3"
 	_new="$4"
@@ -1473,9 +1458,9 @@ _update_kernel_cmdline()
 		fi
 	elif has_command grubby; then
 		if [[ -n $_new ]]; then
-			grubby --update-kernel "$_kernel" --args "$_param=$_new"
+			grubby --update-kernel "$_grub_entry_index" --args "$_param=$_new"
 		else
-			grubby --update-kernel "$_kernel" --remove-args "$_param"
+			grubby --update-kernel "$_grub_entry_index" --remove-args "$_param"
 		fi
 	else
 		derror "Unable to update kernel command line"
@@ -1493,25 +1478,58 @@ _valid_grubby_kernel_path()
 	[[ -n $1 ]] && grubby --info="$1" > /dev/null 2>&1
 }
 
-# return all the kernel paths given a grubby kernel-path
+# return all the grub entries given a grubby kernel-path
 #
 # $1: kernel path accepted by grubby, e.g. DEFAULT, ALL,
 #     /boot/vmlinuz-`uname -r`
-# return: kernel paths separated by space
+# return: grub entry index, kernel path, crashkernel and fadump value separated by \t.
+# For example:
+# 0	/boot/vmlinuz-6.12.0-102.1131_1899362502.el10.x86_64	2G-64G:256M,64G-:512M	kdump
+# 1	/boot/vmlinuz-6.12.0-55.18.2.el10_0.x86_64	2G-64G:256M,64G-:512M	kdump
+# 2	/boot/vmlinuz-6.12.0-55.18.2.el10_0.x86_64	2G-64G:256M,64G-:512M	kdump
 _get_all_kernels_from_grubby()
 {
-	local _kernels _line _kernel_path _grubby_kernel_path=$1
+	local _grubby_kernel_path=$1
 
-	for _line in $(grubby --info "$_grubby_kernel_path" | grep "^kernel="); do
-		_kernel_path=$(_filter_grubby_kernel_str "$_line")
-		_kernels="$_kernels $_kernel_path"
-	done
-	echo -n "$_kernels"
+	grubby --info "$_grubby_kernel_path" |
+		awk -F'=' '
+	  BEGIN { OFS = "\t" }
+
+      /^index=/ {
+          if (knl) {
+              print idx, knl, crash, kdump
+          }
+          idx = $2
+          knl = ""
+          crash = ""
+          kdump = ""
+      }
+
+      /^kernel=/ {
+          knl = $2
+          gsub(/"/, "", knl)
+      }
+
+      /^args=/ {
+          if (match($0, /crashkernel=([^ "]+)/, arr_crash)) {
+              crash = arr_crash[1]
+          }
+          if (match($0, /fadump=([^ "]+)/, arr_fadump)) {
+              kdump = arr_fadump[1]
+          }
+      }
+
+      END {
+          if (knl) {
+              print idx, knl, crash, kdump
+          }
+      }
+    '
 }
 
 reset_crashkernel()
 {
-	local _opt _val _reboot _grubby_kernel_path _kernel _kernels
+	local _opt _val _reboot _grubby_kernel_path _grub_entries _grub_entry_index
 	local _dump_mode
 	local _has_changed _needs_reboot
 	local _old_ck _new_ck
@@ -1572,23 +1590,21 @@ reset_crashkernel()
 	#  - use current running kernel
 	if [[ -z $_grubby_kernel_path ]]; then
 		[[ -n $KDUMP_KERNELVER ]] || KDUMP_KERNELVER=$(uname -r)
-		if ! _kernels=$(_find_kernel_path_by_release "$KDUMP_KERNELVER"); then
+		if ! _grubby_kernel_path=$(_find_kernel_path_by_release "$KDUMP_KERNELVER"); then
 			derror "no kernel for version $KDUMP_KERNELVER found"
 			exit 1
 		fi
-	else
-		_kernels=$(_get_all_kernels_from_grubby "$_grubby_kernel_path")
 	fi
+	_grub_entries=$(_get_all_kernels_from_grubby "$_grubby_kernel_path")
 
-	for _kernel in $_kernels; do
+	while IFS=$'\t' read -r _grub_entry_index _kernel _old_ck _old_fadump; do
 		_has_changed=""
 		if [[ $(uname -m) == ppc64le ]]; then
 			if [[ -n $_opt_fadump ]]; then
 				_new_ck=$(kdump_get_arch_recommend_crashkernel "$_dump_mode")
-				_old_fadump=$(get_grub_kernel_boot_parameter "$_kernel" fadump)
 				_new_fadump="$_opt_fadump"
 				[[ $_new_fadump == off ]] && _new_fadump=""
-				if _update_kernel_cmdline "$_kernel" fadump "$_old_fadump" "$_new_fadump"; then
+				if _update_kernel_cmdline "$_grub_entry_index" fadump "$_old_fadump" "$_new_fadump"; then
 					if [[ -n $_new_fadump ]]; then
 						_has_changed="Updated fadump=$_new_fadump"
 					else
@@ -1596,7 +1612,7 @@ reset_crashkernel()
 					fi
 				fi
 			else
-				if ! _dump_mode="$(get_dump_mode_by_kernel "$_kernel")"; then
+				if ! _dump_mode="$(get_dump_mode_by_fadump_val "$_old_fadump")"; then
 					exit 1
 				fi
 				_new_ck=$(kdump_get_arch_recommend_crashkernel "$_dump_mode")
@@ -1605,15 +1621,14 @@ reset_crashkernel()
 			_new_ck=$(kdump_get_arch_recommend_crashkernel kdump)
 		fi
 
-		_old_ck=$(get_grub_kernel_boot_parameter "$_kernel" crashkernel)
-		if _update_kernel_cmdline "$_kernel" crashkernel "$_old_ck" "$_new_ck"; then
+		if _update_kernel_cmdline "$_grub_entry_index" crashkernel "$_old_ck" "$_new_ck"; then
 			_has_changed="Updated crashkernel=$_new_ck"
 		fi
 		if [[ -n $_has_changed ]]; then
 			_needs_reboot=1
-			dwarn "$_has_changed for kernel=$_kernel. Please reboot the system for the change to take effect."
+			dwarn "$_has_changed for kernel=$_kernel, grub entry index=$_grub_entry_index. Please reboot the system for the change to take effect."
 		fi
-	done
+	done <<< "$_grub_entries"
 
 	if [[ $_reboot == yes && $_needs_reboot == 1 ]]; then
 		systemctl reboot
@@ -1630,20 +1645,28 @@ _is_bootloader_installed()
 	fi
 }
 
+# update a grub entry's "crashkernel=" parameter.
+# $1: index of the grub entry.
+# $2: kernel path
+# $3: old crashkernel
+# $4: old fadump value
 _update_crashkernel()
 {
-	local _kernel _kver _dump_mode _msg
+	local _grub_entry_index _kernel _kver _old_fadump _dump_mode _msg
 	local _old_ck _new_ck
 
-	_kernel=$1
-	if ! _dump_mode=$(get_dump_mode_by_kernel "$_kernel"); then
+	_grub_entry_index=$1
+	_kernel=$2
+	_old_ck=$3
+	_old_fadump=$4
+
+	if ! _dump_mode=$(get_dump_mode_by_fadump_val "$_old_fadump"); then
 		exit 1
 	fi
-	_old_ck=$(get_grub_kernel_boot_parameter "$_kernel" crashkernel)
 	_kver=$(parse_kver_from_path "$_kernel")
 	# The second argument is for the case of aarch64, where installing a 64k variant on a 4k kernel, or vice versa
 	_new_ck=$(kdump_get_arch_recommend_crashkernel "$_dump_mode" "$_kver")
-	if _update_kernel_cmdline "$_kernel" crashkernel "$_old_ck" "$_new_ck"; then
+	if _update_kernel_cmdline "$_grub_entry_index" crashkernel "$_old_ck" "$_new_ck"; then
 		_msg="For kernel=$_kernel, crashkernel=$_new_ck now. Please reboot the system for the change to take effect."
 		_msg+=" Note if you don't want kdump-utils to manage the crashkernel kernel parameter, please set auto_reset_crashkernel=no in /etc/kdump.conf."
 		dinfo "$_msg"
@@ -1653,14 +1676,14 @@ _update_crashkernel()
 # shellcheck disable=SC2154 # false positive when dereferencing an array
 reset_crashkernel_after_update()
 {
-	local _kernel
+	local _grub_entry_index _kernel _old_ck _old_fadump
 
 	if ! _is_bootloader_installed; then
 		return
 	fi
 
-	for _kernel in $(_get_all_kernels_from_grubby ALL); do
-		_update_crashkernel "$_kernel"
+	_get_all_kernels_from_grubby ALL | while IFS=$'\t' read -r _grub_entry_index _kernel _old_ck _old_fadump; do
+		_update_crashkernel "$_grub_entry_index" "$_kernel" "$_old_ck" "$_old_fadump"
 	done
 }
 
@@ -1685,7 +1708,7 @@ _is_osbuild()
 
 reset_crashkernel_for_installed_kernel()
 {
-	local _installed_kernel
+	local _installed_kernel _grub_entry_index _kernel _old_ck _old_fadump
 
 	# During package install, only try to reset crashkernel for osbuild
 	# thus to avoid calling grubby when installing os via anaconda
@@ -1704,7 +1727,9 @@ reset_crashkernel_for_installed_kernel()
 		return
 	fi
 
-	_update_crashkernel "$_installed_kernel"
+	_get_all_kernels_from_grubby "$_installed_kernel" | while IFS=$'\t' read -r _grub_entry_index _kernel _old_ck _old_fadump; do
+		_update_crashkernel "$_grub_entry_index" "$_kernel" "$_old_ck" "$_old_fadump"
+	done
 }
 
 _should_reset_crashkernel()
