@@ -1428,6 +1428,10 @@ get_dump_mode_by_fadump_val()
 		echo -n kdump
 	elif [[ $_fadump_val == on ]] || [[ $_fadump_val == nocma ]]; then
 		echo -n fadump
+	elif [[ $_fadump_val == inconsistent_value ]]; then
+		derror "have multi grub entries for the same kernel, and they have inconsistent value of fadump"
+		derror "kdump-utils can not auto update crashkernel in this case, please set fadump mode manually."
+		return 1
 	else
 		derror "invalid fadump=$_fadump_val"
 		return 1
