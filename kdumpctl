@@ -1391,9 +1391,28 @@ get_default_crashkernel()
 get_grub_kernel_boot_parameter()
 {
 	local _kernel_path=$1 _para=$2
+	local _grubby_output _grub_entries_count _all_values _found_count _uniq_values _uniq_count
 
 	[[ $_kernel_path == ALL ]] && derror "kernel_path=ALL invalid for get_grub_kernel_boot_parameter" && return 1
-	grubby --info="$_kernel_path" | sed -En -e "/^args=.*$/{s/^.*(\s|\")${_para}=(\S*).*\"$/\2/p;q}"
+	_grubby_output=$(grubby --info="$_kernel_path")
+	_grub_entries_count=$(echo "$_grubby_output" | grep -c "index=")
+	_all_values=$(echo "$_grubby_output" | sed -En -e "/^args=.*$/{s/^.*(\s|\")${_para}=(\S*).*\"$/\2/p}")
+	_found_count=$(echo "$_all_values" | grep -c .)
+
+	_uniq_values=$(echo "$_all_values" | sort -u)
+	_uniq_count=$(echo "$_uniq_values" | grep -c .)
+
+	# $para is not set in $_kernel_path.
+	if [[ -z $_all_values ]]; then
+		echo ""
+	# different values for $_para in $_kernel_path.
+	elif [[ $_found_count -ne $_grub_entries_count ]] || [[ $_uniq_count -gt 1 ]]; then
+		dwarn "$_kernel_path has $_grub_entries_count grub entries, and they have different values for $_para."
+		echo "inconsistent_value"
+	else
+		# uniq $_para found in $_kernel_path
+		echo "$_uniq_values"
+	fi
 }
 
 # get dump mode by fadump value
