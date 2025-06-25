@@ -29,7 +29,7 @@ KDUMP_COMMANDLINE_REMOVE="hugepages hugepagesz slub_debug quiet log_buf_len swio
 
 # This variable lets us append arguments to the current kdump commandline
 # after processed by KDUMP_COMMANDLINE_REMOVE
-KDUMP_COMMANDLINE_APPEND="irqpoll maxcpus=1 reset_devices novmcoredd cma=0 hugetlb_cma=0"
+KDUMP_COMMANDLINE_APPEND="irqpoll maxcpus=1 reset_devices novmcoredd cma=0 hugetlb_cma=0 kfence.sample_interval=0"
 
 # This variable lets us append arguments to fadump (powerpc) capture kernel,
 # further to the parameters passed via the bootloader.
