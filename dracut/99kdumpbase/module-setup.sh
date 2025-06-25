@@ -11,7 +11,10 @@ _save_kdump_netifs() {
 }
 
 _get_kdump_netifs() {
-    echo -n "${!unique_netifs[@]} ${!ovs_unique_netifs[@]}"
+    local -a _all_netifs
+
+    _all_netifs=("${!unique_netifs[@]}" "${!ovs_unique_netifs[@]}")
+    echo -n "${_all_netifs[@]}"
 }
 
 kdump_module_init() {
@@ -1069,6 +1072,58 @@ ForwardToConsole=yes
 EOF
 }
 
+kdump_check_crypt_targets() {
+    local _luks_dev _devuuid _key_desc
+    declare -a _luks_devs
+
+    mapfile -t _luks_devs < <(get_all_kdump_crypt_dev)
+
+    if [[ ${#_luks_devs[@]} -lt 1 ]]; then
+        return
+    fi
+
+    if [[ ! -d $LUKS_CONFIGFS ]]; then
+        dwarn "$LUKS_CONFIGFS not available"
+        return 1
+    fi
+
+    # This overrides behaviour of 90crypt
+    inst cryptsetup
+    instmods dm_crypt
+
+    echo > "$initdir/etc/cmdline.d/90crypt.conf"
+    echo > "$initdir/etc/crypttab"
+    echo > "${initdir}/sbin/crypt-run-generator"
+
+    # configfs is mounted after dracut pre-udev hook
+    inst_hook initqueue 20 "$moddir/kexec-crypt-setup.sh"
+
+    mkdir -p $hookdir/initqueue/finished
+
+    for _luks_dev in "${_luks_devs[@]}"; do
+        _devuuid=$(maj_min_to_uuid "$_luks_dev")
+        _key_desc=$LUKS_KEY_PRFIX$_devuuid
+
+        mkdir -p "${initdir}/etc/udev/rules.d/"
+        {
+            printf -- 'ENV{ID_FS_UUID}=="%s", ' "$_devuuid"
+            printf -- 'RUN+="/sbin/initqueue  --settled --unique --onetime '
+            printf -- '--name kdump-crypt-target-%%k %s ' "$(command -v cryptsetup)"
+            printf -- 'luksOpen --volume-key-keyring %s $env{DEVNAME} %s"\n' "%%user:$_key_desc" "luks-$_devuuid"
+        } >> "${initdir}/etc/udev/rules.d/70-luks-kdump.rules"
+
+    done
+
+    # latest systemd makes /usr read-only by default
+    mkdir -p "${initdir}/etc/systemd/system.conf.d"
+    {
+        echo "[Manager]"
+        echo "ProtectSystem=false"
+    } >>"${initdir}/etc/systemd/system.conf.d/kdump_luks.conf"
+
+    dracut_need_initqueue
+}
+
 install() {
     declare -A unique_netifs ovs_unique_netifs ipv4_usage ipv6_usage
 
@@ -1117,6 +1172,8 @@ install() {
     # target. Ideally all this should be pushed into dracut iscsi module
     # at some point of time.
     kdump_check_iscsi_targets
+
+    kdump_check_crypt_targets
 
     kdump_install_systemd_conf
 
