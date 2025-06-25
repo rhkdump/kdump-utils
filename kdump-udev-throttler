@@ -15,6 +15,17 @@
 
 throttle_lock="/var/lock/kdump-udev-throttle"
 
+LUKS_CONFIGFS_REUSE=/sys/kernel/config/crash_dm_crypt_keys/reuse
+reuse_luks_keys()
+{
+	[[ -f $LUKS_CONFIGFS_REUSE ]] || echo 1 > $LUKS_CONFIGFS_REUSE
+}
+
+unuse_luks_keys()
+{
+
+	[[ -f $LUKS_CONFIGFS_REUSE ]] || echo 0 > $LUKS_CONFIGFS_REUSE
+}
 exec 9> $throttle_lock
 if [ $? -ne 0 ]; then
 	echo "Failed to create the lock file! Fallback to non-throttled kdump service restart"
@@ -37,6 +48,8 @@ sleep 1 && udevadm settle --timeout 3
 # holding two locks at the same time and we might miss some events
 exec 9>&-
 
+reuse_luks_keys
 /bin/kdumpctl reload
+unuse_luks_keys
 
 exit 0
