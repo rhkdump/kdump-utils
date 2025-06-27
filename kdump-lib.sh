@@ -11,6 +11,7 @@ fi
 FADUMP_ENABLED_SYS_NODE="/sys/kernel/fadump/enabled"
 FADUMP_REGISTER_SYS_NODE="/sys/kernel/fadump/registered"
 FADUMP_APPEND_ARGS_SYS_NODE="/sys/kernel/fadump/bootargs_append"
+maximize_crashkernel=0
 
 is_uki()
 {
@@ -41,7 +42,7 @@ is_aws_aarch64()
 
 is_sme_or_sev_active()
 {
-	journalctl -q --dmesg --grep "^Memory Encryption Features active: AMD (SME|SEV)$" >/dev/null 2>&1
+	$maximize_crashkernel || journalctl -q --dmesg --grep "^Memory Encryption Features active: AMD (SME|SEV)$" >/dev/null 2>&1
 }
 
 has_command()
@@ -846,12 +847,18 @@ get_recommend_size()
 
 has_mlx5()
 {
-	[[ -d /sys/bus/pci/drivers/mlx5_core ]]
+	$maximize_crashkernel || [[ -d /sys/bus/pci/drivers/mlx5_core ]]
 }
 
 has_aarch64_smmu()
 {
-	ls /sys/devices/platform/arm-smmu-* 1> /dev/null 2>&1
+	$maximize_crashkernel || ls /sys/devices/platform/arm-smmu-* 1> /dev/null 2>&1
+}
+
+is_aarch64_64k_kernel()
+{
+	local _kernel="$1"
+	$maximize_crashkernel || echo "$_kernel" | grep -q 64k
 }
 
 is_memsize() { [[ "$1" =~ ^[+-]?[0-9]+[KkMmGgTtPbEe]?$ ]]; }
@@ -995,6 +1002,9 @@ kdump_get_arch_recommend_crashkernel()
 	local _arch _ck_cmdline _dump_mode
 	local _delta=0
 
+	# osbuild deploys rpm on chroot environment. kdump-utils has no opportunity
+	# to deduce the exact memory cost on the real target.
+	maximize_crashkernel=$(is_ostree)
 	if [[ -z "$1" ]]; then
 		if is_fadump_capable; then
 			_dump_mode=fadump
@@ -1022,7 +1032,7 @@ kdump_get_arch_recommend_crashkernel()
 		fi
 
 		# the naming convention of 64k variant suffixes with +64k, e.g. "vmlinuz-5.14.0-312.el9.aarch64+64k"
-		if echo "$_running_kernel" | grep -q 64k; then
+		if is_aarch64_64k_kernel "$_running_kernel"; then
 			# Without smmu, the diff of MemFree between 4K and 64K measured on a high end aarch64 machine is 82M.
 			# Picking up 100M to cover this diff. And finally, we have "2G-4G:356M;4G-64G:420M;64G-:676M"
 			((_delta += 100))

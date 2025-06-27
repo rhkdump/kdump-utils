@@ -1051,6 +1051,83 @@ check_final_action_config()
 	esac
 }
 
+get_recommend_crashkernel_value()
+{
+	local _crashkernel_str=$1
+	local _total_mem_kib
+	local _total_mem
+
+	_total_mem_kib=$(grep MemTotal /proc/meminfo | awk '{print $2}')
+	_total_mem=$((_total_mem_kib * 1024))
+
+	# Main loop
+	IFS=',' read -ra entries <<< "$_crashkernel_str"
+	for entry in "${entries[@]}"; do
+		IFS=':' read -r range size <<< "$entry"
+		# Parse range
+		if [[ $range == *-* ]]; then
+			IFS='-' read -r lower upper <<< "$range"
+			lower_bytes=$(to_bytes "$lower")
+			if [[ -z "$upper" ]]; then
+				upper_bytes=$(to_bytes 10T)  # for open-ended range (e.g., 2G-)
+			else
+				upper_bytes=$(to_bytes "$upper")
+			fi
+			if (( _total_mem >= lower_bytes && _total_mem < upper_bytes )); then
+				echo "$size"
+				return
+			fi
+		fi
+	done
+}
+
+get_crashkernel_low_value()
+{
+	mapfile -t lines < <(grep -n "Crash kernel" /proc/iomem)
+
+	if [ ${#lines[@]} -eq 1 ]; then
+		return 0
+	fi
+
+	first_line=$(grep "Crash kernel" /proc/iomem | sed -n '1p')
+	# Extract start and end addresses
+	start_hex=$(echo "$first_line" | awk '{split($1, a, "-"); print a[1]}')
+	end_hex=$(echo "$first_line" | awk '{split($1, a, "-"); print a[2]}')
+	# Convert hex to decimal
+	start_dec=$((0x$start_hex))
+	end_dec=$((0x$end_hex))
+	# Calculate size in bytes
+	size_bytes=$((end_dec - start_dec + 1))
+	echo "$size_bytes"
+}
+
+suggest_crashkernel_reset()
+{
+	local _crashkernel
+	local _recommend
+	local _recommend_value
+	local _actual_value
+
+	_crashkernel=$(sed -n 's/.*crashkernel=\([^ ]*\).*/\1/p' /proc/cmdline)
+	[[ $(kdump_get_conf_val auto_reset_crashkernel) == no ]] && return
+
+	if ! echo "$_crashkernel" | grep -q -E "(fadump|fadump=0)"; then
+		_recommend=$(kdump_get_arch_recommend_crashkernel "kdump")
+		_recommend_value=$(get_recommend_crashkernel_value "$_recommend")
+		_low_mem=$(get_crashkernel_low_value)
+		# The crashkernel formula does not include the crashkernel low value
+		# but the kexec_crash_size does.
+		_recommend_value=$(memsize_add "$_recommend_value" "$_low_mem")
+		_recommend_value=$(to_bytes "$_recommend_value")
+		_actual_value=$(cat /sys/kernel/kexec_crash_size)
+
+		if [ "$_recommend_value" -lt "$_actual_value" ]; then
+			dwarn "The reserved crashkernel is abundant. Using 'kdumpctl reset-crashkernel' to reset kernel cmdline. It will take effect in the next boot"
+			dwarn "To release the abundant memory immediately. You can do: 'kdumpctl stop', 'echo $_recommend_value >/sys/kernel/kexec_crash_size', and finally 'kdump start'"
+		fi
+	fi
+}
+
 start()
 {
 	check_dump_feasibility || return
@@ -1084,6 +1161,7 @@ start()
 	start_dump || return
 
 	dinfo "Starting kdump: [OK]"
+	suggest_crashkernel_reset
 	return 0
 }
 
