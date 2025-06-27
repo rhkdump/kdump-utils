@@ -45,31 +45,31 @@ Describe 'kdumpctl reset-crashkernel [--kernel] [--fadump]'
 			if [[ $1 == '-m' ]]; then
 				echo -n x86_64
 			elif [[ $1 == '-r' ]]; then
-				echo -n $current_kernel
+				echo -n "$current_kernel"
 			fi
 		}
 		kdump_crashkernel=$(get_default_crashkernel kdump)
 		Context "when --kernel not specified"
-			grubby --args crashkernel=$ck --update-kernel ALL
+			grubby --args crashkernel="$ck" --update-kernel ALL
 			Specify 'kdumpctl should warn the user that crashkernel has been udpated'
 				When call reset_crashkernel
 				The error should include "Updated crashkernel=$kdump_crashkernel"
 			End
 
 			Specify 'Current running kernel should have crashkernel updated'
-				When call grubby --info $kernel1
+				When call grubby --info "$kernel1"
 				The line 3 of output should include crashkernel="$kdump_crashkernel"
-				The line 3 of output should not include crashkernel=$ck
+				The line 3 of output should not include crashkernel="$ck"
 			End
 
 			Specify 'Other kernel still use the old crashkernel value'
-				When call grubby --info $kernel2
-				The line 3 of output should include crashkernel=$ck
+				When call grubby --info "$kernel2"
+				The line 3 of output should include crashkernel="$ck"
 			End
 		End
 
 		Context "--kernel=ALL"
-			grubby --args crashkernel=$ck --update-kernel ALL
+			grubby --args crashkernel="$ck" --update-kernel ALL
 			Specify 'kdumpctl should warn the user that crashkernel has been udpated'
 				When call reset_crashkernel --kernel=ALL
 				The error should include "Updated crashkernel=$kdump_crashkernel for kernel=$kernel1"
@@ -77,31 +77,31 @@ Describe 'kdumpctl reset-crashkernel [--kernel] [--fadump]'
 			End
 
 			Specify 'kernel1 should have crashkernel updated'
-				When call grubby --info $kernel1
+				When call grubby --info "$kernel1"
 				The line 3 of output should include crashkernel="$kdump_crashkernel"
 			End
 
 			Specify 'kernel2 should have crashkernel updated'
-				When call grubby --info $kernel2
+				When call grubby --info "$kernel2"
 				The line 3 of output should include crashkernel="$kdump_crashkernel"
 			End
 		End
 
 		Context "--kernel=/boot/one-kernel to update one specified kernel"
-			grubby --args crashkernel=$ck --update-kernel ALL
+			grubby --args crashkernel="$ck" --update-kernel ALL
 			Specify 'kdumpctl should warn the user that crashkernel has been updated'
-				When call reset_crashkernel --kernel=$kernel1
+				When call reset_crashkernel --kernel="$kernel1"
 				The error should include "Updated crashkernel=$kdump_crashkernel for kernel=$kernel1"
 			End
 
 			Specify 'kernel1 should have crashkernel updated'
-				When call grubby --info $kernel1
+				When call grubby --info "$kernel1"
 				The line 3 of output should include crashkernel="$kdump_crashkernel"
 			End
 
 			Specify 'kernel2 should have the old crashkernel'
-				When call grubby --info $kernel2
-				The line 3 of output should include crashkernel=$ck
+				When call grubby --info "$kernel2"
+				The line 3 of output should include crashkernel="$ck"
 			End
 
 		End
@@ -113,14 +113,14 @@ Describe 'kdumpctl reset-crashkernel [--kernel] [--fadump]'
 			if [[ $1 == '-m' ]]; then
 				echo -n ppc64le
 			elif [[ $1 == '-r' ]]; then
-				echo -n $current_kernel
+				echo -n "$current_kernel"
 			fi
 		}
 
 		kdump_crashkernel=$(get_default_crashkernel kdump)
 		fadump_crashkernel=$(get_default_crashkernel fadump)
 		Context "when no --kernel specified"
-			grubby --args crashkernel=$ck --update-kernel ALL
+			grubby --args crashkernel="$ck" --update-kernel ALL
 			grubby --remove-args=fadump --update-kernel ALL
 			Specify 'kdumpctl should warn the user that crashkernel has been udpated'
 				When call reset_crashkernel
@@ -128,18 +128,18 @@ Describe 'kdumpctl reset-crashkernel [--kernel] [--fadump]'
 			End
 
 			Specify 'Current running kernel should have crashkernel updated'
-				When call grubby --info $kernel1
+				When call grubby --info "$kernel1"
 				The line 3 of output should include crashkernel="$kdump_crashkernel"
 			End
 
 			Specify 'Other kernel still use the old crashkernel value'
-				When call grubby --info $kernel2
-				The line 3 of output should include crashkernel=$ck
+				When call grubby --info "$kernel2"
+				The line 3 of output should include crashkernel="$ck"
 			End
 		End
 
 		Context "--kernel=ALL --fadump=on"
-			grubby --args crashkernel=$ck --update-kernel ALL
+			grubby --args crashkernel="$ck" --update-kernel ALL
 			Specify 'kdumpctl should warn the user that crashkernel has been udpated'
 				When call reset_crashkernel --kernel=ALL --fadump=on
 				The error should include "Updated crashkernel=$fadump_crashkernel for kernel=$kernel1"
@@ -147,56 +147,56 @@ Describe 'kdumpctl reset-crashkernel [--kernel] [--fadump]'
 			End
 
 			Specify 'kernel1 should have crashkernel updated'
-				When call grubby --info $kernel1
+				When call grubby --info "$kernel1"
 				The line 3 of output should include crashkernel="$fadump_crashkernel"
 			End
 
 			Specify 'kernel2 should have crashkernel updated'
-				When call get_grub_kernel_boot_parameter $kernel2 crashkernel
+				When call get_grub_kernel_boot_parameter "$kernel2" crashkernel
 				The output should equal "$fadump_crashkernel"
 			End
 		End
 
 		Context "--kernel=/boot/one-kernel to update one specified kernel"
-			grubby --args crashkernel=$ck --update-kernel ALL
-			grubby --args fadump=on --update-kernel $kernel1
+			grubby --args crashkernel="$ck" --update-kernel ALL
+			grubby --args fadump=on --update-kernel "$kernel1"
 			Specify 'kdumpctl should warn the user that crashkernel has been updated'
-				When call reset_crashkernel --kernel=$kernel1
+				When call reset_crashkernel --kernel="$kernel1"
 				The error should include "Updated crashkernel=$fadump_crashkernel for kernel=$kernel1"
 			End
 
 			Specify 'kernel1 should have crashkernel updated'
-				When call grubby --info $kernel1
+				When call grubby --info "$kernel1"
 				The line 3 of output should include crashkernel="$fadump_crashkernel"
 			End
 
 			Specify 'kernel2 should have the old crashkernel'
-				When call get_grub_kernel_boot_parameter $kernel2 crashkernel
-				The output should equal $ck
+				When call get_grub_kernel_boot_parameter "$kernel2" crashkernel
+				The output should equal "$ck"
 			End
 		End
 
 		Context "Update all kernels but without --fadump specified"
-			grubby --args crashkernel=$ck --update-kernel ALL
-			grubby --args fadump=on --update-kernel $kernel1
+			grubby --args crashkernel="$ck" --update-kernel ALL
+			grubby --args fadump=on --update-kernel "$kernel1"
 			Specify 'kdumpctl should warn the user that crashkernel has been updated'
-				When call reset_crashkernel --kernel=$kernel1
+				When call reset_crashkernel --kernel="$kernel1"
 				The error should include "Updated crashkernel=$fadump_crashkernel for kernel=$kernel1"
 			End
 
 			Specify 'kernel1 should have crashkernel updated'
-				When call get_grub_kernel_boot_parameter $kernel1 crashkernel
+				When call get_grub_kernel_boot_parameter "$kernel1" crashkernel
 				The output should equal "$fadump_crashkernel"
 			End
 
 			Specify 'kernel2 should have the old crashkernel'
-				When call get_grub_kernel_boot_parameter $kernel2 crashkernel
-				The output should equal $ck
+				When call get_grub_kernel_boot_parameter "$kernel2" crashkernel
+				The output should equal "$ck"
 			End
 		End
 
 		Context 'Switch between fadump=on and fadump=nocma'
-			grubby --args crashkernel=$ck --update-kernel ALL
+			grubby --args crashkernel="$ck" --update-kernel ALL
 			grubby --args fadump=on --update-kernel ALL
 			Specify 'fadump=on to fadump=nocma'
 				When call reset_crashkernel --kernel=ALL --fadump=nocma
@@ -205,7 +205,7 @@ Describe 'kdumpctl reset-crashkernel [--kernel] [--fadump]'
 			End
 
 			Specify 'kernel1 should have fadump=nocma in cmdline'
-				When call get_grub_kernel_boot_parameter $kernel1 fadump
+				When call get_grub_kernel_boot_parameter "$kernel1" fadump
 				The output should equal nocma
 			End
 
@@ -215,7 +215,7 @@ Describe 'kdumpctl reset-crashkernel [--kernel] [--fadump]'
 			End
 
 			Specify 'kernel2 should have fadump=on in cmdline'
-				When call get_grub_kernel_boot_parameter $kernel1 fadump
+				When call get_grub_kernel_boot_parameter "$kernel1" fadump
 				The output should equal on
 			End
 

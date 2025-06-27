@@ -5,12 +5,17 @@
 if [[ ${__SOURCED__:+x} ]]; then
 	. ./kdump-lib-initramfs.sh
 else
+	# shellcheck source=SCRIPTDIR/kdump-lib-initramfs.sh
 	. /lib/kdump/kdump-lib-initramfs.sh
 fi
 
+# shellcheck disable=SC2034
 FADUMP_ENABLED_SYS_NODE="/sys/kernel/fadump/enabled"
 FADUMP_REGISTER_SYS_NODE="/sys/kernel/fadump/registered"
+# shellcheck disable=SC2034
 FADUMP_APPEND_ARGS_SYS_NODE="/sys/kernel/fadump/bootargs_append"
+# shellcheck disable=SC2034
+FENCE_KDUMP_CONFIG_FILE="/etc/sysconfig/fence_kdump"
 
 is_uki()
 {
@@ -18,7 +23,7 @@ is_uki()
 
 	img="$1"
 
-	[[ -f "$img" ]] || return
+	[[ -f $img ]] || return
 	[[ "$(objdump -a "$img" 2> /dev/null)" =~ pei-(x86-64|aarch64-little) ]] || return
 	objdump -h -j .linux "$img" &> /dev/null
 }
@@ -41,7 +46,7 @@ is_aws_aarch64()
 
 is_sme_or_sev_active()
 {
-	journalctl -q --dmesg --grep "^Memory Encryption Features active: AMD (SME|SEV)$" >/dev/null 2>&1
+	journalctl -q --dmesg --grep "^Memory Encryption Features active: AMD (SME|SEV)$" > /dev/null 2>&1
 }
 
 has_command()
@@ -245,7 +250,7 @@ get_kdump_mntpoint_from_target()
 	fi
 
 	# strip duplicated "/"
-	echo $_mntpoint | tr -s "/"
+	echo "$_mntpoint" | tr -s "/"
 }
 
 kdump_get_persistent_dev()
@@ -403,10 +408,10 @@ is_kernel_loaded()
 #
 get_bootcpu_apicid()
 {
-	awk '                                                       \
-        BEGIN { CPU = "-1"; }                                   \
-        $1=="processor" && $2==":"      { CPU = $NF; }          \
-        CPU=="0" && /^apicid/           { print $NF; }          \
+	awk '
+        BEGIN { CPU = "-1"; }
+        $1=="processor" && $2==":"      { CPU = $NF; }
+        CPU=="0" && /^apicid/           { print $NF; }
         ' \
 		/proc/cpuinfo
 }
@@ -523,7 +528,7 @@ prepare_kdump_kernel()
 
 	# Use BOOT_IMAGE as reference if possible, strip the GRUB root device prefix in (hd0,gpt1) format
 	boot_img="$(grep -P -o '^BOOT_IMAGE=(\S+)' /proc/cmdline | sed "s/^BOOT_IMAGE=\((\S*)\)\?\(\S*\)/\2/")"
-	if [[ "$boot_img" == *"$kdump_kernelver" ]]; then
+	if [[ $boot_img == *"$kdump_kernelver" ]]; then
 		boot_imglist="$boot_img $boot_imglist"
 	fi
 
@@ -549,10 +554,10 @@ parse_kver_from_path()
 {
 	local _img _kver
 
-	[[ -z "$1" ]] && return
+	[[ -z $1 ]] && return
 
 	_img=$1
-	BLS_ENTRY_TOKEN=$(</etc/machine-id)
+	BLS_ENTRY_TOKEN=$(< /etc/machine-id)
 
 	# Fedora standard installation, i.e. $BOOT/vmlinuz-<version>
 	_kver=${_img##*/vmlinuz-}
@@ -585,13 +590,13 @@ _get_kdump_kernel_version()
 {
 	local _version _version_nondebug
 
-	if [[ -n "$KDUMP_KERNELVER" ]]; then
+	if [[ -n $KDUMP_KERNELVER ]]; then
 		echo "$KDUMP_KERNELVER"
 		return
 	fi
 
 	_version=$(uname -r)
-	if [[ ! "$_version" =~ [+|-]debug$ ]]; then
+	if [[ ! $_version =~ [+|-]debug$ ]]; then
 		echo "$_version"
 		return
 	fi
@@ -627,7 +632,7 @@ prepare_kdump_bootinfo()
 	fi
 
 	# For 64k variant, e.g. vmlinuz-5.14.0-327.el9.aarch64+64k-debug
-	if [[ "$KDUMP_KERNEL" == *"+debug" || "$KDUMP_KERNEL" == *"64k-debug" ]]; then
+	if [[ $KDUMP_KERNEL == *"+debug" || $KDUMP_KERNEL == *"64k-debug" ]]; then
 		dwarn "Using debug kernel, you may need to set a larger crashkernel than the default value."
 	fi
 
@@ -663,8 +668,10 @@ prepare_kdump_bootinfo()
 	if [[ ! -w $KDUMP_BOOTDIR ]]; then
 		var_target_initrd_dir="/var/lib/kdump"
 		mkdir -p "$var_target_initrd_dir"
+		# shellcheck disable=SC2034 # KDUMP_INITRD is used by kdumpctl
 		KDUMP_INITRD="$var_target_initrd_dir/$kdump_initrd_base"
 	else
+		# shellcheck disable=SC2034 # KDUMP_INITRD is used by kdumpctl
 		KDUMP_INITRD="$KDUMP_BOOTDIR/$kdump_initrd_base"
 	fi
 }
@@ -718,11 +725,10 @@ prepare_cmdline()
 
 	in=${1:-$(< /proc/cmdline)}
 	while read -r opt val; do
-		[[ -n "$opt" ]] || continue
+		[[ -n $opt ]] || continue
 		remove[$opt]=1
 	done <<< "$(_cmdline_parse "$2")"
 	append=$3
-
 
 	# These params should always be removed
 	remove[crashkernel]=1
@@ -751,10 +757,10 @@ prepare_cmdline()
 	remove[iscsi_initiator]=1
 
 	while read -r opt val; do
-		[[ -n "$opt" ]] || continue
-		[[ -n "${remove[$opt]}" ]] && continue
+		[[ -n $opt ]] || continue
+		[[ -n ${remove[$opt]} ]] && continue
 
-		if [[ -n "$val" ]]; then
+		if [[ -n $val ]]; then
 			out+="$opt=$val "
 		else
 			out+="$opt "
@@ -764,7 +770,7 @@ prepare_cmdline()
 	out+="$append "
 
 	id=$(get_bootcpu_apicid)
-	if [[ -n "${id}" ]]; then
+	if [[ -n ${id} ]]; then
 		out+="disable_cpu_apicid=$id "
 	fi
 
@@ -786,6 +792,8 @@ prepare_cmdline()
 
 	# This is a workaround on AWS platform. Always remove irqpoll since it
 	# may cause the hot-remove of some pci hotplug device.
+	# shellcheck disable=SC2001 # \< and \> are word boundary markers which
+	# doesn't exist in bash parameter expansion
 	is_aws_aarch64 && out=$(echo "$out" | sed -e "s/\<irqpoll\>//")
 
 	# Always disable gpt-auto-generator as it hangs during boot of the
@@ -803,9 +811,9 @@ get_system_size()
 {
 	local _mem_size_mb _sum
 	_sum=$(sed -n "s/\s*\([0-9a-fA-F]\+\)-\([0-9a-fA-F]\+\) : System RAM$/+ 0x\2 - 0x\1 + 1/p" $PROC_IOMEM)
-	_mem_size_mb=$(( (_sum) / 1024 / 1024 ))
+	_mem_size_mb=$(((_sum) / 1024 / 1024))
 	# rounding up the total_size to 128M to align with kernel code kernel/crash_reserve.c
-	echo $(((_mem_size_mb + 127) / 128 * 128 / 1024 ))
+	echo $(((_mem_size_mb + 127) / 128 * 128 / 1024))
 }
 
 # Return the recommended size for the reserved crashkernel memory
@@ -829,8 +837,8 @@ get_recommend_size()
 
 		# aka. 102400T
 		end=${end:-104857600}
-		[[ "$end_unit" == T ]] && end=$((end * 1024))
-		[[ "$start_unit" == T ]] && start=$((start * 1024))
+		[[ $end_unit == T ]] && end=$((end * 1024))
+		[[ $start_unit == T ]] && start=$((start * 1024))
 
 		if [[ $mem_size -ge $start ]] && [[ $mem_size -lt $end ]]; then
 			echo "$size"
@@ -854,7 +862,10 @@ has_aarch64_smmu()
 	ls /sys/devices/platform/arm-smmu-* 1> /dev/null 2>&1
 }
 
-is_memsize() { [[ "$1" =~ ^[+-]?[0-9]+[KkMmGgTtPbEe]?$ ]]; }
+is_memsize()
+{
+	[[ $1 =~ ^[+-]?[0-9]+[KkMmGgTtPbEe]?$ ]]
+}
 
 # range defined for crashkernel parameter
 # i.e. <start>-[<end>]
@@ -873,32 +884,31 @@ to_bytes()
 	is_memsize "$_s" || return 1
 
 	case "${_s: -1}" in
-		K|k)
-			_s=${_s::-1}
-			_s="$((_s * 1024))"
-			;;
-		M|m)
-			_s=${_s::-1}
-			_s="$((_s * 1024 * 1024))"
-			;;
-		G|g)
-			_s=${_s::-1}
-			_s="$((_s * 1024 * 1024 * 1024))"
-			;;
-		T|t)
-			_s=${_s::-1}
-			_s="$((_s * 1024 * 1024 * 1024 * 1024))"
-			;;
-		P|p)
-			_s=${_s::-1}
-			_s="$((_s * 1024 * 1024 * 1024 * 1024 * 1024))"
-			;;
-		E|e)
-			_s=${_s::-1}
-			_s="$((_s * 1024 * 1024 * 1024 * 1024 * 1024 * 1024))"
-			;;
-		*)
-			;;
+	K | k)
+		_s=${_s::-1}
+		_s="$((_s * 1024))"
+		;;
+	M | m)
+		_s=${_s::-1}
+		_s="$((_s * 1024 * 1024))"
+		;;
+	G | g)
+		_s=${_s::-1}
+		_s="$((_s * 1024 * 1024 * 1024))"
+		;;
+	T | t)
+		_s=${_s::-1}
+		_s="$((_s * 1024 * 1024 * 1024 * 1024))"
+		;;
+	P | p)
+		_s=${_s::-1}
+		_s="$((_s * 1024 * 1024 * 1024 * 1024 * 1024))"
+		;;
+	E | e)
+		_s=${_s::-1}
+		_s="$((_s * 1024 * 1024 * 1024 * 1024 * 1024 * 1024))"
+		;;
+	*) ;;
 	esac
 	echo "$_s"
 }
@@ -912,14 +922,14 @@ memsize_add()
 	b=$(to_bytes "$2") || return 1
 	i=0
 
-	(( a += b ))
+	((a += b))
 	while :; do
-		[[ $(( a / 1024 )) -eq 0 ]] && break
-		[[ $(( a % 1024 )) -ne 0 ]] && break
-		[[ $(( ${#units[@]} - 1 )) -eq $i ]] && break
+		[[ $((a / 1024)) -eq 0 ]] && break
+		[[ $((a % 1024)) -ne 0 ]] && break
+		[[ $((${#units[@]} - 1)) -eq $i ]] && break
 
-		(( a /= 1024 ))
-		(( i += 1 ))
+		((a /= 1024))
+		((i += 1))
 	done
 
 	echo "${a}${units[$i]}"
@@ -932,10 +942,10 @@ _crashkernel_parse()
 
 	ck="$1"
 
-	if [[ "$ck" == *@* ]]; then
+	if [[ $ck == *@* ]]; then
 		offset="@${ck##*@}"
 		ck=${ck%@*}
-	elif [[ "$ck" == *,high ]] || [[ "$ck" == *,low ]]; then
+	elif [[ $ck == *,high ]] || [[ $ck == *,low ]]; then
 		offset=",${ck##*,}"
 		ck=${ck%,*}
 	else
@@ -943,8 +953,8 @@ _crashkernel_parse()
 	fi
 
 	while read -d , -r entry; do
-		[[ -n "$entry" ]] || continue
-		if [[ "$entry" == *:* ]]; then
+		[[ -n $entry ]] || continue
+		if [[ $entry == *:* ]]; then
 			range=${entry%:*}
 			size=${entry#*:}
 		else
@@ -969,20 +979,20 @@ _crashkernel_add()
 	ret=""
 
 	while IFS=';' read -r size range offset; do
-		if [[ -n "$offset" ]]; then
+		if [[ -n $offset ]]; then
 			ret="${ret%,}$offset"
 			break
 		fi
 
-		[[ -n "$size" ]] || continue
-		if [[ -n "$range" ]]; then
+		[[ -n $size ]] || continue
+		if [[ -n $range ]]; then
 			is_memrange "$range" || return 1
 			ret+="$range:"
 		fi
 
 		size=$(memsize_add "$size" "$delta") || return 1
 		ret+="$size,"
-	done < <( _crashkernel_parse "$ck")
+	done < <(_crashkernel_parse "$ck")
 
 	echo "${ret%,}"
 }
@@ -990,12 +1000,13 @@ _crashkernel_add()
 # get default crashkernel
 # $1 dump mode, if not specified, dump_mode will be judged by is_fadump_capable
 # $2 kernel-release, if not specified, got by _get_kdump_kernel_version
+# shellcheck disable=SC2120 # kdumpctl will call this func with an argument
 kdump_get_arch_recommend_crashkernel()
 {
 	local _arch _ck_cmdline _dump_mode
 	local _delta=0
 
-	if [[ -z "$1" ]]; then
+	if [[ -z $1 ]]; then
 		if is_fadump_capable; then
 			_dump_mode=fadump
 		else
@@ -1015,7 +1026,7 @@ kdump_get_arch_recommend_crashkernel()
 
 		# Base line for 4K variant kernel. The formula is based on x86 plus extra = 64M
 		_ck_cmdline="2G-4G:256M,4G-64G:320M,64G-:576M"
-		if [[ -z "$2" ]]; then
+		if [[ -z $2 ]]; then
 			_running_kernel=$(_get_kdump_kernel_version)
 		else
 			_running_kernel=$2
@@ -1071,7 +1082,7 @@ get_luks_crypt_dev()
 
 	[[ -b /dev/block/$1 ]] || return 1
 
-	_type=$(blkid -u filesystem,crypto -o export -- "/dev/block/$1" | \
+	_type=$(blkid -u filesystem,crypto -o export -- "/dev/block/$1" |
 		sed -n -E "s/^TYPE=(.*)$/\1/p")
 	[[ $_type == "crypto_LUKS" ]] && echo "$1"
 
