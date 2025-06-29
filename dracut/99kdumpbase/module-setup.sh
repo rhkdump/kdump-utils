@@ -1051,10 +1051,11 @@ kdump_install_random_seed() {
 kdump_install_systemd_conf() {
     # Kdump turns out to require longer default systemd mount timeout
     # than 1st kernel(45s by default), we use default 300s for kdump.
+    kdump_timeout=$(get_kdump_service_timeout)
     mkdir -p "${initdir}/etc/systemd/system.conf.d"
     cat > "${initdir}/etc/systemd/system.conf.d/99-kdump.conf" << EOF
 [Manager]
-DefaultTimeoutStartSec=300s
+DefaultTimeoutStartSec=${kdump_timeout}s
 EOF
 
     # Forward logs to console directly, and don't read Kmsg, this avoids

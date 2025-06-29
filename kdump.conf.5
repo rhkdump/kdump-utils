@@ -284,6 +284,12 @@ Now dracut network module takes care of this issue automatically.
 Similar to link_delay, dracut ensures disks are ready before kdump uses them.
 .RE
 
+.B dracut_kdump_service_timeout <seconds>
+.RS
+dracut kdump service start timeout.
+The default value is 300 seconds.
+.RE
+
 .B debug_mem_level <0-3>
 .RS
 Turn on verbose debug output of kdump scripts regarding free/used memory at

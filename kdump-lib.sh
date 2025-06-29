@@ -347,6 +347,14 @@ get_reserved_mem_size()
 	echo "$reserved_mem_size"
 }
 
+get_kdump_service_timeout(){
+	timeout=$(kdump_get_conf_val "dracut_kdump_service_timeout")
+	if [ -z "$timeout" ];then
+		timeout=$DEFAULT_KDUMP_TIMEOUT
+	fi
+	echo $timeout
+}
+
 check_crash_mem_reserved()
 {
 	local mem_reserved

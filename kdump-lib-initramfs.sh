@@ -5,6 +5,7 @@
 
 DEFAULT_PATH="/var/crash/"
 DEFAULT_SSHKEY="/root/.ssh/kdump_id_rsa"
+DEFAULT_KDUMP_TIMEOUT=300
 KDUMP_CONFIG_FILE="/etc/kdump.conf"
 FENCE_KDUMP_CONFIG_FILE="/etc/sysconfig/fence_kdump"
 FENCE_KDUMP_SEND="/usr/libexec/fence_kdump_send"
