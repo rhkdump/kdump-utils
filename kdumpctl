@@ -1705,7 +1705,7 @@ set_kdump_test_id()
 
 	KDUMP_COMMANDLINE_APPEND+=" $_id "
 
-	if ! reload >& /dev/null; then
+	if ! reload > /dev/null; then
 		derror "Set kdump test id fail."
 		exit 1
 	fi
@@ -1916,6 +1916,7 @@ main()
 			derror "Starting kdump: [FAILED]"
 			exit 1
 		fi
+		check_vmcore_creation_status
 		;;
 	rebuild)
 		rebuild
