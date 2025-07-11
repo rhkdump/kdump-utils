@@ -1273,7 +1273,7 @@ do_estimate()
 	local kdump_mods
 	local -A large_mods
 	local baseline
-	local kernel_size mod_size initrd_size baseline_size runtime_size reserved_size estimated_size recommended_size _cryptsetup_overhead
+	local kernel_size mod_size initrd_size baseline_size reserved_size estimated_size recommended_size _cryptsetup_overhead
 	local size_mb=$((1024 * 1024))
 
 	setup_initrd
@@ -1297,16 +1297,13 @@ do_estimate()
 	elif [[ ${baseline: -1} == "G" ]]; then
 		baseline=$((${baseline%G} * 1024))
 	elif [[ ${baseline: -1} == "T" ]]; then
-		baseline=$((${baseline%Y} * 1048576))
+		baseline=$((${baseline%T} * 1048576))
 	fi
 
 	# The default pre-reserved crashkernel value
 	baseline_size=$((baseline * size_mb))
 	# Current reserved crashkernel size
 	reserved_size=$(get_reserved_mem_size)
-	# A pre-estimated value for userspace usage and kernel
-	# runtime allocation, 64M should good for most cases
-	runtime_size=$((64 * size_mb))
 	# Kernel image size
 	kernel_size=$(get_kernel_size "$KDUMP_KERNEL")
 	# Kdump initramfs size
@@ -1347,7 +1344,7 @@ do_estimate()
 		echo -e "Encrypted kdump target requires extra memory, assuming using the keyslot with maximum memory requirement\n"
 	fi
 
-	estimated_size=$((kernel_size + mod_size + initrd_size + runtime_size + crypt_size))
+	estimated_size=$((kernel_size + mod_size + initrd_size * 3 + crypt_size))
 	if [[ $baseline_size -gt $estimated_size ]]; then
 		recommended_size=$baseline_size
 	else
@@ -1360,7 +1357,6 @@ do_estimate()
 	echo "Kernel image size:   $((kernel_size / size_mb))M"
 	echo "Kernel modules size: $((mod_size / size_mb))M"
 	echo "Initramfs size:      $((initrd_size / size_mb))M"
-	echo "Runtime reservation: $((runtime_size / size_mb))M"
 	[[ $crypt_size -ne 0 ]] &&
 		echo "LUKS required size:  $((crypt_size / size_mb))M"
 	echo -n "Large modules:"
