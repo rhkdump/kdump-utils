@@ -11,6 +11,8 @@ KDUMP_CONFIG_FILE="/etc/kdump.conf"
 FENCE_KDUMP_SEND="/usr/libexec/fence_kdump_send"
 # shellcheck disable=SC2034
 LVM_CONF="/etc/lvm/lvm.conf"
+LUKS_CONFIGFS=/sys/kernel/config/crash_dm_crypt_keys
+LUKS_KEY_PRFIX="systemd-cryptsetup:vk-"
 
 # Read kdump config in well formated style
 kdump_read_conf()
