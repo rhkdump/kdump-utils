@@ -29,6 +29,11 @@ case "$COMMAND" in
         # and managed by kdump service
         ;;
     remove)
+        if [[ -n "$KERNEL_INSTALL_BOOT_ENTRY_TYPE" ]] && [[ -d "/usr/lib/modules/$KERNEL_VERSION/kernel" ]]; then
+            [[ "${KERNEL_INSTALL_VERBOSE:-0}" -gt 0 ]] && \
+                echo "Multiple entry types may exist, not removing kdump initrd."
+            exit 0
+        fi
         rm -f -- "$KDUMP_INITRD_DIR_ABS/$KDUMP_INITRD"
         ret=$?
         ;;
