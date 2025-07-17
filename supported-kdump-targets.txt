@@ -47,6 +47,8 @@ storage:
         software FCoE (bnx2fc) (Extra configuration required,
             please read "Note on FCoE" section below)
         NVMe-FC (qla2xxx, lpfc)
+        NVMe/TCP configured by NVMe Boot Firmware Table (users may need to
+            increase the crashkernel value)
 
 network:
         Hardware using kernel modules: (igb, ixgbe, ice, i40e, e1000e, igc,

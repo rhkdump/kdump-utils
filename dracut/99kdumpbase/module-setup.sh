@@ -360,11 +360,6 @@ kdump_install_nmconnections() {
             exit 1
         fi
     done <<< "$(nmcli -t -f device,filename connection show --active)"
-
-    # Stop dracut 35network-manger to calling nm-initrd-generator.
-    # Note this line of code can be removed after NetworkManager >= 1.35.2
-    # gets released.
-    echo > "${initdir}/usr/libexec/nm-initrd-generator"
 }
 
 kdump_install_nm_netif_allowlist() {
@@ -658,7 +653,7 @@ kdump_install_net() {
         kdump_install_nmconnections
         apply_nm_initrd_generator_timeouts
         kdump_setup_znet "$_netifs"
-        kdump_install_nm_netif_allowlist "$_netifs"
+        [[ $is_nvmf ]] || kdump_install_nm_netif_allowlist "$_netifs"
         kdump_install_nic_driver "$_netifs"
         kdump_install_resolv_conf
     fi
@@ -915,6 +910,33 @@ kdump_check_iscsi_targets() {
     }
 }
 
+# Callback function for for_each_host_dev_and_slaves_all
+#
+# Code adapted from the is_nvmf function of dracut nvmf module
+kdump_nvmf_callback() {
+    local _dev _d _trtype
+
+    _dev=$1
+
+    cd -P "/sys/dev/block/$_dev" || return 1
+    if [ -f partition ]; then
+        cd ..
+    fi
+
+    for _d in device/nvme*; do
+        [ -L "$_d" ] || continue
+        if readlink "$_d" | grep -q nvme-fabrics; then
+            read -r _trtype < "$_d"/transport
+            [[ $_trtype == "fc" || $_trtype == "tcp" || $_trtype == "rdma" ]] && return 0
+        fi
+    done
+    return 1
+}
+
+kdump_check_nvmf_target() {
+    for_each_host_dev_and_slaves_all kdump_nvmf_callback && is_nvmf=1
+}
+
 # hostname -a is deprecated, do it by ourself
 get_alias() {
     local ips
@@ -1074,6 +1096,7 @@ EOF
 
 install() {
     declare -A unique_netifs ovs_unique_netifs ipv4_usage ipv6_usage
+    local is_nvmf
 
     kdump_module_init
     kdump_install_conf
@@ -1120,6 +1143,8 @@ install() {
     # target. Ideally all this should be pushed into dracut iscsi module
     # at some point of time.
     kdump_check_iscsi_targets
+
+    kdump_check_nvmf_target
 
     kdump_install_systemd_conf
 
