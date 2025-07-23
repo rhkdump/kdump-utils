@@ -15,17 +15,17 @@
 
 throttle_lock="/var/lock/kdump-udev-throttle"
 
-exec 9>$throttle_lock
+exec 9> $throttle_lock
 if [ $? -ne 0 ]; then
-        echo "Failed to create the lock file! Fallback to non-throttled kdump service restart"
-        /bin/kdumpctl reload
-        exit 1
+	echo "Failed to create the lock file! Fallback to non-throttled kdump service restart"
+	/bin/kdumpctl reload
+	exit 1
 fi
 
 flock -n 9
 if [ $? -ne 0 ]; then
-        echo "Throttling kdump restart for concurrent udev event"
-        exit 0
+	echo "Throttling kdump restart for concurrent udev event"
+	exit 0
 fi
 
 # Wait for at least 1 second, at most 4 seconds for udev to settle
