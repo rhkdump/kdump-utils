@@ -26,15 +26,14 @@ unuse_luks_keys()
 
 	[[ -f $LUKS_CONFIGFS_REUSE ]] || echo 0 > $LUKS_CONFIGFS_REUSE
 }
-exec 9> $throttle_lock
-if [ $? -ne 0 ]; then
+
+if ! exec 9> $throttle_lock; then
 	echo "Failed to create the lock file! Fallback to non-throttled kdump service restart"
 	/bin/kdumpctl reload
 	exit 1
 fi
 
-flock -n 9
-if [ $? -ne 0 ]; then
+if ! flock -n 9; then
 	echo "Throttling kdump restart for concurrent udev event"
 	exit 0
 fi

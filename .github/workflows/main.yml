@@ -19,7 +19,7 @@ jobs:
       - run: dnf install shellcheck -y
       # Currently, for kdump-utils, there is need for shellcheck to require
       # the sourced file to give correct warnings about the checked file
-      - run: shellcheck -x *.sh  kdumpctl mk*dumprd
+      - run: shellcheck -x *.sh  kdumpctl mk*dumprd kdump-udev-throttler
       - run: shellcheck -x dracut/*/*.sh
       - run: shellcheck -x tests/*/*/*.sh tools/*.sh
       # disable the follow checks for unit tests
