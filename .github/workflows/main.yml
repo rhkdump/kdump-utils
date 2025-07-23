@@ -9,7 +9,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: dnf install shfmt -y
-      - run: shfmt -s -d *.sh kdumpctl mk*dumprd tests/*/*/*.sh dracut/*/*.sh tools/*.sh
+      - run: shfmt -s -d *.sh kdumpctl mk*dumprd kdump-udev-throttler tests/*/*/*.sh dracut/*/*.sh tools/*.sh
 
   static-analysis:
     runs-on: ubuntu-latest
