@@ -6,6 +6,7 @@
 DEFAULT_PATH="/var/crash/"
 # shellcheck disable=SC2034
 DEFAULT_SSHKEY="/root/.ssh/kdump_id_rsa"
+DEFAULT_KDUMP_TIMEOUT=300
 KDUMP_CONFIG_FILE="/etc/kdump.conf"
 # shellcheck disable=SC2034
 FENCE_KDUMP_SEND="/usr/libexec/fence_kdump_send"
