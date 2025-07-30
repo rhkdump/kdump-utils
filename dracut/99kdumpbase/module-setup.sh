@@ -344,6 +344,7 @@ _install_nmconnections_before_ovs() {
             exit 1
         fi
     done <<< "$(nmcli --get-values filename,ACTIVE connection show | grep "no$")"
+    inst -o /var/lib/NetworkManager/timestamps
 }
 
 kdump_install_nmconnections() {
