@@ -26,15 +26,18 @@ jobs:
   - job: copr_build
     trigger: pull_request
     targets:
-      - fedora-41-x86_64
+      - fedora-42-x86_64
       - fedora-rawhide-x86_64
+      - fedora-rawhide-aarch64
     packages:
       - kdump-utils
 
   - job: tests
     trigger: pull_request
     targets:
-      - fedora-41-x86_64
+      - fedora-42-x86_64
+      - fedora-rawhide-x86_64
+      - fedora-rawhide-aarch64
     fmf_path: kernel-tests-plans
     use_internal_tf: true
     tf_extra_params:
