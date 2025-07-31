@@ -722,22 +722,12 @@ function load_kdump_kernel_key()
 # as the currently running kernel.
 load_kdump()
 {
-	local uki
 	local -a args
-
-	if is_uki "$KDUMP_KERNEL"; then
-		uki=$KDUMP_KERNEL
-		KDUMP_KERNEL=$KDUMP_TMPDIR/vmlinuz
-		objcopy -O binary --only-section .linux "$uki" "$KDUMP_KERNEL"
-		sync -f "$KDUMP_KERNEL"
-		# Make sure the temp file has the correct SELinux label.
-		# Otherwise starting the kdump.service will fail.
-		chcon -t boot_t "$KDUMP_KERNEL"
-	fi
 
 	IFS=' ' read -r -a args < <(prepare_kexec_args "$KEXEC_ARGS")
 	args+=("-p")
 	args+=("--command-line=$(prepare_cmdline "${KDUMP_COMMANDLINE}" "${KDUMP_COMMANDLINE_REMOVE}" "${KDUMP_COMMANDLINE_APPEND}")")
+	# For the time being, in the UKI case, we still need to build a kdump initrd independent of UKI image
 	args+=("--initrd=$TARGET_INITRD")
 	args+=("$KDUMP_KERNEL")
 
