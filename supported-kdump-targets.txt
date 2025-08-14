@@ -49,6 +49,7 @@ storage:
         NVMe-FC (qla2xxx, lpfc)
         NVMe/TCP configured by NVMe Boot Firmware Table (users may need to
             increase the crashkernel value)
+        LUKS-encrypted volume
 
 network:
         Hardware using kernel modules: (igb, ixgbe, ice, i40e, e1000e, igc,
