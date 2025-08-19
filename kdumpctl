@@ -243,19 +243,22 @@ backup_default_initrd()
 	ddebug "backup default initrd: $DEFAULT_INITRD"
 
 	if [[ ! -f $DEFAULT_INITRD ]]; then
+		ddebug "\$DEFAULT_INITRD=$DEFAULT_INITRD does not exist"
 		return
 	fi
 
-	if [[ ! -e $DEFAULT_INITRD_BAK ]]; then
-		dinfo "Backing up $DEFAULT_INITRD before rebuild."
-		# save checksum to verify before restoring
-		sha1sum "$DEFAULT_INITRD" > "$INITRD_CHECKSUM_LOCATION"
-		if ! cp "$DEFAULT_INITRD" "$DEFAULT_INITRD_BAK"; then
-			dwarn "WARNING: failed to backup $DEFAULT_INITRD."
-			rm -f -- "$INITRD_CHECKSUM_LOCATION"
-			rm -f -- "$DEFAULT_INITRD_BAK"
-		fi
+	if [[ -f $DEFAULT_INITRD_BAK ]]; then
+		ddebug "\$DEFAULT_INITRD_BAK=$DEFAULT_INITRD_BAK already exist"
+		return
 	fi
+
+	dinfo "Backing up $DEFAULT_INITRD before rebuild."
+	if ! cp "$DEFAULT_INITRD" "$DEFAULT_INITRD_BAK"; then
+		dwarn "WARNING: failed to backup $DEFAULT_INITRD."
+		rm -f -- "$DEFAULT_INITRD_BAK"
+		return
+	fi
+	sha512sum "$DEFAULT_INITRD_BAK" > "$INITRD_CHECKSUM_LOCATION"
 }
 
 restore_default_initrd()
@@ -263,24 +266,31 @@ restore_default_initrd()
 	ddebug "restore default initrd: $DEFAULT_INITRD"
 
 	if [[ ! -f $DEFAULT_INITRD ]]; then
+		ddebug "\$DEFAULT_INITRD=$DEFAULT_INITRD does not exist"
+		return
+	fi
+
+	if [[ ! -f $DEFAULT_INITRD_BAK ]]; then
+		ddebug "\$DEFAULT_INITRD_BAK=$DEFAULT_INITRD_BAK does not exist"
+		return
+	fi
+
+	if [[ ! -f $INITRD_CHECKSUM_LOCATION ]]; then
+		ddebug "\$INITRD_CHECKSUM_LOCATION=$INITRD_CHECKSUM_LOCATION does not exist"
 		return
 	fi
 
 	# If a backup initrd exists, we must be switching back from
 	# fadump to kdump. Restore the original default initrd.
-	if [[ -f $DEFAULT_INITRD_BAK ]] && [[ -f $INITRD_CHECKSUM_LOCATION ]]; then
-		# verify checksum before restoring
-		backup_checksum=$(sha1sum "$DEFAULT_INITRD_BAK" | awk '{ print $1 }')
-		default_checksum=$(awk '{ print $1 }' "$INITRD_CHECKSUM_LOCATION")
-		if [[ $default_checksum != "$backup_checksum" ]]; then
-			dwarn "WARNING: checksum mismatch! Can't restore original initrd.."
-		else
-			rm -f "$INITRD_CHECKSUM_LOCATION"
-			if mv "$DEFAULT_INITRD_BAK" "$DEFAULT_INITRD"; then
-				derror "Restoring original initrd as fadump mode is disabled."
-				sync -f "$DEFAULT_INITRD"
-			fi
-		fi
+	if ! sha512sum --status --check "$INITRD_CHECKSUM_LOCATION"; then
+		dwarn "WARNING: checksum mismatch! Can't restore original initrd."
+		return
+	fi
+
+	rm -f "$INITRD_CHECKSUM_LOCATION"
+	if mv "$DEFAULT_INITRD_BAK" "$DEFAULT_INITRD"; then
+		derror "Restoring original initrd as fadump mode is disabled."
+		sync -f "$DEFAULT_INITRD"
 	fi
 }
 
