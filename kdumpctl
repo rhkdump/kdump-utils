@@ -7,11 +7,23 @@ KEXEC_ARGS=""
 MKDUMPRD="/sbin/mkdumprd -f"
 MKFADUMPRD="/sbin/mkfadumprd"
 DRACUT_MODULES_FILE="/usr/lib/dracut/modules.txt"
+
+# Path to the initrd used for normal boot. Used to determine the naming
+# convention and in case for fadump (and earlykdump) gets rebuild.
 DEFAULT_INITRD=""
+
+# Path to backup and checksum of the default initrd. Used to backup/restore the
+# default initrd for fadump.
 DEFAULT_INITRD_BAK=""
-INITRD_CHECKSUM_LOCATION=""
+DEFAULT_INITRD_CHECKSUM=""
+
+# Path to the initrd used for kdump
 KDUMP_INITRD=""
+
+# Path to the initrd depending on the dump mode. Identical to KDUMP_INITRD for
+# kdump and DEFAULT_INITRD for fadump
 TARGET_INITRD=""
+
 #kdump shall be the default dump mode
 DEFAULT_DUMP_MODE="kdump"
 VMCORE_CREATION_STATUS="/var/lib/kdump/vmcore-creation.status"
@@ -258,7 +270,7 @@ backup_default_initrd()
 		rm -f -- "$DEFAULT_INITRD_BAK"
 		return
 	fi
-	sha512sum "$DEFAULT_INITRD_BAK" > "$INITRD_CHECKSUM_LOCATION"
+	sha512sum "$DEFAULT_INITRD_BAK" > "$DEFAULT_INITRD_CHECKSUM"
 }
 
 restore_default_initrd()
@@ -275,19 +287,19 @@ restore_default_initrd()
 		return
 	fi
 
-	if [[ ! -f $INITRD_CHECKSUM_LOCATION ]]; then
-		ddebug "\$INITRD_CHECKSUM_LOCATION=$INITRD_CHECKSUM_LOCATION does not exist"
+	if [[ ! -f $DEFAULT_INITRD_CHECKSUM ]]; then
+		ddebug "\$DEFAULT_INITRD_CHECKSUM=$DEFAULT_INITRD_CHECKSUM does not exist"
 		return
 	fi
 
 	# If a backup initrd exists, we must be switching back from
 	# fadump to kdump. Restore the original default initrd.
-	if ! sha512sum --status --check "$INITRD_CHECKSUM_LOCATION"; then
+	if ! sha512sum --status --check "$DEFAULT_INITRD_CHECKSUM"; then
 		dwarn "WARNING: checksum mismatch! Can't restore original initrd."
 		return
 	fi
 
-	rm -f "$INITRD_CHECKSUM_LOCATION"
+	rm -f "$DEFAULT_INITRD_CHECKSUM"
 	if mv "$DEFAULT_INITRD_BAK" "$DEFAULT_INITRD"; then
 		derror "Restoring original initrd as fadump mode is disabled."
 		sync -f "$DEFAULT_INITRD"
@@ -421,7 +433,7 @@ setup_initrd()
 	fi
 
 	DEFAULT_INITRD_BAK="$KDUMP_BOOTDIR/.$(basename "$DEFAULT_INITRD").default"
-	INITRD_CHECKSUM_LOCATION="$DEFAULT_INITRD_BAK.checksum"
+	DEFAULT_INITRD_CHECKSUM="$DEFAULT_INITRD_BAK.checksum"
 	if [[ $DEFAULT_DUMP_MODE == "fadump" ]]; then
 		TARGET_INITRD="$DEFAULT_INITRD"
 
