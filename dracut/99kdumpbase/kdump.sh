@@ -182,7 +182,7 @@ dump_fs() {
     KDUMP_LOG_DEST=$_dump_fs_path/
     KDUMP_LOG_OP="mv '$KDUMP_LOG_FILE' '$KDUMP_LOG_DEST/'"
 
-    $CORE_COLLECTOR /proc/vmcore "$_dump_fs_path/vmcore-incomplete"
+    $CORE_COLLECTOR /proc/vmcore "$_dump_fs_path/vmcore-incomplete" > /dev/console 2>&1
     _dump_exitcode=$?
     if [ $_dump_exitcode -eq 0 ]; then
         sync -f "$_dump_fs_path/vmcore-incomplete"
