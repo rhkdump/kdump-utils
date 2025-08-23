@@ -12,6 +12,7 @@ DEFAULT_INITRD_BAK=""
 INITRD_CHECKSUM_LOCATION=""
 KDUMP_INITRD=""
 TARGET_INITRD=""
+NR_CPUS=""
 #kdump shall be the default dump mode
 DEFAULT_DUMP_MODE="kdump"
 VMCORE_CREATION_STATUS="/var/lib/kdump/vmcore-creation.status"
@@ -145,6 +146,20 @@ determine_dump_mode()
 		DEFAULT_DUMP_MODE="fadump"
 	fi
 	ddebug "DEFAULT_DUMP_MODE=$DEFAULT_DUMP_MODE"
+}
+
+find_nr_cpus()
+{
+	local _cmdline_append
+
+	# shellcheck disable=SC2153
+	if is_fadump_capable; then
+		_cmdline_append="$FADUMP_COMMANDLINE_APPEND"
+	else
+		_cmdline_append="$KDUMP_COMMANDLINE_APPEND"
+	fi
+	NR_CPUS=$(echo "$_cmdline_append" | sed -n 's/.*nr_cpus=\([0-9]\+\).*/\1/p')
+	ddebug "Configured nr_cpus=$NR_CPUS"
 }
 
 rebuild_fadump_initrd()
@@ -1360,7 +1375,7 @@ do_estimate()
 	esac
 
 	kdump_mods="$(lsinitrd "$TARGET_INITRD" -f /usr/lib/dracut/hostonly-kernel-modules.txt | tr '\n' ' ')"
-	baseline=$(kdump_get_arch_recommend_size)
+	baseline=$(kdump_get_arch_recommend_size "" "$NR_CPUS")
 	if [[ ${baseline: -1} == "M" ]]; then
 		baseline=${baseline%M}
 	elif [[ ${baseline: -1} == "G" ]]; then
@@ -1456,7 +1471,7 @@ get_default_crashkernel()
 {
 	local _dump_mode=$1
 
-	kdump_get_arch_recommend_crashkernel "$_dump_mode"
+	kdump_get_arch_recommend_crashkernel "$_dump_mode" "" "$NR_CPUS"
 }
 
 # Read kernel cmdline parameter for a specific kernel
@@ -1651,7 +1666,7 @@ reset_crashkernel()
 	#    to repeat it.
 	if is_ostree; then
 		_old_ck=$(rpm-ostree kargs | sed -n -E 's/.*(^|\s)crashkernel=(\S*).*/\2/p')
-		_new_ck=$(kdump_get_arch_recommend_crashkernel kdump)
+		_new_ck=$(kdump_get_arch_recommend_crashkernel kdump "" "$NR_CPUS")
 		if _update_kernel_cmdline "" crashkernel "$_old_ck" "$_new_ck"; then
 			[[ $_reboot == yes ]] && systemctl reboot
 		fi
@@ -1675,7 +1690,7 @@ reset_crashkernel()
 		_has_changed=""
 		if [[ $(uname -m) == ppc64le ]]; then
 			if [[ -n $_opt_fadump ]]; then
-				_new_ck=$(kdump_get_arch_recommend_crashkernel "$_dump_mode")
+				_new_ck=$(kdump_get_arch_recommend_crashkernel "$_dump_mode" "" "$NR_CPUS")
 				_old_fadump=$(get_grub_kernel_boot_parameter "$_kernel" fadump)
 				_new_fadump="$_opt_fadump"
 				[[ $_new_fadump == off ]] && _new_fadump=""
@@ -1688,10 +1703,10 @@ reset_crashkernel()
 				fi
 			else
 				_dump_mode="$(get_dump_mode_by_kernel "$_kernel")"
-				_new_ck=$(kdump_get_arch_recommend_crashkernel "$_dump_mode")
+				_new_ck=$(kdump_get_arch_recommend_crashkernel "$_dump_mode" "" "$NR_CPUS")
 			fi
 		else
-			_new_ck=$(kdump_get_arch_recommend_crashkernel kdump)
+			_new_ck=$(kdump_get_arch_recommend_crashkernel kdump "" "$NR_CPUS")
 		fi
 
 		_old_ck=$(get_grub_kernel_boot_parameter "$_kernel" crashkernel)
@@ -1730,7 +1745,7 @@ _update_crashkernel()
 	_old_ck=$(get_grub_kernel_boot_parameter "$_kernel" crashkernel)
 	_kver=$(parse_kver_from_path "$_kernel")
 	# The second argument is for the case of aarch64, where installing a 64k variant on a 4k kernel, or vice versa
-	_new_ck=$(kdump_get_arch_recommend_crashkernel "$_dump_mode" "$_kver")
+	_new_ck=$(kdump_get_arch_recommend_crashkernel "$_dump_mode" "$_kver" "$NR_CPUS")
 	if _update_kernel_cmdline "$_kernel" crashkernel "$_old_ck" "$_new_ck"; then
 		_msg="For kernel=$_kernel, crashkernel=$_new_ck now. Please reboot the system for the change to take effect."
 		_msg+=" Note if you don't want kdump-utils to manage the crashkernel kernel parameter, please set auto_reset_crashkernel=no in /etc/kdump.conf."
@@ -1981,6 +1996,7 @@ main()
 {
 	# Determine if the dump mode is kdump or fadump
 	determine_dump_mode
+	find_nr_cpus
 
 	case "$1" in
 	start)

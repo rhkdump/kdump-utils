@@ -1000,10 +1000,13 @@ _crashkernel_add()
 # get default crashkernel
 # $1 dump mode, if not specified, dump_mode will be judged by is_fadump_capable
 # $2 kernel-release, if not specified, got by _get_kdump_kernel_version
+# $3: number of CPUs configured for kdump kernel (nr_cpus)
 # shellcheck disable=SC2120 # kdumpctl will call this func with an argument
 kdump_get_arch_recommend_crashkernel()
 {
 	local _arch _ck_cmdline _dump_mode
+	local _nr_cpus=$3
+	local _pcpu_area=0
 	local _delta=0
 
 	if [[ -z $1 ]]; then
@@ -1047,6 +1050,9 @@ kdump_get_arch_recommend_crashkernel()
 			has_mlx5 && ((_delta += 150))
 		fi
 	elif [[ $_arch == "ppc64le" ]]; then
+		# 1MB per CPU
+		_pcpu_area=1
+		_delta=$(( _delta + _pcpu_area * _nr_cpus ))
 		if [[ $_dump_mode == "fadump" ]]; then
 			_ck_cmdline="4G-16G:768M,16G-64G:1G,64G-128G:2G,128G-1T:4G,1T-2T:6G,2T-4T:12G,4T-8T:20G,8T-16T:36G,16T-32T:64G,32T-64T:128G,64T-:180G"
 		else
@@ -1059,16 +1065,18 @@ kdump_get_arch_recommend_crashkernel()
 
 # return recommended size based on current system RAM size
 # $1: kernel version, if not set, will defaults to $(uname -r)
+# $2: number of CPUs configured for kdump kernel (nr_cpus)
 kdump_get_arch_recommend_size()
 {
 	local _ck_cmdline _sys_mem
+	local _nr_cpus=$2
 
 	if ! [[ -r "/proc/iomem" ]]; then
 		echo "Error, can not access /proc/iomem."
 		return 1
 	fi
 	_sys_mem=$(get_system_size)
-	_ck_cmdline=$(kdump_get_arch_recommend_crashkernel)
+	_ck_cmdline=$(kdump_get_arch_recommend_crashkernel "" "" "$_nr_cpus")
 	_ck_cmdline=${_ck_cmdline//-:/-102400T:}
 	get_recommend_size "$_sys_mem" "$_ck_cmdline"
 }
