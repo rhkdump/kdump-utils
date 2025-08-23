@@ -100,7 +100,7 @@ ppc64le)
 	update_param KDUMP_COMMANDLINE_REMOVE \
 		"hugepages hugepagesz slub_debug quiet log_buf_len swiotlb hugetlb_cma ignition.firstboot"
 	update_param KDUMP_COMMANDLINE_APPEND \
-		"irqpoll nr_cpus=1 noirqdistrib reset_devices cgroup_disable=memory numa=off udev.children-max=2 ehea.use_mcs=0 panic=10 kvm_cma_resv_ratio=0 transparent_hugepage=never novmcoredd hugetlb_cma=0 kfence.sample_interval=0"
+		"irqpoll nr_cpus=16 noirqdistrib reset_devices cgroup_disable=memory numa=off udev.children-max=2 ehea.use_mcs=0 panic=10 kvm_cma_resv_ratio=0 transparent_hugepage=never novmcoredd hugetlb_cma=0 kfence.sample_interval=0"
 	update_param FADUMP_COMMANDLINE_APPEND \
 		"nr_cpus=16 numa=off cgroup_disable=memory cma=0 kvm_cma_resv_ratio=0 hugetlb_cma=0 transparent_hugepage=never novmcoredd udev.children-max=2"
 	;;
