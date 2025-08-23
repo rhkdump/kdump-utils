@@ -975,6 +975,24 @@ _crashkernel_add()
 	echo "${ret%,}"
 }
 
+
+find_nr_cpus()
+{
+	local _cmdline_append
+	local _nr_cpus
+
+	# shellcheck disable=SC2153
+	if [[  $DEFAULT_DUMP_MODE == "fadump" ]]; then
+		_cmdline_append="$FADUMP_COMMANDLINE_APPEND"
+	else
+		_cmdline_append="$KDUMP_COMMANDLINE_APPEND"
+	fi
+	_nr_cpus=$(echo "$_cmdline_append" | sed -n 's/.*nr_cpus=\([0-9]\+\).*/\1/p')
+	ddebug "Configured nr_cpus=$_nr_cpus"
+	echo "$_nr_cpus"
+}
+
+
 # get default crashkernel
 # $1 dump mode, if not specified, dump_mode will be judged by is_fadump_capable
 # $2 kernel-release, if not specified, got by _get_kdump_kernel_version
@@ -1025,6 +1043,14 @@ kdump_get_arch_recommend_crashkernel()
 			has_mlx5 && ((_delta += 150))
 		fi
 	elif [[ $_arch == "ppc64le" ]]; then
+		local _per_cpu_area
+		local _nr_cpus
+
+		# 1MB per CPU
+		_per_cpu_area=1
+		_nr_cpus=$(find_nr_cpus)
+
+		_delta=$(( _delta + _per_cpu_area * _nr_cpus ))
 		if [[ $_dump_mode == "fadump" ]]; then
 			_ck_cmdline="4G-16G:768M,16G-64G:1G,64G-128G:2G,128G-1T:4G,1T-2T:6G,2T-4T:12G,4T-8T:20G,8T-16T:36G,16T-32T:64G,32T-64T:128G,64T-:180G"
 		else
