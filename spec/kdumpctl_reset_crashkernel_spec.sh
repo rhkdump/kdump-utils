@@ -3,6 +3,8 @@ Describe 'kdumpctl reset-crashkernel [--kernel] [--fadump]'
 	Include ./kdumpctl
 	kernel1=/boot/vmlinuz-5.15.6-100.fc34.x86_64
 	kernel2=/boot/vmlinuz-5.14.14-200.fc34.x86_64
+	kernel2_index1=1
+	kernel2_index2=2
 	ck=222M
 	KDUMP_SPEC_TEST_RUN_DIR=$(mktemp -d /tmp/spec_test.XXXXXXXXXX)
 	current_kernel=5.15.6-100.fc34.x86_64
@@ -103,9 +105,34 @@ Describe 'kdumpctl reset-crashkernel [--kernel] [--fadump]'
 				When call grubby --info "$kernel2"
 				The line 3 of output should include crashkernel="$ck"
 			End
-
 		End
 
+		Context "one kernel have 2 grub entries, and the first one is modified"
+			grubby --args crashkernel="$kdump_crashkernel" --update-kernel ALL
+			grubby --args crashkernel="$ck" --update-kernel "$kernel2_index1"
+			Specify 'kdumpctl should warn the user that crashkernel has been updated'
+				When call reset_crashkernel --kernel="$kernel2"
+				The error should include "Updated crashkernel=$kdump_crashkernel for kernel=$kernel2, grub entry index=$kernel2_index1"
+			End
+			Specify 'kernel2 should not have old crashkernel ck'
+				When call grubby --info "$kernel2"
+				The line 3 of output should not include crashkernel="$ck"
+			End
+		End
+
+		Context "one kernel have 2 grub entries, and the second one is modified"
+			grubby --args crashkernel="$kdump_crashkernel" --update-kernel ALL
+			grubby --args crashkernel="$ck" --update-kernel "$kernel2_index2"
+			Specify 'kdumpctl should warn the user that crashkernel has been updated'
+				When call reset_crashkernel --kernel="$kernel2"
+				The error should include "Updated crashkernel=$kdump_crashkernel for kernel=$kernel2, grub entry index=$kernel2_index2"
+			End
+
+			Specify 'kernel2 should not have old crashkernel ck'
+				When call grubby --info "$kernel2"
+				The line 3 of output should not include crashkernel="$ck"
+			End
+		End
 	End
 
 	Describe "FADump" fadump
@@ -142,8 +169,8 @@ Describe 'kdumpctl reset-crashkernel [--kernel] [--fadump]'
 			grubby --args crashkernel="$ck" --update-kernel ALL
 			Specify 'kdumpctl should warn the user that crashkernel has been udpated'
 				When call reset_crashkernel --kernel=ALL --fadump=on
-				The error should include "Updated crashkernel=$fadump_crashkernel for kernel=$kernel1"
-				The error should include "Updated crashkernel=$fadump_crashkernel for kernel=$kernel2"
+				The error should include "Updated fadump=on and updated crashkernel=$fadump_crashkernel for kernel=$kernel1"
+				The error should include "Updated fadump=on and updated crashkernel=$fadump_crashkernel for kernel=$kernel2"
 			End
 
 			Specify 'kernel1 should have crashkernel updated'
@@ -176,6 +203,72 @@ Describe 'kdumpctl reset-crashkernel [--kernel] [--fadump]'
 			End
 		End
 
+		Context "multiple grub entries, and the 1st enabled fadump"
+			grubby --args crashkernel="$kdump_crashkernel" --remove-args=fadump --update-kernel ALL
+			grubby --args fadump=on --update-kernel "$kernel2_index1"
+			Specify 'kdumpctl should warn the user that crashkernel has been updated'
+				When call reset_crashkernel --kernel="$kernel2"
+				The error should include "Updated crashkernel=$fadump_crashkernel for kernel=$kernel2, grub entry index=$kernel2_index1"
+			End
+
+			Specify 'kernel2 index 2 should have old crashkernel'
+				When call grubby --info "$kernel2_index2"
+				The line 3 of output should include crashkernel="$kdump_crashkernel"
+			End
+
+			Specify 'kdumpctl should warn the user that crashkernel has been updated'
+				When call reset_crashkernel --kernel="$kernel2" --fadump=on
+				The error should include "Updated fadump=on and updated crashkernel=$fadump_crashkernel for kernel=$kernel2, grub entry index=$kernel2_index2"
+			End
+		End
+
+		Context "multiple grub entries, and the 2nd is enabled fadump"
+			grubby --args crashkernel="$kdump_crashkernel" --remove-args=fadump --update-kernel ALL
+			grubby --args fadump=on --update-kernel "$kernel2_index2"
+			Specify 'kdumpctl should warn the user that crashkernel has been updated'
+				When call reset_crashkernel --kernel="$kernel2"
+				The error should include "Updated crashkernel=$fadump_crashkernel for kernel=$kernel2, grub entry index=$kernel2_index2"
+			End
+
+			Specify 'kernel2 index 1 should have old crashkernel'
+				When call grubby --info "$kernel2_index1"
+				The line 3 of output should include crashkernel="$kdump_crashkernel"
+			End
+
+			Specify 'kdumpctl should warn the user that crashkernel has been updated'
+				When call reset_crashkernel --kernel="$kernel2" --fadump=on
+				The error should include "Updated fadump=on and updated crashkernel=$fadump_crashkernel for kernel=$kernel2, grub entry index=$kernel2_index1"
+			End
+		End
+
+		Context "multiple grub entries, and the 1st is enabled fadump with default crashkernel, --fadump=off"
+			grubby --args crashkernel="$kdump_crashkernel" --remove-args=fadump --update-kernel "$kernel2_index2"
+			grubby --args crashkernel="$fadump_crashkernel" --update-kernel "$kernel2_index1"
+			Specify 'kdumpctl should warn the user that crashkernel has been updated'
+				When call reset_crashkernel --kernel="$kernel2" --fadump=off
+				The error should include "Removed fadump and updated crashkernel=$kdump_crashkernel for kernel=$kernel2, grub entry index=$kernel2_index1"
+			End
+
+			Specify 'kernel2 index 1 should not have fadump'
+				When call grubby --info "$kernel2_index1"
+				The line 3 of output should not include fadump=on
+			End
+		End
+
+		Context "multiple grub entries, and the 2nd is enabled fadump with default crashkernel, --fadump=off"
+			grubby --args crashkernel="$kdump_crashkernel" --remove-args=fadump --update-kernel "$kernel2_index1"
+			grubby --args crashkernel="$fadump_crashkernel" --update-kernel "$kernel2_index2"
+			Specify 'kdumpctl should warn the user that crashkernel has been updated'
+				When call reset_crashkernel --kernel="$kernel2" --fadump=off
+				The error should include "Removed fadump and updated crashkernel=$kdump_crashkernel for kernel=$kernel2, grub entry index=$kernel2_index2"
+			End
+
+			Specify 'kernel2 index 2 should not have fadump crashkernel'
+				When call grubby --info "$kernel2_index2"
+				The line 3 of output should not include fadump=on
+			End
+		End
+
 		Context "Update all kernels but without --fadump specified"
 			grubby --args crashkernel="$ck" --update-kernel ALL
 			grubby --args fadump=on --update-kernel "$kernel1"
@@ -200,8 +293,8 @@ Describe 'kdumpctl reset-crashkernel [--kernel] [--fadump]'
 			grubby --args fadump=on --update-kernel ALL
 			Specify 'fadump=on to fadump=nocma'
 				When call reset_crashkernel --kernel=ALL --fadump=nocma
-				The error should include "Updated crashkernel=$fadump_crashkernel for kernel=$kernel1"
-				The error should include "Updated crashkernel=$fadump_crashkernel for kernel=$kernel2"
+				The error should include "Updated fadump=nocma and updated crashkernel=$fadump_crashkernel for kernel=$kernel1"
+				The error should include "Updated fadump=nocma and updated crashkernel=$fadump_crashkernel for kernel=$kernel2"
 			End
 
 			Specify 'kernel1 should have fadump=nocma in cmdline'
