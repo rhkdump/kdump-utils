@@ -1622,7 +1622,11 @@ reset_crashkernel()
 		fi
 
 		if _update_kernel_cmdline "$_grub_entry_index" crashkernel "$_old_ck" "$_new_ck"; then
-			_has_changed="Updated crashkernel=$_new_ck"
+			if [[ -n $_has_changed ]]; then
+				_has_changed="$_has_changed and updated crashkernel=$_new_ck"
+			else
+				_has_changed="Updated crashkernel=$_new_ck"
+			fi
 		fi
 		if [[ -n $_has_changed ]]; then
 			_needs_reboot=1
