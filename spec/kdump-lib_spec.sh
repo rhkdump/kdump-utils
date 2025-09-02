@@ -97,7 +97,7 @@ Describe 'kdump-lib'
 			echo foo
 		}
 
-		add="disable_cpu_apicid=1 foo.pretimeout=0"
+		add="disable_cpu_apicid=1 foo.pretimeout=0 rd.systemd.gpt_auto=no"
 
 		Parameters
 		       #test  cmdline       remove    add       result
