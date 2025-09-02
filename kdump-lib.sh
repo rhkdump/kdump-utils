@@ -799,7 +799,7 @@ prepare_cmdline()
 	# Always disable gpt-auto-generator as it hangs during boot of the
 	# crash kernel. Furthermore we know which disk will be used for dumping
 	# (if at all) and add it explicitly.
-	is_uki "$KDUMP_KERNEL" && out+="rd.systemd.gpt_auto=no "
+	out+="rd.systemd.gpt_auto=no "
 
 	# Trim unnecessary whitespaces
 	echo "$out" | sed -e "s/^ *//g" -e "s/ *$//g" -e "s/ \+/ /g"
