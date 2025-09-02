@@ -17,17 +17,6 @@ FADUMP_APPEND_ARGS_SYS_NODE="/sys/kernel/fadump/bootargs_append"
 # shellcheck disable=SC2034
 FENCE_KDUMP_CONFIG_FILE="/etc/sysconfig/fence_kdump"
 
-is_uki()
-{
-	local img
-
-	img="$1"
-
-	[[ -f $img ]] || return
-	[[ "$(objdump -a "$img" 2> /dev/null)" =~ pei-(x86-64|aarch64-little) ]] || return
-	objdump -h -j .linux "$img" &> /dev/null
-}
-
 is_fadump_capable()
 {
 	# Check if firmware-assisted dump is enabled
@@ -621,7 +610,7 @@ _get_kdump_kernel_version()
 #
 prepare_kdump_bootinfo()
 {
-	local boot_initrdlist default_initrd_base var_target_initrd_dir
+	local _initrd
 
 	KDUMP_KERNELVER=$(_get_kdump_kernel_version)
 	KDUMP_KERNEL=$(prepare_kdump_kernel "$KDUMP_KERNELVER")
@@ -632,48 +621,29 @@ prepare_kdump_bootinfo()
 	fi
 
 	# For 64k variant, e.g. vmlinuz-5.14.0-327.el9.aarch64+64k-debug
-	if [[ $KDUMP_KERNEL == *"+debug" || $KDUMP_KERNEL == *"64k-debug" ]]; then
+	if [[ ${KDUMP_KERNEL##*+} == ?(64k-)debug ]]; then
 		dwarn "Using debug kernel, you may need to set a larger crashkernel than the default value."
 	fi
 
-	# Set KDUMP_BOOTDIR to where kernel image is stored
-	if is_uki "$KDUMP_KERNEL"; then
-		KDUMP_BOOTDIR=/boot
-	else
-		KDUMP_BOOTDIR=$(dirname "$KDUMP_KERNEL")
-	fi
-
-	# Default initrd should just stay aside of kernel image, try to find it in KDUMP_BOOTDIR
-	boot_initrdlist="initramfs-$KDUMP_KERNELVER.img initrd"
-	for initrd in $boot_initrdlist; do
-		if [[ -f "$KDUMP_BOOTDIR/$initrd" ]]; then
-			default_initrd_base="$initrd"
-			DEFAULT_INITRD="$KDUMP_BOOTDIR/$default_initrd_base"
-			break
-		fi
+	KDUMP_BOOTDIR="$(dirname "$KDUMP_KERNEL")"
+	for _initrd in "initramfs-$KDUMP_KERNELVER.img" "initrd"; do
+		[[ -f "$KDUMP_BOOTDIR/$_initrd" ]] || continue
+		DEFAULT_INITRD="$KDUMP_BOOTDIR/$_initrd"
+		break
 	done
 
-	# Create kdump initrd basename from default initrd basename
-	# initramfs-5.7.9-200.fc32.x86_64.img => initramfs-5.7.9-200.fc32.x86_64kdump.img
-	# initrd => initrdkdump
-	if [[ -z $default_initrd_base ]]; then
-		kdump_initrd_base=initramfs-${KDUMP_KERNELVER}kdump.img
-	elif [[ $default_initrd_base == *.* ]]; then
-		kdump_initrd_base=${default_initrd_base%.*}kdump.${DEFAULT_INITRD##*.}
+	# There are cases where $DEFAULT_INITRD can be empty, e.g. for UKIs.
+	if [[ -z $DEFAULT_INITRD ]] || [[ ! -w $KDUMP_BOOTDIR ]]; then
+		local statedir="/var/lib/kdump"
+		mkdir -p "$statedir"
+		_initrd="$statedir/initramfs-${KDUMP_KERNELVER}kdump.img"
+	elif [[ $DEFAULT_INITRD == *.img ]]; then
+		_initrd="${DEFAULT_INITRD/%.img/kdump.img}"
 	else
-		kdump_initrd_base=${default_initrd_base}kdump
+		_initrd="${DEFAULT_INITRD}kdump"
 	fi
-
-	# Place kdump initrd in $(/var/lib/kdump) if $(KDUMP_BOOTDIR) not writable
-	if [[ ! -w $KDUMP_BOOTDIR ]]; then
-		var_target_initrd_dir="/var/lib/kdump"
-		mkdir -p "$var_target_initrd_dir"
-		# shellcheck disable=SC2034 # KDUMP_INITRD is used by kdumpctl
-		KDUMP_INITRD="$var_target_initrd_dir/$kdump_initrd_base"
-	else
-		# shellcheck disable=SC2034 # KDUMP_INITRD is used by kdumpctl
-		KDUMP_INITRD="$KDUMP_BOOTDIR/$kdump_initrd_base"
-	fi
+	# shellcheck disable=SC2034 # KDUMP_INITRD is used by kdumpctl
+	KDUMP_INITRD="$_initrd"
 }
 
 get_watchdog_drvs()
