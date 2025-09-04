@@ -17,6 +17,25 @@ FADUMP_APPEND_ARGS_SYS_NODE="/sys/kernel/fadump/bootargs_append"
 # shellcheck disable=SC2034
 FENCE_KDUMP_CONFIG_FILE="/etc/sysconfig/fence_kdump"
 
+# read the value of an environ variable from given environ file path
+#
+# The environment variable entries in /proc/[pid]/environ are separated
+# by null bytes instead of by spaces.
+#
+# $1: environment variable
+# $2: environ file path
+read_proc_environ_var()
+{
+	local _var=$1 _environ_path=$2
+	sed -n -E "s/.*(^|\x00)${_var}=([^\x00]*).*/\2/p" < "$_environ_path"
+}
+
+_OSBUILD_ENVIRON_PATH='/proc/1/environ'
+_is_osbuild()
+{
+	[[ $(read_proc_environ_var container "$_OSBUILD_ENVIRON_PATH") == bwrap-osbuild ]]
+}
+
 is_uki()
 {
 	local img
