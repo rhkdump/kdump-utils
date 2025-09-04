@@ -38,6 +38,25 @@ is_sme_or_sev_active()
 	journalctl -q --dmesg --grep "^Memory Encryption Features active: AMD (SME|SEV)$" > /dev/null 2>&1
 }
 
+# read the value of an environ variable from given environ file path
+#
+# The environment variable entries in /proc/[pid]/environ are separated
+# by null bytes instead of by spaces.
+#
+# $1: environment variable
+# $2: environ file path
+read_proc_environ_var()
+{
+	local _var=$1 _environ_path=$2
+	sed -n -E "s/.*(^|\x00)${_var}=([^\x00]*).*/\2/p" < "$_environ_path"
+}
+
+_OSBUILD_ENVIRON_PATH='/proc/1/environ'
+_is_osbuild()
+{
+	[[ $(read_proc_environ_var container "$_OSBUILD_ENVIRON_PATH") == bwrap-osbuild ]]
+}
+
 has_command()
 {
 	[[ -x $(command -v "$1") ]]
