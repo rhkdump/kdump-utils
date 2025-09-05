@@ -10,16 +10,19 @@ if ! [[ ${KERNEL_INSTALL_MACHINE_ID-x} ]]; then
 fi
 
 if [[ -d "$KDUMP_INITRD_DIR_ABS" ]]; then
-    KDUMP_INITRD="initrdkdump"
+    KDUMP_INITRD="$KDUMP_INITRD_DIR_ABS/initrdkdump"
 else
-    # If `KDUMP_BOOTDIR` is not writable, then the kdump
-    # initrd must have been placed at `/var/lib/kdump`
-    if [[ ! -w "/boot" ]]; then
-        KDUMP_INITRD_DIR_ABS="/var/lib/kdump"
-    else
-        KDUMP_INITRD_DIR_ABS="/boot"
-    fi
-    KDUMP_INITRD="initramfs-${KERNEL_VERSION}kdump.img"
+    # Usually the initrd is stored besides the kernel image in /boot. But there
+    # are some exceptions when /boot isn't writable or there is no "normal"
+    # initrd, e.g. for UKIs. In those cases the KDUMP_INITRD is stored in
+    # /var/lib/kdump.
+
+    _initrd="initramfs-${KERNEL_VERSION}kdump.img"
+    for dir in "/boot" "/var/lib/kdump"; do
+        [[ -f "$dir/$_initrd" ]] || continue
+        KDUMP_INITRD="$dir/$_initrd"
+        break
+    done
 fi
 
 ret=0
@@ -34,7 +37,8 @@ case "$COMMAND" in
                 echo "Multiple entry types may exist, not removing kdump initrd."
             exit 0
         fi
-        rm -f -- "$KDUMP_INITRD_DIR_ABS/$KDUMP_INITRD"
+        [[ -n "$KDUMP_INITRD" ]] || exit 0
+        rm -f -- "$KDUMP_INITRD"
         ret=$?
         ;;
 esac
