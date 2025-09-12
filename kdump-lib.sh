@@ -946,13 +946,16 @@ _crashkernel_parse()
 
 # $1 crashkernel command line parameter
 # $2 size to be added
+# $3 optionally skip the first n items in command line
 _crashkernel_add()
 {
-	local ck delta ret
+	local ck delta skip ret
 	local range size offset
+	local count=0
 
 	ck="$1"
 	delta="$2"
+	skip="${3:-0}" # Default to 0 if third parameter not provided
 	ret=""
 
 	while IFS=';' read -r size range offset; do
@@ -967,8 +970,12 @@ _crashkernel_add()
 			ret+="$range:"
 		fi
 
-		size=$(memsize_add "$size" "$delta") || return 1
+		if ((count >= skip)); then
+			size=$(memsize_add "$size" "$delta") || return 1
+		fi
+
 		ret+="$size,"
+		((count++))
 	done < <(_crashkernel_parse "$ck")
 
 	echo "${ret%,}"
