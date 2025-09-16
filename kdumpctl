@@ -1091,7 +1091,7 @@ _get_luks_key_by_unlock()
 
 prepare_luks()
 {
-	local _luks_dev _key_id _key_des _luks_unlock_cmd
+	local _key_id _key_des _luks_unlock_cmd
 	declare -a _luks_devs
 
 	mapfile -t _luks_devs < <(get_all_kdump_crypt_dev)
@@ -1108,8 +1108,7 @@ prepare_luks()
 	# For the case of CPU/memory hotplugging, we can reuse loaded keys
 	[[ $(cat $LUKS_CONFIGFS/reuse) == 1 ]] && return 0
 
-	for _luks_dev in "${_luks_devs[@]}"; do
-		_devuuid=$(maj_min_to_uuid "$_luks_dev")
+	for _devuuid in "${_luks_devs[@]}"; do
 		_key_dir=$LUKS_CONFIGFS/$_devuuid
 		_key_des=$LUKS_KEY_PRFIX$_devuuid
 		if _key_id=$(keyctl request logon "$_key_des" 2> /dev/null); then

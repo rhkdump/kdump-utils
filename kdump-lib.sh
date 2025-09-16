@@ -1073,7 +1073,12 @@ kdump_get_arch_recommend_size()
 	get_recommend_size "$_sys_mem" "$_ck_cmdline"
 }
 
-# Print all underlying crypt devices of a block device
+maj_min_to_uuid()
+{
+	lsblk -no uuid,MAJ:MIN | awk -v dev="$1" 'NF==2 && $2 == dev {print $1}'
+}
+
+# Print all underlying crypt devices (UUID) of a block device
 # print nothing if device is not on top of a crypt device
 # $1: the block device to be checked in maj:min format
 get_luks_crypt_dev()
@@ -1084,18 +1089,13 @@ get_luks_crypt_dev()
 
 	_type=$(blkid -u filesystem,crypto -o export -- "/dev/block/$1" |
 		sed -n -E "s/^TYPE=(.*)$/\1/p")
-	[[ $_type == "crypto_LUKS" ]] && echo "$1"
+	[[ $_type == "crypto_LUKS" ]] && maj_min_to_uuid "$1"
 
 	for _x in "/sys/dev/block/$1/slaves/"*; do
 		[[ -f $_x/dev ]] || continue
 		[[ $_x/subsystem -ef /sys/class/block ]] || continue
 		get_luks_crypt_dev "$(< "$_x/dev")"
 	done
-}
-
-maj_min_to_uuid()
-{
-	lsblk -no uuid,MAJ:MIN | awk -v dev="$1" 'NF==2 && $2 == dev {print $1}'
 }
 
 # kdump_get_maj_min <device>
