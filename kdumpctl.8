@@ -76,6 +76,17 @@ by "kdumpctl status". Note, fadump is not supported.
 If the optional parameter [--force] is provided, there will be no confirmation
 before triggering the system crash. Dangerous though, this option is meant
 for automation testing.
+.TP
+.I setup-crypttab
+Add the 'link-volume-key' option to /etc/crypttab so vmcore can be saved to
+LUKS-encrypted disk volume. For more info on link-volume-key option,
+please "man crypttab".
+
+This step is optional. If kdump.service can start successfully, there is no
+need for this step. You can confirm if this step is needed by running "kdumpctl
+restart". If you need to input any passpharse to unlock the the encrypted
+volume, please run "kdumpctl setup-crypttab".
+
 .SH "SEE ALSO"
 .BR kdump.conf (5),
 .BR mkdumprd (8)

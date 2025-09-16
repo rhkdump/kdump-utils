@@ -1079,7 +1079,8 @@ _get_luks_key_by_unlock()
 	while [ "$_attempt" -le "$_max_retries" ]; do
 		if cryptsetup open "UUID=$_devuuid" DUMMY "--link-vk-to-keyring=@u::%logon:$_key_des" --test-passphrase; then
 			ddebug "Success: LUKS device unlocked."
-			dwarn "To avoid manually running kdumpctl, ensure the link-volume-key=@u::%logon:$_key_des option is correctly set up in /etc/crypttab (see man crypttab)."
+			# For an interactive terminal, it's possible an user manually entered a passphrase
+			[ -t 0 ] && dwarn "If you typed passphrase to unlock it manually, please run 'kdumpctl setup-crypttab' (see man kdumpctl)."
 			return 0
 		fi
 		_attempt=$((_attempt + 1))
@@ -1162,6 +1163,106 @@ start()
 
 	dinfo "Starting kdump: [OK]"
 	return 0
+}
+
+# @description Updates a crypttab file to add the 'link-volume-key' option for kdump devices.
+#
+# It gets the list of kdump-related UUIDs by calling the 'get_all_kdump_crypt_dev' function.
+# The function is idempotent and performs pre-flight checks before making any modifications.
+#
+# @exitcode 0 If the update was successful or no changes were needed.
+# @exitcode 1 If there is an error (e.g. UUID mismatch).
+#
+# @stdout No output on success.
+# @stderr Progress and error messages are printed to stderr.
+CRYPTTAB_FILE=/etc/crypttab
+setup_crypttab()
+{
+	local _devuuid uuids_string temp_file
+	declare -a _luks_devs
+
+	if [[ ! -f $CRYPTTAB_FILE ]]; then
+		dinfo "$CRYPTTAB_FILE doesn't exist, skip setup"
+		return 0
+	fi
+
+	mapfile -t _luks_devs < <(get_all_kdump_crypt_dev)
+	if [[ ${#_luks_devs[@]} -eq 0 ]]; then
+		dinfo "No LUKS-encrypted device found to process. Exiting."
+		return 0
+	fi
+
+	for _devuuid in "${_luks_devs[@]}"; do
+		if ! awk -v devuuid="$_devuuid" '!/^[[:space:]]*#/ && $2 == "UUID="devuuid { found=1; exit } END { exit !found }' "$CRYPTTAB_FILE"; then
+			derror "Device UUID=${_devuuid} doesn't exist."
+			return 1
+		fi
+	done
+
+	uuids_string="${_luks_devs[*]}"
+	temp_file=$(mktemp)
+
+	local status_updates
+
+	status_updates=$({
+		awk -v prefix="$LUKS_KEY_PRFIX" -v targets="$uuids_string" '
+    BEGIN {
+        split(targets, temp_arr, " ")
+        for (i in temp_arr) { target_uuids[temp_arr[i]] = 1 }
+    }
+    /^#|^$/ { print; next }
+    {
+        split($2, uuid_parts, "=")
+        current_uuid = uuid_parts[2]
+
+        if (current_uuid in target_uuids) {
+            target_option = "link-volume-key=@u::%logon:" prefix current_uuid
+
+            if (!index($0, target_option)) {
+                # If we need to modify, check if we are replacing or adding
+                if (index($0, "link-volume-key=")) {
+                    print "STATUS:REPLACED:" current_uuid > "/dev/stderr"
+                } else {
+                    print "STATUS:ADDED:" current_uuid > "/dev/stderr"
+                }
+
+                # Remove any existing, incorrect link-volume-key option
+                sub(/,?link-volume-key=[^, ]+/, "", $4)
+                sub(/^,/, "", $4)
+
+                # Add the correct option
+                if (NF < 3 || $3 == "") { $3 = "none" }
+                if ($4 == "" || $4 == "none") {
+                    $4 = target_option
+                } else {
+                    $4 = $4 "," target_option
+                }
+            }
+        }
+        print
+    }' "$CRYPTTAB_FILE" > "$temp_file"
+	} 2>&1)
+
+	if cmp -s "$CRYPTTAB_FILE" "$temp_file"; then
+		dinfo "No changes were needed. $CRYPTTAB_FILE is already up to date."
+		rm "$temp_file"
+		return 0
+	else
+		mv "$temp_file" "$CRYPTTAB_FILE"
+		dinfo "Success! $CRYPTTAB_FILE has been updated."
+
+		# Parse status updates and report on each changed UUID
+		while IFS=: read -r _ status uuid; do
+			if [[ $status == "ADDED" ]]; then
+				dinfo "   - Added link-volume-key for UUID: $uuid"
+			elif [[ $status == "REPLACED" ]]; then
+				dinfo "   - Replaced link-volume-key for UUID: $uuid"
+			fi
+		done < <(echo "$status_updates" | grep "STATUS:")
+		dinfo "If the dump target is rootfs and you call this command manually, you will need to run 'dracut -f --regenerate-all' to regenerate initramfs."
+
+		return 0
+	fi
 }
 
 reload()
@@ -2090,8 +2191,11 @@ main()
 			reset_crashkernel_for_installed_kernel "$2"
 		fi
 		;;
+	setup-crypttab)
+		setup_crypttab
+		;;
 	*)
-		dinfo $"Usage: $0 {estimate|start|stop|status|restart|reload|rebuild|reset-crashkernel|propagate|showmem|test}"
+		dinfo $"Usage: $0 {estimate|start|stop|status|restart|reload|rebuild|reset-crashkernel|propagate|showmem|test|setup-crypttab}"
 		exit 1
 		;;
 	esac
