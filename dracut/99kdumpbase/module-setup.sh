@@ -1095,7 +1095,7 @@ EOF
 }
 
 kdump_check_crypt_targets() {
-    local _luks_dev _devuuid _key_desc
+    local _devuuid _key_desc
     declare -a _luks_devs
 
     mapfile -t _luks_devs < <(get_all_kdump_crypt_dev)
@@ -1124,8 +1124,7 @@ kdump_check_crypt_targets() {
     # shellcheck disable=SC2154
     mkdir -p "$hookdir/initqueue/finished"
     CRYPTSETUP_PATH=$(command -v cryptsetup)
-    for _luks_dev in "${_luks_devs[@]}"; do
-        _devuuid=$(maj_min_to_uuid "$_luks_dev")
+    for _devuuid in "${_luks_devs[@]}"; do
         _key_desc=$LUKS_KEY_PRFIX$_devuuid
         cat << EOF >> "${initdir}/etc/udev/rules.d/70-luks-kdump.rules"
 ENV{ID_FS_UUID}=="$_devuuid", \
