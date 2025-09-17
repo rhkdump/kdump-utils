@@ -1101,9 +1101,15 @@ prepare_luks()
 		return
 	fi
 
+	# Currently only x86_64 is supported
+	if [[ "$(uname -m)" != "x86_64" ]]; then
+		dwarn "Warning: Encrypted device is in dump path, which is not recommended, see kexec-kdump-howto.txt for more details."
+		return 0
+	fi
+
 	if [[ ! -d $LUKS_CONFIGFS ]]; then
-		dwarn "$LUKS_CONFIGFS not available, please use a newer kernel."
-		return 1
+		dwarn "$LUKS_CONFIGFS not available, please use a newer kernel or see kexec-kdump-howto.txt to make sure dumping to encrypted target will work."
+		return 0
 	fi
 
 	# For the case of CPU/memory hotplugging, we can reuse loaded keys
@@ -1180,6 +1186,11 @@ setup_crypttab()
 {
 	local _devuuid uuids_string temp_file
 	declare -a _luks_devs
+
+	if [[ "$(uname -m)" != "x86_64" ]]; then
+		dwarn "Currently only x86_64 supported"
+		return 0
+	fi
 
 	if [[ ! -f $CRYPTTAB_FILE ]]; then
 		dinfo "$CRYPTTAB_FILE doesn't exist, skip setup"

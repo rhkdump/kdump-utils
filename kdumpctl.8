@@ -83,9 +83,11 @@ LUKS-encrypted disk volume. For more info on link-volume-key option,
 please "man crypttab".
 
 This step is optional. If kdump.service can start successfully, there is no
-need for this step. You can confirm if this step is needed by running "kdumpctl
-restart". If you need to input any passpharse to unlock the the encrypted
-volume, please run "kdumpctl setup-crypttab".
+need for this step. You can confirm if this step is needed by running
+"kdumpctl restart". If you need to input any passpharse to unlock the the
+encrypted volume, then please run "kdumpctl setup-crypttab".
+
+Note this subcommand is only helpful to x86_64 for now.
 
 .SH "SEE ALSO"
 .BR kdump.conf (5),

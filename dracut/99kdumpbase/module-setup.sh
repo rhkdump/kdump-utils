@@ -1098,6 +1098,9 @@ kdump_check_crypt_targets() {
     local _devuuid _key_desc
     declare -a _luks_devs
 
+    # Currently only x86_64 is supported
+    [[ "$(uname -m)" != "x86_64" ]] && return 1
+
     mapfile -t _luks_devs < <(get_all_kdump_crypt_dev)
 
     if [[ ${#_luks_devs[@]} -lt 1 ]]; then
