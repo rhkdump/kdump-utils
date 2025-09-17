@@ -1056,6 +1056,35 @@ check_final_action_config()
 	esac
 }
 
+remove_luks_vol_keys()
+{
+	local _key_line _key_id _key_desc _status=1
+
+	# Get all keys from @u keyring and process each line
+	while read -r _key_line; do
+		# Skip header lines and empty lines
+		[[ $_key_line =~ ^[0-9]+: ]] || continue
+
+		# Extract key ID (first field before colon)
+		_key_id=${_key_line%%:*}
+
+		# Extract key description (everything after "logon: " or "user: ")
+		if [[ $_key_line =~ logon:\ (.+)$ ]]; then
+			_key_desc=${BASH_REMATCH[1]}
+		else
+			continue
+		fi
+
+		# Check if key description starts with LUKS_KEY_PRFIX
+		if [[ $_key_desc == "$LUKS_KEY_PRFIX"* ]]; then
+			keyctl unlink "$_key_id"
+			_status=0
+		fi
+	done < <(keyctl list @u 2> /dev/null || true)
+
+	return $_status
+}
+
 _get_luks_key_by_unlock()
 {
 	local _devuuid=$1 _key_des=$2
@@ -1098,7 +1127,10 @@ prepare_luks()
 	mapfile -t _luks_devs < <(get_all_kdump_crypt_dev)
 
 	if [[ ${#_luks_devs[@]} -lt 1 ]]; then
-		return
+		if remove_luks_vol_keys; then
+			dwarn "Encrypted device not in dump path, please drop the link-volume-key option in $CRYPTTAB_FILE"
+		fi
+		return 0
 	fi
 
 	# Currently only x86_64 is supported
@@ -1109,6 +1141,7 @@ prepare_luks()
 
 	if [[ ! -d $LUKS_CONFIGFS ]]; then
 		dwarn "$LUKS_CONFIGFS not available, please use a newer kernel or see kexec-kdump-howto.txt to make sure dumping to encrypted target will work."
+		remove_luks_vol_keys
 		return 0
 	fi
 
