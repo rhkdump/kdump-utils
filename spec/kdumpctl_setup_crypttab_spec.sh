@@ -87,4 +87,88 @@ luks-007 UUID=uuid-007 none discard,link-volume-key=@u::%logon:${LUKS_KEY_PRFIX}
 		End
 
 	End
+
+	Describe "remove_luks_vol_keys()"
+
+		Context "when LUKS keys exist in keyring"
+			It "removes all LUKS keys with correct prefix"
+				# Arrange - mock keyctl to return keys with LUKS prefix
+				keyctl() {
+					case "$1" in
+					"list")
+						if [[ "$2" == "@u" ]]; then
+							cat <<EOF
+3 keys in keyring:
+464821568: --alsw-v     0     0 logon: ${LUKS_KEY_PRFIX}uuid-001
+930415407: --alsw-v     0     0 logon: ${LUKS_KEY_PRFIX}uuid-002
+123456789: --alsw-v     0     0 logon: other-key-prefix:uuid-003
+EOF
+							return 0
+						fi
+						;;
+					"unlink")
+						echo "keyctl unlink $2" >&2
+						return 0
+						;;
+					*)
+						return 1
+						;;
+					esac
+				}
+
+				When call remove_luks_vol_keys
+				The status should be success
+				The stderr should include "keyctl unlink 464821568"
+				The stderr should include "keyctl unlink 930415407"
+				The stderr should not include "keyctl unlink 123456789"
+			End
+
+		End
+
+		Context "when no LUKS keys exist"
+			It "completes successfully with no matching keys"
+				# Arrange - return keys but none with LUKS prefix
+				keyctl() {
+					case "$1" in
+					"list")
+						if [[ "$2" == "@u" ]]; then
+							cat <<EOF
+2 keys in keyring:
+123456789: --alsw-v     0     0 logon: other-key-prefix:uuid-003
+987654321: --alsw-v     0     0 user: regular-user-key
+EOF
+							return 0
+						fi
+						;;
+					*)
+						return 1
+						;;
+					esac
+				}
+
+				When call remove_luks_vol_keys
+				The status should be failure
+			End
+
+			It "completes successfully when keyring is empty"
+				# Arrange
+				keyctl() {
+					case "$1" in
+					"list")
+						if [[ "$2" == "@u" ]]; then
+							echo "keyring is empty"
+							return 0
+						fi
+						;;
+					*)
+						return 1
+						;;
+					esac
+				}
+
+				When call remove_luks_vol_keys
+				The status should be failure
+			End
+		End
+	End
 End
