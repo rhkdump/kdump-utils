@@ -882,16 +882,23 @@ or else kdump may not work as expeceted.
 Notes on encrypted dump target
 ------------------------------
 
-Currently, kdump is not working well with encrypted dump target.
-First, user have to give the password manually in capture kernel,
-so a working interactive terminal is required in the capture kernel.
+Currently, only x86_64 supports encrypted dump target. And depending on
+your setup, you may need to run "kdumpctl setup-crypttab" once in order
+for kdump.service to work on boot automatically next time. You can
+confirm if this step is needed by running "kdumpctl restart". If you have
+to input passphrase to unlock the encrypted volume, then please run 
+"kdumpctl setup-crypttab".
+
+For other architectures, kdump is not working well. First, user have
+to give the password manually in capture kernel, so a working
+interactive terminal is required in the capture kernel.
 And another major issue is that an OOM problem will occur with certain
 encryption setup. For example, the default setup for LUKS2 will use a
 memory hard key derivation function to mitigate brute force attach,
 it's impossible to reduce the memory usage for mounting the encrypted
 target. In such case, you have to either reserved enough memory for
-crash kernel according, or update your encryption setup.
-It's recommanded to use a non-encrypted target (eg. remote target)
+crash kernel accordingly, or update your encryption setup.
+It's recommended to use a non-encrypted target (eg. remote target)
 instead.
 
 Notes on device dump
