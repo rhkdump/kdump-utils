@@ -14,7 +14,7 @@ LVM_CONF="/etc/lvm/lvm.conf"
 # shellcheck disable=SC2034
 LUKS_CONFIGFS=/sys/kernel/config/crash_dm_crypt_keys
 # shellcheck disable=SC2034
-LUKS_KEY_PRFIX="systemd-cryptsetup:vk-"
+LUKS_KEY_PRFIX="kdump-cryptsetup:vk-"
 
 # Read kdump config in well formated style
 kdump_read_conf()
