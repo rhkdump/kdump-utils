@@ -8,8 +8,8 @@ jobs:
     container: docker.io/fedora:latest
     steps:
       - uses: actions/checkout@v4
-      - run: dnf install shfmt -y
-      - run: shfmt -s -d *.sh kdumpctl mk*dumprd kdump-udev-throttler tests/*/*/*.sh dracut/*/*.sh tools/*.sh
+      - run: dnf install shfmt make -y
+      - run: make format-check
 
   static-analysis:
     runs-on: ubuntu-latest
