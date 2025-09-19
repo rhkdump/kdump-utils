@@ -8,7 +8,8 @@ jobs:
     container: docker.io/fedora:latest
     steps:
       - uses: actions/checkout@v4
-      - run: dnf install shfmt make -y
+      - run: dnf install shfmt make curl which diffutils -yq
+      - run: curl -o /usr/local/bin/altshfmt https://raw.githubusercontent.com/shellspec/altshfmt/refs/heads/main/altshfmt && chmod +x /usr/local/bin/altshfmt
       - run: make format-check
 
   static-analysis:
