@@ -28,9 +28,15 @@ kdump-conf: gen-kdump-conf.sh
 kdump-sysconfig: gen-kdump-sysconfig.sh
 	./gen-kdump-sysconfig.sh $(ARCH) > kdump.sysconfig
 
-format-check:
+format-check-shfmt:
 	@command -v shfmt &>/dev/null || { echo "Error: shfmt not found. Please install shfmt."; exit 1; }
 	shfmt -s -d *.sh kdumpctl mk*dumprd kdump-udev-throttler tests/*/*/*.sh dracut/*/*.sh tools/*.sh
+
+format-check-altshfmt:
+	@command -v altshfmt >/dev/null 2>&1 || { echo "Error: altshfmt not found. Please install it."; exit 1; }
+	altshfmt -d spec/*_spec.sh
+
+format-check: format-check-shfmt format-check-altshfmt
 
 manpages:
 	install -D -m 644 mkdumprd.8 kdumpctl.8 -t $(DESTDIR)$(mandir)/man8
