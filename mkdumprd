@@ -76,10 +76,13 @@ to_mount()
 {
 	local _target=$1 _fstype=$2 _options=$3 _sed_cmd _new_mntpoint _pdev
 
-	_new_mntpoint=$(get_kdump_mntpoint_from_target "$_target")
 	_fstype="${_fstype:-$(get_fs_type_from_target "$_target")}"
 	_options="${_options:-$(get_mntopt_from_target "$_target")}"
 	_options="${_options:-defaults}"
+	if [[ $_fstype == btrfs ]]; then
+		_subvol=$(get_btrfs_subvol_from_mntopt "$_options")
+	fi
+	_new_mntpoint=$(get_kdump_mntpoint_from_target "$_target" "$_subvol")
 
 	if [[ $_fstype == "nfs"* ]]; then
 		_pdev=$_target
@@ -146,7 +149,7 @@ mkdir_save_path_ssh()
 #$1=dump target
 get_fs_size()
 {
-	df --output=avail "$(get_mntpoint_from_target "$1")/$SAVE_PATH" | tail -1
+	df --output=avail "$(get_mntpoint_from_target "$1" "$2")/$SAVE_PATH" | tail -1
 }
 
 #Function: get_raw_size
@@ -159,6 +162,7 @@ get_raw_size()
 #Function: check_size
 #$1: dump type string ('raw', 'fs', 'ssh')
 #$2: dump target
+#$3: btrfs subvol
 check_size()
 {
 	local avail memtotal
@@ -172,7 +176,7 @@ check_size()
 		avail=$(get_ssh_size "$2")
 		;;
 	fs)
-		avail=$(get_fs_size "$2")
+		avail=$(get_fs_size "$2" "$3")
 		;;
 	*)
 		return
@@ -302,20 +306,24 @@ add_mount()
 #handle the case user does not specify the dump target explicitly
 handle_default_dump_target()
 {
-	local _target
-	local _mntpoint
+	local _target _mntpoint _fstype _subvol _options
 
 	is_user_configured_dump_target && return
 
 	check_save_path_fs "$SAVE_PATH"
 
 	_save_path=$(get_bind_mount_source "$SAVE_PATH")
+	_options=$(get_mount_info OPTIONS target "$_save_path" -f)
 	_target=$(get_target_from_path "$_save_path")
-	_mntpoint=$(get_mntpoint_from_target "$_target")
+	_fstype=$(get_fs_type_from_target "$_target")
+	if [[ $_fstype == btrfs ]]; then
+		_subvol=$(get_btrfs_subvol_from_mntopt "$_options")
+	fi
 
+	_mntpoint=$(get_mntpoint_from_target "$_target" "$_subvol")
 	SAVE_PATH=${_save_path##"$_mntpoint"}
-	add_mount "$_target"
-	check_size fs "$_target"
+	add_mount "$_target" "$_fstype" "$_options"
+	check_size fs "$_target" "$_subvol"
 }
 
 # firstly get right SSH_KEY_LOCATION
