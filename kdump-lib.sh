@@ -177,7 +177,7 @@ get_kdump_targets()
 # part is the bind mounted directory which quotes by bracket "[]".
 get_bind_mount_source()
 {
-	local _mnt _path _src _opt _fstype
+	local _mnt _path _src _opt _fstype _subvol
 	local _fsroot _src_nofsroot
 
 	_mnt=$(df "$1" | tail -1 | awk '{print $NF}')
@@ -200,15 +200,13 @@ get_bind_mount_source()
 
 	_fsroot=${_src#"${_src_nofsroot}"[}
 	_fsroot=${_fsroot%]}
-	_mnt=$(get_mntpoint_from_target "$_src_nofsroot")
-
 	# for btrfs, _fsroot will also contain the subvol value as well, strip it
 	if [[ $_fstype == btrfs ]]; then
-		local _subvol
-		_subvol=${_opt#*subvol=}
-		_subvol=${_subvol%,*}
+		_subvol=$(get_btrfs_subvol_from_mntopt "$_opt")
 		_fsroot=${_fsroot#"$_subvol"}
 	fi
+	_mnt=$(get_mntpoint_from_target "$_src_nofsroot" "$_subvol")
+
 	echo "$_mnt$_fsroot$_path"
 }
 
@@ -219,11 +217,12 @@ get_mntopt_from_target()
 
 # Get the path where the target will be mounted in kdump kernel
 # $1: kdump target device
+# $2: btrfs subvol
 get_kdump_mntpoint_from_target()
 {
 	local _mntpoint
 
-	_mntpoint=$(get_mntpoint_from_target "$1")
+	_mntpoint=$(get_mntpoint_from_target "$1" "$2")
 	# mount under /sysroot if dump to root disk or mount under
 	# mount under /kdumproot if dump target is not mounted in first kernel
 	# mount under /kdumproot/$_mntpoint in other cases in 2nd kernel.
