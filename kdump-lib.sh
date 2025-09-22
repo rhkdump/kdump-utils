@@ -989,6 +989,7 @@ kdump_get_arch_recommend_crashkernel()
 {
 	local _arch _ck_cmdline _dump_mode
 	local _delta=0
+	local _skip=0
 
 	if [[ -z $1 ]]; then
 		if is_fadump_capable; then
@@ -1015,6 +1016,8 @@ kdump_get_arch_recommend_crashkernel()
 		else
 			_running_kernel=$2
 		fi
+		# skip adding additional memory for small-memory machine
+		_skip=1
 
 		# the naming convention of 64k variant suffixes with +64k, e.g. "vmlinuz-5.14.0-312.el9.aarch64+64k"
 		if echo "$_running_kernel" | grep -q 64k; then
@@ -1038,7 +1041,7 @@ kdump_get_arch_recommend_crashkernel()
 		fi
 	fi
 
-	echo -n "$(_crashkernel_add "$_ck_cmdline" "${_delta}M")"
+	echo -n "$(_crashkernel_add "$_ck_cmdline" "${_delta}M" "$_skip")"
 }
 
 # return recommended size based on current system RAM size
