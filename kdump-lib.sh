@@ -513,13 +513,20 @@ prepare_kexec_args()
 prepare_kdump_kernel()
 {
 	local kdump_kernelver=$1
-	local dir img boot_dirlist boot_imglist kdump_kernel machine_id
+	local dir img boot_dirlist boot_imglist kdump_kernel machine_id uki_img
 	read -r machine_id < /etc/machine-id
+
+	# UKI is not guaranteed named after machine ID. Use EFI var as reference.
+	if [[ -f /sys/firmware/efi/efivars/LoaderImageIdentifier-4a67b082-0a4c-41cf-b6c7-440b29bb8c4f ]]; then
+		uki_img=$(tr -cd '[:print:]/' < /sys/firmware/efi/efivars/LoaderImageIdentifier-4a67b082-0a4c-41cf-b6c7-440b29bb8c4f | sed 's/\\/\//g')
+	else
+		uki_img="EFI/Linux/$machine_id-$kdump_kernelver.efi"
+	fi
 
 	boot_dirlist=${KDUMP_BOOTDIR:-"/boot /boot/efi /efi /"}
 	boot_imglist="$KDUMP_IMG-$kdump_kernelver$KDUMP_IMG_EXT \
 		$machine_id/$kdump_kernelver/$KDUMP_IMG \
-		EFI/Linux/$machine_id-$kdump_kernelver.efi"
+		$uki_img"
 
 	# The kernel of OSTree based systems is not in the standard locations.
 	if is_ostree; then
