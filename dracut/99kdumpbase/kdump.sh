@@ -68,7 +68,7 @@ get_kdump_confs() {
                 KDUMP_POST="$config_val"
                 ;;
             fence_kdump_args)
-                FENCE_KDUMP_ARGS="$config_val"
+                FENCE_KDUMP_ARGS="$config_val -i 1"
                 ;;
             fence_kdump_nodes)
                 FENCE_KDUMP_NODES="$config_val"
@@ -533,10 +533,6 @@ wait_online_network() {
 
 get_host_ip() {
 
-    if ! is_nfs_dump_target && ! is_ssh_dump_target; then
-        return 0
-    fi
-
     _kdump_remote_ip=$(getarg kdump_remote_ip=)
 
     if [ -z "$_kdump_remote_ip" ]; then
@@ -558,6 +554,14 @@ get_host_ip() {
     _kdumpip=$(echo "$_kdumpip" | head -n 1 | awk '{print $2}')
     _kdumpip="${_kdumpip%%/*}"
     HOST_IP=$_kdumpip
+}
+
+remote_dump_wait_host_ip() {
+
+    if ! is_nfs_dump_target && ! is_ssh_dump_target; then
+        return 0
+    fi
+    get_host_ip
 }
 
 read_kdump_confs() {
@@ -661,8 +665,8 @@ fi
 read_kdump_confs
 fence_kdump_notify
 
-if ! get_host_ip; then
-    derror "get_host_ip exited with non-zero status!"
+if ! remote_dump_wait_host_ip; then
+    derror "remote_dump_wait_host_ip exited with non-zero status!"
     exit 1
 fi
 
@@ -692,4 +696,12 @@ if [ $DUMP_RETVAL -ne 0 ]; then
 fi
 
 kdump_test_set_status "success"
+#fence_kdump_send may fail to send a message due to slow network initialization.
+#Let's wait for the network to be ready and retry.
+if require_fence_message; then
+    get_host_ip
+    # Give fence_kdump_send a chance to send out message.
+    sleep 2
+fi
+
 do_final_action
