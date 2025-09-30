@@ -683,16 +683,21 @@ kdump_install_pre_post_conf() {
 }
 
 default_dump_target_install_conf() {
-    local _target _fstype
+    local _target _fstype _subvol _options
     local _mntpoint _save_path
 
     is_user_configured_dump_target && return
 
     _save_path=$(get_bind_mount_source "$(get_save_path)")
     _target=$(get_target_from_path "$_save_path")
-    _mntpoint=$(get_mntpoint_from_target "$_target")
-
+    _options=$(get_mount_info OPTIONS target "$_save_path" -f)
     _fstype=$(get_fs_type_from_target "$_target")
+    if [[ $_fstype == btrfs ]]; then
+        _subvol=$(get_btrfs_subvol_from_mntopt "$_options")
+    fi
+
+    _mntpoint=$(get_mntpoint_from_target "$_target" "$_subvol")
+
     if is_fs_type_nfs "$_fstype"; then
         kdump_collect_netif_usage "$_target"
         _fstype="nfs"
