@@ -1,11 +1,55 @@
 #!/bin/bash
-# $1: target arch
+#
+# Generate /etc/sysconfig/kdump content for different architectures.
+#
+# Usage:
+#       $0 [arch]
+#
+# if [arch] is not specified, the default values will be used.
+#
 
-SED_EXP=""
+declare -A KEXEC_ARGS=(
+	[default]=""
+	[aarch64]="-s"
+	[ppc64]="--dt-no-old-root"
+	[ppc64le]="-s"
+	[s390x]="-s"
+	[x86_64]="-s"
+)
 
-generate()
-{
-	sed "$SED_EXP" << EOF
+declare -A KDUMP_COMMANDLINE_REMOVE=(
+	[default]="hugepages hugepagesz slub_debug quiet log_buf_len swiotlb cma hugetlb_cma ignition.firstboot"
+	[ppc64]="hugepages hugepagesz slub_debug quiet log_buf_len swiotlb hugetlb_cma ignition.firstboot"
+	[ppc64le]="hugepages hugepagesz slub_debug quiet log_buf_len swiotlb hugetlb_cma ignition.firstboot"
+	[s390x]="hugepages hugepagesz slub_debug quiet log_buf_len swiotlb vmcp_cma cma hugetlb_cma prot_virt ignition.firstboot zfcp.allow_lun_scan"
+)
+
+declare -A KDUMP_COMMANDLINE_APPEND=(
+	[default]="irqpoll maxcpus=1 reset_devices novmcoredd cma=0 hugetlb_cma=0"
+	[aarch64]="irqpoll nr_cpus=1 reset_devices cgroup_disable=memory udev.children-max=2 panic=10 swiotlb=noforce novmcoredd cma=0 hugetlb_cma=0 kfence.sample_interval=0"
+	[i386]="irqpoll nr_cpus=1 reset_devices numa=off udev.children-max=2 panic=10 transparent_hugepage=never novmcoredd cma=0 hugetlb_cma=0 kfence.sample_interval=0"
+	[ppc64]="irqpoll maxcpus=1 noirqdistrib reset_devices cgroup_disable=memory numa=off udev.children-max=2 ehea.use_mcs=0 panic=10 kvm_cma_resv_ratio=0 transparent_hugepage=never novmcoredd hugetlb_cma=0 kfence.sample_interval=0"
+	[ppc64le]="irqpoll nr_cpus=1 noirqdistrib reset_devices cgroup_disable=memory numa=off udev.children-max=2 ehea.use_mcs=0 panic=10 kvm_cma_resv_ratio=0 transparent_hugepage=never novmcoredd hugetlb_cma=0 kfence.sample_interval=0"
+	[s390x]="nr_cpus=1 cgroup_disable=memory numa=off udev.children-max=2 panic=10 transparent_hugepage=never novmcoredd vmcp_cma=0 cma=0 hugetlb_cma=0 kfence.sample_interval=0"
+	[x86_64]="irqpoll nr_cpus=1 reset_devices cgroup_disable=memory mce=off numa=off udev.children-max=2 panic=10 acpi_no_memhotplug transparent_hugepage=never nokaslr hest_disable novmcoredd cma=0 hugetlb_cma=0 pcie_ports=compat kfence.sample_interval=0"
+)
+
+declare -A FADUMP_COMMANDLINE_APPEND=(
+	[default]=""
+	[ppc64le]="nr_cpus=16 numa=off cgroup_disable=memory cma=0 kvm_cma_resv_ratio=0 hugetlb_cma=0 transparent_hugepage=never novmcoredd udev.children-max=2"
+)
+
+arch="$1"
+declare -A known_arches_map=([aarch64]=1 [i386]=1 [ppc64]=1 [ppc64le]=1 [s390x]=1 [x86_64]=1)
+if [[ -z $arch || -z ${known_arches_map[$arch]} ]]; then
+	echo "Warning: Unknown architecture '$arch', using default sysconfig template." >&2
+	arch="default"
+fi
+
+#
+# Generate the config file
+#
+cat <<EOF
 # Kernel Version string for the -kdump kernel, such as 2.6.13-1544.FC5kdump
 # If no version is specified, then the init script will try to find a
 # kdump kernel with the same version number as the running kernel.
@@ -25,22 +69,22 @@ KDUMP_COMMANDLINE=""
 # This variable lets us remove arguments from the current kdump commandline
 # as taken from either KDUMP_COMMANDLINE above, or from /proc/cmdline
 # NOTE: some arguments such as crashkernel will always be removed
-KDUMP_COMMANDLINE_REMOVE="hugepages hugepagesz slub_debug quiet log_buf_len swiotlb cma hugetlb_cma ignition.firstboot"
+KDUMP_COMMANDLINE_REMOVE="${KDUMP_COMMANDLINE_REMOVE[$arch]-${KDUMP_COMMANDLINE_REMOVE[default]}}"
 
 # This variable lets us append arguments to the current kdump commandline
 # after processed by KDUMP_COMMANDLINE_REMOVE
-KDUMP_COMMANDLINE_APPEND="irqpoll maxcpus=1 reset_devices novmcoredd cma=0 hugetlb_cma=0"
+KDUMP_COMMANDLINE_APPEND="${KDUMP_COMMANDLINE_APPEND[$arch]-${KDUMP_COMMANDLINE_APPEND[default]}}"
 
 # This variable lets us append arguments to fadump (powerpc) capture kernel,
 # further to the parameters passed via the bootloader.
-FADUMP_COMMANDLINE_APPEND=""
+FADUMP_COMMANDLINE_APPEND="${FADUMP_COMMANDLINE_APPEND[$arch]-${FADUMP_COMMANDLINE_APPEND[default]}}"
 
 # Any additional kexec arguments required.  In most situations, this should
 # be left empty
 #
 # Example:
 #   KEXEC_ARGS="--elf32-core-headers"
-KEXEC_ARGS=""
+KEXEC_ARGS="${KEXEC_ARGS[$arch]-${KEXEC_ARGS[default]}}"
 
 #Where to find the boot image
 #KDUMP_BOOTDIR="/boot"
@@ -71,54 +115,3 @@ VMCORE_CREATION_NOTIFICATION="yes"
 # KDUMP_SYSLOGLVL=0
 # KDUMP_KMSGLOGLVL=0
 EOF
-}
-
-update_param()
-{
-	SED_EXP="${SED_EXP}s/^$1=.*$/$1=\"$2\"/;"
-}
-
-case "$1" in
-aarch64)
-	update_param KEXEC_ARGS "-s"
-	update_param KDUMP_COMMANDLINE_APPEND \
-		"irqpoll nr_cpus=1 reset_devices cgroup_disable=memory udev.children-max=2 panic=10 swiotlb=noforce novmcoredd cma=0 hugetlb_cma=0 kfence.sample_interval=0"
-	;;
-i386)
-	update_param KDUMP_COMMANDLINE_APPEND \
-		"irqpoll nr_cpus=1 reset_devices numa=off udev.children-max=2 panic=10 transparent_hugepage=never novmcoredd cma=0 hugetlb_cma=0 kfence.sample_interval=0"
-	;;
-ppc64)
-	update_param KEXEC_ARGS "--dt-no-old-root"
-	update_param KDUMP_COMMANDLINE_REMOVE \
-		"hugepages hugepagesz slub_debug quiet log_buf_len swiotlb hugetlb_cma ignition.firstboot"
-	update_param KDUMP_COMMANDLINE_APPEND \
-		"irqpoll maxcpus=1 noirqdistrib reset_devices cgroup_disable=memory numa=off udev.children-max=2 ehea.use_mcs=0 panic=10 kvm_cma_resv_ratio=0 transparent_hugepage=never novmcoredd hugetlb_cma=0 kfence.sample_interval=0"
-	;;
-ppc64le)
-	update_param KEXEC_ARGS "-s"
-	update_param KDUMP_COMMANDLINE_REMOVE \
-		"hugepages hugepagesz slub_debug quiet log_buf_len swiotlb hugetlb_cma ignition.firstboot"
-	update_param KDUMP_COMMANDLINE_APPEND \
-		"irqpoll nr_cpus=1 noirqdistrib reset_devices cgroup_disable=memory numa=off udev.children-max=2 ehea.use_mcs=0 panic=10 kvm_cma_resv_ratio=0 transparent_hugepage=never novmcoredd hugetlb_cma=0 kfence.sample_interval=0"
-	update_param FADUMP_COMMANDLINE_APPEND \
-		"nr_cpus=16 numa=off cgroup_disable=memory cma=0 kvm_cma_resv_ratio=0 hugetlb_cma=0 transparent_hugepage=never novmcoredd udev.children-max=2"
-	;;
-s390x)
-	update_param KEXEC_ARGS "-s"
-	update_param KDUMP_COMMANDLINE_REMOVE \
-		"hugepages hugepagesz slub_debug quiet log_buf_len swiotlb vmcp_cma cma hugetlb_cma prot_virt ignition.firstboot zfcp.allow_lun_scan"
-	update_param KDUMP_COMMANDLINE_APPEND \
-		"nr_cpus=1 cgroup_disable=memory numa=off udev.children-max=2 panic=10 transparent_hugepage=never novmcoredd vmcp_cma=0 cma=0 hugetlb_cma=0 kfence.sample_interval=0"
-	;;
-x86_64)
-	update_param KEXEC_ARGS "-s"
-	update_param KDUMP_COMMANDLINE_APPEND \
-		"irqpoll nr_cpus=1 reset_devices cgroup_disable=memory mce=off numa=off udev.children-max=2 panic=10 acpi_no_memhotplug transparent_hugepage=never nokaslr hest_disable novmcoredd cma=0 hugetlb_cma=0 pcie_ports=compat kfence.sample_interval=0"
-	;;
-*)
-	echo "Warning: Unknown architecture '$1', using default sysconfig template." >&2
-	;;
-esac
-
-generate
