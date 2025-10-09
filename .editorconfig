@@ -18,5 +18,5 @@ binary_next_line   = false
 space_redirects    = true
 
 # Some scripts will only run with bash
-[{mkfadumprd,mkdumprd,kdumpctl,kdump-lib.sh}]
+[{mkfadumprd,mkdumprd,kdumpctl,kdump-lib.sh,gen-kdump-sysconfig.sh}]
 shell_variant = bash
