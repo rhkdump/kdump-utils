@@ -28,6 +28,13 @@ kdump-conf: gen-kdump-conf.sh
 kdump-sysconfig: gen-kdump-sysconfig.sh
 	./gen-kdump-sysconfig.sh $(ARCH) > kdump.sysconfig
 
+format-check:
+	@for tool in shfmt altshfmt; do \
+		command -v $$tool >/dev/null 2>&1 || { echo "Error: $$tool not found. Please install $$tool."; exit 1; }; \
+	done
+	shfmt -s -d *.sh kdumpctl mk*dumprd kdump-udev-throttler tests/*/*/*.sh dracut/*/*.sh tools/*.sh
+	altshfmt -d spec/*_spec.sh
+
 manpages:
 	install -D -m 644 mkdumprd.8 kdumpctl.8 -t $(DESTDIR)$(mandir)/man8
 	install -D -m 644 kdump.conf.5 $(DESTDIR)$(mandir)/man5/kdump.conf.5

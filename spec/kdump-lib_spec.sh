@@ -100,18 +100,18 @@ Describe 'kdump-lib'
 		add="disable_cpu_apicid=1 foo.pretimeout=0 rd.systemd.gpt_auto=no"
 
 		Parameters
-		       #test  cmdline       remove    add       result
-			"#1"  "a b c"       ""        ""        "a b c"
-			"#2"  "a b c"       "b"       ""        "a c"
-			"#3"  "a b=x c"     "b"       ""        "a c"
-			"#4"  "a b='x y' c" "b"       ""        "a c"
-			"#5"  "a b='x y' c" "b=x"     ""        "a c"
-			"#6"  "a b='x y' c" "b='x y'" ""        "a c"
-			"#7"  "a b c"       ""        "x"       "a b c x"
-			"#8"  "a b c"       ""        "x=1"     "a b c x=1"
-			"#9"  "a b c"       ""        "x='1 2'" "a b c x='1 2'"
-			"#10" "a b c"       "a"       "x='1 2'" "b c x='1 2'"
-			"#11" "a b c"       "x"       "x='1 2'" "a b c x='1 2'"
+			#test  cmdline       remove    add       result
+			"#1" "a b c" "" "" "a b c"
+			"#2" "a b c" "b" "" "a c"
+			"#3" "a b=x c" "b" "" "a c"
+			"#4" "a b='x y' c" "b" "" "a c"
+			"#5" "a b='x y' c" "b=x" "" "a c"
+			"#6" "a b='x y' c" "b='x y'" "" "a c"
+			"#7" "a b c" "" "x" "a b c x"
+			"#8" "a b c" "" "x=1" "a b c x=1"
+			"#9" "a b c" "" "x='1 2'" "a b c x='1 2'"
+			"#10" "a b c" "a" "x='1 2'" "b c x='1 2'"
+			"#11" "a b c" "x" "x='1 2'" "a b c x='1 2'"
 		End
 
 		It "Test $1: should generate the correct kernel command line"
@@ -124,7 +124,6 @@ Describe 'kdump-lib'
 		get_mntpoint_from_target() {
 			echo -n "/"
 		}
-
 
 		# the fips dracut module requires this when there is no boot partition
 		It 'should make sure root partition will be mounted to /sysroot'
