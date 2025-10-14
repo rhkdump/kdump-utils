@@ -719,7 +719,7 @@ kdump_install_conf() {
     kdump_read_conf > "${initdir}/tmp/$$-kdump.conf"
 
     while read -r _opt _val; do
-        # remove inline comments after the end of a directive.
+        [[ $_val == \"*\" ]] && _val=${_val:1:-1}
         case "$_opt" in
             raw)
                 _pdev=$(persistent_policy="by-id" kdump_get_persistent_dev "$_val")

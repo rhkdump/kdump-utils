@@ -29,9 +29,10 @@ kdump_read_conf()
 kdump_get_conf_val()
 {
 	# For lines matching "^\s*$1\s+", remove matched part (config name including space),
-	# remove tailing comment, space, then store in hold space. Print out the hold buffer on last line.
+	# remove tailing comment, space and the surrounding quotes, then store in hold space.
+	# Print out the hold buffer on last line.
 	[ -f "$KDUMP_CONFIG_FILE" ] &&
-		sed -n -e "/^\s*\($1\)\s\+/{s/^\s*\($1\)\s\+//;s/#.*//;s/\s*$//;h};\${x;p}" $KDUMP_CONFIG_FILE
+		sed -n -e "/^\s*\($1\)\s\+/{s/^\s*\($1\)\s\+//;s/#.*//;s/\s*$//;s/^\"\(.*\)\"$/\1/;h};\${x;p}" $KDUMP_CONFIG_FILE
 }
 
 is_mounted()
