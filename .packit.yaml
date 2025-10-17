@@ -41,6 +41,10 @@ jobs:
     fmf_path: kernel-tests-plans
     use_internal_tf: true
     tf_extra_params:
+      hardware:
+        - virtualization:
+            # avoid using xen guests as some machines don't support kdump
+            hypervisor: '!= xen'
       environments:
         - variables:
             # use internal NFS/SSH server to avoid creating another VM as NFS/SSH server
