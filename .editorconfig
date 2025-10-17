@@ -20,3 +20,8 @@ space_redirects    = true
 # Some scripts will only run with bash
 [{mkfadumprd,mkdumprd,kdumpctl,kdump-lib.sh,gen-kdump-sysconfig.sh}]
 shell_variant = bash
+
+# Use bash for shellspec tests otherwise altshfmt will fail with
+# error "arrays are a bash/mksh feature"
+[*]
+shell_variant = bash
