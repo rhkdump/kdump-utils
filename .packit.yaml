@@ -43,6 +43,10 @@ jobs:
     fmf_path: kernel-tests-plans
     use_internal_tf: true
     tf_extra_params:
+      hardware:
+        - virtualization:
+            # use internal NFS/SSH server to avoid creating another VM as NFS/SSH server
+            hypervisor: '!= xen'
       environments:
         - variables:
             # use internal NFS/SSH server to avoid creating another VM as NFS/SSH server
