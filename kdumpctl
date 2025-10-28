@@ -2134,16 +2134,16 @@ check_vmcore_creation_status()
 
 	case "$_status" in
 	success)
-		dinfo "Notice: Last successful vmcore creation on $_status_date"
+		dinfo "Notice: Last successful vmcore creation test on $_status_date"
 		;;
 	fail)
-		dwarn "Notice: Last NOT successful vmcore creation on $_status_date"
+		dwarn "Notice: Last NOT successful vmcore creation test on $_status_date"
 		;;
 	manual)
-		dwarn "Notice: Require manual check for kdump test of $_status_date"
+		dwarn "Notice: Require manual check for vmcore creation test of $_status_date"
 		;;
 	*)
-		derror "Unknown test status: $_status"
+		derror "Unknown vmcore creation test status: $_status"
 		;;
 	esac
 }
