@@ -67,6 +67,12 @@ Describe 'kdump-lib-initramfs'
 				else
 					printf '/var %s[/ostree/deploy/default/var]\n/sysroot %s\n' "$7" "$7"
 				fi
+			elif [[ "$7" == '/dev/nvme0n1p3' ]]; then
+				if [[ "$8" == "-f" ]]; then
+					printf '/ /dev/nvme0n1p3[/root]\n'
+				else
+					printf '/ /dev/nvme0n1p3[/root]\n/var /dev/nvme0n1p3[/var]\n'
+				fi
 			fi
 		}
 
@@ -76,19 +82,51 @@ Describe 'kdump-lib-initramfs'
 			#  - IPv6 NFS target also contain '[' in the export
 			#  - local dumping target that has '[' in the name
 			#  - has bind mint
+			#  - has subvol
 			Parameters
-				'eng.redhat.com:/srv/[nfs]' '/mnt'
-				'[2620:52:0:a1:217:38ff:fe01:131]:/srv/[nfs]' '/mnt'
-				'/dev/mapper/rhel[disk]' '/'
-				'/dev/vda4' '/sysroot'
+				'eng.redhat.com:/srv/[nfs]' '' '/mnt'
+				'[2620:52:0:a1:217:38ff:fe01:131]:/srv/[nfs]' '' '/mnt'
+				'/dev/mapper/rhel[disk]' '' '/'
+				'/dev/vda4' '' '/sysroot'
+				'/dev/nvme0n1p3' '/var' '/var'
 			End
 
 			It 'should handle all cases correctly'
-				When call get_mntpoint_from_target "$1"
-				The output should equal "$2"
+				When call get_mntpoint_from_target "$1" "$2"
+				The output should equal "$3"
 			End
 		End
 
 	End
 
+	Describe 'Test get_btrfs_subvol_from_mntopt'
+		Context 'Given different mount option formats'
+			# Test the following cases:
+			#  - Standard subvol option at the beginning
+			#  - Standard subvol option in the middle
+			#  - Standard subvol option at the end
+			#  - Subvol with @ prefix (common btrfs pattern)
+			#  - Subvol with complex path
+			#  - No subvol option present
+			#  - Empty mount options
+			#  - Subvol option with no value
+			#  - Similar but different option names
+			Parameters
+				"subvol=/home,rw,relatime" "/home"
+				"rw,subvol=/root,defaults" "/root"
+				"rw,relatime,subvol=/root" "/root"
+				"subvol=@home" "@home"
+				"subvol=/path/to/subvolume,rw" "/path/to/subvolume"
+				"rw,relatime,defaults" ""
+				true ''
+				"subvol=,rw" ""
+				"rw,subvolume=@home" ""
+			End
+
+			It 'should extract subvolume correctly'
+				When call get_btrfs_subvol_from_mntopt "$1"
+				The output should equal "$2"
+			End
+		End
+	End
 End
