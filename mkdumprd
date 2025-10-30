@@ -433,8 +433,9 @@ if ! is_fadump_capable; then
 	# to /sysroot beforehand.
 	if [[ $(cat /proc/sys/crypto/fips_enabled 2> /dev/null) == 1 ]]; then
 		_boot_source=$(findmnt -n -o SOURCE --target /boot)
+		_disk_persistent=$(get_persistent_dev "$_boot_source")
 		if mountpoint -q /boot; then
-			dracut_args+=(--add-device "$_boot_source")
+			dracut_args+=(--add-device "$_disk_persistent")
 		else
 			add_mount "$_boot_source"
 		fi
