@@ -133,4 +133,52 @@ Describe 'kdump-lib'
 		End
 	End
 
+	Describe "get_kdump_mntpoint_from_target with btrfs subvolume support"
+		# Mock get_mntpoint_from_target to simulate different mount scenarios
+		get_mntpoint_from_target() {
+			local device="$1" subvol="$2"
+			case "$device" in
+				'/dev/sda1')
+					if [[ "$subvol" == "@home" ]]; then
+						echo "/mnt/btrfs"
+					elif [[ "$subvol" == "/root" ]]; then
+						echo "/"
+					else
+						echo "/"
+					fi
+					;;
+				'/dev/sdb1')
+					if [[ "$subvol" == "@backup" ]]; then
+						echo "/backup"
+					else
+						echo "/backup"
+					fi
+					;;
+				*)
+					echo "/"
+					;;
+			esac
+		}
+
+		Context 'Given various mount point scenarios with subvolumes'
+			# Test the following cases:
+			#  - Root filesystem with @ subvolume -> /sysroot
+			#  - Home subvolume on non-root -> /kdumproot/mnt/btrfs
+			#  - Backup subvolume -> /kdumproot/backup
+			#  - Regular filesystem without subvolume -> /sysroot
+			Parameters
+				'/dev/sda1 /root /sysroot'
+				'/dev/sda1 @home /kdumproot/mnt/btrfs'
+				'/dev/sdb1 @backup /kdumproot/backup'
+				'/dev/vda2 "" /sysroot'
+			End
+
+			It 'should handle btrfs subvolumes correctly'
+				# Parse parameters: device subvol expected_result
+				read -r device subvol expected_result <<< "$1"
+				When call get_kdump_mntpoint_from_target "$device" "$subvol"
+				The output should equal "$expected_result"
+			End
+		End
+	End
 End
