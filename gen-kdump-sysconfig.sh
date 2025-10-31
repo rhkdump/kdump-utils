@@ -49,7 +49,7 @@ fi
 #
 # Generate the config file
 #
-cat <<EOF
+cat << EOF
 # Kernel Version string for the -kdump kernel, such as 2.6.13-1544.FC5kdump
 # If no version is specified, then the init script will try to find a
 # kdump kernel with the same version number as the running kernel.
