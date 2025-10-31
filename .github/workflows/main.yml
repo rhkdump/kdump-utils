@@ -17,16 +17,8 @@ jobs:
     container: docker.io/fedora:latest
     steps:
       - uses: actions/checkout@v4
-      - run: dnf install shellcheck -y
-      # Currently, for kdump-utils, there is need for shellcheck to require
-      # the sourced file to give correct warnings about the checked file
-      - run: shellcheck -x *.sh  kdumpctl mk*dumprd kdump-udev-throttler
-      - run: shellcheck -x dracut/*/*.sh
-      - run: shellcheck -x tests/*/*/*.sh tools/*.sh
-      # disable the follow checks for unit tests
-      # - 2317: to use shellspec directives like Context, When and etc.
-      # - 2288, 2215: to use test data like -o, 'eng.redhat.com:/srv/[nfs]' in parametrized tests
-      - run: shellcheck -e 2317,2288,2215 -x spec/*.sh
+      - run: dnf install shellcheck make -y
+      - run: make static-analysis
 
   unit-tests:
     runs-on: ubuntu-latest
