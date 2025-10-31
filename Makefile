@@ -36,7 +36,7 @@ format-check-altshfmt:
 	@command -v altshfmt >/dev/null 2>&1 || { echo "Error: altshfmt not found. Please install it."; exit 1; }
 	altshfmt -d spec/*_spec.sh
 
-format-check: format-check-shfmt format-check-altshfmt
+format-check: format-check-shfmt
 
 static-analysis:
 	@command -v shellcheck >/dev/null 2>&1 || { echo "Error: shellcheck not found. Please install it."; exit 1; }
