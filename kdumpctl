@@ -2188,6 +2188,8 @@ main()
 			derror "Starting kdump: [FAILED]"
 			exit 1
 		fi
+		check_vmcore_creation_status
+		exit 0
 		;;
 	stop)
 		if ! stop; then
@@ -2224,6 +2226,7 @@ main()
 			exit 1
 		fi
 		check_vmcore_creation_status
+		exit 0
 		;;
 	rebuild)
 		rebuild
