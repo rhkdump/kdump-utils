@@ -1316,6 +1316,7 @@ setup_crypttab()
 		return 0
 	else
 		mv "$temp_file" "$CRYPTTAB_FILE"
+		restorecon "$CRYPTTAB_FILE"
 		dinfo "Success! $CRYPTTAB_FILE has been updated."
 
 		# Parse status updates and report on each changed UUID
