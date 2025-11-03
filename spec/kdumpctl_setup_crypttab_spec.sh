@@ -5,6 +5,10 @@ Describe "kdumpctl "
 	dinfo() {
 		echo "$1"
 	}
+	restorecon() {
+		:
+	}
+
 	Describe "setup_crypttab()"
 		# Set up global variables and mocks for each test
 		# shellcheck disable=SC2016 # expand expression later
