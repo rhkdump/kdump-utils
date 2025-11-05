@@ -1177,7 +1177,10 @@ prepare_luks()
 		if _key_id=$(keyctl request logon "$_key_des" 2> /dev/null); then
 			ddebug "Succesfully get @u::%logon:$_key_des"
 		elif _get_luks_key_by_unlock "$_devuuid" "$_key_des"; then
-			_key_id=$(keyctl request logon "$_key_des")
+			if ! _key_id=$(keyctl request logon "$_key_des"); then
+				derror "Probably you are using 'sudo kdumpctl' or 'sudo su', please retry with 'sudo -i kdumpctl'"
+				return 1
+			fi
 			ddebug "Succesfully get @u::%logon:$_key_des after cryptsetup"
 		else
 			derror "Failed to get logon key $_key_des. Run 'kdumpctl restart' manually to start kdump."
