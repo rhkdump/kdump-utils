@@ -737,7 +737,8 @@ function load_kdump_kernel_key()
 	if ! [[ -f /proc/device-tree/ibm,secure-boot ]]; then
 		return
 	fi
-
+	# %.ima keyring is writable to the user, no need to use
+	# "sudo -i keyctl"
 	keyctl padd asymmetric "" %:.ima < "/usr/share/doc/kernel-keys/$KDUMP_KERNELVER/kernel-signing-ppc.cer"
 }
 
@@ -760,6 +761,7 @@ load_kdump()
 		return 1
 	fi
 
+	[[ ${KEYCTL_CMD[0]} == sudo ]] && KEXEC="sudo -i $KEXEC"
 	ddebug "$KEXEC ${args[*]}"
 	if $KEXEC "${args[@]}"; then
 		dinfo "kexec: loaded kdump kernel"
@@ -1084,6 +1086,9 @@ remove_luks_vol_keys()
 	local _key_line _key_id _key_desc _status=1
 
 	# Get all keys from @u keyring and process each line
+	# sudo process by default only has the permission to list the keys
+	# stored in user keyring i.e. "sudo keyctl list" can work not
+	# "sudo keyctl unlink/show"
 	while read -r _key_line; do
 		# Skip header lines and empty lines
 		[[ $_key_line =~ ^[0-9]+: ]] || continue
@@ -1100,7 +1105,7 @@ remove_luks_vol_keys()
 
 		# Check if key description starts with LUKS_KEY_PRFIX
 		if [[ $_key_desc == "$LUKS_KEY_PRFIX"* ]]; then
-			keyctl unlink "$_key_id"
+			"${KEYCTL_CMD[@]}" unlink "$_key_id"
 			_status=0
 		fi
 	done < <(keyctl list @u 2> /dev/null || true)
@@ -1142,10 +1147,21 @@ _get_luks_key_by_unlock()
 	return 1
 }
 
+# Some users may use "sudo kdumpctl". sudo process by default inherits the
+# session keyring (@s) of the original user which means it can't read LUKS keys
+# stored in root's user (@u) which is only linked to root's session keyring.
+# So use "sudo -i keyctl" and "sudo kexec" automatically in order to be able to
+# search and read the LUKS key(s).
+KEYCTL_CMD=(keyctl)
 prepare_luks()
 {
 	local _key_id _key_des _luks_unlock_cmd
 	declare -a _luks_devs
+
+	# Use "sudo -i" to use the root's session keyring to access LUKS keys
+	if ! keyctl show @s | grep -qs "_uid.0$"; then
+		KEYCTL_CMD=(sudo -i keyctl)
+	fi
 
 	mapfile -t _luks_devs < <(get_all_kdump_crypt_dev)
 
@@ -1174,10 +1190,13 @@ prepare_luks()
 	for _devuuid in "${_luks_devs[@]}"; do
 		_key_dir=$LUKS_CONFIGFS/$_devuuid
 		_key_des=$LUKS_KEY_PRFIX$_devuuid
-		if _key_id=$(keyctl request logon "$_key_des" 2> /dev/null); then
+		if _key_id=$("${KEYCTL_CMD[@]}" request logon "$_key_des" 2> /dev/null); then
 			ddebug "Succesfully get @u::%logon:$_key_des"
 		elif _get_luks_key_by_unlock "$_devuuid" "$_key_des"; then
-			_key_id=$(keyctl request logon "$_key_des")
+			if ! _key_id=$("${KEYCTL_CMD[@]}" request logon "$_key_des"); then
+				derror "Probably you are using 'sudo kdumpctl' or 'sudo su', please retry with 'sudo -i kdumpctl'"
+				return 1
+			fi
 			ddebug "Succesfully get @u::%logon:$_key_des after cryptsetup"
 		else
 			derror "Failed to get logon key $_key_des. Run 'kdumpctl restart' manually to start kdump."
@@ -1185,7 +1204,7 @@ prepare_luks()
 		fi
 
 		# Let the key expire after 300 seconds
-		keyctl timeout "$_key_id" 300
+		"${KEYCTL_CMD[@]}" timeout "$_key_id" 300
 		mkdir "$_key_dir"
 		printf "%s" "$_key_des" > "$_key_dir"/description
 	done
