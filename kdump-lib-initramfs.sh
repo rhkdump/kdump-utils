@@ -19,19 +19,52 @@ LUKS_KEY_PRFIX="kdump-cryptsetup:vk-"
 # Read kdump config in well formated style
 kdump_read_conf()
 {
-	# Following steps are applied in order: strip trailing comment, strip trailing space,
-	# strip heading space, match non-empty line, remove duplicated spaces between conf name and value
-	[ -f "$KDUMP_CONFIG_FILE" ] && sed -n -e "s/#.*//;s/\s*$//;s/^\s*//;s/\(\S\+\)\s*\(.*\)/\1 \2/p" $KDUMP_CONFIG_FILE
+	kdump_get_conf_val ""
 }
 
 # Retrieves config value defined in kdump.conf
-# $1: config name, sed regexp compatible
+# $1: config name, if empty print full config
 kdump_get_conf_val()
 {
-	# For lines matching "^\s*$1\s+", remove matched part (config name including space),
-	# remove tailing comment, space, then store in hold space. Print out the hold buffer on last line.
-	[ -f "$KDUMP_CONFIG_FILE" ] &&
-		sed -n -e "/^\s*\($1\)\s\+/{s/^\s*\($1\)\s\+//;s/#.*//;s/\s*$//;h};\${x;p}" $KDUMP_CONFIG_FILE
+	_to_find="$1"
+	_found=""
+
+	[ -f "$KDUMP_CONFIG_FILE" ] || return
+	while read -r _line; do
+		_line="$(echo "$_line" | tr -s "[:blank:]" " ")"
+		case "$_line" in
+		"" | \#*)
+			continue
+			;;
+		*\#*)
+			_line="${_line%%\#*}"
+			_line="${_line% }"
+			;;
+		esac
+
+		_opt=${_line%% *}
+		_val=${_line#* }
+
+		case "$_val" in
+		\"*\")
+			# Remove quotes
+			_val="${_val#\"}"
+			_val="${_val%\"}"
+			;;
+		esac
+
+		if [ -z "$_to_find" ]; then
+			echo "$_opt $_val"
+		elif echo "$_opt" | grep -q -E "^($_to_find)$"; then
+			# make sure to only return the last match to mirror the
+			# old behavior
+			_found="$_val"
+		fi
+	done < "$KDUMP_CONFIG_FILE"
+	[ -n "$_found" ] && echo "$_found"
+
+	# make sure we return 0 even when a option isn't set
+	return 0
 }
 
 is_mounted()
