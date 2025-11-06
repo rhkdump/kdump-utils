@@ -87,7 +87,7 @@ to_dev_name()
 
 is_user_configured_dump_target()
 {
-	[[ $(kdump_get_conf_val "ext[234]\|xfs\|btrfs\|minix\|raw\|nfs\|ssh\|virtiofs") ]] || is_mount_in_dracut_args
+	[[ $(kdump_get_conf_val "ext[234]|xfs|btrfs|minix|raw|nfs|ssh|virtiofs") ]] || is_mount_in_dracut_args
 }
 
 get_block_dump_target()
@@ -98,7 +98,7 @@ get_block_dump_target()
 		return
 	fi
 
-	_target=$(kdump_get_conf_val "ext[234]\|xfs\|btrfs\|minix\|raw\|virtiofs")
+	_target=$(kdump_get_conf_val "ext[234]|xfs|btrfs|minix|raw|virtiofs")
 	[[ -n $_target ]] && to_dev_name "$_target" && return
 
 	_target=$(get_dracut_args_target "$(kdump_get_conf_val "dracut_args")")
@@ -116,7 +116,7 @@ get_block_dump_target()
 
 is_dump_to_rootfs()
 {
-	[[ $(kdump_get_conf_val 'failure_action\|default') == dump_to_rootfs ]]
+	[[ $(kdump_get_conf_val 'failure_action|default') == dump_to_rootfs ]]
 }
 
 is_lvm2_thinp_dump_target()
