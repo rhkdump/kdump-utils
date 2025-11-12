@@ -208,7 +208,7 @@ mount_failure()
 	msg="$msg for kdump preflight check."
 
 	if [[ $_fstype == "nfs" ]]; then
-		msg="$msg Please make sure nfs-utils has been installed."
+		msg="$msg Please make sure nfs-utils has been installed, and nfs server is accessible."
 	fi
 
 	perror_exit "$msg"
@@ -217,7 +217,7 @@ mount_failure()
 check_user_configured_target()
 {
 	local _target=$1 _cfg_fs_type=$2 _mounted
-	local _mnt _opt _fstype
+	local _mnt _opt _fstype _timeout_cmd=""
 
 	_mnt=$(get_mntpoint_from_target "$_target")
 	_opt=$(get_mntopt_from_target "$_target")
@@ -235,12 +235,16 @@ check_user_configured_target()
 		_fstype="$_cfg_fs_type"
 	fi
 
+	if [[ $_fstype == "nfs"* ]]; then
+		_timeout_cmd="timeout --preserve-status 10m"
+	fi
+
 	# For noauto mount, mount it inplace with default value.
 	# Else use the temporary target directory
 	if [[ -n $_mnt ]]; then
 		if ! is_mounted "$_mnt"; then
 			if [[ $_opt == *",noauto"* ]]; then
-				mount "$_mnt" || mount_failure "$_target" "$_mnt" "$_fstype"
+				$_timeout_cmd mount "$_mnt" || mount_failure "$_target" "$_mnt" "$_fstype"
 				_mounted=$_mnt
 			else
 				perror_exit "Dump target \"$_target\" is neither mounted nor configured as \"noauto\""
@@ -249,7 +253,7 @@ check_user_configured_target()
 	else
 		_mnt=$MKDUMPRD_TMPMNT
 		mkdir -p "$_mnt"
-		mount "$_target" "$_mnt" -t "$_fstype" -o defaults || mount_failure "$_target" "" "$_fstype"
+		$_timeout_cmd mount "$_target" "$_mnt" -t "$_fstype" -o defaults || mount_failure "$_target" "" "$_fstype"
 		_mounted=$_mnt
 	fi
 
