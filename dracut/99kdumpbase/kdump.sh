@@ -48,7 +48,14 @@ kdump_read_conf > $KDUMP_CONF_PARSED
 
 get_kdump_confs() {
     while read -r config_opt config_val; do
-        # remove inline comments after the end of a directive.
+        # Variable starts and ends with a quote, remove them
+        case "$config_val" in
+            \"*\")
+                config_val="${config_val#?}" # Remove the first character
+                config_val="${config_val%?}" # Remove the last character
+                ;;
+        esac
+
         case "$config_opt" in
             path)
                 KDUMP_PATH="$config_val"
