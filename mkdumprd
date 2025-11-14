@@ -429,8 +429,10 @@ if ! is_fadump_capable; then
 	# to /sysroot beforehand.
 	if [[ $(cat /proc/sys/crypto/fips_enabled 2> /dev/null) == 1 ]]; then
 		_boot_source=$(findmnt -n -o SOURCE --target /boot)
+		_dev_uuid=$(blkid -s UUID -o value "$_boot_source")
+		_disk_uuid=$("/dev/disk/by-uuid/$_dev_uuid")
 		if mountpoint -q /boot; then
-			dracut_args+=(--add-device "$_boot_source")
+			dracut_args+=(--add-device "$_disk_uuid")
 		else
 			add_mount "$_boot_source"
 		fi
