@@ -46,7 +46,7 @@ jobs:
         strategy:
             matrix:
                 fedora_version: [
-                        "40", "rawhide"
+                        "41"
                 ]
             fail-fast: false
         steps:
