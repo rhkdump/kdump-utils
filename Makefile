@@ -28,6 +28,28 @@ kdump-conf: gen-kdump-conf.sh
 kdump-sysconfig: gen-kdump-sysconfig.sh
 	./gen-kdump-sysconfig.sh $(ARCH) > kdump.sysconfig
 
+format-check-shfmt:
+	@command -v shfmt &>/dev/null || { echo "Error: shfmt not found. Please install shfmt."; exit 1; }
+	shfmt -s -d *.sh kdumpctl mk*dumprd kdump-udev-throttler tests/*/*/*.sh dracut/*/*.sh tools/*.sh
+
+format-check-altshfmt:
+	@command -v altshfmt >/dev/null 2>&1 || { echo "Error: altshfmt not found. Please install it."; exit 1; }
+	altshfmt -d spec/*_spec.sh
+
+format-check: format-check-shfmt
+
+static-analysis:
+	@command -v shellcheck >/dev/null 2>&1 || { echo "Error: shellcheck not found. Please install it."; exit 1; }
+	@# Currently, for kdump-utils, there is need for shellcheck to require
+	@# the sourced file to give correct warnings about the checked file
+	shellcheck -x *.sh kdumpctl mk*dumprd kdump-udev-throttler
+	shellcheck -x dracut/*/*.sh
+	shellcheck -x tests/*/*/*.sh tools/*.sh
+	@# disable the follow checks for unit tests
+	@# - 2317: to use shellspec directives like Context, When and etc.
+	@# - 2288, 2215: to use test data like -o, 'eng.redhat.com:/srv/[nfs]' in parametrized tests
+	shellcheck -e 2317,2288,2215 -x spec/*.sh
+
 manpages:
 	install -D -m 644 mkdumprd.8 kdumpctl.8 -t $(DESTDIR)$(mandir)/man8
 	install -D -m 644 kdump.conf.5 $(DESTDIR)$(mandir)/man5/kdump.conf.5

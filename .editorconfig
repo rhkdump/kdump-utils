@@ -4,10 +4,10 @@
 # Top-most EditorConfig file
 root = true
 
-# Default code style for kexec-tools scripts
+# Default code style for kdump-utils scripts
 [*]
 end_of_line = lf
-shell_variant = posix
+shell_variant = bash
 insert_final_newline = true
 trim_trailing_whitespace = true
 indent_style = tab
@@ -17,6 +17,5 @@ function_next_line = true
 binary_next_line   = false
 space_redirects    = true
 
-# Some scripts will only run with bash
-[{mkfadumprd,mkdumprd,kdumpctl,kdump-lib.sh,gen-kdump-sysconfig.sh}]
-shell_variant = bash
+[{kdump-lib-initramfs.sh,kdump-logger.sh}]
+shell_variant = posix

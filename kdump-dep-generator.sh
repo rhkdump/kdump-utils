@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # More details about systemd generator:
 # http://www.freedesktop.org/wiki/Software/systemd/Generators/

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 if ! systemctl is-active kdump; then
 	exit 0
