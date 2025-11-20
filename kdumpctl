@@ -4,8 +4,16 @@ KEXEC=/sbin/kexec
 KDUMP_KERNELVER=""
 KDUMP_KERNEL=""
 KEXEC_ARGS=""
-MKDUMPRD="/sbin/mkdumprd -f"
+MKDUMPRD="/sbin/mkdumprd"
 MKFADUMPRD="/sbin/mkfadumprd"
+if shopt -q -o xtrace; then
+	# shells running as root don't inherit PS4
+	PS4='${BASH_SOURCE}@${LINENO}(${FUNCNAME[0]-}): '
+	MKDUMPRD+=" --debug"
+	MKFADUMPRD+=" --debug"
+fi
+MKDUMPRD+=" -f"
+
 DRACUT_MODULES_FILE="/usr/lib/dracut/modules.txt"
 
 # Path to the initrd used for normal boot. Used to determine the naming

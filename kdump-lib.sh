@@ -778,6 +778,8 @@ prepare_cmdline()
 	# (if at all) and add it explicitly.
 	out+="rd.systemd.gpt_auto=no "
 
+	shopt -q -o xtrace && out+="rd.debug "
+
 	# Trim unnecessary whitespaces
 	echo "$out" | sed -e "s/^ *//g" -e "s/ *$//g" -e "s/ \+/ /g"
 }
