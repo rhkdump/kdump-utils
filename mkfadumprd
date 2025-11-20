@@ -2,6 +2,18 @@
 # Generate an initramfs image that isolates dump capture capability within
 # the default initramfs using zz-fadumpinit dracut module.
 
+MKDUMPRD="/sbin/mkdumprd"
+if [[ $1 == --debug ]]; then
+	set -x
+	PS4='${BASH_SOURCE}@${LINENO}(${FUNCNAME[0]-}): '
+	shift
+	MKDUMPRD+=" --debug"
+	debug_dracut=--debug
+else
+	debug_dracut=--quiet
+fi
+MKDUMPRD+=" -f"
+
 if [[ -f /etc/sysconfig/kdump ]]; then
 	# shellcheck source=/dev/null
 	. /etc/sysconfig/kdump
@@ -33,7 +45,6 @@ trap '
 # clean up after ourselves no matter how we die.
 trap 'exit 1;' SIGINT
 
-MKDUMPRD="/sbin/mkdumprd -f"
 # Default boot initramfs to be rebuilt
 REBUILD_INITRD="$1" && shift
 TARGET_INITRD="$1" && shift
@@ -74,6 +85,6 @@ if ! have_compression_in_dracut_args; then
 	fi
 fi
 
-if ! dracut --force --quiet "${_dracut_isolate_args[@]}" "$@" "$TARGET_INITRD"; then
+if ! dracut "$debug_dracut" --force "${_dracut_isolate_args[@]}" "$@" "$TARGET_INITRD"; then
 	perror_exit "mkfadumprd: failed to setup '$TARGET_INITRD' with dump capture capability"
 fi
