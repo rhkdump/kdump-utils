@@ -1,4 +1,7 @@
 #!/bin/bash
+
+shopt -q -o xtrace && export debug=1
+
 KEXEC=/sbin/kexec
 
 KDUMP_KERNELVER=""
