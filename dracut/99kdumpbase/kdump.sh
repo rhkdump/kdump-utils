@@ -151,7 +151,13 @@ dump_fs() {
             CORE_COLLECTOR=$(echo "$CORE_COLLECTOR" | sed -e "s/-F//g")
             THREADS=$(nproc)
             if [ "$THREADS" -gt 1 ]; then
-                CORE_COLLECTOR="$CORE_COLLECTOR --num-threads=$THREADS"
+                case "$CORE_COLLECTOR" in
+                    *-E*) ;;
+
+                    *)
+                        CORE_COLLECTOR="$CORE_COLLECTOR --num-threads=$THREADS"
+                        ;;
+                esac
             fi
             ;;
     esac
@@ -387,7 +393,13 @@ dump_raw() {
     if echo "$CORE_COLLECTOR" | grep -q makedumpfile; then
         THREADS=$(nproc)
         if [ "$THREADS" -gt 1 ]; then
-            CORE_COLLECTOR="$CORE_COLLECTOR --num-threads=$THREADS"
+            case "$CORE_COLLECTOR" in
+                *-E*) ;;
+
+                *)
+                    CORE_COLLECTOR="$CORE_COLLECTOR --num-threads=$THREADS"
+                    ;;
+            esac
         fi
     fi
 
