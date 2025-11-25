@@ -324,7 +324,6 @@ _set_config()
 		fi
 		return 1
 	fi
-	[[ $_val == \"*\" ]] && _val=${_val:1:-1}
 	OPT[$opt]="$val"
 }
 
