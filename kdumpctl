@@ -1532,8 +1532,9 @@ do_estimate()
 	local kernel_size mod_size initrd_size baseline_size runtime_size reserved_size estimated_size recommended_size _cryptsetup_overhead
 	local size_mb=$((1024 * 1024))
 
-	setup_initrd
-	is_system_modified
+	parse_config || return 1
+	setup_initrd || return 1
+	need_initrd_rebuild
 	case "$?" in
 	0)
 		# Nothing to do
