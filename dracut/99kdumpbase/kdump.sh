@@ -114,6 +114,10 @@ get_kdump_confs() {
             if is_ssh_dump_target || is_raw_dump_target; then
                 CORE_COLLECTOR="$CORE_COLLECTOR -F"
             fi
+            THREADS=$(nproc)
+            if [ "$THREADS" -gt 1 ]; then
+                CORE_COLLECTOR="$CORE_COLLECTOR --num-threads=$THREADS"
+            fi
             ;;
     esac
 
@@ -147,15 +151,6 @@ dump_fs() {
             return 1
         fi
     fi
-
-    case $CORE_COLLECTOR in
-        *makedumpfile*)
-            THREADS=$(nproc)
-            if [ "$THREADS" -gt 1 ]; then
-                CORE_COLLECTOR="$CORE_COLLECTOR --num-threads=$THREADS"
-            fi
-            ;;
-    esac
 
     if [ -z "$KDUMP_TEST_ID" ]; then
         _dump_fs_path=$(echo "$1/$KDUMP_PATH/$HOST_IP-$DATEDIR/" | tr -s /)
@@ -383,13 +378,6 @@ dump_raw() {
         _src_size=$(stat --format %s /proc/vmcore)
         _src_size_mb=$((_src_size / 1048576))
         /kdumpscripts/monitor_dd_progress.sh $_src_size_mb &
-    fi
-
-    if echo "$CORE_COLLECTOR" | grep -q makedumpfile; then
-        THREADS=$(nproc)
-        if [ "$THREADS" -gt 1 ]; then
-            CORE_COLLECTOR="$CORE_COLLECTOR --num-threads=$THREADS"
-        fi
     fi
 
     dinfo "saving vmcore"
