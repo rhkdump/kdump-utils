@@ -12,9 +12,3 @@ adjust:
    - when: distro == fedora-rawhide and initiator == packit
      enabled: false
      because: somehow the config-ovs test just fails on some testing farm AWS machines
-   - when: install_built_rpm == yes
-     prepare+:
-      - name: Install built RPM
-        how: install
-        package: "$KDUMP_UTILS_RPM"
-        where: client

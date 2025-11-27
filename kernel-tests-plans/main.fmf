@@ -13,6 +13,14 @@ prepare:
     script:
       - test -v CUSTOM_MIRROR && sed -e 's/^metalink=/#metalink=/g' -e "s|^#baseurl=http://download.example/pub/fedora/linux|baseurl=${CUSTOM_MIRROR}|g" -i.bak /etc/yum.repos.d/fedora{,-updates}.repo || true
 
+adjust:
+   - when: install_built_rpm == yes
+     prepare+:
+      - name: Install built RPM
+        how: install
+        package: "$KDUMP_UTILS_RPM"
+        where: client
+
 execute:
     how: tmt
     exit-first: true
