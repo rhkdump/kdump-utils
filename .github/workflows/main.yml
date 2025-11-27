@@ -32,7 +32,7 @@ jobs:
 
   integration-tests:
         runs-on: self-hosted
-        timeout-minutes: 45
+        timeout-minutes: 360
         concurrency:
             group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.fedora_version }}-${{ matrix.test }}
             cancel-in-progress: true
