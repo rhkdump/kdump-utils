@@ -1827,10 +1827,14 @@ reset_crashkernel()
 			fi
 			;;
 		--kernel=*)
+			if is_ostree; then
+				dwarn "Ignore --kernel argument for OSTree system"
+				continue
+			fi
 			_val=${_opt#*=}
 			if ! _valid_grubby_kernel_path "$_val"; then
 				derror "Invalid $_opt, please specify a valid kernel path, ALL or DEFAULT"
-				exit
+				exit 1
 			fi
 			_grubby_kernel_path=$_val
 			;;
