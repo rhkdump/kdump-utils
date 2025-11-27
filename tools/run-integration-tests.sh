@@ -30,3 +30,11 @@ if [[ ! -f $rpm_path ]]; then
 fi
 
 cd tests && tmt --context distro="fedora-${fedora_version}" run --environment CUSTOM_MIRROR="$mirror" --environment KDUMP_UTILS_RPM="$rpm_path" -a provision -h virtual -i fedora:"$fedora_version" plans --name lvm2_thinp
+
+if [[ $fedora_version == rawhide ]]; then
+	cd ../kernel-tests-plans
+	tmt --context distro="fedora-${fedora_version}" --context install_built_rpm=yes run \
+		--environment RESOURCE_URL=https://gitlab.cee.redhat.com/kernel-qe/kernel/-/raw/master/kdump/internal/internal_resources.sh \
+		--environment AUTO_CONFIG=pek --environment CUSTOM_MIRROR="$mirror" --environment KDUMP_UTILS_RPM="$rpm_path" -a \
+		provision -h virtual -c system -i fedora:"$fedora_version" plans --name nfs_ovs
+fi
