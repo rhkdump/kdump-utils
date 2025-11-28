@@ -116,7 +116,13 @@ get_kdump_confs() {
             fi
             THREADS=$(nproc)
             if [ "$THREADS" -gt 1 ]; then
-                CORE_COLLECTOR="$CORE_COLLECTOR --num-threads=$THREADS"
+                case "$CORE_COLLECTOR" in
+                    *-F* | *-E*) ;;
+
+                    *)
+                        CORE_COLLECTOR="$CORE_COLLECTOR --num-threads=$THREADS"
+                        ;;
+                esac
             fi
             ;;
     esac
