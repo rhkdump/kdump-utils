@@ -22,8 +22,7 @@ KDUMP_LOG_DEST=""
 KDUMP_LOG_OP=""
 KDUMP_TEST_ID=""
 KDUMP_TEST_STATUS=""
-CORE_COLLECTOR=""
-DEFAULT_CORE_COLLECTOR="makedumpfile -l --message-level 7 -d 31"
+CORE_COLLECTOR="makedumpfile -l --message-level 7 -d 31"
 DMESG_COLLECTOR="/sbin/vmcore-dmesg"
 FAILURE_ACTION="systemctl reboot -f"
 DATEDIR=$(date +%Y-%m-%d-%T)
@@ -108,12 +107,16 @@ get_kdump_confs() {
         esac
     done < "$KDUMP_CONF_PARSED"
 
-    if [ -z "$CORE_COLLECTOR" ]; then
-        CORE_COLLECTOR="$DEFAULT_CORE_COLLECTOR"
-        if is_ssh_dump_target || is_raw_dump_target; then
-            CORE_COLLECTOR="$CORE_COLLECTOR -F"
-        fi
-    fi
+    case $CORE_COLLECTOR in
+        *makedumpfile*)
+            # Ensure no -F in makedumpfile by default.
+            CORE_COLLECTOR=$(echo "$CORE_COLLECTOR" | sed -e "s/-F//g")
+            if is_ssh_dump_target || is_raw_dump_target; then
+                CORE_COLLECTOR="$CORE_COLLECTOR -F"
+            fi
+            ;;
+    esac
+
 }
 
 # store the kexec kernel log to a file.
@@ -145,10 +148,8 @@ dump_fs() {
         fi
     fi
 
-    # Remove -F in makedumpfile case. We don't want a flat format dump here.
     case $CORE_COLLECTOR in
         *makedumpfile*)
-            CORE_COLLECTOR=$(echo "$CORE_COLLECTOR" | sed -e "s/-F//g")
             THREADS=$(nproc)
             if [ "$THREADS" -gt 1 ]; then
                 CORE_COLLECTOR="$CORE_COLLECTOR --num-threads=$THREADS"
