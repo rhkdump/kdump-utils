@@ -1,0 +1,6 @@
+summary: Kdump early dumping tests
+discover+:
+    test:
+     - /kdump/config-default-crashkernel
+     - /kdump/config-any
+     - /kdump/config-earlykdump

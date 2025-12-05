@@ -14,8 +14,7 @@ prepare:
     order: 30
     how: shell
     script:
-      - test -v CUSTOM_MIRROR && sed -e 's/^metalink=/#metalink=/g' -e "s|^#baseurl=http://download.example/pub/fedora/linux|baseurl=${CUSTOM_MIRROR}|g" -i.bak /etc/yum.repos.d/fedora*.repo || true
-      - dnf config-manager --set-disabled fedora-cisco-openh264 || true
+      - test -v CUSTOM_MIRROR && sed -e 's/^metalink=/#metalink=/g' -e "s|^#baseurl=http://download.example/pub/fedora/linux|baseurl=${CUSTOM_MIRROR}|g" -i.bak /etc/yum.repos.d/fedora{,-updates}.repo || true
 
   # Set root password to log in as root in the console
   - name: Set root password
