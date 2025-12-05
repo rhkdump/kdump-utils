@@ -935,11 +935,6 @@ For example:
 
 Notes on how to use multiple cpus on a capture kernel on x86 system:
 
-Make sure that you are using a kernel that supports disable_cpu_apicid
-kernel option as a capture kernel, which is needed to avoid x86 specific
-hardware issue (*). The disable_cpu_apicid kernel option is automatically
-appended by kdumpctl script and is ignored if the kernel doesn't support it.
-
 You need to specify how many cpus to be used in a capture kernel by specifying
 the number of cpus in nr_cpus kernel option in /etc/sysconfig/kdump. nr_cpus
 is 1 at default.

@@ -89,15 +89,11 @@ Describe 'kdump-lib'
 	End
 
 	Describe 'prepare_cmdline()'
-		get_bootcpu_apicid() {
-			echo 1
-		}
-
 		get_watchdog_drvs() {
 			echo foo
 		}
 
-		add="disable_cpu_apicid=1 foo.pretimeout=0 rd.systemd.gpt_auto=no"
+		add="foo.pretimeout=0 rd.systemd.gpt_auto=no"
 
 		Parameters
 		       #test  cmdline       remove    add       result

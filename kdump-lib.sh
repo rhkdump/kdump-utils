@@ -390,20 +390,6 @@ is_kernel_loaded()
 	[[ $(< $_sysfs) -eq 1 ]]
 }
 
-#
-# This function returns the "apicid" of the boot
-# cpu (cpu 0) if present.
-#
-get_bootcpu_apicid()
-{
-	awk '
-        BEGIN { CPU = "-1"; }
-        $1=="processor" && $2==":"      { CPU = $NF; }
-        CPU=="0" && /^apicid/           { print $NF; }
-        ' \
-		/proc/cpuinfo
-}
-
 # This function check iomem and determines if we have more than
 # 4GB of ram available. Returns 1 if we do, 0 if we dont
 need_64bit_headers()
@@ -697,7 +683,7 @@ _cmdline_parse()
 # This function performs a series of edits on the command line.
 prepare_cmdline()
 {
-	local in out append opt val id drv
+	local in out append opt val drv
 	local -A remove
 
 	in=${1:-$(< /proc/cmdline)}
@@ -745,11 +731,6 @@ prepare_cmdline()
 	done <<< "$(_cmdline_parse "$in")"
 
 	out+="$append "
-
-	id=$(get_bootcpu_apicid)
-	if [[ -n ${id} ]]; then
-		out+="disable_cpu_apicid=$id "
-	fi
 
 	# If any watchdog is used, set it's pretimeout to 0. pretimeout let
 	# watchdog panic the kernel first, and reset the system after the
