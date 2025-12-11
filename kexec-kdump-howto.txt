@@ -935,10 +935,14 @@ For example:
 
 Notes on how to use multiple cpus on a capture kernel on x86 system:
 
-Make sure that you are using a kernel that supports disable_cpu_apicid
-kernel option as a capture kernel, which is needed to avoid x86 specific
-hardware issue (*). The disable_cpu_apicid kernel option is automatically
-appended by kdumpctl script and is ignored if the kernel doesn't support it.
+The disable_cpu_apicid kernel option is automatically appended by kdumpctl
+script to capture kernel to avoid x86 specific hardware issue and is ignored
+if the kernel doesn't support it. For newer kernels that contain commit
+5c5682b9f87a ("x86/cpu: Detect real BSP on crash kernels"), this hardware
+issue on x86 has been fixed in the kernel. However, adding disable_cpu_apicid
+is not harmful for newer kernels, and it is still added to the capture kernel
+to maintain backward compatibility with older kernels that do not contain
+commit 5c5682b9f87a.
 
 You need to specify how many cpus to be used in a capture kernel by specifying
 the number of cpus in nr_cpus kernel option in /etc/sysconfig/kdump. nr_cpus
@@ -948,9 +952,9 @@ You should use necessary and sufficient number of cpus on a capture kernel.
 Warning: Don't use too many cpus on a capture kernel, or the capture kernel
 may lead to panic due to Out Of Memory.
 
-(*) Without disable_cpu_apicid kernel option, capture kernel may lead to
-hang, system reset or power-off at boot, depending on your system and runtime
-situation at the time of crash.
+(*) Without the disable_cpu_apicid kernel option, a capture kernel that does
+not contain commit 5c5682b9f87a may hang, reset, or power-off at boot,
+depending on your system and runtime situation at the time of the crash.
 
 
 Debugging Tips
