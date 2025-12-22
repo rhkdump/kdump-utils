@@ -37,6 +37,14 @@
 # The code in this file might be run in an environment without bash.
 # Any code added must be POSIX compliant.
 
+# When xtrace is enabled, set debug to prevent logger functions from turning
+# off xtrace
+case "$-" in
+*"x"*)
+	debug=1
+	;;
+esac
+
 # Define vairables for the log levels in this module.
 kdump_stdloglvl=""
 kdump_sysloglvl=""
