@@ -898,7 +898,7 @@ kdump_check_iscsi_targets() {
     # If our prerequisites are not met, fail anyways.
     type -P iscsistart > /dev/null || return 1
 
-    # shellcheck disable=SC2317
+    # shellcheck disable=SC2329 # false postive, shellcheck issue #3273
     kdump_check_setup_iscsi() {
         local _dev
         _dev=$1
