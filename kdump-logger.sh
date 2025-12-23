@@ -85,7 +85,7 @@ check_loglvl()
 # @brief Initializes Logger.
 # @retval 1 if something has gone wrong
 # @retval 0 on success.
-# shellcheck disable=SC2317 # skip for empty functions like dwarn
+# shellcheck disable=SC2329 # skip for empty functions like dwarn
 #
 dlog_init()
 {
