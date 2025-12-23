@@ -78,6 +78,7 @@ luks-007 UUID=uuid-007 none discard,link-volume-key=@u::%logon:${LUKS_KEY_PRFIX}
 				echo "#luks-001 UUID=uuid-001" >"$CRYPTTAB_FILE"
 				When call setup_crypttab
 				The status should be failure
+				# shellcheck disable=SC2218 # likely false postive, shellcheck issue #3290
 				The stderr should include "Device UUID=$(get_all_kdump_crypt_dev) doesn't exist"
 			End
 

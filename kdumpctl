@@ -547,7 +547,7 @@ check_drivers_modified()
 	# If it's dump target is on block device, detect the block driver
 	_target=$(get_block_dump_target)
 	if [[ -n $_target ]]; then
-		# shellcheck disable=SC2317
+		# shellcheck disable=SC2329 # false postive, shellcheck issue #3273
 		_record_block_drivers()
 		{
 			local _drivers

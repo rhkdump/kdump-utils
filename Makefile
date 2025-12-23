@@ -47,8 +47,9 @@ static-analysis:
 	shellcheck -x tests/*/*/*.sh tools/*.sh
 	@# disable the follow checks for unit tests
 	@# - 2317: to use shellspec directives like Context, When and etc.
+	@# - 2329: to mock functions.
 	@# - 2288, 2215: to use test data like -o, 'eng.redhat.com:/srv/[nfs]' in parametrized tests
-	shellcheck -e 2317,2288,2215 -x spec/*.sh
+	shellcheck -e 2317,2329,2288,2215 -x spec/*.sh
 
 manpages:
 	install -D -m 644 mkdumprd.8 kdumpctl.8 -t $(DESTDIR)$(mandir)/man8
