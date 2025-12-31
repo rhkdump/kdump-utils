@@ -16,6 +16,8 @@ FADUMP_REGISTER_SYS_NODE="/sys/kernel/fadump/registered"
 FADUMP_APPEND_ARGS_SYS_NODE="/sys/kernel/fadump/bootargs_append"
 # shellcheck disable=SC2034
 FENCE_KDUMP_CONFIG_FILE="/etc/sysconfig/fence_kdump"
+# shellcheck disable=SC2034
+KDUMP_SYSCONFIG_FILE="/etc/sysconfig/kdump"
 
 is_fadump_capable()
 {
@@ -974,6 +976,27 @@ _crashkernel_add()
 	echo "${ret%,}"
 }
 
+get_dump_commandline()
+{
+	local _dump_mode=$1
+	local _cmdline_append
+
+	if ! [ -e "$KDUMP_SYSCONFIG_FILE" ]; then
+		derror "No $KDUMP_SYSCONFIG_FILE yet"
+		return 1
+	fi
+
+	if [ "$_dump_mode" = "fadump" ]; then
+		_cmdline_append=$(grep '^\s*FADUMP_COMMANDLINE_APPEND\s*=' "$KDUMP_SYSCONFIG_FILE" | \
+			sed 's/^\s*FADUMP_COMMANDLINE_APPEND\s*=\s*"\(.*\)".*$/\1/')
+	else
+		_cmdline_append=$(grep '^\s*KDUMP_COMMANDLINE_APPEND\s*=' "$KDUMP_SYSCONFIG_FILE" | \
+			sed 's/^\s*KDUMP_COMMANDLINE_APPEND\s*=\s*"\(.*\)".*$/\1/')
+	fi
+
+	echo "$_cmdline_append"
+}
+
 # Parses the kdump or fadump command line to extract a valid
 # positive nr_cpus=<N> value, defaulting to 1 if none is found.
 find_nr_cpus()
@@ -983,9 +1006,9 @@ find_nr_cpus()
 
 	# shellcheck disable=SC2153
 	if [[ $DEFAULT_DUMP_MODE == "fadump" ]]; then
-		_cmdline_append="$FADUMP_COMMANDLINE_APPEND"
+		_cmdline_append=$(get_dump_commandline "fadump")
 	else
-		_cmdline_append="$KDUMP_COMMANDLINE_APPEND"
+		_cmdline_append=$(get_dump_commandline "kdump")
 	fi
 
 	for arg in $_cmdline_append; do

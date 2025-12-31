@@ -1014,7 +1014,10 @@ fadump_bootargs_append()
 
 		# shellcheck disable=SC2153
 		if output=$({
-			echo "${FADUMP_COMMANDLINE_APPEND}" > "$FADUMP_APPEND_ARGS_SYS_NODE"
+			local _fadump_append
+
+			_fadump_append=$(get_dump_commandline fadump) || exit
+			echo "$_fadump_append" > "$FADUMP_APPEND_ARGS_SYS_NODE"
 		} 2>&1); then
 			output=$(cat "$FADUMP_APPEND_ARGS_SYS_NODE")
 			dinfo "fadump: additional parameters for capture kernel: '$output'"
