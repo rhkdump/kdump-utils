@@ -8,6 +8,7 @@
 # if [arch] is not specified, the default values will be used.
 #
 
+# shellcheck disable=SC2034 # false postive # shellcheck issue #817
 declare -A KEXEC_ARGS=(
 	[default]=""
 	[aarch64]="-s"
@@ -17,23 +18,28 @@ declare -A KEXEC_ARGS=(
 	[x86_64]="-s"
 )
 
+# shellcheck disable=SC2034 # false postive # shellcheck issue #817
 declare -A KDUMP_COMMANDLINE_REMOVE=(
-	[default]="hugepages hugepagesz slub_debug quiet log_buf_len swiotlb cma hugetlb_cma ignition.firstboot"
-	[ppc64]="hugepages hugepagesz slub_debug quiet log_buf_len swiotlb hugetlb_cma ignition.firstboot"
-	[ppc64le]="hugepages hugepagesz slub_debug quiet log_buf_len swiotlb hugetlb_cma ignition.firstboot"
-	[s390x]="hugepages hugepagesz slub_debug quiet log_buf_len swiotlb vmcp_cma cma hugetlb_cma prot_virt ignition.firstboot zfcp.allow_lun_scan"
+	[_common]="hugepages hugepagesz slub_debug quiet log_buf_len swiotlb hugetlb_cma ignition.firstboot"
+	[default]="cma"
+	[ppc64]=""
+	[ppc64le]=""
+	[s390x]="vmcp_cma cma prot_virt zfcp.allow_lun_scan"
 )
 
+# shellcheck disable=SC2034 # false postive # shellcheck issue #817
 declare -A KDUMP_COMMANDLINE_APPEND=(
-	[default]="irqpoll maxcpus=1 reset_devices novmcoredd cma=0 hugetlb_cma=0 initramfs_options=size=90%"
-	[aarch64]="irqpoll nr_cpus=1 reset_devices cgroup_disable=memory udev.children-max=2 panic=10 swiotlb=noforce novmcoredd cma=0 hugetlb_cma=0 kfence.sample_interval=0 initramfs_options=size=90%"
-	[i386]="irqpoll nr_cpus=1 reset_devices numa=off udev.children-max=2 panic=10 transparent_hugepage=never novmcoredd cma=0 hugetlb_cma=0 kfence.sample_interval=0 initramfs_options=size=90%"
-	[ppc64]="irqpoll maxcpus=1 noirqdistrib reset_devices cgroup_disable=memory numa=off udev.children-max=2 ehea.use_mcs=0 panic=10 kvm_cma_resv_ratio=0 transparent_hugepage=never novmcoredd hugetlb_cma=0 kfence.sample_interval=0 initramfs_options=size=90%"
-	[ppc64le]="irqpoll nr_cpus=16 noirqdistrib reset_devices cgroup_disable=memory numa=off udev.children-max=2 ehea.use_mcs=0 panic=10 kvm_cma_resv_ratio=0 transparent_hugepage=never novmcoredd hugetlb_cma=0 kfence.sample_interval=0 initramfs_options=size=90%"
-	[s390x]="nr_cpus=1 cgroup_disable=memory numa=off udev.children-max=2 panic=10 transparent_hugepage=never novmcoredd vmcp_cma=0 cma=0 hugetlb_cma=0 kfence.sample_interval=0 initramfs_options=size=90%"
-	[x86_64]="irqpoll nr_cpus=1 reset_devices cgroup_disable=memory mce=off numa=off udev.children-max=2 panic=10 acpi_no_memhotplug transparent_hugepage=never nokaslr hest_disable novmcoredd cma=0 hugetlb_cma=0 pcie_ports=compat kfence.sample_interval=0 initramfs_options=size=90%"
+	[_common]="novmcoredd hugetlb_cma=0 kfence.sample_interval=0 initramfs_options=size=90%"
+	[default]="irqpoll maxcpus=1 reset_devices cma=0"
+	[aarch64]="irqpoll nr_cpus=1 reset_devices cgroup_disable=memory udev.children-max=2 panic=10 swiotlb=noforce cma=0"
+	[i386]="irqpoll nr_cpus=1 reset_devices numa=off udev.children-max=2 panic=10 transparent_hugepage=never cma=0"
+	[ppc64]="irqpoll maxcpus=1 noirqdistrib reset_devices cgroup_disable=memory numa=off udev.children-max=2 ehea.use_mcs=0 panic=10 kvm_cma_resv_ratio=0 transparent_hugepage=never"
+	[ppc64le]="irqpoll nr_cpus=16 noirqdistrib reset_devices cgroup_disable=memory numa=off udev.children-max=2 ehea.use_mcs=0 panic=10 kvm_cma_resv_ratio=0 transparent_hugepage=never"
+	[s390x]="nr_cpus=1 cgroup_disable=memory numa=off udev.children-max=2 panic=10 transparent_hugepage=never vmcp_cma=0 cma=0"
+	[x86_64]="irqpoll nr_cpus=1 reset_devices cgroup_disable=memory mce=off numa=off udev.children-max=2 panic=10 acpi_no_memhotplug transparent_hugepage=never nokaslr hest_disable cma=0 pcie_ports=compat"
 )
 
+# shellcheck disable=SC2034 # false postive # shellcheck issue #817
 declare -A FADUMP_COMMANDLINE_APPEND=(
 	[default]=""
 	[ppc64le]="nr_cpus=16 numa=off cgroup_disable=memory cma=0 kvm_cma_resv_ratio=0 hugetlb_cma=0 transparent_hugepage=never novmcoredd udev.children-max=2"
@@ -45,6 +51,28 @@ if [[ -z $arch || -z ${known_arches_map[$arch]} ]]; then
 	echo "Warning: Unknown architecture '$arch', using default sysconfig template." >&2
 	arch="default"
 fi
+
+# Assembly value for an architecture
+# _values[_common] + _values[$arch]
+#
+# If _values[$arch] doesn't exist, use _common + default
+set_value()
+{
+	local -n _values=$1
+	local _common="${_values[_common]}"
+	local _arch_val="${_values[$arch]-${_values[default]}}"
+
+	if [[ -n $_common && -n $_arch_val ]]; then
+		echo -n "$_common $_arch_val"
+	else
+		echo -n "$_common$_arch_val"
+	fi
+}
+
+KEXEC_ARGS_val=$(set_value KEXEC_ARGS)
+KDUMP_COMMANDLINE_REMOVE_val=$(set_value KDUMP_COMMANDLINE_REMOVE)
+KDUMP_COMMANDLINE_APPEND_val=$(set_value KDUMP_COMMANDLINE_APPEND)
+FADUMP_COMMANDLINE_APPEND_val=$(set_value FADUMP_COMMANDLINE_APPEND)
 
 #
 # Generate the config file
@@ -69,22 +97,22 @@ KDUMP_COMMANDLINE=""
 # This variable lets us remove arguments from the current kdump commandline
 # as taken from either KDUMP_COMMANDLINE above, or from /proc/cmdline
 # NOTE: some arguments such as crashkernel will always be removed
-KDUMP_COMMANDLINE_REMOVE="${KDUMP_COMMANDLINE_REMOVE[$arch]-${KDUMP_COMMANDLINE_REMOVE[default]}}"
+KDUMP_COMMANDLINE_REMOVE="${KDUMP_COMMANDLINE_REMOVE_val}"
 
 # This variable lets us append arguments to the current kdump commandline
 # after processed by KDUMP_COMMANDLINE_REMOVE
-KDUMP_COMMANDLINE_APPEND="${KDUMP_COMMANDLINE_APPEND[$arch]-${KDUMP_COMMANDLINE_APPEND[default]}}"
+KDUMP_COMMANDLINE_APPEND="${KDUMP_COMMANDLINE_APPEND_val}"
 
 # This variable lets us append arguments to fadump (powerpc) capture kernel,
 # further to the parameters passed via the bootloader.
-FADUMP_COMMANDLINE_APPEND="${FADUMP_COMMANDLINE_APPEND[$arch]-${FADUMP_COMMANDLINE_APPEND[default]}}"
+FADUMP_COMMANDLINE_APPEND="${FADUMP_COMMANDLINE_APPEND_val}"
 
 # Any additional kexec arguments required.  In most situations, this should
 # be left empty
 #
 # Example:
 #   KEXEC_ARGS="--elf32-core-headers"
-KEXEC_ARGS="${KEXEC_ARGS[$arch]-${KEXEC_ARGS[default]}}"
+KEXEC_ARGS="${KEXEC_ARGS_val}"
 
 #Where to find the boot image
 #KDUMP_BOOTDIR="/boot"
