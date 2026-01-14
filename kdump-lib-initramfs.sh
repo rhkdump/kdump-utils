@@ -30,38 +30,40 @@ kdump_get_conf_val()
 	_found=""
 
 	[ -f "$KDUMP_CONFIG_FILE" ] || return
-	while read -r _line; do
-		_line="$(echo "$_line" | tr -s "[:blank:]" " ")"
-		case "$_line" in
-		"" | \#*)
-			continue
-			;;
-		*\#*)
-			_line="${_line%%\#*}"
-			_line="${_line% }"
-			;;
-		esac
 
-		_opt=${_line%% *}
-		_val=${_line#* }
+	# On lines that are _not_ comments or empty remove...
+	# Note: The additional braces {} are required as piping into a while
+	# loop creates a sub-shell. So without the braces $_found would only be
+	# set inside the loop but empty outside of it.
+	grep -Ev -e '^\s*#' -e '^\s*$' "$KDUMP_CONFIG_FILE" | {
+		while read -r _opt _val; do
+			# ...trailing comments...
+			case "$_val" in
+			*\#*)
+				_val="${_val%%#*}"
+				_val="${_val%"${_val##*[![:space:]]}"}"
+				;;
+			esac
 
-		case "$_val" in
-		\"*\")
-			# Remove quotes
-			_val="${_val#\"}"
-			_val="${_val%\"}"
-			;;
-		esac
+			# ...quotes
+			case "$_val" in
+			\"*\")
+				_val="${_val#\"}"
+				_val="${_val%\"}"
+				;;
+			esac
 
-		if [ -z "$_to_find" ]; then
-			echo "$_opt $_val"
-		elif echo "$_opt" | grep -q -E "^($_to_find)$"; then
-			# make sure to only return the last match to mirror the
-			# old behavior
-			_found="$_val"
-		fi
-	done < "$KDUMP_CONFIG_FILE"
-	[ -n "$_found" ] && echo "$_found"
+			if [ -z "$_to_find" ]; then
+				echo "$_opt $_val"
+			elif echo "$_opt" | grep -q -E "^($_to_find)$"; then
+				# make sure to only return the last match to
+				# mirror the old behavior
+				_found="$_val"
+			fi
+		done
+
+		[ -n "$_found" ] && echo "$_found"
+	}
 
 	# make sure we return 0 even when a option isn't set
 	return 0
