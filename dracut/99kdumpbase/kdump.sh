@@ -184,6 +184,7 @@ dump_fs() {
     KDUMP_LOG_DEST=$_dump_fs_path/
     KDUMP_LOG_OP="mv '$KDUMP_LOG_FILE' '$KDUMP_LOG_DEST/'"
 
+    ddebug "Core Collector: $CORE_COLLECTOR"
     $CORE_COLLECTOR /proc/vmcore "$_dump_fs_path/vmcore-incomplete" > /dev/console 2>&1
     _dump_exitcode=$?
     if [ $_dump_exitcode -eq 0 ]; then
@@ -387,6 +388,7 @@ dump_raw() {
     fi
 
     dinfo "saving vmcore"
+    ddebug "Core Collector: $CORE_COLLECTOR"
     $CORE_COLLECTOR /proc/vmcore | dd of="$1" bs=$DD_BLKSIZE >> /tmp/dd_progress_file 2>&1 || return 1
     sync
 
@@ -435,6 +437,7 @@ dump_ssh() {
         # shellcheck disable=SC2029,SC2086
         #  - _ssh_opts needs to be split
         #  - _ssh_dir needs to be expanded
+        ddebug "Core Collector: $CORE_COLLECTOR"
         $CORE_COLLECTOR /proc/vmcore | ssh $_ssh_opts "$2" "umask 0077 && dd bs=512 of='$_ssh_dir/vmcore-incomplete'"
         _ret=$?
         _vmcore="vmcore.flat"
