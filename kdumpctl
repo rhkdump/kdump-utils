@@ -461,9 +461,6 @@ check_files_modified()
 	#also rebuild when Pacemaker cluster conf is changed and fence kdump is enabled.
 	modified_files=$(get_pcs_cluster_modified_files "$image_time")
 
-	EXTRA_BINS=${OPT[kdump_post]}
-	CHECK_FILES=${OPT[kdump_pre]}
-	HOOKS="/etc/kdump/post.d/ /etc/kdump/pre.d/"
 	if [[ -d /etc/kdump/post.d ]]; then
 		for file in /etc/kdump/post.d/*; do
 			if [[ -x $file ]]; then
@@ -478,13 +475,11 @@ check_files_modified()
 			fi
 		done
 	fi
-	HOOKS="$HOOKS $POST_FILES $PRE_FILES"
+	HOOKS="$POST_FILES $PRE_FILES"
 	CORE_COLLECTOR=$(echo "${OPT[core_collector]}" | awk '{print $1}')
 	CORE_COLLECTOR=$(type -P "$CORE_COLLECTOR")
 	# POST_FILES and PRE_FILES are already checked against executable, need not to check again.
-	EXTRA_BINS="$EXTRA_BINS $CHECK_FILES"
-	CHECK_FILES=${OPT[extra_bins]}
-	EXTRA_BINS="$EXTRA_BINS $CHECK_FILES"
+	EXTRA_BINS="${OPT[kdump_post]} ${OPT[kdump_pre]} ${OPT[extra_bins]}"
 	files="$KDUMP_CONFIG_FILE $KDUMP_KERNEL $EXTRA_BINS $CORE_COLLECTOR"
 	[[ -e /etc/fstab ]] && files="$files /etc/fstab"
 
