@@ -618,6 +618,21 @@ level in the above KDUMP_COMMANDLINE_APPEND.
 
 Logging levels: no logging(0), error(1), warn(2), info(3), debug(4)
 
+Kdump Emergency Executable
+--------------------------
+
+It is possible to specify a custom script or binary you wish to run in
+emergency mode after an error in the kdump environment occurs.
+From the error handler launched in emergency mode within the kdump capture
+kernel, you can trigger different actions from within your specified
+executables.
+If /etc/kdump/emergency.d directory exist, all files in the directory are
+collectively sorted and executed in lexical order, before binary or script
+specified using kdump_emergency option is executed.
+
+In these scripts, the reference to the storage or network device should adhere
+to the section 'Supported dump target types and requirements'
+
 Kdump Post-Capture Executable
 -----------------------------
 
