@@ -102,6 +102,7 @@ fi
 %dir %{_sysconfdir}/kdump
 %dir %{_sysconfdir}/kdump/pre.d
 %dir %{_sysconfdir}/kdump/post.d
+%dir %{_sysconfdir}/kdump/emergency.d
 %dir %{_sharedstatedir}/kdump
 %{_mandir}/man8/kdumpctl.8*
 %{_mandir}/man8/mkdumprd.8*
