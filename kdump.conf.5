@@ -130,6 +130,22 @@ than the system's RAM.
 
 .RE
 
+.B kdump_emergency <binary | script>
+.RS
+This directive allows you to run a specified executable
+in emergency mode after an error in the kdump environment occurs.
+.PP
+All files under /etc/kdump/emergency.d are collectively sorted
+and executed in lexical order, before binary or script
+specified kdump_emergency parameter is executed.
+.PP
+Note that scripts written for use with this directive must use the /bin/bash
+interpreter. And since these scripts run in kdump enviroment, the reference to
+the storage or network device in the scripts should adhere to the section
+'Supported dump target types and requirements' in kexec-kdump-howto.txt.
+
+.RE
+
 .B kdump_post <binary | script>
 .RS
 This directive allows you to run a specified executable
