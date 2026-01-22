@@ -368,7 +368,7 @@ parse_config()
 			dwarn "Please update $KDUMP_CONFIG_FILE to use option 'failure_action' instead."
 			_set_config failure_action "$config_val" || return 1
 			;;
-		path | core_collector | kdump_post | kdump_pre | extra_bins | extra_modules | failure_action | final_action | force_rebuild | force_no_rebuild | fence_kdump_args | fence_kdump_nodes | auto_reset_crashkernel) ;;
+		path | core_collector | kdump_post | kdump_pre | kdump_emergency | extra_bins | extra_modules | failure_action | final_action | force_rebuild | force_no_rebuild | fence_kdump_args | fence_kdump_nodes | auto_reset_crashkernel) ;;
 
 		net | options | link_delay | disk_timeout | debug_mem_level | blacklist)
 			derror "Deprecated kdump config option: $config_opt. Refer to kdump.conf manpage for alternatives."
