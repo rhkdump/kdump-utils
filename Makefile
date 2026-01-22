@@ -59,6 +59,7 @@ install: dracut-modules kdump-conf kdump-sysconfig manpages
 	mkdir -p $(DESTDIR)$(pkglibdir)/dracut.conf.d
 	mkdir -p -m755 $(DESTDIR)$(sysconfdir)/kdump/pre.d
 	mkdir -p -m755 $(DESTDIR)$(sysconfdir)/kdump/post.d
+	mkdir -p -m755 $(DESTDIR)$(sysconfdir)/kdump/emergency.d
 	mkdir -p -m755 $(DESTDIR)$(localstatedir)/crash
 	mkdir -p -m755 $(DESTDIR)$(udevrulesdir)
 	mkdir -p -m755 $(DESTDIR)$(sharedstatedir)/kdump
