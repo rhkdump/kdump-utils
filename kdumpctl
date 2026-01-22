@@ -475,11 +475,18 @@ check_files_modified()
 			fi
 		done
 	fi
-	HOOKS="$POST_FILES $PRE_FILES"
+	if [[ -d /etc/kdump/emergency.d ]]; then
+		for file in /etc/kdump/emergency.d/*; do
+			if [[ -x $file ]]; then
+				EMERGENCY_FILES="$EMERGENCY_FILES $file"
+			fi
+		done
+	fi
+	HOOKS="$POST_FILES $PRE_FILES $EMERGENCY_FILES"
 	CORE_COLLECTOR=$(echo "${OPT[core_collector]}" | awk '{print $1}')
 	CORE_COLLECTOR=$(type -P "$CORE_COLLECTOR")
 	# POST_FILES and PRE_FILES are already checked against executable, need not to check again.
-	EXTRA_BINS="${OPT[kdump_post]} ${OPT[kdump_pre]} ${OPT[extra_bins]}"
+	EXTRA_BINS="${OPT[kdump_post]} ${OPT[kdump_pre]} ${OPT[kdump_emergency]} ${OPT[extra_bins]}"
 	files="$KDUMP_CONFIG_FILE $KDUMP_KERNEL $EXTRA_BINS $CORE_COLLECTOR"
 	[[ -e /etc/fstab ]] && files="$files /etc/fstab"
 
