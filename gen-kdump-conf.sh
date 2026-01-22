@@ -90,6 +90,13 @@ generate()
 #             For core_collector format details, you can refer to
 #             kexec-kdump-howto.txt or kdump.conf manpage.
 #
+# kdump_emergency <binary | script>
+#           - This directive allows you to run a specified executable
+#             in emergency mode after an error in the kdump environment occurs.
+#             All files under /etc/kdump/emergency.d are collectively sorted
+#             and executed in lexical order, before binary or script
+#             specified kdump_emergency parameter is executed.
+#
 # kdump_post <binary | script>
 #           - This directive allows you to run a executable binary
 #             or script after the vmcore dump process terminates.
