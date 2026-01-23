@@ -33,6 +33,7 @@ DD_BLKSIZE=512
 FINAL_ACTION="systemctl reboot -f"
 KDUMP_PRE=""
 KDUMP_POST=""
+KDUMP_EMERGENCY=""
 NEWROOT="/sysroot"
 OPALCORE="/sys/firmware/opal/mpipl/core"
 KDUMP_CONF_PARSED="/tmp/kdump.conf.$$"
@@ -65,6 +66,9 @@ get_kdump_confs() {
                 ;;
             kdump_post)
                 KDUMP_POST="$config_val"
+                ;;
+            kdump_emergency)
+                KDUMP_EMERGENCY="$config_val"
                 ;;
             fence_kdump_args)
                 FENCE_KDUMP_ARGS="$config_val"
@@ -374,6 +378,25 @@ do_kdump_post() {
     fi
 }
 
+do_kdump_emergency() {
+    if [ -d /etc/kdump/emergency.d ]; then
+        for file in /etc/kdump/emergency.d/*; do
+            "$file"
+            _ret=$?
+            if [ $_ret -ne 0 ]; then
+                derror "$file exited with $_ret status"
+            fi
+        done
+    fi
+
+    if [ -n "$KDUMP_EMERGENCY" ]; then
+        "$KDUMP_EMERGENCY"
+        _ret=$?
+        if [ $_ret -ne 0 ]; then
+            derror "$KDUMP_EMERGENCY exited with $_ret status"
+        fi
+    fi
+}
 # $1: block target, eg. /dev/sda
 dump_raw() {
     [ -b "$1" ] || return 1
@@ -641,6 +664,7 @@ kdump_test_init() {
 
 if [ "$1" = "--error-handler" ]; then
     get_kdump_confs
+    do_kdump_emergency
     do_failure_action
     save_log
     do_final_action

@@ -618,6 +618,20 @@ level in the above KDUMP_COMMANDLINE_APPEND.
 
 Logging levels: no logging(0), error(1), warn(2), info(3), debug(4)
 
+Kdump Emergency Executable
+--------------------------
+
+It is possible to specify a custom script or binary you wish to run in
+emergency mode prior to the dump process. From the error handler launched
+in emergency mode within the kdump capture kernel, you can trigger different
+actions from within your specified executables.
+If /etc/kdump/emergency.d directory exist, all files in the directory are
+collectively sorted and executed in lexical order, before binary or script
+specified using kdump_emergency option is executed.
+
+In these scripts, the reference to the storage or network device should adhere
+to the section 'Supported dump target types and requirements'
+
 Kdump Post-Capture Executable
 -----------------------------
 
@@ -625,7 +639,7 @@ It is possible to specify a custom script or binary you wish to run following
 an attempt to capture a vmcore. The executable is passed an exit code from
 the capture process, which can be used to trigger different actions from
 within your post-capture executable.
-If /etc/kdump/post.d directory exist, All files in the directory are
+If /etc/kdump/post.d directory exist, all files in the directory are
 collectively sorted and executed in lexical order, before binary or script
 specified kdump_post parameter is executed.
 

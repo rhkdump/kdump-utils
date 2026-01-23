@@ -660,7 +660,7 @@ kdump_install_net() {
     fi
 }
 
-# install etc/kdump/pre.d and /etc/kdump/post.d
+# install etc/kdump/pre.d and /etc/kdump/post.d /etc/kdump/emergency.d
 kdump_install_pre_post_conf() {
     if [[ -d /etc/kdump/pre.d ]]; then
         for file in /etc/kdump/pre.d/*; do
@@ -677,6 +677,16 @@ kdump_install_pre_post_conf() {
             if [[ -x $file ]]; then
                 dracut_install "$file"
             elif [[ $file != "/etc/kdump/post.d/*" ]]; then
+                echo "$file is not executable"
+            fi
+        done
+    fi
+
+    if [[ -d /etc/kdump/emergency.d ]]; then
+        for file in /etc/kdump/emergency.d/*; do
+            if [[ -x $file ]]; then
+                dracut_install "$file"
+            elif [[ $file != "/etc/kdump/emergency.d/*" ]]; then
                 echo "$file is not executable"
             fi
         done
@@ -743,7 +753,7 @@ kdump_install_conf() {
                     kdump_collect_netif_usage "$(get_dracut_args_target "$_val")"
                 fi
                 ;;
-            kdump_pre | kdump_post | extra_bins)
+            kdump_pre | kdump_post | kdump_emergency | extra_bins)
                 # shellcheck disable=SC2086
                 dracut_install $_val
                 ;;
