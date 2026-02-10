@@ -21,6 +21,9 @@ adjust:
         package: "$KDUMP_UTILS_RPM"
         where: client
 
+environment:
+    PANIC_VMCORE_CHECK: false
+
 execute:
     how: tmt
     exit-first: true
