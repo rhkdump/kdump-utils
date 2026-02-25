@@ -2211,6 +2211,7 @@ main()
 {
 	# Determine if the dump mode is kdump or fadump
 	determine_dump_mode
+	local rc
 
 	case "$1" in
 	start)
@@ -2230,7 +2231,13 @@ main()
 	status)
 		EXIT_CODE=0
 		is_kernel_loaded "$DEFAULT_DUMP_MODE"
-		case "$?" in
+		rc=$?
+
+		if [ "$rc" -eq 0 ] && [ "$DEFAULT_DUMP_MODE" = "fadump" ]; then
+			systemctl is-active --quiet kdump.service || rc=1
+		fi
+
+		case "$rc" in
 		0)
 			dinfo "Kdump is operational"
 			EXIT_CODE=0
