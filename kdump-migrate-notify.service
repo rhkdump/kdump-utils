@@ -1,0 +1,14 @@
+[Unit]
+Description=Register kdump migration notification
+After=kdump.service
+ConditionPathExists=/usr/lib/kdump/kdump-migrate-action.sh
+ConditionPathExists=/usr/bin/servicelog_notify
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/servicelog_notify --add --command=/usr/lib/kdump/kdump-migrate-action.sh --match='refcode="#MIGRATE" and serviceable=0' --type=EVENT --method=pairs_stdin
+ExecStop=/usr/bin/servicelog_notify --remove --command=/usr/lib/kdump/kdump-migrate-action.sh
+
+[Install]
+WantedBy=multi-user.target
