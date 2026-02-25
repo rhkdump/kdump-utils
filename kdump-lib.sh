@@ -16,6 +16,7 @@ FADUMP_REGISTER_SYS_NODE="/sys/kernel/fadump/registered"
 FADUMP_APPEND_ARGS_SYS_NODE="/sys/kernel/fadump/bootargs_append"
 # shellcheck disable=SC2034
 FENCE_KDUMP_CONFIG_FILE="/etc/sysconfig/fence_kdump"
+maximize_crashkernel=false
 
 is_fadump_capable()
 {
@@ -35,7 +36,26 @@ is_aws_aarch64()
 
 is_sme_or_sev_active()
 {
-	journalctl -q --dmesg --grep "^Memory Encryption Features active: AMD (SME|SEV)$" > /dev/null 2>&1
+	$maximize_crashkernel || journalctl -q --dmesg --grep "^Memory Encryption Features active: AMD (SME|SEV)$" > /dev/null 2>&1
+}
+
+# read the value of an environ variable from given environ file path
+#
+# The environment variable entries in /proc/[pid]/environ are separated
+# by null bytes instead of by spaces.
+#
+# $1: environment variable
+# $2: environ file path
+read_proc_environ_var()
+{
+	local _var=$1 _environ_path=$2
+	sed -n -E "s/.*(^|\x00)${_var}=([^\x00]*).*/\2/p" < "$_environ_path"
+}
+
+_OSBUILD_ENVIRON_PATH='/proc/1/environ'
+_is_osbuild()
+{
+	[[ $(read_proc_environ_var container "$_OSBUILD_ENVIRON_PATH") == bwrap-osbuild ]]
 }
 
 has_command()
@@ -833,12 +853,19 @@ get_recommend_size()
 
 has_mlx5()
 {
-	[[ -d /sys/bus/pci/drivers/mlx5_core ]]
+	$maximize_crashkernel || [[ -d /sys/bus/pci/drivers/mlx5_core ]]
 }
 
 has_aarch64_smmu()
 {
-	ls /sys/devices/platform/arm-smmu-* 1> /dev/null 2>&1
+	$maximize_crashkernel || ls /sys/devices/platform/arm-smmu-* 1> /dev/null 2>&1
+}
+
+is_aarch64_64k_kernel()
+{
+	local _kernel="$1"
+	# the naming convention of 64k variant suffixes with +64k, e.g. "vmlinuz-5.14.0-312.el9.aarch64+64k"
+	$maximize_crashkernel || echo "$_kernel" | grep -q 64k
 }
 
 is_memsize()
@@ -948,13 +975,16 @@ _crashkernel_parse()
 
 # $1 crashkernel command line parameter
 # $2 size to be added
+# $3 optionally skip the first n items in command line
 _crashkernel_add()
 {
-	local ck delta ret
+	local ck delta skip ret
 	local range size offset
+	local count=0
 
 	ck="$1"
 	delta="$2"
+	skip="${3:-0}" # Default to 0 if third parameter not provided
 	ret=""
 
 	while IFS=';' read -r size range offset; do
@@ -969,8 +999,12 @@ _crashkernel_add()
 			ret+="$range:"
 		fi
 
-		size=$(memsize_add "$size" "$delta") || return 1
+		if ((count >= skip)); then
+			size=$(memsize_add "$size" "$delta") || return 1
+		fi
+
 		ret+="$size,"
+		((count++))
 	done < <(_crashkernel_parse "$ck")
 
 	echo "${ret%,}"
@@ -1014,7 +1048,11 @@ kdump_get_arch_recommend_crashkernel()
 {
 	local _arch _ck_cmdline _dump_mode
 	local _delta=0
+	local _skip=0
 
+	# osbuild deploys rpm on isolated environment. kdump-utils has no opportunity
+	# to deduce the exact memory cost on the real target.
+	_is_osbuild && maximize_crashkernel=true
 	if [[ -z $1 ]]; then
 		if is_fadump_capable; then
 			_dump_mode=fadump
@@ -1040,9 +1078,10 @@ kdump_get_arch_recommend_crashkernel()
 		else
 			_running_kernel=$2
 		fi
+		# skip adding additional memory for small-memory machine
+		_skip=1
 
-		# the naming convention of 64k variant suffixes with +64k, e.g. "vmlinuz-5.14.0-312.el9.aarch64+64k"
-		if echo "$_running_kernel" | grep -q 64k; then
+		if is_aarch64_64k_kernel "$_running_kernel"; then
 			# Without smmu, the diff of MemFree between 4K and 64K measured on a high end aarch64 machine is 82M.
 			# Picking up 100M to cover this diff. And finally, we have "2G-4G:356M;4G-64G:420M;64G-:676M"
 			((_delta += 100))
@@ -1071,7 +1110,7 @@ kdump_get_arch_recommend_crashkernel()
 		fi
 	fi
 
-	echo -n "$(_crashkernel_add "$_ck_cmdline" "${_delta}M")"
+	echo -n "$(_crashkernel_add "$_ck_cmdline" "${_delta}M" "$_skip")"
 }
 
 # return recommended size based on current system RAM size
