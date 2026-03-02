@@ -55,7 +55,7 @@ network:
         Hardware using kernel modules: (igb, ixgbe, ice, i40e, e1000e, igc,
               tg3, bnx2x, bnxt_en, qede, cxgb4, be2net, enic, sfc, mlx4_en,
               mlx5_core, r8169, atlantic, nfp, ionic; nicvf (aarch64 only))
-        protocol: ipv4
+        protocol: IPv4, IPv6
         bonding
         vlan
         bridge
@@ -93,7 +93,6 @@ storage:
 
 network:
         hardware using kernel modules: (sfc SRIOV, cxgb4vf, pch_gbe)
-        protocol: ipv6
         wireless
         Infiniband (IB)
         vlan over bridge/team
