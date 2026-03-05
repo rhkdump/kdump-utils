@@ -188,11 +188,6 @@ dlog_init()
 		{
 			:
 		}
-		unset dwarning
-		dwarning()
-		{
-			:
-		}
 	fi
 
 	if [ "$kdump_stdloglvl" -lt 1 ] && [ "$kdump_kmsgloglvl" -lt 1 ] && [ "$kdump_sysloglvl" -lt 1 ]; then
@@ -368,20 +363,7 @@ dinfo()
 dwarn()
 {
 	set +x
-	dlog 2 "$@"
-	if [ -n "$debug" ]; then
-		set -x
-	fi
-}
-
-## @brief It's an alias to dwarn() function.
-#
-# @param msg Message.
-# @retval 0 It's always returned, even if logging failed.
-dwarning()
-{
-	set +x
-	dwarn "$@"
+	dlog 2 "WARNING:" "$@"
 	if [ -n "$debug" ]; then
 		set -x
 	fi
