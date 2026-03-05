@@ -192,8 +192,8 @@ check_size()
 	esac || perror_exit "Check dump target size failed"
 
 	if [[ $avail -lt $memtotal ]]; then
-		dwarn "Warning: There might not be enough space to save a vmcore."
-		dwarn "         The size of $2 should be greater than $memtotal kilo bytes."
+		dwarn "There might not be enough space to save a vmcore."
+		dwarn "The size of $2 should be greater than $memtotal kilo bytes."
 	fi
 }
 
@@ -290,7 +290,7 @@ verify_core_collector()
 
 	if [[ $_cmd != "makedumpfile" ]]; then
 		if is_raw_dump_target; then
-			dwarn "Warning: specifying a non-makedumpfile core collector, you will have to recover the vmcore manually."
+			dwarn "Specifying a non-makedumpfile core collector, you will have to recover the vmcore manually."
 		fi
 		return
 	fi

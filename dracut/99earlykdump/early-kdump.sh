@@ -35,7 +35,7 @@ early_kdump_load() {
     fi
 
     if is_fadump_capable; then
-        dwarn "WARNING: early kdump doesn't support fadump."
+        dwarn "Early kdump doesn't support fadump."
         return 1
     fi
 
