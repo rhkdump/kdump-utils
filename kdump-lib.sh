@@ -473,7 +473,7 @@ prepare_kexec_args()
 		if [[ $? == 1 ]]; then
 			found_elf_args=$(echo "$kexec_args" | grep elf32-core-headers)
 			if [[ -n $found_elf_args ]]; then
-				dwarn "Warning: elf32-core-headers overrides correct elf64 setting"
+				dwarn "elf32-core-headers overrides correct elf64 setting"
 			else
 				kexec_args="$kexec_args --elf64-core-headers"
 			fi
