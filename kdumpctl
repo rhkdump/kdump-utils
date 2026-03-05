@@ -1919,11 +1919,18 @@ reset_crashkernel()
 			else
 				_has_changed="Updated crashkernel=$_new_ck"
 			fi
+		else
+			# No change needed - crashkernel value is already correct
+			if [[ -z $_has_changed ]]; then
+				dinfo "No need update crashkernel value for kernel=$_kernel, grub entry index=$_grub_entry_index"
+			fi
 		fi
 		if [[ -n $_has_changed ]]; then
-			check_mem_requirement "$_dump_mode"
-			_needs_reboot=1
-			dwarn "$_has_changed for kernel=$_kernel, grub entry index=$_grub_entry_index. Please reboot the system for the change to take effect."
+			dinfo "$_has_changed for kernel=$_kernel, grub entry index=$_grub_entry_index."
+			if check_mem_requirement "$_dump_mode"; then
+				_needs_reboot=1
+				dwarn "Please reboot the system for the change to take effect."
+			fi
 		fi
 	done <<< "$_grub_entries"
 
