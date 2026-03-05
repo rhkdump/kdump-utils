@@ -363,7 +363,7 @@ dinfo()
 dwarn()
 {
 	set +x
-	dlog 2 "$@"
+	dlog 2 "WARNING:" "$@"
 	if [ -n "$debug" ]; then
 		set -x
 	fi
