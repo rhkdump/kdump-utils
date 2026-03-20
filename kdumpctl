@@ -2310,7 +2310,7 @@ main()
 		setup_crypttab
 		;;
 	*)
-		dinfo $"Usage: $0 {estimate|start|stop|status|restart|reload|rebuild|reset-crashkernel|propagate|showmem|test|setup-crypttab}"
+		dinfo $"Usage: $0 {estimate|start|stop|status|restart|reload|rebuild|reset-crashkernel|propagate|showmem|test|setup-crypttab|get-default-crashkernel}"
 		exit 1
 		;;
 	esac
