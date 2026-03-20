@@ -350,6 +350,7 @@ parse_config()
 			fi
 			;;
 		raw)
+			dwarn "Raw targets will be deprecated and removed in the future. Please migrate to a supported dump target."
 			if [[ -d "/proc/device-tree/ibm,opal/dump" ]]; then
 				dwarn "Won't capture opalcore when 'raw' dump target is used."
 			fi

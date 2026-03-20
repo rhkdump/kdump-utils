@@ -3,7 +3,7 @@
 .SH NAME
 kdump.conf \- configuration file for kdump kernel.
 
-.SH DESCRIPTION 
+.SH DESCRIPTION
 
 kdump.conf is a configuration file for the kdump kernel crash
 collection service.
@@ -16,7 +16,7 @@ effect, restart the kdump service to rebuild the initrd.
 For most configurations, you can simply review the examples provided
 in the stock /etc/kdump.conf.
 
-.B NOTE: 
+.B NOTE:
 For filesystem dumps the dump target must be mounted before building
 kdump initramfs.
 
@@ -53,13 +53,14 @@ Also see kdumpctl(8).
 .B raw <partition>
 .RS
 Will dd /proc/vmcore into <partition>.  Use persistent device names for
-partition devices, such as /dev/vg/<devname>.
+partition devices, such as /dev/vg/<devname>. Raw dump targets will be
+deprecated in a future version.
 .RE
 
 .B nfs <nfs mount>
 .RS
 Will mount nfs to <mnt>, and copy /proc/vmcore to <mnt>/<path>/%HOST-%DATE/,
-supports DNS. Note that a fqdn should be used as the server name in the 
+supports DNS. Note that a fqdn should be used as the server name in the
 mount point.
 .RE
 

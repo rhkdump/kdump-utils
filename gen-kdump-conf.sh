@@ -30,6 +30,7 @@ generate()
 #           - Will dd /proc/vmcore into <partition>.
 #             Use persistent device names for partition devices,
 #             such as /dev/vg/<devname>.
+#             NOTE: raw dump targets will be deprecated in a future version.
 #
 # nfs <nfs mount>
 #           - Will mount nfs to <mnt>, and copy /proc/vmcore to
