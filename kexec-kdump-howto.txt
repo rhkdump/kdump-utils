@@ -451,6 +451,8 @@ onto partition /dev/vg/lv_kdump. Restart the kdump service via
 initrd. Dump target should be persistent device name, such as lvm or device
 mapper canonical name.
 
+Raw targets will be deprecated in a future version.
+
 2) Dedicated file system
 
 Similar to raw partition dumping, you can format a partition with the file
@@ -901,7 +903,7 @@ Currently, only x86_64 supports encrypted dump target. And depending on
 your setup, you may need to run "kdumpctl setup-crypttab" once in order
 for kdump.service to work on boot automatically next time. You can
 confirm if this step is needed by running "kdumpctl restart". If you have
-to input passphrase to unlock the encrypted volume, then please run 
+to input passphrase to unlock the encrypted volume, then please run
 "kdumpctl setup-crypttab".
 
 For other architectures, kdump is not working well. First, user have
