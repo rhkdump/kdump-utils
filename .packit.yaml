@@ -30,6 +30,7 @@ jobs:
       - fedora-42-x86_64
       - fedora-rawhide-x86_64
       - fedora-rawhide-aarch64
+    identifier: package-mode
     fmf_path: kernel-tests-plans
     use_internal_tf: true
     tf_extra_params:
@@ -48,6 +49,27 @@ jobs:
             # report cloud costs: https://docs.testing-farm.io/Testing%20Farm/0.1/services.html#_changing_the_team_name
               tags:
                 BusinessUnit: sst_kernel_debug_sst
+  - job: tests
+    trigger: pull_request
+    targets:
+      fedora-44:
+        distros: ["fedora-44-image-mode"]
+    skip_build: true
+    identifier: image-mode
+    fmf_path: kernel-tests-plans
+    # Currently only public testing farm supports image-mode Fedora
+    use_internal_tf: false
+    tf_extra_params:
+      test:
+        tmt:
+          name: local
+      environments:
+        - settings:
+            provisioning:
+            # report cloud costs: https://docs.testing-farm.io/Testing%20Farm/0.1/services.html#_changing_the_team_name
+              tags:
+                BusinessUnit: sst_kernel_debug_sst
+
   - job: koji_build
     trigger: commit
     dist_git_branches: [fedora-all]
