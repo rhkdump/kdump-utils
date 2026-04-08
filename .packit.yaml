@@ -17,6 +17,7 @@ jobs:
     dist_git_branches: [fedora-all]
   - job: copr_build
     trigger: pull_request
+    manual_trigger: true
     targets:
       - fedora-42-x86_64
       - fedora-rawhide-x86_64
@@ -24,6 +25,7 @@ jobs:
     packages: [kdump-utils]
   - job: tests
     trigger: pull_request
+    manual_trigger: true
     targets:
       - fedora-42-x86_64
       - fedora-rawhide-x86_64
