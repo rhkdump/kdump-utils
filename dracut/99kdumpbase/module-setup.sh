@@ -784,6 +784,15 @@ remove_sysctl_conf() {
     rm -rf "${initdir}/usr/lib/sysctl.d"
 }
 
+# Removes unwanted udev rules from the initramfs image.
+remove_udev_rules() {
+    # Exclude 90-vpdupdate.rules on ppc64le as VPD updates are not needed
+    # in the capture kernel.
+    if [[ "$(uname -m)" == "ppc64le" ]]; then
+        rm -f "${initdir}/etc/udev/rules.d/90-vpdupdate.rules"
+    fi
+}
+
 kdump_iscsi_get_rec_val() {
 
     local result
@@ -1170,6 +1179,7 @@ install() {
     kdump_module_init
     kdump_install_conf
     remove_sysctl_conf
+    remove_udev_rules
 
     if is_ssh_dump_target; then
         kdump_install_random_seed
