@@ -10,6 +10,12 @@ discover:
      - /setup/default_crashkernel
     where:
       - client
+  - name: Set up ssh server
+    how: fmf
+    test:
+     - /setup/network_client/ssh
+    where:
+      - server
   - name: Set up ssh client
     how: fmf
     test:
