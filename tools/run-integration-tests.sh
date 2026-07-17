@@ -13,7 +13,7 @@ if ! rpm_path=$(./tools/build-rpm.sh "$fedora_version"); then
 	exit 1
 fi
 
-tmt_run_env=(--environment CUSTOM_MIRROR="$mirror" --environment KDUMP_UTILS_RPM="$rpm_path" --environment RESOURCE_URL=https://gitlab.cee.redhat.com/kernel-qe/kernel/-/raw/master/kdump/internal/internal_resources.sh --environment AUTO_CONFIG=pek)
+tmt_run_env=(--environment CUSTOM_MIRROR="$mirror" --environment KDUMP_UTILS_RPM="$rpm_path" --environment RESOURCE_URL=https://gitlab.cee.redhat.com/kernel-qe/kernel/-/raw/master/kdump/internal/internal_resources.sh --environment AUTO_CONFIG=bos)
 
 tmt_context=(--context distro="fedora-${fedora_version}")
 cd tests && tmt "${tmt_context[@]}" run "${tmt_run_env[@]}" -a provision -h virtual -i fedora:"$fedora_version" plans --name lvm2_thinp
