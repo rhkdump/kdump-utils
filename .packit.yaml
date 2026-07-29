@@ -26,7 +26,7 @@ jobs:
   - job: copr_build
     trigger: pull_request
     targets:
-      - fedora-42-x86_64
+      - fedora-latest-stable-x86_64
       - fedora-rawhide-x86_64
       - fedora-rawhide-aarch64
     packages:
@@ -35,7 +35,7 @@ jobs:
   - job: tests
     trigger: pull_request
     targets:
-      - fedora-42-x86_64
+      - fedora-latest-stable-x86_64
       - fedora-rawhide-x86_64
       - fedora-rawhide-aarch64
     fmf_path: kernel-tests-plans
