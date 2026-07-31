@@ -314,11 +314,6 @@ is_wdt_active()
 	return 1
 }
 
-have_compression_in_dracut_args()
-{
-	[[ "$(kdump_get_conf_val dracut_args)" =~ (^|[[:space:]])--(gzip|bzip2|lzma|xz|lzo|lz4|zstd|no-compress|compress|squash-compressor)([[:space:]]|$) ]]
-}
-
 # If "dracut_args" contains "--mount" information, use it
 # directly without any check(users are expected to ensure
 # its correctness).

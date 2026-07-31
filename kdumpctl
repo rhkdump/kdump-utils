@@ -66,7 +66,6 @@ fi
 KDUMP_TMPDIR=$(mktemp --tmpdir -d kdump.XXXX)
 export KDUMP_TMPDIR
 KDUMP_TMPMNT="$KDUMP_TMPDIR/target"
-MKDUMPRD_TMPMNT=$KDUMP_TMPMNT
 trap '
     ret=$?;
     is_mounted $KDUMP_TMPMNT && umount -f $KDUMP_TMPMNT;

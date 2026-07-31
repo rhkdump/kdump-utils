@@ -68,9 +68,9 @@ to_mount()
 get_ssh_size()
 {
 	local _out
-	local _opt=("-i" "$SSH_KEY_LOCATION" "-o" "BatchMode=yes" "-o" "StrictHostKeyChecking=yes")
+	local _opt=("-i" "${OPT[sshkey]}" "-o" "BatchMode=yes" "-o" "StrictHostKeyChecking=yes")
 
-	if ! _out=$(ssh -q -n "${_opt[@]}" "$1" "df" "--output=avail" "$SAVE_PATH"); then
+	if ! _out=$(ssh -q -n "${_opt[@]}" "$1" "df" "--output=avail" "${OPT[path]}"); then
 		derror "checking remote ssh server available size failed."
 		return 1
 	fi
@@ -80,20 +80,20 @@ get_ssh_size()
 
 #mkdir if save path does not exist on ssh dump target
 #$1=ssh dump target
-#caller should ensure write permission on $1:$SAVE_PATH
+#caller should ensure write permission on $1:${OPT[path]}
 #called from while loop and shouldn't read from stdin, so we're using "ssh -n"
 mkdir_save_path_ssh()
 {
 	local _opt _dir
-	_opt=(-i "$SSH_KEY_LOCATION" -o BatchMode=yes -o StrictHostKeyChecking=yes)
-	ssh -qn "${_opt[@]}" "$1" mkdir -p "$SAVE_PATH" &> /dev/null || {
-		derror "mkdir failed on $1:$SAVE_PATH"
+	_opt=(-i "${OPT[sshkey]}" -o BatchMode=yes -o StrictHostKeyChecking=yes)
+	ssh -qn "${_opt[@]}" "$1" mkdir -p "${OPT[path]}" &> /dev/null || {
+		derror "mkdir failed on $1:${OPT[path]}"
 		return 1
 	}
 
-	# check whether user has write permission on $1:$SAVE_PATH
-	_dir=$(ssh -qn "${_opt[@]}" "$1" mktemp -dqp "$SAVE_PATH" 2> /dev/null) || {
-		derror "Could not create temporary directory on $1:$SAVE_PATH. Make sure user has write permission on destination"
+	# check whether user has write permission on $1:${OPT[path]}
+	_dir=$(ssh -qn "${_opt[@]}" "$1" mktemp -dqp "${OPT[path]}" 2> /dev/null) || {
+		derror "Could not create temporary directory on $1:${OPT[path]}. Make sure user has write permission on destination"
 		return 1
 	}
 	ssh -qn "${_opt[@]}" "$1" rmdir "$_dir"
@@ -105,7 +105,7 @@ mkdir_save_path_ssh()
 #$1=dump target
 get_fs_size()
 {
-	df --output=avail "$(get_mntpoint_from_target "$1" "$2")/$SAVE_PATH" | tail -1
+	df --output=avail "$(get_mntpoint_from_target "$1" "$2")/${OPT[path]}" | tail -1
 }
 
 #Function: get_raw_size
@@ -221,7 +221,7 @@ check_user_configured_target()
 			fi
 		fi
 	else
-		_mnt=$MKDUMPRD_TMPMNT
+		_mnt=$KDUMP_TMPMNT
 		mkdir -p "$_mnt"
 		$_timeout_cmd mount "$_target" "$_mnt" -t "$_fstype" -o defaults || {
 			mount_failure "$_target" "" "$_fstype"
@@ -230,9 +230,9 @@ check_user_configured_target()
 		_mounted=$_mnt
 	fi
 
-	# For user configured target, use $SAVE_PATH as the dump path within the target
-	if [[ ! -d "$_mnt/$SAVE_PATH" ]]; then
-		derror "Dump path \"$SAVE_PATH\" does not exist in dump target \"$_target\""
+	# For user configured target, use ${OPT[path]} as the dump path within the target
+	if [[ ! -d "$_mnt/${OPT[path]}" ]]; then
+		derror "Dump path \"${OPT[path]}\" does not exist in dump target \"$_target\""
 		[[ -n $_mounted ]] && umount -f -- "$_mounted"
 		return 1
 	fi
@@ -290,9 +290,9 @@ handle_default_dump_target()
 
 	is_user_configured_dump_target && return
 
-	check_save_path_fs "$SAVE_PATH" || return 1
+	check_save_path_fs "${OPT[path]}" || return 1
 
-	_save_path=$(get_bind_mount_source "$SAVE_PATH")
+	_save_path=$(get_bind_mount_source "${OPT[path]}")
 	_options=$(get_mount_info OPTIONS target "$_save_path" -f)
 	_target=$(get_target_from_path "$_save_path")
 	_fstype=$(get_fs_type_from_target "$_target")
@@ -301,16 +301,18 @@ handle_default_dump_target()
 	fi
 
 	_mntpoint=$(get_mntpoint_from_target "$_target" "$_subvol")
-	SAVE_PATH=${_save_path##"$_mntpoint"}
+	OPT[path]=${_save_path##"$_mntpoint"}
 	add_mount "$_target" "$_fstype" "$_options" || return 1
 	check_size fs "$_target" "$_subvol" || return 1
 }
 
+have_compression_in_dracut_args()
+{
+	[[ "${OPT[dracut_args]}" =~ (^|[[:space:]])--(gzip|bzip2|lzma|xz|lzo|lz4|zstd|no-compress|compress|squash-compressor)([[:space:]]|$) ]]
+}
+
 mkdumprd()
 {
-	SSH_KEY_LOCATION=$DEFAULT_SSHKEY
-	SAVE_PATH=$(get_save_path)
-
 	local -a dracut_args
 	dracut_args+=(--force)
 	if [[ -n $debug ]]; then
@@ -325,67 +327,56 @@ mkdumprd()
 	dracut_args+=(--hostonly-nics '')
 	dracut_args+=(--aggressive-strip)
 
-	# firstly get right SSH_KEY_LOCATION
-	keyfile=$(kdump_get_conf_val sshkey)
-	if [[ -f $keyfile ]]; then
-		# canonicalize the path
-		SSH_KEY_LOCATION=$(/usr/bin/readlink -m "$keyfile")
+	if [[ -n ${OPT[extra_modules]} ]]; then
+		dracut_args+=(--add-drivers "${OPT[extra_modules]}")
 	fi
 
-	while read -r config_opt config_val; do
-		# remove inline comments after the end of a directive.
-		case "$config_opt" in
-		extra_modules)
-			dracut_args+=(--add-drivers "$config_val")
-			;;
-		ext[234] | xfs | btrfs | minix | nfs | virtiofs)
-			check_user_configured_target "$config_val" "$config_opt" || return 1
-			add_mount "$config_val" "$config_opt" || return 1
-			;;
-		raw)
-			# checking raw disk writable
-			dd if="$config_val" count=1 of=/dev/null > /dev/null 2>&1 || {
-				derror "Bad raw disk $config_val"
-				return 1
-			}
-			_praw=$(persistent_policy="by-id" kdump_get_persistent_dev "$config_val")
-			if [[ -z $_praw ]]; then
-				return 1
-			fi
-			dracut_args+=(--device "$_praw")
-			check_size raw "$config_val" || return 1
-			;;
-		ssh)
-			if strstr "$config_val" "@"; then
-				mkdir_save_path_ssh "$config_val" || return 1
-				check_size ssh "$config_val" || return 1
-				dracut_args+=(--sshkey "$SSH_KEY_LOCATION")
-			else
-				derror "Bad ssh dump target $config_val"
-				return 1
-			fi
-			;;
-		core_collector)
-			verify_core_collector "$config_val" || return 1
-			;;
-		dracut_args)
+	case "${OPT[_fstype]}" in
+	ext[234] | xfs | btrfs | minix | nfs | virtiofs)
+		check_user_configured_target "${OPT[_target]}" "${OPT[_fstype]}" || return 1
+		add_mount "${OPT[_target]}" "${OPT[_fstype]}" || return 1
+		;;
+	raw)
+		dd if="${OPT[_target]}" count=1 of=/dev/null > /dev/null 2>&1 || {
+			derror "Bad raw disk ${OPT[_target]}"
+			return 1
+		}
+		_praw=$(persistent_policy="by-id" kdump_get_persistent_dev "${OPT[_target]}")
+		if [[ -z $_praw ]]; then
+			return 1
+		fi
+		dracut_args+=(--device "$_praw")
+		check_size raw "${OPT[_target]}" || return 1
+		;;
+	ssh)
+		if strstr "${OPT[_target]}" "@"; then
+			mkdir_save_path_ssh "${OPT[_target]}" || return 1
+			check_size ssh "${OPT[_target]}" || return 1
+			dracut_args+=(--sshkey "${OPT[sshkey]}")
+		else
+			derror "Bad ssh dump target ${OPT[_target]}"
+			return 1
+		fi
+		;;
+	esac
 
-			# When users specify nfs dumping via dracut_args, kdump-utils won't
-			# mount nfs fs beforehand thus nfsv4-related drivers won't be installed
-			# because we call dracut with --hostonly-mode strict. So manually install
-			# nfsv4-related drivers.
-			if [[ $(get_dracut_args_fstype "$config_val") == nfs* ]]; then
-				dracut_args+=(--add-drivers "nfs_layout_nfsv41_files")
-			fi
+	if [[ -n ${OPT[core_collector]} ]]; then
+		verify_core_collector "${OPT[core_collector]}" || return 1
+	fi
 
-			while read -r dracut_arg; do
-				dracut_args+=("$dracut_arg")
-			done <<< "$(echo "$config_val" | xargs -n 1 echo)"
-			;;
-		*) ;;
+	if [[ -n ${OPT[dracut_args]} ]]; then
+		# When users specify nfs dumping via dracut_args, kdump-utils won't
+		# mount nfs fs beforehand thus nfsv4-related drivers won't be installed
+		# because we call dracut with --hostonly-mode strict. So manually install
+		# nfsv4-related drivers.
+		if [[ $(get_dracut_args_fstype "${OPT[dracut_args]}") == nfs* ]]; then
+			dracut_args+=(--add-drivers "nfs_layout_nfsv41_files")
+		fi
 
-		esac
-	done <<< "$(kdump_read_conf)"
+		while read -r dracut_arg; do
+			dracut_args+=("$dracut_arg")
+		done <<< "$(echo "${OPT[dracut_args]}" | xargs -n 1 echo)"
+	fi
 
 	handle_default_dump_target || return 1
 
