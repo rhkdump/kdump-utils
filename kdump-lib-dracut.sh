@@ -182,7 +182,8 @@ mount_failure()
 check_user_configured_target()
 {
 	local _target=$1 _cfg_fs_type=$2 _mounted
-	local _mnt _opt _fstype _timeout_cmd=""
+	local _mnt _opt _fstype
+	local -a _timeout_cmd=()
 
 	_mnt=$(get_mntpoint_from_target "$_target")
 	_opt=$(get_mntopt_from_target "$_target")
@@ -202,7 +203,7 @@ check_user_configured_target()
 	fi
 
 	if [[ $_fstype == "nfs"* ]]; then
-		_timeout_cmd="timeout --preserve-status 10m"
+		_timeout_cmd=(timeout --preserve-status 10m)
 	fi
 
 	# For noauto mount, mount it inplace with default value.
@@ -210,7 +211,7 @@ check_user_configured_target()
 	if [[ -n $_mnt ]]; then
 		if ! is_mounted "$_mnt"; then
 			if [[ $_opt == *",noauto"* ]]; then
-				$_timeout_cmd mount "$_mnt" || {
+				"${_timeout_cmd[@]}" mount "$_mnt" || {
 					mount_failure "$_target" "$_mnt" "$_fstype"
 					return 1
 				}
@@ -223,7 +224,7 @@ check_user_configured_target()
 	else
 		_mnt=$KDUMP_TMPMNT
 		mkdir -p "$_mnt"
-		$_timeout_cmd mount "$_target" "$_mnt" -t "$_fstype" -o defaults || {
+		"${_timeout_cmd[@]}" mount "$_target" "$_mnt" -t "$_fstype" -o defaults || {
 			mount_failure "$_target" "" "$_fstype"
 			return 1
 		}

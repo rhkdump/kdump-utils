@@ -2085,7 +2085,8 @@ set_vmcore_creation_status()
 fetch_status()
 {
 	local _test_id="$1" _mnt
-	local _status _timeout_cmd=""
+	local _status
+	local -a _timeout_cmd=()
 
 	is_raw_dump_target && return 2
 
@@ -2094,12 +2095,12 @@ fetch_status()
 	if is_nfs_dump_target || is_local_target; then
 		_mnt=$(get_mntpoint_from_target "${OPT[_target]}")
 		if is_nfs_dump_target; then
-			_timeout_cmd="timeout --preserve-status 5m"
+			_timeout_cmd=(timeout --preserve-status 5m)
 		fi
 
 		if [[ -z $_mnt ]] || ! is_mounted "$_mnt"; then
 			mkdir -p "$KDUMP_TMPMNT"
-			$_timeout_cmd mount "${OPT[_target]}" "$KDUMP_TMPMNT" -t "${OPT[_fstype]}" -o defaults ||
+			"${_timeout_cmd[@]}" mount "${OPT[_target]}" "$KDUMP_TMPMNT" -t "${OPT[_fstype]}" -o defaults ||
 				{
 					dwarn "Failed to mount ${OPT[_target]}" && return 2
 				}
