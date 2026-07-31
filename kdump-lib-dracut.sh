@@ -1,0 +1,486 @@
+#!/bin/bash --norc
+# Kdump common functions to interact with dracut
+#
+# Copyright 2011 Red Hat, Inc.
+#
+# Written by Cong Wang <amwang@redhat.com>
+#
+
+# check whether the given dracut module is installed. If multiple modules are
+# provided return true if any of them is installed.
+has_dracut_module()
+{
+	local -a _args
+	local _e
+
+	[[ $# -ge 1 ]] || return 1
+
+	for _e in "$@"; do
+		_args+=(-e "$_e")
+	done
+
+	grep -x -q "${_args[@]}" <<< "$(dracut --list-modules)"
+}
+
+# caller should ensure $1 is valid and mounted in 1st kernel
+to_mount()
+{
+	local _target=$1 _fstype=$2 _options=$3 _sed_cmd _new_mntpoint _pdev
+
+	_fstype="${_fstype:-$(get_fs_type_from_target "$_target")}"
+	_options="${_options:-$(get_mntopt_from_target "$_target")}"
+	_options="${_options:-defaults}"
+	if [[ $_fstype == btrfs ]]; then
+		_subvol=$(get_btrfs_subvol_from_mntopt "$_options")
+	fi
+	_new_mntpoint=$(get_kdump_mntpoint_from_target "$_target" "$_subvol")
+
+	if [[ $_fstype == "nfs"* ]]; then
+		_pdev=$_target
+		_sed_cmd+='s/,\(mount\)\?addr=[^,]*//g;'
+		_sed_cmd+='s/,\(mount\)\?proto=[^,]*//g;'
+		_sed_cmd+='s/,clientaddr=[^,]*//;'
+	else
+		# for non-nfs _target converting to use udev persistent name
+		_pdev="$(kdump_get_persistent_dev "$_target")"
+		if [[ -z $_pdev ]]; then
+			return 1
+		fi
+	fi
+
+	# mount fs target as rw in 2nd kernel
+	_sed_cmd+='s/\(^\|,\)ro\($\|,\)/\1rw\2/g;'
+	# with 'noauto' in fstab nfs and non-root disk mount will fail in 2nd
+	# kernel, filter it out here.
+	_sed_cmd+='s/\(^\|,\)noauto\($\|,\)/\1/g;'
+	# drop nofail or nobootwait
+	_sed_cmd+='s/\(^\|,\)nofail\($\|,\)/\1/g;'
+	_sed_cmd+='s/\(^\|,\)nobootwait\($\|,\)/\1/g;'
+
+	_options=$(echo "$_options" | sed "$_sed_cmd")
+
+	echo "$_pdev $_new_mntpoint $_fstype $_options"
+}
+
+#Function: get_ssh_size
+#$1=dump target
+#called from while loop and shouldn't read from stdin, so we're using "ssh -n"
+get_ssh_size()
+{
+	local _out
+	local _opt=("-i" "$SSH_KEY_LOCATION" "-o" "BatchMode=yes" "-o" "StrictHostKeyChecking=yes")
+
+	if ! _out=$(ssh -q -n "${_opt[@]}" "$1" "df" "--output=avail" "$SAVE_PATH"); then
+		perror_exit "checking remote ssh server available size failed."
+	fi
+
+	echo -n "$_out" | tail -1
+}
+
+#mkdir if save path does not exist on ssh dump target
+#$1=ssh dump target
+#caller should ensure write permission on $1:$SAVE_PATH
+#called from while loop and shouldn't read from stdin, so we're using "ssh -n"
+mkdir_save_path_ssh()
+{
+	local _opt _dir
+	_opt=(-i "$SSH_KEY_LOCATION" -o BatchMode=yes -o StrictHostKeyChecking=yes)
+	ssh -qn "${_opt[@]}" "$1" mkdir -p "$SAVE_PATH" &> /dev/null ||
+		perror_exit "mkdir failed on $1:$SAVE_PATH"
+
+	# check whether user has write permission on $1:$SAVE_PATH
+	_dir=$(ssh -qn "${_opt[@]}" "$1" mktemp -dqp "$SAVE_PATH" 2> /dev/null) ||
+		perror_exit "Could not create temporary directory on $1:$SAVE_PATH. Make sure user has write permission on destination"
+	ssh -qn "${_opt[@]}" "$1" rmdir "$_dir"
+
+	return 0
+}
+
+#Function: get_fs_size
+#$1=dump target
+get_fs_size()
+{
+	df --output=avail "$(get_mntpoint_from_target "$1" "$2")/$SAVE_PATH" | tail -1
+}
+
+#Function: get_raw_size
+#$1=dump target
+get_raw_size()
+{
+	fdisk -s "$1"
+}
+
+#Function: check_size
+#$1: dump type string ('raw', 'fs', 'ssh')
+#$2: dump target
+#$3: btrfs subvol
+check_size()
+{
+	local avail memtotal
+
+	memtotal=$(awk '/MemTotal/{print $2}' /proc/meminfo)
+	case "$1" in
+	raw)
+		avail=$(get_raw_size "$2")
+		;;
+	ssh)
+		avail=$(get_ssh_size "$2")
+		;;
+	fs)
+		avail=$(get_fs_size "$2" "$3")
+		;;
+	*)
+		return
+		;;
+	esac || perror_exit "Check dump target size failed"
+
+	if [[ $avail -lt $memtotal ]]; then
+		dwarn "There might not be enough space to save a vmcore."
+		dwarn "The size of $2 should be greater than $memtotal kilo bytes."
+	fi
+}
+
+check_save_path_fs()
+{
+	local _path=$1
+
+	if [[ ! -d $_path ]]; then
+		perror_exit "Dump path $_path does not exist."
+	fi
+}
+
+mount_failure()
+{
+	local _target=$1
+	local _mnt=$2
+	local _fstype=$3
+	local msg="Failed to mount $_target"
+
+	if [[ -n $_mnt ]]; then
+		msg="$msg on $_mnt"
+	fi
+
+	msg="$msg for kdump preflight check."
+
+	if [[ $_fstype == "nfs" ]]; then
+		msg="$msg Please make sure nfs-utils has been installed, and nfs server is accessible."
+	fi
+
+	perror_exit "$msg"
+}
+
+check_user_configured_target()
+{
+	local _target=$1 _cfg_fs_type=$2 _mounted
+	local _mnt _opt _fstype _timeout_cmd=""
+
+	_mnt=$(get_mntpoint_from_target "$_target")
+	_opt=$(get_mntopt_from_target "$_target")
+	_fstype=$(get_fs_type_from_target "$_target")
+
+	if [[ -n $_fstype ]]; then
+		# In case of nfs4, nfs should be used instead, nfs* options is deprecated in kdump.conf
+		[[ $_fstype == "nfs"* ]] && _fstype=nfs
+
+		if [[ -n $_cfg_fs_type ]] && [[ $_fstype != "$_cfg_fs_type" ]]; then
+			perror_exit "\"$_target\" have a wrong type config \"$_cfg_fs_type\", expected \"$_fstype\""
+		fi
+	else
+		_fstype="$_cfg_fs_type"
+		_fstype="$_cfg_fs_type"
+	fi
+
+	if [[ $_fstype == "nfs"* ]]; then
+		_timeout_cmd="timeout --preserve-status 10m"
+	fi
+
+	# For noauto mount, mount it inplace with default value.
+	# Else use the temporary target directory
+	if [[ -n $_mnt ]]; then
+		if ! is_mounted "$_mnt"; then
+			if [[ $_opt == *",noauto"* ]]; then
+				$_timeout_cmd mount "$_mnt" || mount_failure "$_target" "$_mnt" "$_fstype"
+				_mounted=$_mnt
+			else
+				perror_exit "Dump target \"$_target\" is neither mounted nor configured as \"noauto\""
+			fi
+		fi
+	else
+		_mnt=$MKDUMPRD_TMPMNT
+		mkdir -p "$_mnt"
+		$_timeout_cmd mount "$_target" "$_mnt" -t "$_fstype" -o defaults || mount_failure "$_target" "" "$_fstype"
+		_mounted=$_mnt
+	fi
+
+	# For user configured target, use $SAVE_PATH as the dump path within the target
+	if [[ ! -d "$_mnt/$SAVE_PATH" ]]; then
+		perror_exit "Dump path \"$SAVE_PATH\" does not exist in dump target \"$_target\""
+	fi
+
+	check_size fs "$_target"
+
+	# Unmount it early, if function is interrupted and didn't reach here, the shell trap will clear it up anyway
+	if [[ -n $_mounted ]]; then
+		umount -f -- "$_mounted"
+	fi
+}
+
+# $1: core_collector config value
+verify_core_collector()
+{
+	local _cmd="${1%% *}"
+	local _params="${1#"${_cmd}"}"
+
+	if [[ $_cmd != "makedumpfile" ]]; then
+		if is_raw_dump_target; then
+			dwarn "Specifying a non-makedumpfile core collector, you will have to recover the vmcore manually."
+		fi
+		return
+	fi
+
+	if is_ssh_dump_target || is_raw_dump_target; then
+		if ! strstr "$_params" "-F"; then
+			perror_exit 'The specified dump target needs makedumpfile "-F" option.'
+		fi
+		_params="$_params vmcore"
+	else
+		_params="$_params vmcore dumpfile"
+	fi
+
+	# shellcheck disable=SC2086
+	if ! $_cmd --check-params $_params; then
+		perror_exit "makedumpfile parameter check failed."
+	fi
+}
+
+add_mount()
+{
+	dracut_args+=(--mount "$(to_mount "$@")") || exit 1
+}
+
+#handle the case user does not specify the dump target explicitly
+handle_default_dump_target()
+{
+	local _target _mntpoint _fstype _subvol _options
+
+	is_user_configured_dump_target && return
+
+	check_save_path_fs "$SAVE_PATH"
+
+	_save_path=$(get_bind_mount_source "$SAVE_PATH")
+	_options=$(get_mount_info OPTIONS target "$_save_path" -f)
+	_target=$(get_target_from_path "$_save_path")
+	_fstype=$(get_fs_type_from_target "$_target")
+	if [[ $_fstype == btrfs ]]; then
+		_subvol=$(get_btrfs_subvol_from_mntopt "$_options")
+	fi
+
+	_mntpoint=$(get_mntpoint_from_target "$_target" "$_subvol")
+	SAVE_PATH=${_save_path##"$_mntpoint"}
+	add_mount "$_target" "$_fstype" "$_options"
+	check_size fs "$_target" "$_subvol"
+}
+
+mkdumprd()
+{
+	SSH_KEY_LOCATION=$DEFAULT_SSHKEY
+	SAVE_PATH=$(get_save_path)
+
+	local -a dracut_args
+	dracut_args+=(--force)
+	if [[ -n $debug ]]; then
+		dracut_args+=(--debug)
+	else
+		dracut_args+=(--quiet)
+	fi
+	dracut_args+=(--hostonly)
+	dracut_args+=(--hostonly-cmdline)
+	dracut_args+=(--hostonly-i18n)
+	dracut_args+=(--hostonly-mode strict)
+	dracut_args+=(--hostonly-nics '')
+	dracut_args+=(--aggressive-strip)
+
+	# firstly get right SSH_KEY_LOCATION
+	keyfile=$(kdump_get_conf_val sshkey)
+	if [[ -f $keyfile ]]; then
+		# canonicalize the path
+		SSH_KEY_LOCATION=$(/usr/bin/readlink -m "$keyfile")
+	fi
+
+	while read -r config_opt config_val; do
+		# remove inline comments after the end of a directive.
+		case "$config_opt" in
+		extra_modules)
+			dracut_args+=(--add-drivers "$config_val")
+			;;
+		ext[234] | xfs | btrfs | minix | nfs | virtiofs)
+			check_user_configured_target "$config_val" "$config_opt"
+			add_mount "$config_val" "$config_opt"
+			;;
+		raw)
+			# checking raw disk writable
+			dd if="$config_val" count=1 of=/dev/null > /dev/null 2>&1 || {
+				perror_exit "Bad raw disk $config_val"
+			}
+			_praw=$(persistent_policy="by-id" kdump_get_persistent_dev "$config_val")
+			if [[ -z $_praw ]]; then
+				exit 1
+			fi
+			dracut_args+=(--device "$_praw")
+			check_size raw "$config_val"
+			;;
+		ssh)
+			if strstr "$config_val" "@"; then
+				mkdir_save_path_ssh "$config_val"
+				check_size ssh "$config_val"
+				dracut_args+=(--sshkey "$SSH_KEY_LOCATION")
+			else
+				perror_exit "Bad ssh dump target $config_val"
+			fi
+			;;
+		core_collector)
+			verify_core_collector "$config_val"
+			;;
+		dracut_args)
+
+			# When users specify nfs dumping via dracut_args, kdump-utils won't
+			# mount nfs fs beforehand thus nfsv4-related drivers won't be installed
+			# because we call dracut with --hostonly-mode strict. So manually install
+			# nfsv4-related drivers.
+			if [[ $(get_dracut_args_fstype "$config_val") == nfs* ]]; then
+				dracut_args+=(--add-drivers "nfs_layout_nfsv41_files")
+			fi
+
+			while read -r dracut_arg; do
+				dracut_args+=("$dracut_arg")
+			done <<< "$(echo "$config_val" | xargs -n 1 echo)"
+			;;
+		*) ;;
+
+		esac
+	done <<< "$(kdump_read_conf)"
+
+	handle_default_dump_target
+
+	if ! have_compression_in_dracut_args; then
+		# With dracut 104 the 99squash module got split up into 99squash and
+		# 95squash-squashfs as well as the new 95squash-erofs. Explicitly set
+		# which image type is required otherwise the requested compression
+		# algorithm might not be supported.
+		if has_dracut_module squash-squashfs && has_command mksquashfs; then
+			dracut_args+=(--add squash-squashfs)
+			dracut_args+=(--squash-compressor zstd)
+		elif has_dracut_module squash-erofs && has_command mkfs.erofs; then
+			dracut_args+=(--add squash-erofs)
+			dracut_args+=(--squash-compressor lzma)
+		elif has_command mksquashfs; then
+			# only true for dracut <= 103
+			dracut_args+=(--add squash)
+			dracut_args+=(--squash-compressor zstd)
+		fi
+	fi
+
+	# TODO: The below check is not needed anymore with the introduction of
+	#       'zz-fadumpinit' module, that isolates fadump's capture kernel initrd,
+	#       but still sysroot.mount unit gets generated based on 'root=' kernel
+	#       parameter available in fadump case. So, find a way to fix that first
+	#       before removing this check.
+	if ! is_fadump_capable; then
+		# The 2nd rootfs mount stays behind the normal dump target mount,
+		# so it doesn't affect the logic of check_dump_fs_modified().
+		is_dump_to_rootfs && add_mount "$(to_dev_name "$(get_root_fs_device)")"
+
+		dracut_args+=(--no-hostonly-default-device)
+
+		# When FIPS mode is enabled, the fips dracut module needs to use
+		# /boot/.vmlinuz-${KERNEL}.hmac to verify the integrity of the kernel.
+		#
+		# If /boot is on a separate partition, the fips module will mount /boot
+		# based on the boot= kernel parameter.
+		#
+		# If /boot is not on a separate partition, the fips dracut module will
+		# link /sysroot/boot to /boot. So we need to mount the root partition
+		# to /sysroot beforehand.
+		if [[ $(cat /proc/sys/crypto/fips_enabled 2> /dev/null) == 1 ]]; then
+			_boot_source=$(findmnt -n -o SOURCE --target /boot)
+			_disk_persistent=$(get_persistent_dev "$_boot_source")
+			if mountpoint -q /boot; then
+				dracut_args+=(--add-device "$_disk_persistent")
+			else
+				add_mount "$_boot_source"
+			fi
+		fi
+	fi
+
+	# Use kdump managed dracut profile.
+	[[ $kdump_dracut_confdir ]] || kdump_dracut_confdir=/lib/kdump/dracut.conf.d
+	if [[ "$(dracut --help)" == *--add-confdir* ]] && [[ -d $kdump_dracut_confdir ]]; then
+		dracut_args+=("--add-confdir" "$kdump_dracut_confdir")
+	else
+		dracut_args+=(--add kdumpbase)
+		dracut_args+=(--omit "rdma plymouth resume ifcfg earlykdump")
+	fi
+
+	export IN_KDUMP=1
+	dracut "${dracut_args[@]}" "$@"
+	local _ret=$?
+	unset IN_KDUMP
+	return $_ret
+}
+
+mkfadumprd()
+{
+	local MKFADUMPRD_TMPDIR REBUILD_INITRD TARGET_INITRD FADUMP_INITRD
+	local -a _dracut_isolate_args
+
+	MKFADUMPRD_TMPDIR="$KDUMP_TMPDIR/mkfadump"
+	mkdir "$MKFADUMPRD_TMPDIR" || {
+		perror_exit "mkfadumprd: failed to create mkfadump tmpdir."
+	}
+
+	# Default boot initramfs to be rebuilt
+	REBUILD_INITRD="$1" && shift
+	TARGET_INITRD="$1" && shift
+	FADUMP_INITRD="$MKFADUMPRD_TMPDIR/fadump.img"
+
+	### First build an initramfs with dump capture capability
+	# this file tells the initrd is fadump enabled
+	touch "$MKFADUMPRD_TMPDIR/fadump.initramfs"
+	ddebug "rebuild fadump initrd: $FADUMP_INITRD"
+	# Don't use squash for capture image or default image as it negatively impacts
+	# compression ratio and increases the size of the initramfs image.
+	# Don't compress the capture image as uncompressed image is needed immediately.
+	# Also, early microcode would not be needed here.
+	if ! mkdumprd "$FADUMP_INITRD" -i "$MKFADUMPRD_TMPDIR/fadump.initramfs" /etc/fadump.initramfs --omit squash --omit squash-squashfs --omit squash-erofs --no-compress --no-early-microcode; then
+		perror_exit "mkfadumprd: failed to build image with dump capture support"
+	fi
+
+	### Unpack the initramfs having dump capture capability retaining previous file modification time.
+	# This helps in saving space by hardlinking identical files.
+	mkdir -p "$MKFADUMPRD_TMPDIR/fadumproot"
+	if ! cpio -id --preserve-modification-time --quiet -D "$MKFADUMPRD_TMPDIR/fadumproot" < "$FADUMP_INITRD"; then
+		derror "mkfadumprd: failed to unpack '$MKFADUMPRD_TMPDIR'"
+		exit 1
+	fi
+
+	### Pack it into the normal boot initramfs with zz-fadumpinit module
+	_dracut_isolate_args=(
+		--rebuild "$REBUILD_INITRD" --add zz-fadumpinit
+		-i "$MKFADUMPRD_TMPDIR/fadumproot" /fadumproot
+		-i "$MKFADUMPRD_TMPDIR/fadumproot/usr/lib/dracut/hostonly-kernel-modules.txt"
+		/usr/lib/dracut/fadump-kernel-modules.txt
+	)
+
+	# Use zstd compression method, if available
+	if ! have_compression_in_dracut_args; then
+		if has_command zstd; then
+			_dracut_isolate_args+=(--compress zstd)
+		fi
+	fi
+
+	local _debug_dracut=--quiet
+	[[ -n $debug ]] && _debug_dracut=--debug
+	if ! dracut --force "$_debug_dracut" "${_dracut_isolate_args[@]}" "$@" "$TARGET_INITRD"; then
+		perror_exit "mkfadumprd: failed to setup '$TARGET_INITRD' with dump capture capability"
+	fi
+}

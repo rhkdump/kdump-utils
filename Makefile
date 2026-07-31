@@ -69,7 +69,7 @@ install: dracut-modules kdump-conf kdump-sysconfig manpages
 	install -D -m 755 mkdumprd $(DESTDIR)$(sbindir)/mkdumprd
 	install -D -m 644 kdump.conf $(DESTDIR)$(sysconfdir)
 	install -D -m 644 kdump.sysconfig $(DESTDIR)$(sysconfdir)/sysconfig/kdump
-	install -D -m 755 kdump-lib.sh kdump-lib-initramfs.sh kdump-logger.sh -t $(DESTDIR)$(pkglibdir)
+	install -D -m 755 kdump-lib.sh kdump-lib-dracut.sh kdump-lib-initramfs.sh kdump-logger.sh -t $(DESTDIR)$(pkglibdir)
 	install -D -m 644 99-kdump.conf -t $(DESTDIR)$(pkglibdir)/dracut.conf.d
 
 ifeq ($(ARCH), $(filter ppc64le ppc64,$(ARCH)))
