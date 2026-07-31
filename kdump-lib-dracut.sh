@@ -71,7 +71,8 @@ get_ssh_size()
 	local _opt=("-i" "$SSH_KEY_LOCATION" "-o" "BatchMode=yes" "-o" "StrictHostKeyChecking=yes")
 
 	if ! _out=$(ssh -q -n "${_opt[@]}" "$1" "df" "--output=avail" "$SAVE_PATH"); then
-		perror_exit "checking remote ssh server available size failed."
+		derror "checking remote ssh server available size failed."
+		return 1
 	fi
 
 	echo -n "$_out" | tail -1
@@ -85,12 +86,16 @@ mkdir_save_path_ssh()
 {
 	local _opt _dir
 	_opt=(-i "$SSH_KEY_LOCATION" -o BatchMode=yes -o StrictHostKeyChecking=yes)
-	ssh -qn "${_opt[@]}" "$1" mkdir -p "$SAVE_PATH" &> /dev/null ||
-		perror_exit "mkdir failed on $1:$SAVE_PATH"
+	ssh -qn "${_opt[@]}" "$1" mkdir -p "$SAVE_PATH" &> /dev/null || {
+		derror "mkdir failed on $1:$SAVE_PATH"
+		return 1
+	}
 
 	# check whether user has write permission on $1:$SAVE_PATH
-	_dir=$(ssh -qn "${_opt[@]}" "$1" mktemp -dqp "$SAVE_PATH" 2> /dev/null) ||
-		perror_exit "Could not create temporary directory on $1:$SAVE_PATH. Make sure user has write permission on destination"
+	_dir=$(ssh -qn "${_opt[@]}" "$1" mktemp -dqp "$SAVE_PATH" 2> /dev/null) || {
+		derror "Could not create temporary directory on $1:$SAVE_PATH. Make sure user has write permission on destination"
+		return 1
+	}
 	ssh -qn "${_opt[@]}" "$1" rmdir "$_dir"
 
 	return 0
@@ -132,7 +137,10 @@ check_size()
 	*)
 		return
 		;;
-	esac || perror_exit "Check dump target size failed"
+	esac || {
+		derror "Check dump target size failed"
+		return 1
+	}
 
 	if [[ $avail -lt $memtotal ]]; then
 		dwarn "There might not be enough space to save a vmcore."
@@ -145,7 +153,8 @@ check_save_path_fs()
 	local _path=$1
 
 	if [[ ! -d $_path ]]; then
-		perror_exit "Dump path $_path does not exist."
+		derror "Dump path $_path does not exist."
+		return 1
 	fi
 }
 
@@ -166,7 +175,8 @@ mount_failure()
 		msg="$msg Please make sure nfs-utils has been installed, and nfs server is accessible."
 	fi
 
-	perror_exit "$msg"
+	derror "$msg"
+	return 1
 }
 
 check_user_configured_target()
@@ -183,7 +193,8 @@ check_user_configured_target()
 		[[ $_fstype == "nfs"* ]] && _fstype=nfs
 
 		if [[ -n $_cfg_fs_type ]] && [[ $_fstype != "$_cfg_fs_type" ]]; then
-			perror_exit "\"$_target\" have a wrong type config \"$_cfg_fs_type\", expected \"$_fstype\""
+			derror "\"$_target\" have a wrong type config \"$_cfg_fs_type\", expected \"$_fstype\""
+			return 1
 		fi
 	else
 		_fstype="$_cfg_fs_type"
@@ -199,25 +210,37 @@ check_user_configured_target()
 	if [[ -n $_mnt ]]; then
 		if ! is_mounted "$_mnt"; then
 			if [[ $_opt == *",noauto"* ]]; then
-				$_timeout_cmd mount "$_mnt" || mount_failure "$_target" "$_mnt" "$_fstype"
+				$_timeout_cmd mount "$_mnt" || {
+					mount_failure "$_target" "$_mnt" "$_fstype"
+					return 1
+				}
 				_mounted=$_mnt
 			else
-				perror_exit "Dump target \"$_target\" is neither mounted nor configured as \"noauto\""
+				derror "Dump target \"$_target\" is neither mounted nor configured as \"noauto\""
+				return 1
 			fi
 		fi
 	else
 		_mnt=$MKDUMPRD_TMPMNT
 		mkdir -p "$_mnt"
-		$_timeout_cmd mount "$_target" "$_mnt" -t "$_fstype" -o defaults || mount_failure "$_target" "" "$_fstype"
+		$_timeout_cmd mount "$_target" "$_mnt" -t "$_fstype" -o defaults || {
+			mount_failure "$_target" "" "$_fstype"
+			return 1
+		}
 		_mounted=$_mnt
 	fi
 
 	# For user configured target, use $SAVE_PATH as the dump path within the target
 	if [[ ! -d "$_mnt/$SAVE_PATH" ]]; then
-		perror_exit "Dump path \"$SAVE_PATH\" does not exist in dump target \"$_target\""
+		derror "Dump path \"$SAVE_PATH\" does not exist in dump target \"$_target\""
+		[[ -n $_mounted ]] && umount -f -- "$_mounted"
+		return 1
 	fi
 
-	check_size fs "$_target"
+	check_size fs "$_target" || {
+		[[ -n $_mounted ]] && umount -f -- "$_mounted"
+		return 1
+	}
 
 	# Unmount it early, if function is interrupted and didn't reach here, the shell trap will clear it up anyway
 	if [[ -n $_mounted ]]; then
@@ -240,7 +263,8 @@ verify_core_collector()
 
 	if is_ssh_dump_target || is_raw_dump_target; then
 		if ! strstr "$_params" "-F"; then
-			perror_exit 'The specified dump target needs makedumpfile "-F" option.'
+			derror 'The specified dump target needs makedumpfile "-F" option.'
+			return 1
 		fi
 		_params="$_params vmcore"
 	else
@@ -249,13 +273,14 @@ verify_core_collector()
 
 	# shellcheck disable=SC2086
 	if ! $_cmd --check-params $_params; then
-		perror_exit "makedumpfile parameter check failed."
+		derror "makedumpfile parameter check failed."
+		return 1
 	fi
 }
 
 add_mount()
 {
-	dracut_args+=(--mount "$(to_mount "$@")") || exit 1
+	dracut_args+=(--mount "$(to_mount "$@")") || return 1
 }
 
 #handle the case user does not specify the dump target explicitly
@@ -265,7 +290,7 @@ handle_default_dump_target()
 
 	is_user_configured_dump_target && return
 
-	check_save_path_fs "$SAVE_PATH"
+	check_save_path_fs "$SAVE_PATH" || return 1
 
 	_save_path=$(get_bind_mount_source "$SAVE_PATH")
 	_options=$(get_mount_info OPTIONS target "$_save_path" -f)
@@ -277,8 +302,8 @@ handle_default_dump_target()
 
 	_mntpoint=$(get_mntpoint_from_target "$_target" "$_subvol")
 	SAVE_PATH=${_save_path##"$_mntpoint"}
-	add_mount "$_target" "$_fstype" "$_options"
-	check_size fs "$_target" "$_subvol"
+	add_mount "$_target" "$_fstype" "$_options" || return 1
+	check_size fs "$_target" "$_subvol" || return 1
 }
 
 mkdumprd()
@@ -314,32 +339,34 @@ mkdumprd()
 			dracut_args+=(--add-drivers "$config_val")
 			;;
 		ext[234] | xfs | btrfs | minix | nfs | virtiofs)
-			check_user_configured_target "$config_val" "$config_opt"
-			add_mount "$config_val" "$config_opt"
+			check_user_configured_target "$config_val" "$config_opt" || return 1
+			add_mount "$config_val" "$config_opt" || return 1
 			;;
 		raw)
 			# checking raw disk writable
 			dd if="$config_val" count=1 of=/dev/null > /dev/null 2>&1 || {
-				perror_exit "Bad raw disk $config_val"
+				derror "Bad raw disk $config_val"
+				return 1
 			}
 			_praw=$(persistent_policy="by-id" kdump_get_persistent_dev "$config_val")
 			if [[ -z $_praw ]]; then
-				exit 1
+				return 1
 			fi
 			dracut_args+=(--device "$_praw")
-			check_size raw "$config_val"
+			check_size raw "$config_val" || return 1
 			;;
 		ssh)
 			if strstr "$config_val" "@"; then
-				mkdir_save_path_ssh "$config_val"
-				check_size ssh "$config_val"
+				mkdir_save_path_ssh "$config_val" || return 1
+				check_size ssh "$config_val" || return 1
 				dracut_args+=(--sshkey "$SSH_KEY_LOCATION")
 			else
-				perror_exit "Bad ssh dump target $config_val"
+				derror "Bad ssh dump target $config_val"
+				return 1
 			fi
 			;;
 		core_collector)
-			verify_core_collector "$config_val"
+			verify_core_collector "$config_val" || return 1
 			;;
 		dracut_args)
 
@@ -360,7 +387,7 @@ mkdumprd()
 		esac
 	done <<< "$(kdump_read_conf)"
 
-	handle_default_dump_target
+	handle_default_dump_target || return 1
 
 	if ! have_compression_in_dracut_args; then
 		# With dracut 104 the 99squash module got split up into 99squash and
@@ -388,7 +415,7 @@ mkdumprd()
 	if ! is_fadump_capable; then
 		# The 2nd rootfs mount stays behind the normal dump target mount,
 		# so it doesn't affect the logic of check_dump_fs_modified().
-		is_dump_to_rootfs && add_mount "$(to_dev_name "$(get_root_fs_device)")"
+		is_dump_to_rootfs && { add_mount "$(to_dev_name "$(get_root_fs_device)")" || return 1; }
 
 		dracut_args+=(--no-hostonly-default-device)
 
@@ -407,7 +434,7 @@ mkdumprd()
 			if mountpoint -q /boot; then
 				dracut_args+=(--add-device "$_disk_persistent")
 			else
-				add_mount "$_boot_source"
+				add_mount "$_boot_source" || return 1
 			fi
 		fi
 	fi
@@ -435,7 +462,8 @@ mkfadumprd()
 
 	MKFADUMPRD_TMPDIR="$KDUMP_TMPDIR/mkfadump"
 	mkdir "$MKFADUMPRD_TMPDIR" || {
-		perror_exit "mkfadumprd: failed to create mkfadump tmpdir."
+		derror "mkfadumprd: failed to create mkfadump tmpdir."
+		return 1
 	}
 
 	# Default boot initramfs to be rebuilt
@@ -452,7 +480,8 @@ mkfadumprd()
 	# Don't compress the capture image as uncompressed image is needed immediately.
 	# Also, early microcode would not be needed here.
 	if ! mkdumprd "$FADUMP_INITRD" -i "$MKFADUMPRD_TMPDIR/fadump.initramfs" /etc/fadump.initramfs --omit squash --omit squash-squashfs --omit squash-erofs --no-compress --no-early-microcode; then
-		perror_exit "mkfadumprd: failed to build image with dump capture support"
+		derror "mkfadumprd: failed to build image with dump capture support"
+		return 1
 	fi
 
 	### Unpack the initramfs having dump capture capability retaining previous file modification time.
@@ -460,7 +489,7 @@ mkfadumprd()
 	mkdir -p "$MKFADUMPRD_TMPDIR/fadumproot"
 	if ! cpio -id --preserve-modification-time --quiet -D "$MKFADUMPRD_TMPDIR/fadumproot" < "$FADUMP_INITRD"; then
 		derror "mkfadumprd: failed to unpack '$MKFADUMPRD_TMPDIR'"
-		exit 1
+		return 1
 	fi
 
 	### Pack it into the normal boot initramfs with zz-fadumpinit module
@@ -481,6 +510,7 @@ mkfadumprd()
 	local _debug_dracut=--quiet
 	[[ -n $debug ]] && _debug_dracut=--debug
 	if ! dracut --force "$_debug_dracut" "${_dracut_isolate_args[@]}" "$@" "$TARGET_INITRD"; then
-		perror_exit "mkfadumprd: failed to setup '$TARGET_INITRD' with dump capture capability"
+		derror "mkfadumprd: failed to setup '$TARGET_INITRD' with dump capture capability"
+		return 1
 	fi
 }
