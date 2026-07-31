@@ -4,15 +4,10 @@ KEXEC=/sbin/kexec
 KDUMP_KERNELVER=""
 KDUMP_KERNEL=""
 KEXEC_ARGS=""
-MKDUMPRD="/sbin/mkdumprd"
-MKFADUMPRD="/sbin/mkfadumprd"
 if shopt -q -o xtrace; then
 	# shells running as root don't inherit PS4
 	PS4='${BASH_SOURCE}@${LINENO}(${FUNCNAME[0]-}): '
-	MKDUMPRD+=" --debug"
-	MKFADUMPRD+=" --debug"
 fi
-MKDUMPRD+=" -f"
 
 DRACUT_MODULES_FILE="/usr/lib/dracut/modules.txt"
 
@@ -59,6 +54,8 @@ fi
 . $KDUMP_LIB_PATH/kdump-lib.sh
 # shellcheck source=SCRIPTDIR/kdump-logger.sh
 . $KDUMP_LIB_PATH/kdump-logger.sh
+# shellcheck source=SCRIPTDIR/kdump-lib-dracut.sh
+. $KDUMP_LIB_PATH/kdump-lib-dracut.sh
 
 #initiate the kdump logger
 if ! dlog_init; then
@@ -67,10 +64,12 @@ if ! dlog_init; then
 fi
 
 KDUMP_TMPDIR=$(mktemp --tmpdir -d kdump.XXXX)
-TMPMNT="$KDUMP_TMPDIR/target"
+export KDUMP_TMPDIR
+KDUMP_TMPMNT="$KDUMP_TMPDIR/target"
+MKDUMPRD_TMPMNT=$KDUMP_TMPMNT
 trap '
     ret=$?;
-    is_mounted $TMPMNT && umount -f $TMPMNT;
+    is_mounted $KDUMP_TMPMNT && umount -f $KDUMP_TMPMNT;
     rm -rf "$KDUMP_TMPDIR"
     [[ -d $LUKS_CONFIGFS ]] && find $LUKS_CONFIGFS/ -mindepth 1 -type d -delete
     exit $ret;
@@ -169,7 +168,7 @@ determine_dump_mode()
 
 rebuild_fadump_initrd()
 {
-	if ! $MKFADUMPRD "$DEFAULT_INITRD_BAK" "$TARGET_INITRD" --kver "$KDUMP_KERNELVER"; then
+	if ! mkfadumprd "$DEFAULT_INITRD_BAK" "$TARGET_INITRD" --kver "$KDUMP_KERNELVER"; then
 		derror "mkfadumprd: failed to make fadump initrd"
 		return 1
 	fi
@@ -185,8 +184,8 @@ check_earlykdump_is_enabled()
 
 rebuild_kdump_initrd()
 {
-	ddebug "rebuild kdump initrd: $MKDUMPRD $TARGET_INITRD $KDUMP_KERNELVER"
-	if ! $MKDUMPRD "$TARGET_INITRD" "$KDUMP_KERNELVER"; then
+	ddebug "rebuild kdump initrd: mkdumprd $TARGET_INITRD $KDUMP_KERNELVER"
+	if ! mkdumprd "$TARGET_INITRD" "$KDUMP_KERNELVER"; then
 		derror "mkdumprd: failed to make kdump initrd"
 		return 1
 	fi
@@ -2100,12 +2099,12 @@ fetch_status()
 		fi
 
 		if [[ -z $_mnt ]] || ! is_mounted "$_mnt"; then
-			mkdir -p "$TMPMNT"
-			$_timeout_cmd mount "${OPT[_target]}" "$TMPMNT" -t "${OPT[_fstype]}" -o defaults ||
+			mkdir -p "$KDUMP_TMPMNT"
+			$_timeout_cmd mount "${OPT[_target]}" "$KDUMP_TMPMNT" -t "${OPT[_fstype]}" -o defaults ||
 				{
 					dwarn "Failed to mount ${OPT[_target]}" && return 2
 				}
-			_mnt="$TMPMNT"
+			_mnt="$KDUMP_TMPMNT"
 		fi
 		_status="$_mnt/$_status"
 	elif is_ssh_dump_target; then
