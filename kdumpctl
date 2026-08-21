@@ -1708,6 +1708,39 @@ _find_kernel_path_by_release()
 	echo -n "$_kernel_path"
 }
 
+KERNEL_CMDLINE_FILE=/etc/kernel/cmdline
+
+# Keep /etc/kernel/cmdline in sync when crashkernel is updated for a
+# single BLS entry. grubby --update-kernel <index> does not update this
+# file; only --update-kernel=ALL does. kernel-install copies this file
+# into new BLS entries, so a stale value causes a reset on every kernel
+# install.
+_update_etc_kernel_cmdline()
+{
+	local _param="$1" _new="$2"
+	local _cmdline
+
+	[[ $_param == crashkernel ]] || return 0
+	[[ -f "$KERNEL_CMDLINE_FILE" && -w "$KERNEL_CMDLINE_FILE" ]] || return 0
+
+	_cmdline=$(tr '\n' ' ' < "$KERNEL_CMDLINE_FILE")
+	_cmdline=$(printf '%s\n' "$_cmdline" | sed -E 's/(^|[[:space:]])crashkernel=[^[:space:]]+/\1/g')
+	_cmdline=$(printf '%s\n' "$_cmdline" | sed -E 's/[[:space:]]+/ /g; s/^ //; s/ $//')
+
+	if [[ -n $_new ]]; then
+		if [[ -n $_cmdline ]]; then
+			_cmdline="$_cmdline crashkernel=$_new"
+		else
+			_cmdline="crashkernel=$_new"
+		fi
+	fi
+
+	if ! printf '%s\n' "$_cmdline" > "$KERNEL_CMDLINE_FILE"; then
+		dwarn "Failed to update crashkernel in $KERNEL_CMDLINE_FILE"
+	fi
+	return 0
+}
+
 _update_kernel_cmdline()
 {
 	local _grub_entry_index _param _old _new
@@ -1734,6 +1767,7 @@ _update_kernel_cmdline()
 		else
 			grubby --update-kernel "$_grub_entry_index" --remove-args "$_param"
 		fi
+		_update_etc_kernel_cmdline "$_param" "$_new"
 	else
 		derror "Unable to update kernel command line"
 		exit 1
