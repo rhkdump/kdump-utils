@@ -51,7 +51,7 @@ Describe 'kdump-lib'
 	End
 
 	Describe "_crashkernel_add()"
-		Context "For valid input values"
+		Context "For valid input values with two arguments (skip defaults to 0)"
 			Parameters
 				"2G-4G:256M,4G-64G:320M,64G-:576M" "100M" "2G-4G:356M,4G-64G:420M,64G-:676M"
 				"2G-4G:256M" "100" "2G-4G:268435556" # avoids any rounding when size % 1024 != 0
@@ -74,6 +74,25 @@ Describe 'kdump-lib'
 				The output should equal "$3"
 			End
 		End
+
+		Context "For valid input values with three arguments (explicit skip)"
+			Parameters
+				"2G-4G:256M,4G-64G:320M,64G-:576M" "100M" "1" "2G-4G:256M,4G-64G:420M,64G-:676M"
+				"2G-4G:256M,4G-64G:320M,64G-:576M" "100M" "2" "2G-4G:256M,4G-64G:320M,64G-:676M"
+				"2G-4G:256M,4G-64G:320M,64G-:576M" "100M" "3" "2G-4G:256M,4G-64G:320M,64G-:576M"
+				"2G-4G:256M,4G-64G:320M,64G-:576M@4G" "100M" "1" "2G-4G:256M,4G-64G:420M,64G-:676M@4G"
+				"2G-4G:1G,4G-64G:2G,64G-:3G@4G" "100M" "1" "2G-4G:1G,4G-64G:2148M,64G-:3172M@4G"
+				"2G-4G:10000K,4G-64G:20000K" "100M" "1" "2G-4G:10000K,4G-64G:122400K"
+				"1M@1G" "1K" "1" "1M@1G"
+				"128G-1T:4G,10T-100T:1T" "1G" "1" "128G-1T:4G,10T-100T:1025G"
+				"1K,low" "1" "1" "1K,low"
+			End
+			It "should add delta to values after ':' starting after skip count"
+				When call _crashkernel_add "$1" "$2" "$3"
+				The output should equal "$4"
+			End
+		End
+
 		Context "For invalid input values"
 			Parameters
 				"2G-4G:256M.4G-64G:320M" "100M"
