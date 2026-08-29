@@ -30,7 +30,7 @@ kdump-sysconfig: gen-kdump-sysconfig.sh
 
 format-check-shfmt:
 	@command -v shfmt &>/dev/null || { echo "Error: shfmt not found. Please install shfmt."; exit 1; }
-	shfmt -s -d *.sh kdumpctl mk*dumprd kdump-udev-throttler tests/*/*/*.sh dracut/*/*.sh tools/*.sh
+	shfmt -s -d *.sh kdumpctl kdump-udev-throttler tests/*/*/*.sh dracut/*/*.sh tools/*.sh
 
 format-check-altshfmt:
 	@command -v altshfmt >/dev/null 2>&1 || { echo "Error: altshfmt not found. Please install it."; exit 1; }
@@ -42,7 +42,7 @@ static-analysis:
 	@command -v shellcheck >/dev/null 2>&1 || { echo "Error: shellcheck not found. Please install it."; exit 1; }
 	@# Currently, for kdump-utils, there is need for shellcheck to require
 	@# the sourced file to give correct warnings about the checked file
-	shellcheck -x *.sh kdumpctl mk*dumprd kdump-udev-throttler
+	shellcheck -x *.sh kdumpctl kdump-udev-throttler
 	shellcheck -x dracut/*/*.sh
 	shellcheck -x tests/*/*/*.sh tools/*.sh
 	@# disable the follow checks for unit tests
@@ -52,7 +52,7 @@ static-analysis:
 	shellcheck -e 2317,2329,2288,2215 -x spec/*.sh
 
 manpages:
-	install -D -m 644 mkdumprd.8 kdumpctl.8 -t $(DESTDIR)$(mandir)/man8
+	install -D -m 644 kdumpctl.8 -t $(DESTDIR)$(mandir)/man8
 	install -D -m 644 kdump.conf.5 $(DESTDIR)$(mandir)/man5/kdump.conf.5
 
 install: dracut-modules kdump-conf kdump-sysconfig manpages
@@ -66,14 +66,12 @@ install: dracut-modules kdump-conf kdump-sysconfig manpages
 	mkdir -p -m755 $(DESTDIR)$(libdir)/kernel/install.d/
 
 	install -D -m 755 kdumpctl $(DESTDIR)$(bindir)/kdumpctl
-	install -D -m 755 mkdumprd $(DESTDIR)$(sbindir)/mkdumprd
 	install -D -m 644 kdump.conf $(DESTDIR)$(sysconfdir)
 	install -D -m 644 kdump.sysconfig $(DESTDIR)$(sysconfdir)/sysconfig/kdump
-	install -D -m 755 kdump-lib.sh kdump-lib-initramfs.sh kdump-logger.sh -t $(DESTDIR)$(pkglibdir)
+	install -D -m 755 kdump-lib.sh kdump-lib-dracut.sh kdump-lib-initramfs.sh kdump-logger.sh -t $(DESTDIR)$(pkglibdir)
 	install -D -m 644 99-kdump.conf -t $(DESTDIR)$(pkglibdir)/dracut.conf.d
 
 ifeq ($(ARCH), $(filter ppc64le ppc64,$(ARCH)))
-	install -m 755 mkfadumprd $(DESTDIR)$(sbindir)
 	install -m 755 kdump-migrate-action.sh  kdump-restart.sh -t $(DESTDIR)$(pkglibdir)
 	install -m 755 60-fadump.install $(DESTDIR)$(libdir)/kernel/install.d/
 endif
