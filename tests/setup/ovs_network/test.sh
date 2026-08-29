@@ -5,7 +5,7 @@ ovs_configure_script=/usr/local/bin/configure-ovs.sh
 extract_configure-ovs-script() {
     local _script_url
 
-    _script_url=https://github.com/openshift/machine-config-operator/raw/refs/heads/master/templates/common/_base/files/configure-ovs-network.yaml
+    _script_url=https://github.com/openshift/machine-config-operator/raw/refs/heads/main/templates/common/_base/files/configure-ovs-network.yaml
 
     if curl -sL $_script_url | grep -A2000 '#!/bin/bash' > "$ovs_configure_script"; then
         chmod +x "$ovs_configure_script"

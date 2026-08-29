@@ -75,14 +75,22 @@ EOF
 elif [[ $REMOTE_TYPE == SSH ]]; then
     TMT_TEST_PLAN_ROOT=${TMT_PLAN_DATA%data}
     SERVER_SSH_KEY=${TMT_TEST_PLAN_ROOT}/provision/server/id_ecdsa
-    if test -f "$SERVER_SSH_KEY"; then
-        rlRun "ssh-keyscan -H $SERVER > /root/.ssh/known_hosts"
-        rlRun "ssh root@$SERVER -i $SERVER_SSH_KEY 'mkdir /var/crash'"
-        rlRun "echo ssh root@$SERVER > /etc/kdump.conf"
-        rlRun "echo sshkey $SERVER_SSH_KEY >> /etc/kdump.conf"
-        rlRun "echo core_collector makedumpfile -l --message-level 7 -d 31 -F >> /etc/kdump.conf"
+    CLIENT_SSH_PUBKEY=${TMT_TEST_PLAN_ROOT}/provision/client/id_ecdsa.pub
+    if [[ -f "$SERVER_SSH_KEY" && -f "$CLIENT_SSH_PUBKEY" ]]; then
+        if [[ ${MY_IP} == ${SERVER_IP} ]]; then
+            rlRun "cat $CLIENT_SSH_PUBKEY >> /root/.ssh/authorized_keys"
+        else
+            rlRun "ssh-keyscan -H $SERVER > /root/.ssh/known_hosts"
+            rlRun "ssh root@$SERVER -i $SERVER_SSH_KEY 'mkdir -p /var/crash'"
+            rlRun "echo ssh root@$SERVER > /etc/kdump.conf"
+            rlRun "echo sshkey $SERVER_SSH_KEY >> /etc/kdump.conf"
+            rlRun "echo core_collector makedumpfile -l --message-level 7 -d 31 -F >> /etc/kdump.conf"
+        fi
     else
-        rlDie "Server SSH Key not found, something wrong"
+        [[ -f "$SERVER_SSH_KEY" ]] || \
+            rlDie "Server SSH Key not found, something wrong"
+        [[ -f "$CLIENT_SSH_PUBKEY" ]] || \
+            rlDie "Client SSH Pubkey not found, something wrong"
     fi
 fi
 rlPhaseEnd
