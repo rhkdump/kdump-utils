@@ -31,7 +31,7 @@ execute:
 
 discover:
     how: fmf
-    url: https://gitlab.com/coxu/kernel-tests.git
+    url: https://gitlab.com/coiby/kernel-tests.git
     ref: kdump_utils_github_action
     test:
        - /kdump/config-restraint
