@@ -1,6 +1,7 @@
 summary: Kdump NFS dumping tests
 discover+:
     test:
+     - /kdump/config-restraint
      - /kdump/config-default-crashkernel
      - /kdump/config-nfs
      - /kdump/crash-sysrq-c

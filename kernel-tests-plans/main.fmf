@@ -1,5 +1,6 @@
 provision:
    - name: client
+   - name: server
 
 prepare:
   # Set root password to log in as root in the console
@@ -32,3 +33,6 @@ discover:
     how: fmf
     url: https://gitlab.com/coxu/kernel-tests.git
     ref: kdump_utils_github_action
+    test:
+       - /kdump/config-restraint
+       - /kdump/config-default-crashkernel
