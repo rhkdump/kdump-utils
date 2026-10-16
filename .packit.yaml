@@ -39,7 +39,7 @@ jobs:
       - fedora-rawhide-x86_64
       - fedora-rawhide-aarch64
     fmf_path: kernel-tests-plans
-    use_internal_tf: true
+    tmt_plan: 'local|early'
     tf_extra_params:
       hardware:
         - virtualization:
@@ -47,9 +47,6 @@ jobs:
             hypervisor: '!= xen'
       environments:
         - variables:
-            # use internal NFS/SSH server to avoid creating another VM as NFS/SSH server
-            RESOURCE_URL: https://gitlab.cee.redhat.com/kernel-qe/kernel/-/raw/master/kdump/internal/internal_resources.sh
-            AUTO_CONFIG: auto
             SUBMITTER: rhkdump_kdump_utils_packit
         - settings:
             provisioning:
