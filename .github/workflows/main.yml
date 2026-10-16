@@ -1,6 +1,6 @@
 name: kdump-utils tests
 
-on: pull_request
+on: [pull_request, workflow_dispatch]
 
 jobs:
   format-check:
@@ -29,3 +29,93 @@ jobs:
       - run: curl -L -O https://github.com/shellspec/shellspec/archive/latest.tar.gz && tar -xzf latest.tar.gz
       - run: cd shellspec-latest && sudo make install
       - run: shellspec
+
+  build-rpm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Build kdump-utils RPM
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE:/workspace" \
+            -w /workspace \
+            quay.io/fedora/fedora:44 bash -c "
+              set -ex
+              dnf install -y rpm-build make git sed systemd-rpm-macros
+              git config --global --add safe.directory '*'
+              ./tools/build-rpm.sh 44
+              chmod -R a+rw /workspace
+            "
+
+      - name: Upload built RPM
+        uses: actions/upload-artifact@v7
+        with:
+          name: kdump-utils-rpm
+          path: x86_64/*.rpm
+          if-no-files-found: error
+
+  tmt-e2e-tests:
+    needs: [build-rpm]
+    runs-on: ubuntu-latest
+
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.fedora_version }}-${{ matrix.plan }}
+      cancel-in-progress: true
+    strategy:
+      matrix:
+        fedora_version:
+          - "44"
+        plan:
+          - early
+          - local
+          - lvm2_thinp
+          - nfs
+          - nfs_fips
+          - nfs_ovs
+          - ssh
+      fail-fast: false
+
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download built RPM
+        uses: actions/download-artifact@v7
+        with:
+          name: kdump-utils-rpm
+          path: built-rpm
+
+      - name: Install libvirt
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y qemu-system-x86 libvirt-daemon-system libvirt-clients libvirt-dev pkg-config genisoimage
+          sudo usermod -aG libvirt $USER
+          sudo systemctl start libvirtd
+          # verify KVM is available
+          test -e /dev/kvm && echo "KVM OK" || echo "WARNING: /dev/kvm missing"
+          sudo virsh list --all
+
+      - name: Install tmt + testcloud
+        run: |
+          pip install --user tmt testcloud
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          tmt --version
+
+      - name: Run e2e test (${{ matrix.plan }})
+        run: |
+          RPM_PATH=$(find "$GITHUB_WORKSPACE/built-rpm" -name "kdump-utils-*.rpm" | head -n 1)
+          echo "Using built RPM: $RPM_PATH"
+          test -f "$RPM_PATH" || { echo "RPM not found"; exit 1; }
+          cd kernel-tests-plans && sg libvirt -c "tmt --context install_built_rpm=yes --context arch=x86_64 --context distro=fedora-${{ matrix.fedora_version }} run -a --environment KDUMP_UTILS_RPM=\"$RPM_PATH\" provision -h virtual -c system -i fedora:${{ matrix.fedora_version }} plans --name '^/${{ matrix.plan }}\$'"
+
+      - name: Upload tmt artifacts
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: tmt-run-${{ matrix.plan }}
+          path: /var/tmp/tmt/run*
+          if-no-files-found: ignore
