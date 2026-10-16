@@ -1,0 +1,34 @@
+summary: Kdump LVM2 thin provision tests
+discover+:
+  test+:
+    - /kdump/config-thin
+    - /kdump/crash-sysrq-c
+    - /kdump/analyse-crash-cmd/simple_check
+
+provision:
+  - name: client
+    beaker:
+      pool: beaker
+
+    kickstart:
+      script: |
+        zerombr
+        clearpart --all
+        reqpart
+        part /boot --fstype=ext4 --size=2048
+        part / --fstype=xfs --size=4096 --grow
+        part /thinp --fstype=xfs --size=10240
+      metadata: no_autopart
+
+adjust+:
+  - when: initiator != packit or initiator is not defined
+    provision:
+      name: client
+      how: virtual
+      connection: system
+      hardware:
+        disk:
+          - size: = 40GB
+          - size: = 10GB
+    environment+:
+      THIN_MP: /dev/vdb
