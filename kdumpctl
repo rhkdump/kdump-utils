@@ -1182,8 +1182,8 @@ prepare_luks()
 		return 0
 	fi
 
-	# Currently only x86_64 is supported
-	if [[ "$(uname -m)" != "x86_64" ]]; then
+	# Currently only x86_64, aarch64, and ppc64le are supported
+	if [[ "$(uname -m)" != "x86_64" && "$(uname -m)" != "aarch64" && "$(uname -m)" != "ppc64le" ]]; then
 		dwarn "Encrypted device is in dump path, which is not recommended, see kexec-kdump-howto.txt for more details."
 		return 0
 	fi
@@ -1272,8 +1272,8 @@ setup_crypttab()
 	local _devuuid uuids_string temp_file
 	declare -a _luks_devs
 
-	if [[ "$(uname -m)" != "x86_64" ]]; then
-		dwarn "Currently only x86_64 supported"
+	if [[ "$(uname -m)" != "x86_64" && "$(uname -m)" != "aarch64" && "$(uname -m)" != "ppc64le" ]]; then
+		dwarn "Currently only x86_64, aarch64, and ppc64le supported"
 		return 0
 	fi
 

@@ -899,12 +899,12 @@ or else kdump may not work as expeceted.
 Notes on encrypted dump target
 ------------------------------
 
-Currently, only x86_64 supports encrypted dump target. And depending on
-your setup, you may need to run "kdumpctl setup-crypttab" once in order
-for kdump.service to work on boot automatically next time. You can
-confirm if this step is needed by running "kdumpctl restart". If you have
-to input passphrase to unlock the encrypted volume, then please run
-"kdumpctl setup-crypttab".
+Currently, only x86_64, aarch64, and ppc64le support encrypted dump
+target. And depending on your setup, you may need to run "kdumpctl
+setup-crypttab" once in order for kdump.service to work on boot
+automatically next time. You can confirm if this step is needed by
+running "kdumpctl restart". If you have to input passphrase to unlock
+the encrypted volume, then please run "kdumpctl setup-crypttab".
 
 For other architectures, kdump is not working well. First, user have
 to give the password manually in capture kernel, so a working
