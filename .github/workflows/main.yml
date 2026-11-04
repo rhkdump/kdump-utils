@@ -5,7 +5,7 @@ on: [pull_request, workflow_dispatch]
 jobs:
   format-check:
     runs-on: ubuntu-latest
-    container: docker.io/fedora:latest
+    container: docker.io/fedora:44
     steps:
       - uses: actions/checkout@v6
       - run: dnf install shfmt make curl which diffutils -yq
