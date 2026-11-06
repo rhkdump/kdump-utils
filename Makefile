@@ -30,7 +30,7 @@ kdump-sysconfig: gen-kdump-sysconfig.sh
 
 format-check-shfmt:
 	@command -v shfmt &>/dev/null || { echo "Error: shfmt not found. Please install shfmt."; exit 1; }
-	shfmt -s -d *.sh kdumpctl mk*dumprd kdump-udev-throttler tests/*/*/*.sh dracut/*/*.sh tools/*.sh
+	shfmt -s -d *.sh kdumpctl mk*dumprd kdump-udev-throttler dracut/*/*.sh tools/*.sh
 
 format-check-altshfmt:
 	@command -v altshfmt >/dev/null 2>&1 || { echo "Error: altshfmt not found. Please install it."; exit 1; }
@@ -44,7 +44,7 @@ static-analysis:
 	@# the sourced file to give correct warnings about the checked file
 	shellcheck -x *.sh kdumpctl mk*dumprd kdump-udev-throttler
 	shellcheck -x dracut/*/*.sh
-	shellcheck -x tests/*/*/*.sh tools/*.sh
+	shellcheck -x tools/*.sh
 	@# disable the follow checks for unit tests
 	@# - 2317: to use shellspec directives like Context, When and etc.
 	@# - 2329: to mock functions.

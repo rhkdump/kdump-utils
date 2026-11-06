@@ -1,3 +1,0 @@
-summary: Set up LVM2 thin-provision
-require:
-- lvm2

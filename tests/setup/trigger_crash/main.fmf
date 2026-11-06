@@ -1,2 +1,0 @@
-summary: Trigger a kernel panic
-restart-on-exit-code: 255

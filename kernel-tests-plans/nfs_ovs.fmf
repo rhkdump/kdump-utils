@@ -1,7 +1,6 @@
 summary: Kdump NFS dumping over OVS bridge tests
 discover+:
-    test:
-     - /kdump/config-default-crashkernel
+    test+:
      - /kdump/config-ovs
      - /kdump/config-nfs
      - /kdump/crash-sysrq-c

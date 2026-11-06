@@ -1,3 +1,0 @@
-summary: Setup NFS server for saving vmcore
-require:
-- nfs-utils
