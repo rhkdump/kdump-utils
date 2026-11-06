@@ -500,23 +500,22 @@ check_files_modified()
 	[[ -e /etc/fstab ]] && files="$files /etc/fstab"
 
 	# Check for any updated extra module
-	EXTRA_MODULES="${OPT[extra_modules]}"
-	if [[ -n $EXTRA_MODULES ]]; then
+	local _extra_modules="${OPT[extra_modules]}"
+	if [[ -n $_extra_modules ]]; then
 		if [[ -e /lib/modules/$KDUMP_KERNELVER/modules.dep ]]; then
 			files="$files /lib/modules/$KDUMP_KERNELVER/modules.dep"
 		fi
-		for _module in $EXTRA_MODULES; do
-			if _module_file="$(modinfo --set-version "$KDUMP_KERNELVER" --filename "$_module" 2> /dev/null)"; then
-				files="$files $_module_file"
-				for _dep_modules in $(modinfo -F depends "$_module" | tr ',' ' '); do
-					files="$files $(modinfo --set-version "$KDUMP_KERNELVER" --filename "$_dep_modules" 2> /dev/null)"
-				done
-			else
-				# If it's not a module nor builtin, give an error
-				if ! (modprobe --set-version "$KDUMP_KERNELVER" --dry-run "$_module" &> /dev/null); then
-					dwarn "Module $_module not found"
-				fi
+		for _module in $_extra_modules; do
+			if ! modprobe --set-version "$KDUMP_KERNELVER" --dry-run "$_module" &> /dev/null; then
+				dwarn "Module $_module not found"
+				continue
 			fi
+			# Use modprobe --show-depends to get all recursive dependencies.
+			# Skip builtin modules as they have no file to track.
+			local _dep_file
+			while read -r _ _dep_file _; do
+				[[ -n $_dep_file ]] && files="$files $_dep_file"
+			done < <(modprobe --set-version "$KDUMP_KERNELVER" --show-depends "$_module" 2> /dev/null | grep -v "^builtin ")
 		done
 	fi
 
@@ -526,20 +525,16 @@ check_files_modified()
 	check_exist "$files" && check_executable "$EXTRA_BINS" || return 2
 
 	for file in $files; do
-		if [[ -e $file ]]; then
+		time_stamp=$(stat -c "%Y" "$file")
+		if [[ $time_stamp -gt $image_time ]]; then
+			modified_files="$modified_files $file"
+		fi
+		if [[ -L $file ]]; then
+			file=$(readlink -m "$file")
 			time_stamp=$(stat -c "%Y" "$file")
 			if [[ $time_stamp -gt $image_time ]]; then
 				modified_files="$modified_files $file"
 			fi
-			if [[ -L $file ]]; then
-				file=$(readlink -m "$file")
-				time_stamp=$(stat -c "%Y" "$file")
-				if [[ $time_stamp -gt $image_time ]]; then
-					modified_files="$modified_files $file"
-				fi
-			fi
-		else
-			dwarn "$file doesn't exist"
 		fi
 	done
 
