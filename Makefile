@@ -76,6 +76,7 @@ ifeq ($(ARCH), $(filter ppc64le ppc64,$(ARCH)))
 	install -m 755 mkfadumprd $(DESTDIR)$(sbindir)
 	install -m 755 kdump-migrate-action.sh  kdump-restart.sh -t $(DESTDIR)$(pkglibdir)
 	install -m 755 60-fadump.install $(DESTDIR)$(libdir)/kernel/install.d/
+	install -m 644 kdump-migrate-notify.service $(DESTDIR)$(systemdsystemunitdir)/kdump-migrate-notify.service
 endif
 
 ifneq ($(ARCH),s390x)
