@@ -51,8 +51,11 @@ target.
 touch /etc/kdump.conf
 
 %ifarch ppc64 ppc64le
-servicelog_notify --remove --command=/usr/lib/kdump/kdump-migrate-action.sh 2>/dev/null
-servicelog_notify --add --command=/usr/lib/kdump/kdump-migrate-action.sh --match='refcode="#MIGRATE" and serviceable=0' --type=EVENT --method=pairs_stdin >/dev/null
+%systemd_post kdump-migrate-notify.service
+if [ ! -f /run/ostree-booted ]; then
+  servicelog_notify --remove --command=/usr/lib/kdump/kdump-migrate-action.sh 2>/dev/null
+  servicelog_notify --add --command=/usr/lib/kdump/kdump-migrate-action.sh --match='refcode="#MIGRATE" and serviceable=0' --type=EVENT --method=pairs_stdin >/dev/null
+fi
 %endif
 
 # RPM scriptlet should always return 0. Otherwise it can break
@@ -65,7 +68,10 @@ servicelog_notify --add --command=/usr/lib/kdump/kdump-migrate-action.sh --match
 
 %preun
 %ifarch ppc64 ppc64le
-servicelog_notify --remove --command=/usr/lib/kdump/kdump-migrate-action.sh >/dev/null
+if [ ! -f /run/ostree-booted ]; then
+  servicelog_notify --remove --command=/usr/lib/kdump/kdump-migrate-action.sh >/dev/null
+fi
+%systemd_preun kdump-migrate-notify.service
 %endif
 %systemd_preun kdump.service
 
@@ -87,6 +93,7 @@ fi
 %ifarch ppc64 ppc64le
 %{_sbindir}/mkfadumprd
 %{_prefix}/lib/kernel/install.d/60-fadump.install
+%{_unitdir}/kdump-migrate-notify.service
 %endif
 %{_bindir}/kdumpctl
 %{_sbindir}/mkdumprd
